@@ -9,7 +9,9 @@ go.work.sum
 *.dll
 *.so
 *.dylib
-bin/*
+
+**/bin
+
 Dockerfile.cross
 
 # Test binary, build with `go test -c`
