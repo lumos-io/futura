@@ -1,0 +1,27 @@
+# permissions for end users to view futuras.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: futura-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: operator
+    app.kubernetes.io/part-of: operator
+    app.kubernetes.io/managed-by: kustomize
+  name: futura-viewer-role
+rules:
+- apiGroups:
+  - opisvigilant.github.com
+  resources:
+  - futuras
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - opisvigilant.github.com
+  resources:
+  - futuras/status
+  verbs:
+  - get
