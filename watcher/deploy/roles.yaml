@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: watcher
+  namespace: default
+  labels:
+    app.kubernetes.io/name: watcher
+    app.kubernetes.io/instance: watcher
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: watcher
+  namespace: default
+  labels:
+    app.kubernetes.io/name: watcher
+    app.kubernetes.io/instance: watcher
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs:
+      - get
+      - list
+      - watch
+---
+# Source: watcher/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: watcher
+  namespace: default
+  labels:
+    app.kubernetes.io/name: watcher
+    app.kubernetes.io/instance: watcher
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: watcher
+subjects:
+  - kind: ServiceAccount
+    name: watcher
+    namespace: default

@@ -6,9 +6,10 @@ import (
 	"os"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/opisvigilant/futura/pkg/logger"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/controller"
+	"github.com/opisvigilant/futura/watcher/internal/handlers"
+	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -42,9 +43,12 @@ events to the backend`,
 			}()
 		}
 
-		if err := controller.Start(watcherCfg); err != nil {
-			logger.Logger().Panic().Err(err).Msg("controller failed to start or returned an error")
+		eventHandler, err := handlers.New(watcherCfg)
+		if err != nil {
+			panic(fmt.Errorf("initHandler failed"))
 		}
+
+		controller.Start(watcherCfg, eventHandler)
 	},
 }
 
@@ -69,6 +73,7 @@ func setupConfiguration(cmd *cobra.Command, args []string) error {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("/opt/watcher")
 	if err := viper.ReadInConfig(); err != nil {
 		if e, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; ignore error if desired

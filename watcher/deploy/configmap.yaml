@@ -1,8 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: watcher
+  name: watcher-config
   namespace: default
+  labels:
+    app.kubernetes.io/name: watcher
+    app.kubernetes.io/instance: watcher
 data:
   config.toml: |
     # Configuration file running Norman locally

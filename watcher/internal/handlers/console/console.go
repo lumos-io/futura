@@ -3,9 +3,9 @@ package console
 import (
 	"os"
 
-	"github.com/opisvigilant/futura/pkg/logger"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/event"
+	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/rs/zerolog"
 )
 

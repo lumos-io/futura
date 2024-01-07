@@ -22,12 +22,6 @@ type Event struct {
 	OldObj     runtime.Object
 }
 
-var m = map[string]string{
-	"created": "Normal",
-	"deleted": "Danger",
-	"updated": "Warning",
-}
-
 // Message returns event message in standard format.
 // included as a part of event packege to enhance code resuablity across handlers.
 func (e *Event) Message() (msg string) {
@@ -53,29 +47,29 @@ func (e *Event) Message() (msg string) {
 		)
 	case "NodeReady":
 		msg = fmt.Sprintf(
-			"Node `%s` is Ready : \nNodeReady",
+			"Node `%s` is Ready: NodeReady",
 			e.Name,
 		)
 	case "NodeNotReady":
 		msg = fmt.Sprintf(
-			"Node `%s` is Not Ready : \nNodeNotReady",
+			"Node `%s` is Not Ready: NodeNotReady",
 			e.Name,
 		)
 	case "NodeRebooted":
 		msg = fmt.Sprintf(
-			"Node `%s` Rebooted : \nNodeRebooted",
+			"Node `%s` Rebooted: NodeRebooted",
 			e.Name,
 		)
 	case "Backoff":
 		msg = fmt.Sprintf(
-			"Pod `%s` in `%s` Crashed : \nCrashLoopBackOff %s",
+			"Pod `%s` in `%s` Crashed: CrashLoopBackOff %s",
 			e.Name,
 			e.Namespace,
 			e.Reason,
 		)
 	default:
 		msg = fmt.Sprintf(
-			"A `%s` in namespace `%s` has been `%s`:\n`%s`",
+			"A `%s` in namespace `%s` has been `%s`: `%s`",
 			e.Kind,
 			e.Namespace,
 			e.Reason,

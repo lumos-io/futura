@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,12 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/opisvigilant/futura/pkg/logger"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/event"
 	"github.com/opisvigilant/futura/watcher/internal/handlers"
-	"github.com/opisvigilant/futura/watcher/internal/handlers/console"
-	"github.com/opisvigilant/futura/watcher/internal/handlers/webhook"
+	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/utils"
 
 	apps_v1 "k8s.io/api/apps/v1"
@@ -25,11 +22,10 @@ import (
 	events_v1 "k8s.io/api/events/v1"
 	networking_v1 "k8s.io/api/networking/v1"
 	rbac_v1 "k8s.io/api/rbac/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -72,511 +68,246 @@ func objName(obj interface{}) string {
 
 // TODO: we don't need the informer to be indexed
 // Start prepares watchers and run their controllers, then waits for process termination signals
-func Start(c *config.Configuration) error {
+func Start(c *config.Configuration, eventHandler handlers.Handler) {
 	var kubeClient kubernetes.Interface
-
 	if _, err := rest.InClusterConfig(); err != nil {
 		kubeClient = utils.GetClientOutOfCluster()
 	} else {
 		kubeClient = utils.GetClient()
 	}
 
-	eventHandler, err := initHandler(c)
-	if err != nil {
-		return err
+	factory := informers.NewFilteredSharedInformerFactory(kubeClient, 0, "", nil)
+
+	// Pod informer
+	{
+		informer := factory.Core().V1().Pods().Informer()
+		ctrl := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Pod{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go ctrl.Run(stopCh)
 	}
 
-	watchCoreEvent(kubeClient, eventHandler)
-	watchEvent(kubeClient, eventHandler)
-	watchPodEvent(kubeClient, eventHandler)
-	watchHPAEvent(kubeClient, eventHandler)
-	watchDaemonSetEvent(kubeClient, eventHandler)
-	watchStatefulSetEvent(kubeClient, eventHandler)
-	watchReplicaSetEvent(kubeClient, eventHandler)
-	watchServicesEvent(kubeClient, eventHandler)
-	watchDeploymentEvent(kubeClient, eventHandler)
-	watchNamespaceEvent(kubeClient, eventHandler)
-	watchReplicationControllerEvent(kubeClient, eventHandler)
-	watchJobEvent(kubeClient, eventHandler)
-	watchNodeEvent(kubeClient, eventHandler)
-	watchServiceAccountEvent(kubeClient, eventHandler)
-	watchClusterRoleEvent(kubeClient, eventHandler)
-	watchClusterRoleBindingEvent(kubeClient, eventHandler)
-	watchPersistentVolumeEvent(kubeClient, eventHandler)
-	watchSecretEvent(kubeClient, eventHandler)
-	watchConfigmapEvent(kubeClient, eventHandler)
-	watchIngressEvent(kubeClient, eventHandler)
+	// CoreEvent informer
+	{
+		informer := factory.Core().V1().Events().Informer()
+
+		allCoreEventsController := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Event{}), V1)
+		stopAllCoreEventsCh := make(chan struct{})
+		defer close(stopAllCoreEventsCh)
+
+		go allCoreEventsController.Run(stopAllCoreEventsCh)
+	}
+
+	// Event informer
+	{
+		informer := factory.Events().V1().Events().Informer()
+
+		allEventsController := newResourceController(kubeClient, eventHandler, informer, objName(events_v1.Event{}), EVENTS_V1)
+		stopAllEventsCh := make(chan struct{})
+		defer close(stopAllEventsCh)
+
+		go allEventsController.Run(stopAllEventsCh)
+	}
+
+	// HPA informer
+	{
+		informer := factory.Autoscaling().V1().HorizontalPodAutoscalers().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(autoscaling_v1.HorizontalPodAutoscaler{}), AUTOSCALING_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Daemonset informer
+	{
+		informer := factory.Apps().V1().DaemonSets().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(apps_v1.DaemonSet{}), APPS_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Statefulset informer
+	{
+		informer := factory.Apps().V1().StatefulSets().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(apps_v1.StatefulSet{}), APPS_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Replicaset informer
+	{
+		informer := factory.Apps().V1().ReplicaSets().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(apps_v1.ReplicaSet{}), APPS_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Service informer
+	{
+		informer := factory.Core().V1().Services().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Service{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Deployment informer
+	{
+		informer := factory.Apps().V1().Deployments().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(apps_v1.Deployment{}), APPS_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Namespace informer
+	{
+		informer := factory.Core().V1().Namespaces().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Namespace{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Replicaset informer
+	{
+		informer := factory.Apps().V1().ReplicaSets().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.ReplicationController{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Job informer
+	{
+		informer := factory.Batch().V1().Jobs().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(batch_v1.Job{}), BATCH_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Node informer
+	{
+		informer := factory.Core().V1().Nodes().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Node{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// ServiceAccount informer
+	{
+		informer := factory.Core().V1().ServiceAccounts().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.ServiceAccount{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// ClusterRole informer
+	{
+		informer := factory.Rbac().V1().ClusterRoles().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(rbac_v1.ClusterRole{}), RBAC_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// ClusterRoleBinding informer
+	{
+		informer := factory.Rbac().V1().ClusterRoleBindings().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(rbac_v1.ClusterRoleBinding{}), RBAC_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// PersistenVolume informer
+	{
+		informer := factory.Core().V1().PersistentVolumes().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.PersistentVolume{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Secret informer
+	{
+		informer := factory.Core().V1().Secrets().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Secret{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Configmap informer
+	{
+		informer := factory.Core().V1().ConfigMaps().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.ConfigMap{}), V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
+
+	// Ingress informer
+	{
+		informer := factory.Networking().V1().Ingresses().Informer()
+
+		c := newResourceController(kubeClient, eventHandler, informer, objName(networking_v1.Ingress{}), NETWORKING_V1)
+		stopCh := make(chan struct{})
+		defer close(stopCh)
+
+		go c.Run(stopCh)
+	}
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
 	signal.Notify(sigterm, syscall.SIGINT)
 	<-sigterm
-
-	return nil
-}
-
-func initHandler(c *config.Configuration) (handlers.Handler, error) {
-	var eventHandler handlers.Handler
-	switch {
-	case len(c.Handler.Webhook.URL) > 0:
-		eventHandler = new(webhook.Webhook)
-	default:
-		eventHandler = new(console.Console)
-	}
-	if err := eventHandler.Init(c); err != nil {
-		return nil, err
-	}
-	return eventHandler, nil
-}
-
-func watchCoreEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	allCoreEventsInformer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				options.FieldSelector = ""
-				return kubeClient.CoreV1().Events("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				options.FieldSelector = ""
-				return kubeClient.CoreV1().Events("").Watch(context.Background(), options)
-			},
-		},
-		&api_v1.Event{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	allCoreEventsController := newResourceController(kubeClient, eventHandler, allCoreEventsInformer, objName(api_v1.Event{}), V1)
-	stopAllCoreEventsCh := make(chan struct{})
-	defer close(stopAllCoreEventsCh)
-
-	go allCoreEventsController.Run(stopAllCoreEventsCh)
-}
-
-func watchEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	allEventsInformer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				options.FieldSelector = ""
-				return kubeClient.EventsV1().Events("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				options.FieldSelector = ""
-				return kubeClient.EventsV1().Events("").Watch(context.Background(), options)
-			},
-		},
-		&events_v1.Event{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	allEventsController := newResourceController(kubeClient, eventHandler, allEventsInformer, objName(events_v1.Event{}), EVENTS_V1)
-	stopAllEventsCh := make(chan struct{})
-	defer close(stopAllEventsCh)
-
-	go allEventsController.Run(stopAllEventsCh)
-}
-
-func watchIngressEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.NetworkingV1().Ingresses("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.NetworkingV1().Ingresses("").Watch(context.Background(), options)
-			},
-		},
-		&networking_v1.Ingress{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(networking_v1.Ingress{}), NETWORKING_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchConfigmapEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().ConfigMaps("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().ConfigMaps("").Watch(context.Background(), options)
-			},
-		},
-		&api_v1.ConfigMap{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.ConfigMap{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchSecretEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().Secrets("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().Secrets("").Watch(context.Background(), options)
-			},
-		},
-		&api_v1.Secret{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Secret{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchPersistentVolumeEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().PersistentVolumes().List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().PersistentVolumes().Watch(context.Background(), options)
-			},
-		},
-		&api_v1.PersistentVolume{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.PersistentVolume{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchClusterRoleBindingEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.RbacV1().ClusterRoleBindings().List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.RbacV1().ClusterRoleBindings().Watch(context.Background(), options)
-			},
-		},
-		&rbac_v1.ClusterRoleBinding{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(rbac_v1.ClusterRoleBinding{}), RBAC_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchClusterRoleEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.RbacV1().ClusterRoles().List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.RbacV1().ClusterRoles().Watch(context.Background(), options)
-			},
-		},
-		&rbac_v1.ClusterRole{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(rbac_v1.ClusterRole{}), RBAC_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchServiceAccountEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().ServiceAccounts("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().ServiceAccounts("").Watch(context.Background(), options)
-			},
-		},
-		&api_v1.ServiceAccount{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.ServiceAccount{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchNodeEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().Nodes().List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().Nodes().Watch(context.Background(), options)
-			},
-		},
-		&api_v1.Node{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Node{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchJobEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.BatchV1().Jobs("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.BatchV1().Jobs("").Watch(context.Background(), options)
-			},
-		},
-		&batch_v1.Job{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(batch_v1.Job{}), BATCH_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchReplicationControllerEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().ReplicationControllers("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().ReplicationControllers("").Watch(context.Background(), options)
-			},
-		},
-		&api_v1.ReplicationController{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.ReplicationController{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchNamespaceEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().Namespaces().List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().Namespaces().Watch(context.Background(), options)
-			},
-		},
-		&api_v1.Namespace{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Namespace{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchDeploymentEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.AppsV1().Deployments("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.AppsV1().Deployments("").Watch(context.Background(), options)
-			},
-		},
-		&apps_v1.Deployment{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(apps_v1.Deployment{}), APPS_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchServicesEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().Services("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().Services("").Watch(context.Background(), options)
-			},
-		},
-		&api_v1.Service{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Service{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchReplicaSetEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.AppsV1().ReplicaSets("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.AppsV1().ReplicaSets("").Watch(context.Background(), options)
-			},
-		},
-		&apps_v1.ReplicaSet{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(apps_v1.ReplicaSet{}), APPS_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchStatefulSetEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.AppsV1().StatefulSets("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.AppsV1().StatefulSets("").Watch(context.Background(), options)
-			},
-		},
-		&apps_v1.StatefulSet{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(apps_v1.StatefulSet{}), APPS_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchDaemonSetEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.AppsV1().DaemonSets("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.AppsV1().DaemonSets("").Watch(context.Background(), options)
-			},
-		},
-		&apps_v1.DaemonSet{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(apps_v1.DaemonSet{}), APPS_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchHPAEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.AutoscalingV1().HorizontalPodAutoscalers("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.AutoscalingV1().HorizontalPodAutoscalers("").Watch(context.Background(), options)
-			},
-		},
-		&autoscaling_v1.HorizontalPodAutoscaler{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(autoscaling_v1.HorizontalPodAutoscaler{}), AUTOSCALING_V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
-}
-
-func watchPodEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
-	informer := cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-				return kubeClient.CoreV1().Pods("").List(context.Background(), options)
-			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-				return kubeClient.CoreV1().Pods("").Watch(context.Background(), options)
-			},
-		},
-		&api_v1.Pod{},
-		0, //Skip resync
-		cache.Indexers{},
-	)
-
-	c := newResourceController(kubeClient, eventHandler, informer, objName(api_v1.Pod{}), V1)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
-
-	go c.Run(stopCh)
 }
 
 func newResourceController(client kubernetes.Interface, eventHandler handlers.Handler, informer cache.SharedIndexInformer, resourceType string, apiVersion string) *Controller {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	var newEvent Event
 	var err error
+
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			var ok bool
@@ -664,7 +395,7 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 
 	go c.informer.Run(stopCh)
 
-	if !cache.WaitForCacheSync(stopCh, c.HasSynced) {
+	if !cache.WaitForNamedCacheSync("watcher", stopCh, c.HasSynced) {
 		utilruntime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
 		return
 	}

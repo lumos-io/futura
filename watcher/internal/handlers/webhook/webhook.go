@@ -10,9 +10,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/opisvigilant/futura/pkg/logger"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/event"
+	"github.com/opisvigilant/futura/watcher/internal/logger"
 )
 
 // Webhook handler implements handler.Handler interface,
