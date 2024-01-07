@@ -11,9 +11,12 @@ import (
 	"time"
 
 	"github.com/opisvigilant/futura/pkg/logger"
-	"github.com/opisvigilant/futura/watcher/pkg/event"
-	"github.com/opisvigilant/futura/watcher/pkg/utils"
-	"github.com/opisvigilant/futura/watcher/pkg/webhook"
+	"github.com/opisvigilant/futura/watcher/internal/config"
+	"github.com/opisvigilant/futura/watcher/internal/event"
+	"github.com/opisvigilant/futura/watcher/internal/handlers"
+	"github.com/opisvigilant/futura/watcher/internal/handlers/console"
+	"github.com/opisvigilant/futura/watcher/internal/handlers/webhook"
+	"github.com/opisvigilant/futura/watcher/utils"
 
 	apps_v1 "k8s.io/api/apps/v1"
 	autoscaling_v1 "k8s.io/api/autoscaling/v1"
@@ -60,7 +63,7 @@ type Controller struct {
 	clientset    kubernetes.Interface
 	queue        workqueue.RateLimitingInterface
 	informer     cache.SharedIndexInformer
-	eventWebhook webhook.Webhook
+	eventHandler handlers.Handler
 }
 
 func objName(obj interface{}) string {
@@ -69,13 +72,18 @@ func objName(obj interface{}) string {
 
 // TODO: we don't need the informer to be indexed
 // Start prepares watchers and run their controllers, then waits for process termination signals
-func Start(eventHandler webhook.Webhook) {
+func Start(c *config.Configuration) error {
 	var kubeClient kubernetes.Interface
 
 	if _, err := rest.InClusterConfig(); err != nil {
 		kubeClient = utils.GetClientOutOfCluster()
 	} else {
 		kubeClient = utils.GetClient()
+	}
+
+	eventHandler, err := initHandler(c)
+	if err != nil {
+		return err
 	}
 
 	watchCoreEvent(kubeClient, eventHandler)
@@ -103,9 +111,25 @@ func Start(eventHandler webhook.Webhook) {
 	signal.Notify(sigterm, syscall.SIGTERM)
 	signal.Notify(sigterm, syscall.SIGINT)
 	<-sigterm
+
+	return nil
 }
 
-func watchCoreEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func initHandler(c *config.Configuration) (handlers.Handler, error) {
+	var eventHandler handlers.Handler
+	switch {
+	case len(c.Handler.Webhook.URL) > 0:
+		eventHandler = new(webhook.Webhook)
+	default:
+		eventHandler = new(console.Console)
+	}
+	if err := eventHandler.Init(c); err != nil {
+		return nil, err
+	}
+	return eventHandler, nil
+}
+
+func watchCoreEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	allCoreEventsInformer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -129,7 +153,7 @@ func watchCoreEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhoo
 	go allCoreEventsController.Run(stopAllCoreEventsCh)
 }
 
-func watchEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	allEventsInformer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -153,7 +177,7 @@ func watchEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
 	go allEventsController.Run(stopAllEventsCh)
 }
 
-func watchIngressEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchIngressEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -175,7 +199,7 @@ func watchIngressEvent(kubeClient kubernetes.Interface, eventHandler webhook.Web
 	go c.Run(stopCh)
 }
 
-func watchConfigmapEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchConfigmapEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -197,7 +221,7 @@ func watchConfigmapEvent(kubeClient kubernetes.Interface, eventHandler webhook.W
 	go c.Run(stopCh)
 }
 
-func watchSecretEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchSecretEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -219,7 +243,7 @@ func watchSecretEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webh
 	go c.Run(stopCh)
 }
 
-func watchPersistentVolumeEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchPersistentVolumeEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -241,7 +265,7 @@ func watchPersistentVolumeEvent(kubeClient kubernetes.Interface, eventHandler we
 	go c.Run(stopCh)
 }
 
-func watchClusterRoleBindingEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchClusterRoleBindingEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -263,7 +287,7 @@ func watchClusterRoleBindingEvent(kubeClient kubernetes.Interface, eventHandler 
 	go c.Run(stopCh)
 }
 
-func watchClusterRoleEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchClusterRoleEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -285,7 +309,7 @@ func watchClusterRoleEvent(kubeClient kubernetes.Interface, eventHandler webhook
 	go c.Run(stopCh)
 }
 
-func watchServiceAccountEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchServiceAccountEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -307,7 +331,7 @@ func watchServiceAccountEvent(kubeClient kubernetes.Interface, eventHandler webh
 	go c.Run(stopCh)
 }
 
-func watchNodeEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchNodeEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -329,7 +353,7 @@ func watchNodeEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhoo
 	go c.Run(stopCh)
 }
 
-func watchJobEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchJobEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -351,7 +375,7 @@ func watchJobEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook
 	go c.Run(stopCh)
 }
 
-func watchReplicationControllerEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchReplicationControllerEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -373,7 +397,7 @@ func watchReplicationControllerEvent(kubeClient kubernetes.Interface, eventHandl
 	go c.Run(stopCh)
 }
 
-func watchNamespaceEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchNamespaceEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -395,7 +419,7 @@ func watchNamespaceEvent(kubeClient kubernetes.Interface, eventHandler webhook.W
 	go c.Run(stopCh)
 }
 
-func watchDeploymentEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchDeploymentEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -417,7 +441,7 @@ func watchDeploymentEvent(kubeClient kubernetes.Interface, eventHandler webhook.
 	go c.Run(stopCh)
 }
 
-func watchServicesEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchServicesEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -439,7 +463,7 @@ func watchServicesEvent(kubeClient kubernetes.Interface, eventHandler webhook.We
 	go c.Run(stopCh)
 }
 
-func watchReplicaSetEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchReplicaSetEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -461,7 +485,7 @@ func watchReplicaSetEvent(kubeClient kubernetes.Interface, eventHandler webhook.
 	go c.Run(stopCh)
 }
 
-func watchStatefulSetEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchStatefulSetEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -483,7 +507,7 @@ func watchStatefulSetEvent(kubeClient kubernetes.Interface, eventHandler webhook
 	go c.Run(stopCh)
 }
 
-func watchDaemonSetEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchDaemonSetEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -505,7 +529,7 @@ func watchDaemonSetEvent(kubeClient kubernetes.Interface, eventHandler webhook.W
 	go c.Run(stopCh)
 }
 
-func watchHPAEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchHPAEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -527,7 +551,7 @@ func watchHPAEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook
 	go c.Run(stopCh)
 }
 
-func watchPodEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook) {
+func watchPodEvent(kubeClient kubernetes.Interface, eventHandler handlers.Handler) {
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
@@ -549,7 +573,7 @@ func watchPodEvent(kubeClient kubernetes.Interface, eventHandler webhook.Webhook
 	go c.Run(stopCh)
 }
 
-func newResourceController(client kubernetes.Interface, eventHandler webhook.Webhook, informer cache.SharedIndexInformer, resourceType string, apiVersion string) *Controller {
+func newResourceController(client kubernetes.Interface, eventHandler handlers.Handler, informer cache.SharedIndexInformer, resourceType string, apiVersion string) *Controller {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	var newEvent Event
 	var err error
@@ -564,11 +588,11 @@ func newResourceController(client kubernetes.Interface, eventHandler webhook.Web
 			newEvent.obj, ok = obj.(runtime.Object)
 			if !ok {
 				logger.Logger().Error().Fields(map[string]interface{}{
-					"pkg": "kubewatch-" + resourceType,
+					"pkg": "watcher-" + resourceType,
 				}).Msgf("cannot convert to runtime.Object for add on %v", obj)
 			}
 			logger.Logger().Info().Fields(map[string]interface{}{
-				"pkg": "kubewatch-" + resourceType,
+				"pkg": "watcher-" + resourceType,
 			}).Msgf("Processing add to %v: %s", resourceType, newEvent.key)
 			if err == nil {
 				queue.Add(newEvent)
@@ -584,17 +608,17 @@ func newResourceController(client kubernetes.Interface, eventHandler webhook.Web
 			newEvent.obj, ok = new.(runtime.Object)
 			if !ok {
 				logger.Logger().Error().Fields(map[string]interface{}{
-					"pkg": "kubewatch-" + resourceType,
+					"pkg": "watcher-" + resourceType,
 				}).Msgf("cannot convert to runtime.Object for update on %v", new)
 			}
 			newEvent.oldObj, ok = old.(runtime.Object)
 			if !ok {
 				logger.Logger().Error().Fields(map[string]interface{}{
-					"pkg": "kubewatch-" + resourceType,
+					"pkg": "watcher-" + resourceType,
 				}).Msgf("cannot convert old to runtime.Object for update on %v", old)
 			}
 			logger.Logger().Info().Fields(map[string]interface{}{
-				"pkg": "kubewatch-" + resourceType,
+				"pkg": "watcher-" + resourceType,
 			}).Msgf("Processing update to %v: %s", resourceType, newEvent.key)
 			if err == nil {
 				queue.Add(newEvent)
@@ -610,12 +634,12 @@ func newResourceController(client kubernetes.Interface, eventHandler webhook.Web
 			newEvent.obj, ok = obj.(runtime.Object)
 			if !ok {
 				logger.Logger().Error().Fields(map[string]interface{}{
-					"pkg": "kubewatch-" + resourceType,
+					"pkg": "watcher-" + resourceType,
 				}).Msgf("cannot convert to runtime.Object for delete on %v", obj)
 			}
 			logger.Logger().Info().Fields(map[string]interface{}{
-				"pkg": "kubewatch-" + resourceType,
-			}).Msgf("Processing delete to %v: %s", resourceType, newEvent.key)
+				"pkg": "watcher-" + resourceType,
+			}).Msgf("processing delete to %v: %s", resourceType, newEvent.key)
 			if err == nil {
 				queue.Add(newEvent)
 			}
@@ -626,26 +650,26 @@ func newResourceController(client kubernetes.Interface, eventHandler webhook.Web
 		clientset:    client,
 		informer:     informer,
 		queue:        queue,
-		eventWebhook: eventHandler,
+		eventHandler: eventHandler,
 	}
 }
 
-// Run starts the kubewatch controller
+// Run starts the watcher controller
 func (c *Controller) Run(stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	defer c.queue.ShutDown()
 
-	logger.Logger().Info().Msg("Starting kubewatch controller")
+	logger.Logger().Info().Msg("starting watcher controller")
 	serverStartTime = time.Now().Local()
 
 	go c.informer.Run(stopCh)
 
 	if !cache.WaitForCacheSync(stopCh, c.HasSynced) {
-		utilruntime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
+		utilruntime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
 		return
 	}
 
-	logger.Logger().Info().Msg("Kubewatch controller synced and ready")
+	logger.Logger().Info().Msg("watcher controller synced and ready")
 
 	wait.Until(c.runWorker, time.Second, stopCh)
 }
@@ -678,15 +702,14 @@ func (c *Controller) processNextItem() bool {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(newEvent)
 	} else if c.queue.NumRequeues(newEvent) < maxRetries {
-		logger.Logger().Error().Msgf("Error processing %s (will retry): %v", newEvent.(Event).key, err)
+		logger.Logger().Error().Msgf("error processing %s (will retry): %v", newEvent.(Event).key, err)
 		c.queue.AddRateLimited(newEvent)
 	} else {
 		// err != nil and too many retries
-		logger.Logger().Error().Msgf("Error processing %s (giving up): %v", newEvent.(Event).key, err)
+		logger.Logger().Error().Msgf("error processing %s (giving up): %v", newEvent.(Event).key, err)
 		c.queue.Forget(newEvent)
 		utilruntime.HandleError(err)
 	}
-
 	return true
 }
 
@@ -696,7 +719,7 @@ func (c *Controller) processItem(newEvent Event) error {
 	obj, _, err := c.informer.GetIndexer().GetByKey(newEvent.key)
 
 	if err != nil {
-		return fmt.Errorf("Error fetching object with key %s from store: %v", newEvent.key, err)
+		return fmt.Errorf("error fetching object with key %s from store: %v", newEvent.key, err)
 	}
 	// get object's metedata
 	objectMeta := utils.GetObjectMetaData(obj)
@@ -740,7 +763,7 @@ func (c *Controller) processItem(newEvent Event) error {
 				Reason:     "Created",
 				Obj:        newEvent.obj,
 			}
-			c.eventWebhook.Handle(kbEvent)
+			c.eventHandler.Handle(kbEvent)
 			return nil
 		}
 	case "update":
@@ -763,7 +786,7 @@ func (c *Controller) processItem(newEvent Event) error {
 			Obj:        newEvent.obj,
 			OldObj:     newEvent.oldObj,
 		}
-		c.eventWebhook.Handle(kbEvent)
+		c.eventHandler.Handle(kbEvent)
 		return nil
 	case "delete":
 		kbEvent := event.Event{
@@ -775,7 +798,7 @@ func (c *Controller) processItem(newEvent Event) error {
 			Reason:     "Deleted",
 			Obj:        newEvent.obj,
 		}
-		c.eventWebhook.Handle(kbEvent)
+		c.eventHandler.Handle(kbEvent)
 		return nil
 	}
 	return nil

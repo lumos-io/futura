@@ -1,0 +1,15 @@
+# Configuration file running Norman locally
+
+title = "Configuration for Watcher"
+
+debug = true
+enablePprof = true
+
+[handler]
+[handler.console]
+color = true
+
+[handler.webhook]
+url = ""
+cert = ""
+tlsSkip = true

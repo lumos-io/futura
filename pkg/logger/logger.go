@@ -9,7 +9,7 @@ import (
 
 func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	zerolog.DefaultContextLogger.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
 func SetLevel(debug bool) {

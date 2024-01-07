@@ -11,27 +11,14 @@ import (
 	"time"
 
 	"github.com/opisvigilant/futura/pkg/logger"
-	"github.com/opisvigilant/futura/watcher/pkg/event"
+	"github.com/opisvigilant/futura/watcher/internal/config"
+	"github.com/opisvigilant/futura/watcher/internal/event"
 )
 
-// TODO: fix the below
-var webhookErrMsg = `
-%s
-
-You need to set Webhook url, and Webhook cert if you use self signed certificates,
-using "--url/-u" and "--cert", or using environment variables:
-
-export KW_WEBHOOK_URL=webhook_url
-export KW_WEBHOOK_CERT=/path/of/cert
-
-Command line flags will override environment variables
-
-`
-
 // Webhook handler implements handler.Handler interface,
-// Notify event to Webhook channel
+// Notify event to Webhook
 type Webhook struct {
-	Url string
+	URL string
 }
 
 // WebhookMessage for messages
@@ -50,25 +37,23 @@ type EventMeta struct {
 }
 
 // Init prepares Webhook configuration
-func (m *Webhook) Init(url, cert string, tlsSkip bool) error {
-	if url == "" {
-		url = os.Getenv("KW_WEBHOOK_URL")
-	}
-	if cert == "" {
-		cert = os.Getenv("KW_WEBHOOK_CERT")
+func (m *Webhook) Init(c *config.Configuration) error {
+	if c.Handler.Webhook.URL == "" {
+		return fmt.Errorf("missing url for webhook")
 	}
 
-	m.Url = url
+	m.URL = c.Handler.Webhook.URL
+	cert := c.Handler.Webhook.Cert
+	tlsSkip := c.Handler.Webhook.TlsSkip
 
 	if tlsSkip {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	} else {
 		if cert == "" {
-			logger.Logger().Info().Msg("No webhook cert is given")
+			return fmt.Errorf("no webhook cert is given")
 		} else {
 			caCert, err := os.ReadFile(cert)
 			if err != nil {
-				logger.Logger().Err(err).Msg("")
 				return err
 			}
 			caCertPool := x509.NewCertPool()
@@ -76,33 +61,12 @@ func (m *Webhook) Init(url, cert string, tlsSkip bool) error {
 			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{RootCAs: caCertPool}
 		}
 	}
-
-	return checkMissingWebhookVars(m)
+	return nil
 }
 
 // Handle handles an event.
 func (m *Webhook) Handle(e event.Event) {
-	webhookMessage := prepareWebhookMessage(e, m)
-
-	err := postMessage(m.Url, webhookMessage)
-	if err != nil {
-		logger.Logger().Err(err).Msg("")
-		return
-	}
-
-	logger.Logger().Info().Msgf("Message successfully sent to %s at %s ", m.Url, time.Now())
-}
-
-func checkMissingWebhookVars(s *Webhook) error {
-	if s.Url == "" {
-		return fmt.Errorf(webhookErrMsg, "Missing Webhook url")
-	}
-
-	return nil
-}
-
-func prepareWebhookMessage(e event.Event, m *Webhook) *WebhookMessage {
-	return &WebhookMessage{
+	webhookMessage := &WebhookMessage{
 		EventMeta: EventMeta{
 			Kind:      e.Kind,
 			Name:      e.Name,
@@ -112,6 +76,12 @@ func prepareWebhookMessage(e event.Event, m *Webhook) *WebhookMessage {
 		Text: e.Message(),
 		Time: time.Now(),
 	}
+
+	if err := postMessage(m.URL, webhookMessage); err != nil {
+		logger.Logger().Err(err).Msg("failed to post to webhook URL")
+		return
+	}
+	logger.Logger().Info().Msgf("Message successfully sent to %s at %s ", m.URL, time.Now())
 }
 
 func postMessage(url string, webhookMessage *WebhookMessage) error {

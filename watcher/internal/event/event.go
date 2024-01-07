@@ -7,7 +7,7 @@ import (
 )
 
 // Event represent an event got from k8s api server
-// Events from different endpoints need to be casted to KubewatchEvent
+// Events from different endpoints need to be casted to watcherEvent
 // before being able to be handled by handler
 type Event struct {
 	Namespace  string

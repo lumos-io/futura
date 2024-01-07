@@ -74,3 +74,13 @@ operator-deploy:
 .PHONY: operator-undeploy
 operator-undeploy: 
 	$(MAKE) -C operator undeploy		
+
+##@ Watcher Docker
+
+.PHONY: watcher-docker-build
+watcher-docker-build: 
+	$(MAKE) -C watcher docker-build
+
+.PHONY: watcher-docker-push
+watcher-docker-push: 
+	$(MAKE) -C watcher docker-push

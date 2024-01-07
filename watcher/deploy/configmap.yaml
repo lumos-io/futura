@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watcher
+  namespace: default
+data:
+  config.toml: |
+    # Configuration file running Norman locally
+
+    title = "Configuration for Watcher that is running on a pod"
+
+    debug = false
+    enablePprof = true
+
+    [handler]
+    [handler.console]
+    color = false
+
+    [handler.webhook]
+    url = ""
+    cert = ""
+    tlsSkip = true

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: watcher
+  namespace: default
+spec:
+  containers:
+    - image: davideberdin/watcher:latest
+      name: watcher
+      volumeMounts:
+        - name: config-volume
+          mountPath: /root
+  restartPolicy: Always
+  volumes:
+    - name: config-volume
+      configMap:
+        name: watcher
