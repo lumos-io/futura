@@ -7,7 +7,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/controller"
+	"github.com/opisvigilant/futura/watcher/internal/ebpftracer"
 	"github.com/opisvigilant/futura/watcher/internal/handlers"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/spf13/cobra"
@@ -19,8 +19,8 @@ var watcherCfg *config.Configuration
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "watcher",
-	Short: "Watches all the available Kubernetes events",
-	Long: `This application is used to watch all the Kubernetes events that are available.
+	Short: "Watches all the available Kubernetes events and ePBF signals (coming soon)",
+	Long: `This application is used to watch all the Kubernetes events and ePBF signals that are available.
 The events are batched and then sent to either STDOUT or to a defined Webhook. The former
 should be used for debugging while the latter for production and to actually send the 
 events to the backend`,
@@ -43,12 +43,14 @@ events to the backend`,
 			}()
 		}
 
-		eventHandler, err := handlers.New(watcherCfg)
+		_, err := handlers.New(watcherCfg)
 		if err != nil {
 			panic(fmt.Errorf("initHandler failed"))
 		}
 
-		controller.Start(watcherCfg, eventHandler)
+		ebpftracer.Tracer()
+
+		// controller.Start(watcherCfg, eventHandler)
 	},
 }
 
