@@ -8,6 +8,7 @@ ifeq ("$(wildcard $(GO_WORK_FILE))","")
 endif
 	@echo "add all projects to go.work"
 	go work use -r .
+	go work sync
 
 PHONY: run-watcher
 run-watcher:
@@ -74,6 +75,11 @@ operator-deploy:
 .PHONY: operator-undeploy
 operator-undeploy: 
 	$(MAKE) -C operator undeploy		
+
+##@ Watcher Run
+.PHONY: watcher-run
+watcher-run:
+	$(MAKE) -C watcher run
 
 ##@ Watcher Docker
 
