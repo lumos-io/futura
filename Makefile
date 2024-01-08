@@ -77,8 +77,12 @@ operator-undeploy:
 	$(MAKE) -C operator undeploy		
 
 ##@ Watcher Run
+.PHONY: watcher-generate
+watcher-generate:
+	$(MAKE) -C watcher generate
+
 .PHONY: watcher-run
-watcher-run:
+watcher-run: watcher-generate
 	$(MAKE) -C watcher run
 
 ##@ Watcher Docker

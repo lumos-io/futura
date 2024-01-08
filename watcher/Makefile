@@ -14,6 +14,10 @@ vet: ## Run go vet against code.
 run:
 	go run main.go
 
+.PHONY: generate
+generate:
+	go generate internal/ebpftracer/*.go
+
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build -t ${IMG} .
