@@ -1,3 +1,4 @@
+//go:build ignore
 /* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
 #ifndef __BPF_HELPERS__
 #define __BPF_HELPERS__

@@ -1,3 +1,4 @@
+//go:build ignore
 /* This is auto-generated file. See bpf_doc.py for details. */
 
 /* Forward declarations of BPF structs */

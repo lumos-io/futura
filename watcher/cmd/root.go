@@ -1,13 +1,18 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"runtime/debug"
+	"syscall"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/ebpftracer"
+	"github.com/opisvigilant/futura/watcher/internal/controller"
+	"github.com/opisvigilant/futura/watcher/internal/ebpf"
 	"github.com/opisvigilant/futura/watcher/internal/handlers"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/spf13/cobra"
@@ -32,6 +37,17 @@ events to the backend`,
 			panic(fmt.Errorf("configuration has not loaded correctly"))
 		}
 
+		debug.SetGCPercent(80)
+		ctx, cancel := context.WithCancel(context.Background())
+
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+		go func() {
+			<-c
+			signal.Stop(c)
+			cancel()
+		}()
+
 		if watcherCfg.EnablePprof {
 			go func() {
 				pprofAddr := "localhost:6060"
@@ -42,15 +58,18 @@ events to the backend`,
 				}
 			}()
 		}
-
-		_, err := handlers.New(watcherCfg)
+		
+		eventHandler, err := handlers.New(watcherCfg)
 		if err != nil {
 			panic(fmt.Errorf("initHandler failed"))
 		}
 
-		ebpftracer.Tracer()
+		// deploy ebpf programs
+		var ec *ebpf.EbpfCollector
+		ec = ebpf.NewEbpfCollector(ctx)
+		ec.Deploy()
 
-		// controller.Start(watcherCfg, eventHandler)
+		controller.Start(watcherCfg, eventHandler)
 	},
 }
 
