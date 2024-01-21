@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"reflect"
 	"strings"
 	"syscall"
 	"time"
@@ -13,12 +12,6 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/utils"
 
-	apps_v1 "k8s.io/api/apps/v1"
-	autoscaling_v1 "k8s.io/api/autoscaling/v1"
-	batch_v1 "k8s.io/api/batch/v1"
-	api_v1 "k8s.io/api/core/v1"
-	events_v1 "k8s.io/api/events/v1"
-	networking_v1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -44,24 +37,24 @@ type watcherType string
 
 const (
 	PodType                watcherType = "POD"
-	CoreEventType                      = "CORE_EVENT"
-	EventType                          = "EVENT"
-	HPAType                            = "HPA"
-	DaemonSetType                      = "DAEMONSET"
-	StatefulSetType                    = "STATEFULSET"
-	ReplicaSetType                     = "REPLICASET"
-	ServiceType                        = "SERVICE"
-	DeploymentType                     = "DEPLOYMENT"
-	NamespaceType                      = "NAMESPACE"
-	JobType                            = "JOB"
-	NodeType                           = "NODE"
-	ServiceAccountType                 = "SERVICE_ACCOUNT"
-	ClusterRoleType                    = "CLUSTER_ROLE"
-	ClusterRoleBindingType             = "CLUSTER_ROLE_BINDING"
-	PersistentVolumeType               = "PERSISTENT_VOLUME"
-	SecretType                         = "SECRET"
-	ConfigMapType                      = "CONFIGMAP"
-	IngressType                        = "INGRESS"
+	CoreEventType          watcherType = "CORE_EVENT"
+	EventType              watcherType = "EVENT"
+	HPAType                watcherType = "HPA"
+	DaemonSetType          watcherType = "DAEMONSET"
+	StatefulSetType        watcherType = "STATEFULSET"
+	ReplicaSetType         watcherType = "REPLICASET"
+	ServiceType            watcherType = "SERVICE"
+	DeploymentType         watcherType = "DEPLOYMENT"
+	NamespaceType          watcherType = "NAMESPACE"
+	JobType                watcherType = "JOB"
+	NodeType               watcherType = "NODE"
+	ServiceAccountType     watcherType = "SERVICE_ACCOUNT"
+	ClusterRoleType        watcherType = "CLUSTER_ROLE"
+	ClusterRoleBindingType watcherType = "CLUSTER_ROLE_BINDING"
+	PersistentVolumeType   watcherType = "PERSISTENT_VOLUME"
+	SecretType             watcherType = "SECRET"
+	ConfigMapType          watcherType = "CONFIGMAP"
+	IngressType            watcherType = "INGRESS"
 )
 
 // InformerEvent indicate the informerEvent
@@ -69,7 +62,7 @@ type InformerEvent struct {
 	key          string
 	eventType    string
 	namespace    string
-	resourceType string
+	resourceType watcherType
 	apiVersion   string
 	obj          runtime.Object
 	oldObj       runtime.Object
@@ -81,14 +74,14 @@ type KubernetesCollector struct {
 }
 
 type watcher struct {
-	informer     cache.SharedIndexInformer
-	stopCh       chan struct{}
-	clientset    kubernetes.Interface
-	queue        workqueue.RateLimitingInterface
-	eventHandler chan interface{}
+	informer  cache.SharedIndexInformer
+	stopCh    chan struct{}
+	clientset kubernetes.Interface
+	queue     workqueue.RateLimitingInterface
+	events    chan interface{}
 }
 
-func New(c *config.Configuration, eventHandler chan interface{}) (*KubernetesCollector, error) {
+func New(c *config.Configuration, events chan interface{}) (*KubernetesCollector, error) {
 	var kubeClient kubernetes.Interface
 	if _, err := rest.InClusterConfig(); err != nil {
 		kubeClient = utils.GetClientOutOfCluster()
@@ -99,25 +92,25 @@ func New(c *config.Configuration, eventHandler chan interface{}) (*KubernetesCol
 	factory := informers.NewFilteredSharedInformerFactory(kubeClient, 0, "", nil)
 
 	watchers := map[watcherType]*watcher{
-		PodType:              newWatcher(kubeClient, factory.Core().V1().Pods().Informer(), eventHandler, objName(api_v1.Pod{}), V1),
-		CoreEventType:        newWatcher(kubeClient, factory.Core().V1().Events().Informer(), eventHandler, objName(api_v1.Event{}), V1),
-		EventType:            newWatcher(kubeClient, factory.Events().V1().Events().Informer(), eventHandler, objName(events_v1.Event{}), EVENTS_V1),
-		HPAType:              newWatcher(kubeClient, factory.Autoscaling().V1().HorizontalPodAutoscalers().Informer(), eventHandler, objName(autoscaling_v1.HorizontalPodAutoscaler{}), AUTOSCALING_V1),
-		DaemonSetType:        newWatcher(kubeClient, factory.Apps().V1().DaemonSets().Informer(), eventHandler, objName(apps_v1.DaemonSet{}), APPS_V1),
-		StatefulSetType:      newWatcher(kubeClient, factory.Apps().V1().StatefulSets().Informer(), eventHandler, objName(apps_v1.StatefulSet{}), APPS_V1),
-		ReplicaSetType:       newWatcher(kubeClient, factory.Apps().V1().ReplicaSets().Informer(), eventHandler, objName(apps_v1.ReplicaSet{}), APPS_V1),
-		ServiceType:          newWatcher(kubeClient, factory.Core().V1().Services().Informer(), eventHandler, objName(api_v1.Service{}), V1),
-		DeploymentType:       newWatcher(kubeClient, factory.Apps().V1().Deployments().Informer(), eventHandler, objName(apps_v1.Deployment{}), APPS_V1),
-		NamespaceType:        newWatcher(kubeClient, factory.Core().V1().Namespaces().Informer(), eventHandler, objName(api_v1.Namespace{}), V1),
-		JobType:              newWatcher(kubeClient, factory.Batch().V1().Jobs().Informer(), eventHandler, objName(batch_v1.Job{}), BATCH_V1),
-		NodeType:             newWatcher(kubeClient, factory.Core().V1().Nodes().Informer(), eventHandler, objName(api_v1.Node{}), V1),
-		PersistentVolumeType: newWatcher(kubeClient, factory.Core().V1().PersistentVolumes().Informer(), eventHandler, objName(api_v1.PersistentVolume{}), V1),
-		IngressType:          newWatcher(kubeClient, factory.Networking().V1().Ingresses().Informer(), eventHandler, objName(networking_v1.Ingress{}), NETWORKING_V1),
-		// ServiceAccountType:     newWatcher(kubeClient, factory.Core().V1().ServiceAccounts().Informer(), eventHandler, objName(api_v1.ServiceAccount{}), V1),
-		// ClusterRoleType:        newWatcher(kubeClient, factory.Rbac().V1().ClusterRoles().Informer(), eventHandler, objName(rbac_v1.ClusterRole{}), RBAC_V1),
-		// ClusterRoleBindingType: newWatcher(kubeClient, factory.Rbac().V1().ClusterRoleBindings().Informer(), eventHandler, objName(rbac_v1.ClusterRoleBinding{}), RBAC_V1),
-		// SecretType:             newWatcher(kubeClient, factory.Core().V1().Secrets().Informer(), eventHandler, objName(api_v1.Secret{}), V1),
-		// ConfigMapType:          newWatcher(kubeClient, factory.Core().V1().ConfigMaps().Informer(), eventHandler, objName(api_v1.ConfigMap{}), V1),
+		PodType:              newWatcher(kubeClient, factory.Core().V1().Pods().Informer(), events, PodType, V1),
+		CoreEventType:        newWatcher(kubeClient, factory.Core().V1().Events().Informer(), events, CoreEventType, V1),
+		EventType:            newWatcher(kubeClient, factory.Events().V1().Events().Informer(), events, EventType, EVENTS_V1),
+		HPAType:              newWatcher(kubeClient, factory.Autoscaling().V1().HorizontalPodAutoscalers().Informer(), events, HPAType, AUTOSCALING_V1),
+		DaemonSetType:        newWatcher(kubeClient, factory.Apps().V1().DaemonSets().Informer(), events, DaemonSetType, APPS_V1),
+		StatefulSetType:      newWatcher(kubeClient, factory.Apps().V1().StatefulSets().Informer(), events, StatefulSetType, APPS_V1),
+		ReplicaSetType:       newWatcher(kubeClient, factory.Apps().V1().ReplicaSets().Informer(), events, ReplicaSetType, APPS_V1),
+		ServiceType:          newWatcher(kubeClient, factory.Core().V1().Services().Informer(), events, ServiceType, V1),
+		DeploymentType:       newWatcher(kubeClient, factory.Apps().V1().Deployments().Informer(), events, DeploymentType, APPS_V1),
+		NamespaceType:        newWatcher(kubeClient, factory.Core().V1().Namespaces().Informer(), events, NamespaceType, V1),
+		JobType:              newWatcher(kubeClient, factory.Batch().V1().Jobs().Informer(), events, JobType, BATCH_V1),
+		NodeType:             newWatcher(kubeClient, factory.Core().V1().Nodes().Informer(), events, NodeType, V1),
+		PersistentVolumeType: newWatcher(kubeClient, factory.Core().V1().PersistentVolumes().Informer(), events, PersistentVolumeType, V1),
+		IngressType:          newWatcher(kubeClient, factory.Networking().V1().Ingresses().Informer(), events, IngressType, NETWORKING_V1),
+		// ServiceAccountType:     newWatcher(kubeClient, factory.Core().V1().ServiceAccounts().Informer(), eventHandler, ServiceAccountType, V1),
+		// ClusterRoleType:        newWatcher(kubeClient, factory.Rbac().V1().ClusterRoles().Informer(), eventHandler, ClusterRoleType, RBAC_V1),
+		// ClusterRoleBindingType: newWatcher(kubeClient, factory.Rbac().V1().ClusterRoleBindings().Informer(), eventHandler, ClusterRoleBindingType, RBAC_V1),
+		// SecretType:             newWatcher(kubeClient, factory.Core().V1().Secrets().Informer(), eventHandler, SecretType, V1),
+		// ConfigMapType:          newWatcher(kubeClient, factory.Core().V1().ConfigMaps().Informer(), eventHandler, ConfigMapType, V1),
 	}
 
 	return &KubernetesCollector{
@@ -125,7 +118,7 @@ func New(c *config.Configuration, eventHandler chan interface{}) (*KubernetesCol
 	}, nil
 }
 
-func newWatcher(kubeClient kubernetes.Interface, informer cache.SharedIndexInformer, eventHandler chan interface{}, resourceType string, apiVersion string) *watcher {
+func newWatcher(kubeClient kubernetes.Interface, informer cache.SharedIndexInformer, events chan interface{}, resourceType watcherType, apiVersion string) *watcher {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	var newEvent InformerEvent
 	var err error
@@ -200,11 +193,11 @@ func newWatcher(kubeClient kubernetes.Interface, informer cache.SharedIndexInfor
 	})
 
 	return &watcher{
-		informer:     informer,
-		clientset:    kubeClient,
-		queue:        queue,
-		eventHandler: eventHandler,
-		stopCh:       make(chan struct{}),
+		informer:  informer,
+		clientset: kubeClient,
+		queue:     queue,
+		events:    events,
+		stopCh:    make(chan struct{}),
 	}
 }
 
@@ -219,10 +212,6 @@ func (c *KubernetesCollector) Start() {
 	signal.Notify(sigterm, syscall.SIGTERM)
 	signal.Notify(sigterm, syscall.SIGINT)
 	<-sigterm
-}
-
-func objName(obj interface{}) string {
-	return reflect.TypeOf(obj).Name()
 }
 
 // run starts the watcher controller
@@ -287,8 +276,8 @@ type triggerType string
 
 const (
 	CreateType triggerType = "CREATE"
-	UpdateType             = "UPDATE"
-	DeleteType             = "DELETE"
+	UpdateType triggerType = "UPDATE"
+	DeleteType triggerType = "DELETE"
 )
 
 // TODO: Enhance event creation using client-side cacheing machanisms - pending
@@ -312,29 +301,23 @@ func (w *watcher) processItem(newEvent InformerEvent) error {
 	}
 
 	// process events based on its type
+	var tt triggerType
 	switch newEvent.eventType {
 	case "create":
 		// compare CreationTimestamp and serverStartTime and alert only on latest events
 		// Could be Replaced by using Delta or DeltaFIFO
 		if objectMeta.CreationTimestamp.Sub(serverStartTime).Seconds() > 0 {
-			w.eventHandler <- Event{
-				Kind:        newEvent.resourceType,
-				TriggetType: CreateType,
-				Obj:         newEvent.obj,
-			}
+			tt = CreateType
 		}
 	case "update":
-		w.eventHandler <- Event{
-			Kind:        newEvent.resourceType,
-			TriggetType: UpdateType,
-			Obj:         newEvent.obj,
-		}
+		tt = UpdateType
 	case "delete":
-		w.eventHandler <- Event{
-			Kind:        newEvent.resourceType,
-			TriggetType: DeleteType,
-			Obj:         newEvent.obj,
-		}
+		tt = DeleteType
+	}
+	w.events <- Event{
+		Kind:        newEvent.resourceType,
+		TriggetType: tt,
+		Obj:         newEvent.obj,
 	}
 	return nil
 }

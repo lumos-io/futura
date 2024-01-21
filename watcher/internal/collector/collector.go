@@ -121,8 +121,6 @@ var (
 	purgeTime         = 10 * time.Minute
 )
 
-var usePgDs bool = false
-var useBackendDs bool = true // default to true
 var reverseDnsCache *cache.Cache
 
 var re *regexp.Regexp
@@ -237,16 +235,6 @@ func (c *Collector) Run(k8sChan <-chan interface{}, ebpfChan <-chan interface{})
 func (c *Collector) processk8s(k8sChan <-chan interface{}) {
 	c.eventsHandler.HandleKubernetesEvent(k8sChan)
 }
-
-/*
-****************************
-****************************
-****************************
-Check this above only
-****************************
-****************************
-****************************
-*/
 
 func (c *Collector) processEbpf(ctx context.Context, ebpfChan <-chan interface{}) {
 	stop := make(chan struct{})
