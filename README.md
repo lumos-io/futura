@@ -8,5 +8,4 @@ This is a monorepo containing multiple go modules. To start with, run the follow
 
 ```make
 $: make dev-env
-$: go work sync
 ```

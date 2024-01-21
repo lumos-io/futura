@@ -24,7 +24,7 @@ var watcherCfg *config.Configuration
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "watcher",
-	Short: "Watches all the available Kubernetes events and ePBF signals (coming soon)",
+	Short: "Watches all the available Kubernetes events and ePBF signals",
 	Long: `This application is used to watch all the Kubernetes events and ePBF signals that are available.
 The events are batched and then sent to either STDOUT or to a defined Webhook. The former
 should be used for debugging while the latter for production and to actually send the 
@@ -41,7 +41,7 @@ events to the backend`,
 		ctx, cancel := context.WithCancel(context.Background())
 
 		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		go func() {
 			<-c
 			signal.Stop(c)
@@ -58,18 +58,26 @@ events to the backend`,
 				}
 			}()
 		}
-		
+
+		// where to route the events
 		eventHandler, err := handlers.New(watcherCfg)
 		if err != nil {
 			panic(fmt.Errorf("initHandler failed"))
 		}
 
-		// deploy ebpf programs
-		var ec *ebpf.EbpfCollector
-		ec = ebpf.NewEbpfCollector(ctx)
-		ec.Deploy()
+		// Kubernetes events
+		ctrl, err := controller.New(watcherCfg, eventHandler)
+		if err != nil {
+			panic(fmt.Errorf("controller New failed"))
+		}
+		go ctrl.Start()
 
-		controller.Start(watcherCfg, eventHandler)
+		// eBPF signals
+		ec := ebpf.NewEbpfCollector(ctx, eventHandler)
+		go ec.Deploy()
+
+		<-ec.Done()
+		logger.Logger().Info().Msg("ebpfCollector done")
 	},
 }
 

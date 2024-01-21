@@ -1,8 +1,9 @@
 package event
 
 import (
-	"fmt"
+	"encoding/json"
 
+	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -10,71 +11,25 @@ import (
 // Events from different endpoints need to be casted to watcherEvent
 // before being able to be handled by handler
 type Event struct {
-	Namespace  string
-	Kind       string
-	ApiVersion string
-	Component  string
-	Host       string
-	Reason     string
-	Status     string
-	Name       string
-	Obj        runtime.Object
-	OldObj     runtime.Object
+	Namespace  string         `json:"namespace"`
+	Kind       string         `json:"kind"`
+	ApiVersion string         `json:"apiVersion"`
+	Component  string         `json:"component"`
+	Host       string         `json:"host"`
+	Reason     string         `json:"reason"`
+	Status     string         `json:"status"`
+	Name       string         `json:"name"`
+	Timestamp  int64          `json:"timestamp"` // Unix milli timestamp
+	Obj        runtime.Object `json:"object"`
+	OldObj     runtime.Object `json:"oldObject"`
 }
 
 // Message returns event message in standard format.
 // included as a part of event packege to enhance code resuablity across handlers.
 func (e *Event) Message() (msg string) {
-	// using switch over if..else, since the format could vary based on the kind of the object in future.
-	switch e.Kind {
-	case "namespace":
-		msg = fmt.Sprintf(
-			"A namespace `%s` has been `%s`",
-			e.Name,
-			e.Reason,
-		)
-	case "node":
-		msg = fmt.Sprintf(
-			"A node `%s` has been `%s`",
-			e.Name,
-			e.Reason,
-		)
-	case "cluster role":
-		msg = fmt.Sprintf(
-			"A cluster role `%s` has been `%s`",
-			e.Name,
-			e.Reason,
-		)
-	case "NodeReady":
-		msg = fmt.Sprintf(
-			"Node `%s` is Ready: NodeReady",
-			e.Name,
-		)
-	case "NodeNotReady":
-		msg = fmt.Sprintf(
-			"Node `%s` is Not Ready: NodeNotReady",
-			e.Name,
-		)
-	case "NodeRebooted":
-		msg = fmt.Sprintf(
-			"Node `%s` Rebooted: NodeRebooted",
-			e.Name,
-		)
-	case "Backoff":
-		msg = fmt.Sprintf(
-			"Pod `%s` in `%s` Crashed: CrashLoopBackOff %s",
-			e.Name,
-			e.Namespace,
-			e.Reason,
-		)
-	default:
-		msg = fmt.Sprintf(
-			"A `%s` in namespace `%s` has been `%s`: `%s`",
-			e.Kind,
-			e.Namespace,
-			e.Reason,
-			e.Name,
-		)
+	b, err := json.Marshal(e)
+	if err != nil {
+		logger.Logger().Err(err).Msg("failed to marshal the event")
 	}
-	return msg
+	return string(b)
 }
