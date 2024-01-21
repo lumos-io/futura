@@ -10,10 +10,11 @@ import (
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/opisvigilant/futura/watcher/internal/collector"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/controller"
 	"github.com/opisvigilant/futura/watcher/internal/ebpf"
 	"github.com/opisvigilant/futura/watcher/internal/handlers"
+	"github.com/opisvigilant/futura/watcher/internal/kubernetes"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -66,15 +67,19 @@ events to the backend`,
 		}
 
 		// Kubernetes events
-		ctrl, err := controller.New(watcherCfg, eventHandler)
+		kuberneteEvents := make(chan interface{}, 1000)
+		ctrl, err := kubernetes.New(watcherCfg, kuberneteEvents)
 		if err != nil {
 			panic(fmt.Errorf("controller New failed"))
 		}
 		go ctrl.Start()
 
 		// eBPF signals
-		ec := ebpf.NewEbpfCollector(ctx, eventHandler)
-		go ec.Deploy()
+		ec := ebpf.NewEbpfCollector(ctx)
+		// go ec.Deploy()
+
+		col := collector.NewCollector(ctx, eventHandler, ec)
+		col.Run(kuberneteEvents, ec.EbpfEvents())
 
 		<-ec.Done()
 		logger.Logger().Info().Msg("ebpfCollector done")

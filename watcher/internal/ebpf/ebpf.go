@@ -18,7 +18,6 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/l7_req"
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/proc"
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/tcp_state"
-	"github.com/opisvigilant/futura/watcher/internal/handlers"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 
 	"golang.org/x/arch/arm64/arm64asm"
@@ -37,9 +36,6 @@ type BpfEvent interface {
 }
 
 type EbpfCollector struct {
-	// where to redirect the events to
-	eventHandler handlers.Handler
-
 	ctx            context.Context
 	done           chan struct{}
 	ebpfEvents     chan interface{}
@@ -60,11 +56,10 @@ type EbpfCollector struct {
 	mu        sync.Mutex
 }
 
-func NewEbpfCollector(parentCtx context.Context, eventHandler handlers.Handler) *EbpfCollector {
+func NewEbpfCollector(parentCtx context.Context) *EbpfCollector {
 	ctx, _ := context.WithCancel(parentCtx)
 
 	return &EbpfCollector{
-		eventHandler:        eventHandler,
 		ctx:                 ctx,
 		done:                make(chan struct{}),
 		ebpfEvents:          make(chan interface{}, 100000),

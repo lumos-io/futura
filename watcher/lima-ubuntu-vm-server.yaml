@@ -1,0 +1,63 @@
+arch: "aarch64"
+images:
+  - location: "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+    arch: "x86_64"
+  - location: "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+memory: "1GiB"
+cpus: 1
+disk: "10GiB"
+
+mounts:
+  - location: "/Users/davideberdin/Documents/github/opisvigilant/futura"
+    mountPoint: "/tmp/code/futura"
+    writable: true
+
+ssh:
+  # You can choose any port or omit this. Specifying a value ensures same port bindings after restarts
+  # Forwarded to port 22 of the guest.
+  localPort: 2223
+
+containerd:
+  system: false
+  user: false
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      export LIBBPF_VERSION=1.2.2
+      export GOLANG_VERSION=1.20.5
+
+      # Install Clang and LLVM Strip
+      apt-get update && apt-get install -y clang-14 llvm && \
+          update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 100 && \
+          update-alternatives --install /usr/bin/llvm-strip llvm-strip /usr/bin/llvm-strip-14 100
+
+      # Install Make
+      apt-get update && apt-get install -y make
+      apt-get install -y gcc-multilib
+
+      # Install libbpf dependencies
+      apt-get update && apt-get install -y bison build-essential cmake flex git libelf-dev libssl-dev libudev-dev pkg-config wget
+
+      # Install libbpf
+      wget --quiet https://github.com/libbpf/libbpf/archive/refs/tags/v${LIBBPF_VERSION}.tar.gz && \
+          tar -xzf v${LIBBPF_VERSION}.tar.gz && \
+          rm v${LIBBPF_VERSION}.tar.gz && \
+          cd libbpf-${LIBBPF_VERSION}/src && \
+          make && make install
+
+      # Install Go
+      wget -q https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz && \
+          tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz && \
+          rm go${GOLANG_VERSION}.linux-amd64.tar.gz
+
+      export PATH="/usr/local/go/bin:${PATH}"
+
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      sudo cp /home/$(whoami).linux/.ssh/authorized_keys /root/.ssh/authorized_keys

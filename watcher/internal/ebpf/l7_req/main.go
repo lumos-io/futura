@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"time"
 	"unsafe"
 
 	"github.com/cilium/ebpf/link"
@@ -210,6 +211,31 @@ func (e Http2MethodConversion) String() string {
 
 const mapKey uint32 = 0
 
+// bpf
+type bpfTraceEvent struct {
+	Pid   uint32
+	Tid   uint32
+	Tx    uint64
+	Type_ uint8
+	_     [3]byte
+	Seq   uint32
+}
+
+type TraceEvent struct {
+	Pid   uint32
+	Tid   uint32
+	Tx    int64
+	Type_ uint8
+	Seq   uint32
+}
+
+const TRACE_EVENT = "trace_event"
+
+func (e TraceEvent) Type() string {
+	return TRACE_EVENT
+}
+
+// for user space
 // for user space
 type L7Event struct {
 	Fd                  uint64
@@ -224,6 +250,9 @@ type L7Event struct {
 	PayloadReadComplete bool   // Whether the payload was copied completely
 	Failed              bool   // Request failed
 	WriteTimeNs         uint64 // start time of write syscall
+	Tid                 uint32
+	Seq                 uint32 // tcp seq num
+	EventReadTime       int64
 }
 
 const L7_EVENT = "l7_event"
@@ -352,8 +381,19 @@ func DeployAndWait(parentCtx context.Context, ch chan interface{}) {
 		logs.Close()
 	}()
 
+	// TODO: ActiveL7Requests was IngressEgressCalls but symbol cannot be found
+	distTraceCalls, err := perf.NewReader(L7BpfProgsAndMaps.ActiveL7Requests, 512*os.Getpagesize())
+	if err != nil {
+		logger.Logger().Fatal().Err(err).Msg("error creating ringbuf reader")
+	}
+	defer func() {
+		logger.Logger().Info().Msg("closing distTraceCalls ringbuf reader")
+		distTraceCalls.Close()
+	}()
+
 	logsDone := make(chan struct{}, 1)
 	readDone := make(chan struct{})
+	read2Done := make(chan struct{})
 
 	go func() {
 		var logMessage []byte
@@ -523,6 +563,45 @@ func DeployAndWait(parentCtx context.Context, ch chan interface{}) {
 		for {
 			select {
 			case <-readDone:
+				return
+			default:
+				read()
+			}
+		}
+	}()
+
+	go func() {
+		var record perf.Record
+		read := func() {
+			err := distTraceCalls.ReadInto(&record)
+			if err != nil {
+				logger.Logger().Warn().Err(err).Msg("error reading from dist trace calls")
+			}
+
+			if record.LostSamples != 0 {
+				logger.Logger().Warn().Msgf("lost samples dist-trace %d", record.LostSamples)
+			}
+
+			// TODO: investigate why this is happening
+			if record.RawSample == nil || len(record.RawSample) == 0 {
+				logger.Logger().Warn().Msgf("read sample dist-trace nil or empty")
+				return
+			}
+
+			bpfTraceEvent := (*bpfTraceEvent)(unsafe.Pointer(&record.RawSample[0]))
+
+			traceEvent := TraceEvent{
+				Pid:   bpfTraceEvent.Pid,
+				Tid:   bpfTraceEvent.Tid,
+				Tx:    time.Now().UnixMilli(),
+				Type_: bpfTraceEvent.Type_,
+				Seq:   bpfTraceEvent.Seq,
+			}
+			ch <- &traceEvent
+		}
+		for {
+			select {
+			case <-read2Done:
 				return
 			default:
 				read()

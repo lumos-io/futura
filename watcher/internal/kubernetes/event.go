@@ -1,4 +1,4 @@
-package event
+package kubernetes
 
 import (
 	"encoding/json"
@@ -11,17 +11,9 @@ import (
 // Events from different endpoints need to be casted to watcherEvent
 // before being able to be handled by handler
 type Event struct {
-	Namespace  string         `json:"namespace"`
-	Kind       string         `json:"kind"`
-	ApiVersion string         `json:"apiVersion"`
-	Component  string         `json:"component"`
-	Host       string         `json:"host"`
-	Reason     string         `json:"reason"`
-	Status     string         `json:"status"`
-	Name       string         `json:"name"`
-	Timestamp  int64          `json:"timestamp"` // Unix milli timestamp
-	Obj        runtime.Object `json:"object"`
-	OldObj     runtime.Object `json:"oldObject"`
+	Kind        string         `json:"kind"`
+	TriggetType triggerType    `json:"triggerType"`
+	Obj         runtime.Object `json:"object"`
 }
 
 // Message returns event message in standard format.

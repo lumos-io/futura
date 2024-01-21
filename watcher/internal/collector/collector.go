@@ -27,7 +27,10 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/l7_req"
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/proc"
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/tcp_state"
+	"github.com/opisvigilant/futura/watcher/internal/handlers"
+
 	"github.com/opisvigilant/futura/watcher/internal/logger"
+	"github.com/opisvigilant/futura/watcher/internal/models"
 
 	"github.com/patrickmn/go-cache"
 	"k8s.io/apimachinery/pkg/types"
@@ -36,17 +39,13 @@ import (
 type Collector struct {
 	ctx context.Context
 
-	// listen to events from different sources
-	k8sChan  <-chan interface{}
-	ebpfChan <-chan interface{}
-
 	ec *ebpf.EbpfCollector
 
 	// store the service map
 	clusterInfo *ClusterInfo
 
 	// send data to datastore
-	ds datastore.DataStore
+	eventsHandler handlers.Handler
 
 	// http2 ch
 	h2ChMu sync.RWMutex
@@ -142,7 +141,7 @@ func containsSQLKeywords(input string) bool {
 	return re.MatchString(strings.ToUpper(input))
 }
 
-func NewAggregator(parentCtx context.Context, k8sChan <-chan interface{}, ec *ebpf.EbpfCollector, ds datastore.DataStore) *Collector {
+func NewCollector(parentCtx context.Context, eventHandler handlers.Handler, ec *ebpf.EbpfCollector) *Collector {
 	ctx, _ := context.WithCancel(parentCtx)
 	clusterInfo := &ClusterInfo{
 		PodIPToPodUid:         map[string]types.UID{},
@@ -152,11 +151,9 @@ func NewAggregator(parentCtx context.Context, k8sChan <-chan interface{}, ec *eb
 
 	a := &Collector{
 		ctx:           ctx,
-		k8sChan:       k8sChan,
-		ebpfChan:      ec.EbpfEvents(),
 		ec:            ec,
+		eventsHandler: eventHandler,
 		clusterInfo:   clusterInfo,
-		ds:            ds,
 		h2Ch:          make(map[uint32]chan *l7_req.L7Event),
 		h2Parsers:     make(map[string]*http2Parser),
 		liveProcesses: make(map[uint32]struct{}),
@@ -167,7 +164,8 @@ func NewAggregator(parentCtx context.Context, k8sChan <-chan interface{}, ec *eb
 	return a
 }
 
-func (a *Collector) Run() {
+// ec.EbpfEvents()
+func (c *Collector) Run(k8sChan <-chan interface{}, ebpfChan <-chan interface{}) {
 	go func() {
 		// get all alive processes, populate liveProcesses
 		cmd := exec.Command("ps", "-e", "-o", "pid=")
@@ -188,11 +186,10 @@ func (a *Collector) Run() {
 						logger.Logger().Error().Err(err).Msgf("error converting pid to int %s", pid)
 						continue
 					}
-					a.liveProcesses[uint32(pidInt)] = struct{}{}
+					c.liveProcesses[uint32(pidInt)] = struct{}{}
 				}
 			}
 		}
-
 	}()
 	go func() {
 		// every 5 minutes, check alive processes, and clear the ones left behind
@@ -203,9 +200,9 @@ func (a *Collector) Run() {
 		defer t.Stop()
 
 		for range t.C {
-			a.liveProcessesMu.Lock()
+			c.liveProcessesMu.Lock()
 
-			for pid, _ := range a.liveProcesses {
+			for pid, _ := range c.liveProcesses {
 				// https://man7.org/linux/man-pages/man2/kill.2.html
 				//    If sig is 0, then no signal is sent, but existence and permission
 				//    checks are still performed; this can be used to check for the
@@ -215,61 +212,50 @@ func (a *Collector) Run() {
 				err := syscall.Kill(int(pid), 0)
 				if err != nil {
 					// pid does not exist
-					delete(a.liveProcesses, pid)
+					delete(c.liveProcesses, pid)
 
-					a.clusterInfo.mu.Lock()
-					delete(a.clusterInfo.PidToSocketMap, pid)
-					a.clusterInfo.mu.Unlock()
+					c.clusterInfo.mu.Lock()
+					delete(c.clusterInfo.PidToSocketMap, pid)
+					c.clusterInfo.mu.Unlock()
 
 					// close http2Worker if exist
-					a.stopHttp2Worker(pid)
+					c.stopHttp2Worker(pid)
 				}
 			}
-
-			a.liveProcessesMu.Unlock()
+			c.liveProcessesMu.Unlock()
 		}
 	}()
-	
-	go a.processk8s()
+
+	go c.processk8s(k8sChan)
 
 	numWorker := 100
 	for i := 0; i < numWorker; i++ {
-		go a.processEbpf(a.ctx)
+		go c.processEbpf(c.ctx, ebpfChan)
 	}
 }
 
-func (a *Collector) processk8s() {
-	for data := range a.k8sChan {
-		d := data.(k8s.K8sResourceMessage)
-		switch d.ResourceType {
-		case k8s.POD:
-			a.processPod(d)
-		case k8s.SERVICE:
-			a.processSvc(d)
-		case k8s.REPLICASET:
-			a.processReplicaSet(d)
-		case k8s.DEPLOYMENT:
-			a.processDeployment(d)
-		case k8s.ENDPOINTS:
-			a.processEndpoints(d)
-		case k8s.CONTAINER:
-			a.processContainer(d)
-		case k8s.DAEMONSET:
-			a.processDaemonSet(d)
-		default:
-			logger.Logger().Warn().Msgf("unknown resource type %s", d.ResourceType)
-		}
-	}
+func (c *Collector) processk8s(k8sChan <-chan interface{}) {
+	c.eventsHandler.HandleKubernetesEvent(k8sChan)
 }
 
-func (a *Collector) processEbpf(ctx context.Context) {
+/*
+****************************
+****************************
+****************************
+Check this above only
+****************************
+****************************
+****************************
+*/
+
+func (c *Collector) processEbpf(ctx context.Context, ebpfChan <-chan interface{}) {
 	stop := make(chan struct{})
 	go func() {
 		<-ctx.Done()
 		close(stop)
 	}()
 
-	for data := range a.ebpfChan {
+	for data := range ebpfChan {
 		select {
 		case <-stop:
 			logger.Logger().Info().Msg("processEbpf exiting...")
@@ -283,20 +269,20 @@ func (a *Collector) processEbpf(ctx context.Context) {
 			switch bpfEvent.Type() {
 			case tcp_state.TCP_CONNECT_EVENT:
 				d := data.(*tcp_state.TcpConnectEvent) // copy data's value
-				go a.processTcpConnect(d)
+				go c.processTcpConnect(d)
 			case l7_req.L7_EVENT:
 				d := data.(*l7_req.L7Event) // copy data's value
-				go a.processL7(ctx, d)
+				go c.processL7(ctx, d)
 			case proc.PROC_EVENT:
 				d := data.(*proc.ProcEvent) // copy data's value
 				if d.Type_ == proc.EVENT_PROC_EXEC {
-					go a.processExec(d)
+					go c.processExec(d)
 				} else if d.Type_ == proc.EVENT_PROC_EXIT {
-					go a.processExit(d.Pid)
+					go c.processExit(d.Pid)
 				}
 			case l7_req.TRACE_EVENT:
 				d := data.(*l7_req.TraceEvent)
-				a.ds.PersistTraceEvent(d)
+				c.eventsHandler.PersistTraceEvent(d)
 			}
 		}
 	}
@@ -339,7 +325,6 @@ func (a *Collector) stopHttp2Worker(pid uint32) {
 			}
 		}
 		a.h2ParserMu.Unlock()
-
 	}
 }
 
@@ -471,7 +456,7 @@ type FrameArrival struct {
 	ServerHeadersFrameArrived bool
 	ServerDataFrameArrived    bool
 	event                     *l7_req.L7Event // l7 event that carries server data frame
-	req                       *datastore.Request
+	req                       *models.Request
 
 	statusCode uint32
 	grpcStatus uint32
@@ -511,7 +496,7 @@ func (a *Collector) processHttp2Frames(pid uint32, ch chan *l7_req.L7Event) {
 		}
 	}()
 
-	persistReq := func(d *l7_req.L7Event, req *datastore.Request, statusCode uint32, grpcStatus uint32) {
+	persistReq := func(d *l7_req.L7Event, req *models.Request, statusCode uint32, grpcStatus uint32) {
 		if req.Method == "" || req.Path == "" {
 			// if we couldn't parse the request, discard
 			// this is possible because of hpack dynamic table, we can't parse the request until a new connection is established
@@ -552,7 +537,7 @@ func (a *Collector) processHttp2Frames(pid uint32, ch chan *l7_req.L7Event) {
 			return
 		}
 
-		a.ds.PersistRequest(req)
+		a.eventsHandler.PersistRequest(req)
 	}
 
 	parseFrameHeader := func(buf []byte) http2.FrameHeader {
@@ -632,7 +617,7 @@ func (a *Collector) processHttp2Frames(pid uint32, ch chan *l7_req.L7Event) {
 				if _, ok := frames[key]; !ok {
 					frames[key] = &FrameArrival{
 						ClientHeadersFrameArrived: true,
-						req:                       &datastore.Request{},
+						req:                       &models.Request{},
 					}
 				}
 
@@ -641,7 +626,7 @@ func (a *Collector) processHttp2Frames(pid uint32, ch chan *l7_req.L7Event) {
 				fa.req.Latency = d.WriteTimeNs // set latency to write time here, will be updated later
 
 				// Process client headers frame
-				reqHeaderSet := func(req *datastore.Request) func(hf hpack.HeaderField) {
+				reqHeaderSet := func(req *models.Request) func(hf hpack.HeaderField) {
 					return func(hf hpack.HeaderField) {
 						switch hf.Name {
 						case ":method":
@@ -709,13 +694,13 @@ func (a *Collector) processHttp2Frames(pid uint32, ch chan *l7_req.L7Event) {
 					if _, ok := frames[key]; !ok {
 						frames[key] = &FrameArrival{
 							ServerHeadersFrameArrived: true,
-							req:                       &datastore.Request{},
+							req:                       &models.Request{},
 						}
 					}
 					fa := frames[key]
 					fa.ServerHeadersFrameArrived = true
 					// Process server headers frame
-					respHeaderSet := func(req *datastore.Request) func(hf hpack.HeaderField) {
+					respHeaderSet := func(req *models.Request) func(hf hpack.HeaderField) {
 						return func(hf hpack.HeaderField) {
 							switch hf.Name {
 							case ":status":
@@ -748,7 +733,7 @@ func (a *Collector) processHttp2Frames(pid uint32, ch chan *l7_req.L7Event) {
 	done <- true // signal cleaning goroutine
 }
 
-func (a *Collector) setFromTo(skInfo *SockInfo, d *l7_req.L7Event, reqDto *datastore.Request, hostHeader string) error {
+func (a *Collector) setFromTo(skInfo *SockInfo, d *l7_req.L7Event, reqDto *models.Request, hostHeader string) error {
 	// find pod info
 	a.clusterInfo.mu.RLock() // lock for reading
 	podUid, ok := a.clusterInfo.PodIPToPodUid[skInfo.Saddr]
@@ -864,7 +849,7 @@ func (a *Collector) processL7(ctx context.Context, d *l7_req.L7Event) {
 	// Since we process events concurrently
 	// TCP events and L7 events can be processed out of order
 
-	reqDto := datastore.Request{
+	reqDto := models.Request{
 		StartTime:  d.EventReadTime,
 		Latency:    d.Duration,
 		FromIP:     skInfo.Saddr,
@@ -919,11 +904,10 @@ func (a *Collector) processL7(ctx context.Context, d *l7_req.L7Event) {
 		reqDto.Protocol = "HTTPS"
 	}
 
-	err = a.ds.PersistRequest(&reqDto)
+	err = a.eventsHandler.PersistRequest(&reqDto)
 	if err != nil {
 		logger.Logger().Error().Err(err).Msg("error persisting request")
 	}
-
 }
 
 // reverse dns lookup
@@ -1032,7 +1016,6 @@ func (a *Collector) findRelatedSocket(ctx context.Context, d *l7_req.L7Event) *S
 	// TODO: zero IP address check ??
 
 	return skInfo
-
 }
 
 func parseSqlCommand(r []uint8) (string, error) {
@@ -1054,7 +1037,6 @@ func parseSqlCommand(r []uint8) (string, error) {
 	} else {
 		return "", fmt.Errorf("no sql command found")
 	}
-
 }
 
 func (a *Collector) clearSocketLines(ctx context.Context) {

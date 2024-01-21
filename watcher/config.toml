@@ -4,12 +4,15 @@ title = "Configuration for Watcher"
 
 debug = true
 enablePprof = true
+nodeName = "localhost"
+tag = "v0.0.1"
 
 [handler]
 [handler.console]
 color = true
 
 [handler.webhook]
-url = ""
+url = "http://localhost:8080/events"
+batchSize = 1000
 cert = ""
 tlsSkip = true

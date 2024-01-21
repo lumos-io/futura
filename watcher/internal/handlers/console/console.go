@@ -4,8 +4,9 @@ import (
 	"os"
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/event"
+	"github.com/opisvigilant/futura/watcher/internal/ebpf/l7_req"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
+	"github.com/opisvigilant/futura/watcher/internal/models"
 	"github.com/rs/zerolog"
 )
 
@@ -16,7 +17,7 @@ type Console struct {
 
 // Init initializes handler configuration
 // Do nothing for default handler
-func (d *Console) Init(c *config.Configuration) error {
+func (csl *Console) Init(c *config.Configuration) error {
 	if c.Handler.Console.Color {
 		logger.Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
@@ -24,6 +25,16 @@ func (d *Console) Init(c *config.Configuration) error {
 }
 
 // Handle handles an event.
-func (d *Console) Handle(e event.Event) {
-	logger.Logger().Info().Msg(e.Message())
+func (csl *Console) HandleKubernetesEvent(k8sChan <-chan interface{}) {
+}
+
+func (csl *Console) HandleEBpfEvent(ebpfChan <-chan interface{}) {
+}
+
+func (csl *Console) PersistRequest(request *models.Request) error {
+	return nil
+}
+
+func (csl *Console) PersistTraceEvent(trace *l7_req.TraceEvent) error {
+	return nil
 }
