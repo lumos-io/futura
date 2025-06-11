@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -12,7 +11,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/opisvigilant/futura/watcher/internal/collector"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/ebpf"
 	"github.com/opisvigilant/futura/watcher/internal/handlers"
 	"github.com/opisvigilant/futura/watcher/internal/kubernetes"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
@@ -25,8 +23,8 @@ var watcherCfg *config.Configuration
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "watcher",
-	Short: "Watches all the available Kubernetes events and ePBF signals",
-	Long: `This application is used to watch all the Kubernetes events and ePBF signals that are available.
+	Short: "Watches all the available Kubernetes events and metrics-server signals",
+	Long: `This application is used to watch all the Kubernetes events and metrics-server signals that are available.
 The events are batched and then sent to either STDOUT or to a defined Webhook. The former
 should be used for debugging while the latter for production and to actually send the 
 events to the backend`,
@@ -49,17 +47,6 @@ events to the backend`,
 			cancel()
 		}()
 
-		if watcherCfg.EnablePprof {
-			go func() {
-				pprofAddr := "localhost:6060"
-				logger.Logger().Info().Msgf("initializing pprof %s", pprofAddr)
-				err := http.ListenAndServe(pprofAddr, nil)
-				if err != nil {
-					logger.Logger().Error().Err(err).Msg("failed to initialize pprof")
-				}
-			}()
-		}
-
 		// where to route the events
 		eventHandler, err := handlers.New(watcherCfg)
 		if err != nil {
@@ -67,22 +54,18 @@ events to the backend`,
 		}
 
 		// Kubernetes events
-		kuberneteEvents := make(chan interface{}, 1000)
+		kuberneteEvents := make(chan any, 1000)
 		ctrl, err := kubernetes.New(watcherCfg, kuberneteEvents)
 		if err != nil {
 			panic(fmt.Errorf("controller New failed"))
 		}
 		go ctrl.Start()
 
-		// eBPF signals
-		ec := ebpf.NewEbpfCollector(ctx)
-		// go ec.Deploy()
+		col := collector.NewCollector(ctx, eventHandler)
+		col.Run(kuberneteEvents)
 
-		col := collector.NewCollector(ctx, eventHandler, ec)
-		col.Run(kuberneteEvents, ec.EbpfEvents())
-
-		<-ec.Done()
-		logger.Logger().Info().Msg("ebpfCollector done")
+		<-col.Done()
+		logger.Logger().Info().Msg("Collector done")
 	},
 }
 

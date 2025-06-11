@@ -60,7 +60,7 @@ func GetClientOutOfCluster() kubernetes.Interface {
 }
 
 // GetObjectMetaData returns metadata of a given k8s object
-func GetObjectMetaData(obj interface{}) (objectMeta meta_v1.ObjectMeta) {
+func GetObjectMetaData(obj any) (objectMeta meta_v1.ObjectMeta) {
 	switch object := obj.(type) {
 	case *apps_v1.Deployment:
 		objectMeta = object.ObjectMeta

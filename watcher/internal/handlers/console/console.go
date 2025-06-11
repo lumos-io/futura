@@ -4,9 +4,7 @@ import (
 	"os"
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/ebpf/l7_req"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
-	"github.com/opisvigilant/futura/watcher/internal/models"
 	"github.com/rs/zerolog"
 )
 
@@ -25,16 +23,5 @@ func (csl *Console) Init(c *config.Configuration) error {
 }
 
 // Handle handles an event.
-func (csl *Console) HandleKubernetesEvent(k8sChan <-chan interface{}) {
-}
-
-func (csl *Console) HandleEBpfEvent(ebpfChan <-chan interface{}) {
-}
-
-func (csl *Console) PersistRequest(request *models.Request) error {
-	return nil
-}
-
-func (csl *Console) PersistTraceEvent(trace *l7_req.TraceEvent) error {
-	return nil
+func (csl *Console) HandleKubernetesEvent(k8sChan <-chan any) {
 }

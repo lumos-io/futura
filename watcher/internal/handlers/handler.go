@@ -2,20 +2,15 @@ package handlers
 
 import (
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/ebpf/l7_req"
 	"github.com/opisvigilant/futura/watcher/internal/handlers/console"
 	"github.com/opisvigilant/futura/watcher/internal/handlers/webhook"
-	"github.com/opisvigilant/futura/watcher/internal/models"
 )
 
 // Handler is implemented by any handler.
 // The Handle method is used to process event
 type Handler interface {
 	Init(c *config.Configuration) error
-	HandleKubernetesEvent(k8sChan <-chan interface{})
-	HandleEBpfEvent(ebpfChan <-chan interface{})
-	PersistRequest(request *models.Request) error
-	PersistTraceEvent(trace *l7_req.TraceEvent) error
+	HandleKubernetesEvent(k8sChan <-chan any)
 }
 
 func New(c *config.Configuration) (Handler, error) {
@@ -33,7 +28,7 @@ func New(c *config.Configuration) (Handler, error) {
 }
 
 // Map maps each event handler function to a name for easily lookup
-var Map = map[string]interface{}{
+var Map = map[string]any{
 	"console": &console.Console{},
 	"webhook": &webhook.Webhook{},
 }

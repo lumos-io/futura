@@ -3,7 +3,6 @@
 title = "Configuration for Watcher"
 
 debug = true
-enablePprof = true
 nodeName = "localhost"
 tag = "v0.0.1"
 

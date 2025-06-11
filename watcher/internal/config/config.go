@@ -6,10 +6,9 @@ import (
 
 // Config struct contains watcher configuration
 type Configuration struct {
-	Debug       bool   `toml:"debug"`
-	EnablePprof bool   `toml:"enablePprof"`
-	NodeName    string `toml:"nodeName"`
-	Tag         string `toml:"tag"`
+	Debug    bool   `toml:"debug"`
+	NodeName string `toml:"nodeName"`
+	Tag      string `toml:"tag"`
 	// Handlers know how to send notifications to specific services.
 	Handler *Handler `toml:"handler"`
 }
@@ -35,10 +34,9 @@ type Webhook struct {
 
 func Fetch() *Configuration {
 	return &Configuration{
-		Debug:       getBoolOrDefault("debug", true),
-		EnablePprof: getBoolOrDefault("enablePprof", false),
-		NodeName:    getStringOrDefault("nodeName", "localhost"),
-		Tag:         getStringOrDefault("tag", "v0.0.1"),
+		Debug:    getBoolOrDefault("debug", true),
+		NodeName: getStringOrDefault("nodeName", "localhost"),
+		Tag:      getStringOrDefault("tag", "v0.0.1"),
 		Handler: &Handler{
 			Console: &Console{
 				Color: getBoolOrDefault("handler.console", true),

@@ -26,7 +26,7 @@ func (e *Event) Message() (msg string) {
 	return string(b)
 }
 
-func ConvertEvent(e Event) interface{} {
+func ConvertEvent(e Event) any {
 	// convert here
 	switch e.Kind {
 	case PodType:

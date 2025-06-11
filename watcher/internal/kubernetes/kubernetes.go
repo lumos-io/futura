@@ -78,10 +78,10 @@ type watcher struct {
 	stopCh    chan struct{}
 	clientset kubernetes.Interface
 	queue     workqueue.RateLimitingInterface
-	events    chan interface{}
+	events    chan any
 }
 
-func New(c *config.Configuration, events chan interface{}) (*KubernetesCollector, error) {
+func New(c *config.Configuration, events chan any) (*KubernetesCollector, error) {
 	var kubeClient kubernetes.Interface
 	if _, err := rest.InClusterConfig(); err != nil {
 		kubeClient = utils.GetClientOutOfCluster()
@@ -118,13 +118,13 @@ func New(c *config.Configuration, events chan interface{}) (*KubernetesCollector
 	}, nil
 }
 
-func newWatcher(kubeClient kubernetes.Interface, informer cache.SharedIndexInformer, events chan interface{}, resourceType watcherType, apiVersion string) *watcher {
+func newWatcher(kubeClient kubernetes.Interface, informer cache.SharedIndexInformer, events chan any, resourceType watcherType, apiVersion string) *watcher {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	var newEvent InformerEvent
 	var err error
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			var ok bool
 			newEvent.namespace = "" // namespace retrived in processItem incase namespace value is empty
 			newEvent.key, err = cache.MetaNamespaceKeyFunc(obj)
@@ -133,18 +133,18 @@ func newWatcher(kubeClient kubernetes.Interface, informer cache.SharedIndexInfor
 			newEvent.apiVersion = apiVersion
 			newEvent.obj, ok = obj.(runtime.Object)
 			if !ok {
-				logger.Logger().Error().Fields(map[string]interface{}{
+				logger.Logger().Error().Fields(map[string]any{
 					"pkg": "watcher-" + resourceType,
 				}).Msgf("cannot convert to runtime.Object for add on %v", obj)
 			}
-			logger.Logger().Info().Fields(map[string]interface{}{
+			logger.Logger().Info().Fields(map[string]any{
 				"pkg": "watcher-" + resourceType,
 			}).Msgf("Processing add to %v: %s", resourceType, newEvent.key)
 			if err == nil {
 				queue.Add(newEvent)
 			}
 		},
-		UpdateFunc: func(old, new interface{}) {
+		UpdateFunc: func(old, new any) {
 			var ok bool
 			newEvent.namespace = "" // namespace retrived in processItem incase namespace value is empty
 			newEvent.key, err = cache.MetaNamespaceKeyFunc(old)
@@ -153,24 +153,24 @@ func newWatcher(kubeClient kubernetes.Interface, informer cache.SharedIndexInfor
 			newEvent.apiVersion = apiVersion
 			newEvent.obj, ok = new.(runtime.Object)
 			if !ok {
-				logger.Logger().Error().Fields(map[string]interface{}{
+				logger.Logger().Error().Fields(map[string]any{
 					"pkg": "watcher-" + resourceType,
 				}).Msgf("cannot convert to runtime.Object for update on %v", new)
 			}
 			newEvent.oldObj, ok = old.(runtime.Object)
 			if !ok {
-				logger.Logger().Error().Fields(map[string]interface{}{
+				logger.Logger().Error().Fields(map[string]any{
 					"pkg": "watcher-" + resourceType,
 				}).Msgf("cannot convert old to runtime.Object for update on %v", old)
 			}
-			logger.Logger().Debug().Fields(map[string]interface{}{
+			logger.Logger().Debug().Fields(map[string]any{
 				"pkg": "watcher-" + resourceType,
 			}).Msgf("Processing update to %v: %s", resourceType, newEvent.key)
 			if err == nil {
 				queue.Add(newEvent)
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: func(obj any) {
 			var ok bool
 			newEvent.namespace = "" // namespace retrived in processItem incase namespace value is empty
 			newEvent.key, err = cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
@@ -179,11 +179,11 @@ func newWatcher(kubeClient kubernetes.Interface, informer cache.SharedIndexInfor
 			newEvent.apiVersion = apiVersion
 			newEvent.obj, ok = obj.(runtime.Object)
 			if !ok {
-				logger.Logger().Error().Fields(map[string]interface{}{
+				logger.Logger().Error().Fields(map[string]any{
 					"pkg": "watcher-" + resourceType,
 				}).Msgf("cannot convert to runtime.Object for delete on %v", obj)
 			}
-			logger.Logger().Info().Fields(map[string]interface{}{
+			logger.Logger().Info().Fields(map[string]any{
 				"pkg": "watcher-" + resourceType,
 			}).Msgf("processing delete to %v: %s", resourceType, newEvent.key)
 			if err == nil {
@@ -280,7 +280,7 @@ const (
 	DeleteType triggerType = "DELETE"
 )
 
-// TODO: Enhance event creation using client-side cacheing machanisms - pending
+// TODO: Enhance event creation using client-side caching machanisms - pending
 func (w *watcher) processItem(newEvent InformerEvent) error {
 	// NOTE that obj will be nil on deletes!
 	obj, _, err := w.informer.GetIndexer().GetByKey(newEvent.key)
