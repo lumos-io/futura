@@ -11,7 +11,10 @@ tag = "v0.0.1"
 color = true
 
 [handler.webhook]
-url = "http://localhost:8080/events"
+url = "http://localhost:9999/events"
 batchSize = 1000
 cert = ""
 tlsSkip = true
+
+[kubernetes]
+inCluster = false # true when the agent is deployed within the kubernetes cluster

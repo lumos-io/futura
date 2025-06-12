@@ -23,5 +23,5 @@ func (csl *Console) Init(c *config.Configuration) error {
 }
 
 // Handle handles an event.
-func (csl *Console) HandleKubernetesEvent(k8sChan <-chan any) {
+func (csl *Console) HandleKubernetesEvent() {
 }

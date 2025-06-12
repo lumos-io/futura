@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/opisvigilant/futura/watcher/internal/collector"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/handlers"
 	"github.com/opisvigilant/futura/watcher/internal/kubernetes"
@@ -47,25 +46,40 @@ events to the backend`,
 			cancel()
 		}()
 
+		// var nsFilterRx *regexp.Regexp
+		// if os.Getenv("EXCLUDE_NAMESPACES") != "" {
+		// 	nsFilterRx = regexp.MustCompile(os.Getenv("EXCLUDE_NAMESPACES"))
+		// }
+
+		// var nsFilterStr string
+		// if nsFilterRx != nil {
+		// 	nsFilterStr = nsFilterRx.String()
+		// }
+
+		// Kubernetes events
+		var kubernetesCollector *kubernetes.Collector
+		kuberneteEvents := make(chan any, 1000)
+
+		var err error
+		kubernetesCollector, err = kubernetes.New(watcherCfg, ctx)
+		if err != nil {
+			panic(err)
+		}
+		k8sVersion := kubernetesCollector.GetK8sVersion()
+		logger.Logger().Info().Msgf("Current Kubernetes version %s", k8sVersion)
+		go kubernetesCollector.Start(kuberneteEvents)
+
 		// where to route the events
 		eventHandler, err := handlers.New(watcherCfg)
 		if err != nil {
 			panic(fmt.Errorf("initHandler failed"))
 		}
 
-		// Kubernetes events
-		kuberneteEvents := make(chan any, 1000)
-		ctrl, err := kubernetes.New(watcherCfg, kuberneteEvents)
-		if err != nil {
-			panic(fmt.Errorf("controller New failed"))
-		}
-		go ctrl.Start()
+		go eventHandler.HandleKubernetesEvent()
 
-		col := collector.NewCollector(ctx, eventHandler)
-		col.Run(kuberneteEvents)
-
-		<-col.Done()
+		<-kubernetesCollector.Done()
 		logger.Logger().Info().Msg("Collector done")
+		logger.Logger().Info().Msg("Futura exiting...")
 	},
 }
 

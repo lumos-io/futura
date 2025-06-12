@@ -10,7 +10,7 @@ import (
 // The Handle method is used to process event
 type Handler interface {
 	Init(c *config.Configuration) error
-	HandleKubernetesEvent(k8sChan <-chan any)
+	HandleKubernetesEvent()
 }
 
 func New(c *config.Configuration) (Handler, error) {

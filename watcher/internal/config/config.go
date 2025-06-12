@@ -10,7 +10,8 @@ type Configuration struct {
 	NodeName string `toml:"nodeName"`
 	Tag      string `toml:"tag"`
 	// Handlers know how to send notifications to specific services.
-	Handler *Handler `toml:"handler"`
+	Handler    *Handler    `toml:"handler"`
+	Kubernetes *Kubernetes `toml:"kubernetes"`
 }
 
 // Handler contains Handler configuration
@@ -32,6 +33,10 @@ type Webhook struct {
 	TlsSkip   bool   `toml:"tlsSkip"`
 }
 
+type Kubernetes struct {
+	InCluster bool `toml:"inCluster"`
+}
+
 func Fetch() *Configuration {
 	return &Configuration{
 		Debug:    getBoolOrDefault("debug", true),
@@ -47,6 +52,9 @@ func Fetch() *Configuration {
 				Cert:      getStringOrDefault("handler.webhook.cert", ""),
 				TlsSkip:   getBoolOrDefault("handler.webhook.tlsSkip", true),
 			},
+		},
+		Kubernetes: &Kubernetes{
+			InCluster: getBoolOrDefault("kubernetes.inCluster", false),
 		},
 	}
 }
