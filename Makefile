@@ -3,8 +3,8 @@ GO_WORK_FILE=./go.work
 PHONY: dev-env
 dev-env:
 ifeq ("$(wildcard $(GO_WORK_FILE))","")
-	@echo "initialize go workspaces with Go 1.20 toolchain"
-	GOTOOLCHAIN=go1.20+auto go work init
+	@echo "initialize go workspaces with Go 1.24.1 toolchain"
+	GOTOOLCHAIN=go1.24+auto go work init
 endif
 	@echo "add all projects to go.work"
 	go work use -r .

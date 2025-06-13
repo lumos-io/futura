@@ -1,327 +1,302 @@
 package collector
 
-// import (
-// 	"github.com/opisvigilant/futura/watcher/internal/logger"
-// 	"github.com/opisvigilant/futura/watcher/internal/models"
+import (
+	"github.com/opisvigilant/futura/watcher/internal/kubernetes"
+	"github.com/opisvigilant/futura/watcher/internal/logger"
+	"github.com/opisvigilant/futura/watcher/internal/models"
 
-// 	appsv1 "k8s.io/api/apps/v1"
-// 	corev1 "k8s.io/api/core/v1"
-// )
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+)
 
-// const (
-// 	ADD    = "ADD"
-// 	UPDATE = "UPDATE"
-// 	DELETE = "DELETE"
-// )
+const (
+	ADD    = "ADD"
+	UPDATE = "UPDATE"
+	DELETE = "DELETE"
+)
 
-// func (a *Collector) persistPod(dto models.Pod, eventType string) {
-// 	err := a.ds.PersistPod(dto, eventType)
-// 	if err != nil {
-// 		logger.Logger().Error().Err(err).Msgf("error on PersistPod call to %s, uid: %s", eventType, dto.UID)
-// 	}
-// }
+func (c *Collector) persistPod(pod models.Pod, eventType string) {
+	podEvent := models.ConvertPodToPodEvent(pod, eventType)
+	c.sender.PodEventChan <- &podEvent
+}
 
-// func (a *Collector) processPod(d k8s.K8sResourceMessage) {
-// 	pod := d.Object.(*corev1.Pod)
+func (a *Collector) processPod(d kubernetes.ResourceMessage) {
+	pod := d.Object.(*corev1.Pod)
 
-// 	var ownerType, ownerID, ownerName string
-// 	if len(pod.OwnerReferences) > 0 {
-// 		ownerType = pod.OwnerReferences[0].Kind
-// 		ownerID = string(pod.OwnerReferences[0].UID)
-// 		ownerName = pod.OwnerReferences[0].Name
-// 	} else {
-// 		logger.Logger().Debug().Msgf("Pod %s/%s has no owner, event: %s", pod.Namespace, pod.Name, d.EventType)
-// 	}
+	var ownerType, ownerID, ownerName string
+	if len(pod.OwnerReferences) > 0 {
+		ownerType = pod.OwnerReferences[0].Kind
+		ownerID = string(pod.OwnerReferences[0].UID)
+		ownerName = pod.OwnerReferences[0].Name
+	} else {
+		logger.Logger().Debug().Msgf("Pod %s/%s has no owner, event: %s", pod.Namespace, pod.Name, d.EventType)
+	}
 
-// 	if pod.Status.PodIP == "" {
-// 		logger.Logger().Debug().Msgf("Pod %s/%s has no IP, event: %s", pod.Namespace, pod.Name, d.EventType)
-// 		return
-// 	}
+	if pod.Status.PodIP == "" {
+		logger.Logger().Debug().Msgf("Pod %s/%s has no IP, event: %s", pod.Namespace, pod.Name, d.EventType)
+		return
+	}
 
-// 	dtoPod := models.Pod{
-// 		UID:       string(pod.UID),
-// 		Name:      pod.Name,
-// 		Namespace: pod.Namespace,
-// 		Image:     pod.Spec.Containers[0].Image, // main containers
-// 		IP:        pod.Status.PodIP,
+	dtoPod := models.Pod{
+		UID:       string(pod.UID),
+		Name:      pod.Name,
+		Namespace: pod.Namespace,
+		Image:     pod.Spec.Containers[0].Image, // main containers
+		IP:        pod.Status.PodIP,
 
-// 		// Assuming that there is only one owner
-// 		OwnerType: ownerType,
-// 		OwnerID:   ownerID,
-// 		OwnerName: ownerName,
-// 	}
+		// Assuming that there is only one owner
+		OwnerType: ownerType,
+		OwnerID:   ownerID,
+		OwnerName: ownerName,
+	}
 
-// 	switch d.EventType {
-// 	case k8s.ADD:
-// 		a.clusterInfo.mu.Lock()
-// 		a.clusterInfo.PodIPToPodUid[pod.Status.PodIP] = pod.UID
-// 		a.clusterInfo.mu.Unlock()
-// 		go a.persistPod(dtoPod, ADD)
-// 	case k8s.UPDATE:
-// 		a.clusterInfo.mu.Lock()
-// 		a.clusterInfo.PodIPToPodUid[pod.Status.PodIP] = pod.UID
-// 		a.clusterInfo.mu.Unlock()
-// 		go a.persistPod(dtoPod, UPDATE)
-// 	case k8s.DELETE:
-// 		a.clusterInfo.mu.Lock()
-// 		delete(a.clusterInfo.PodIPToPodUid, pod.Status.PodIP)
-// 		a.clusterInfo.mu.Unlock()
-// 		go a.persistPod(dtoPod, DELETE)
-// 	}
-// }
+	switch d.EventType {
+	case kubernetes.ADD:
+		go a.persistPod(dtoPod, ADD)
+	case kubernetes.UPDATE:
+		go a.persistPod(dtoPod, UPDATE)
+	case kubernetes.DELETE:
+		go a.persistPod(dtoPod, DELETE)
+	}
+}
 
-// func (a *Collector) persistSvc(dto models.Service, eventType string) {
-// 	err := a.ds.PersistService(dto, eventType)
-// 	if err != nil {
-// 		logger.Logger().Error().Err(err).Msgf("error on PersistService call to %s, uid: %s", eventType, dto.UID)
-// 	}
-// }
+func (a *Collector) persistSvc(service models.Service, eventType string) {
+	svcEvent := models.ConvertSvcToSvcEvent(service, eventType)
+	a.sender.ServiceEventChan <- &svcEvent
+}
 
-// func (a *Collector) processSvc(d k8s.K8sResourceMessage) {
-// 	service := d.Object.(*corev1.Service)
+func (a *Collector) processSvc(d kubernetes.ResourceMessage) {
+	service := d.Object.(*corev1.Service)
 
-// 	ports := []struct {
-// 		Src      int32  "json:\"src\""
-// 		Dest     int32  "json:\"dest\""
-// 		Protocol string "json:\"protocol\""
-// 	}{}
+	ports := []struct {
+		Name     string "json:\"name\""
+		Src      int32  "json:\"src\""
+		Dest     int32  "json:\"dest\""
+		Protocol string "json:\"protocol\""
+	}{}
 
-// 	for _, port := range service.Spec.Ports {
-// 		ports = append(ports, struct {
-// 			Src      int32  "json:\"src\""
-// 			Dest     int32  "json:\"dest\""
-// 			Protocol string "json:\"protocol\""
-// 		}{
-// 			Src:      port.Port,
-// 			Dest:     int32(port.TargetPort.IntValue()),
-// 			Protocol: string(port.Protocol),
-// 		})
-// 	}
+	for _, port := range service.Spec.Ports {
+		ports = append(ports, struct {
+			Name     string "json:\"name\""
+			Src      int32  "json:\"src\""
+			Dest     int32  "json:\"dest\""
+			Protocol string "json:\"protocol\""
+		}{
+			Name:     port.Name, // https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+			Src:      port.Port,
+			Dest:     int32(port.TargetPort.IntValue()),
+			Protocol: string(port.Protocol),
+		})
+	}
 
-// 	dtoSvc := models.Service{
-// 		UID:        string(service.UID),
-// 		Name:       service.Name,
-// 		Namespace:  service.Namespace,
-// 		Type:       string(service.Spec.Type),
-// 		ClusterIPs: service.Spec.ClusterIPs,
-// 		Ports:      ports,
-// 	}
+	dtoSvc := models.Service{
+		UID:        string(service.UID),
+		Name:       service.Name,
+		Namespace:  service.Namespace,
+		Type:       string(service.Spec.Type),
+		ClusterIPs: service.Spec.ClusterIPs,
+		Ports:      ports,
+	}
 
-// 	switch d.EventType {
-// 	case k8s.ADD:
-// 		a.clusterInfo.mu.Lock()
-// 		a.clusterInfo.ServiceIPToServiceUid[service.Spec.ClusterIP] = service.UID
-// 		a.clusterInfo.mu.Unlock()
-// 		go a.persistSvc(dtoSvc, ADD)
-// 	case k8s.UPDATE:
-// 		a.clusterInfo.mu.Lock()
-// 		a.clusterInfo.ServiceIPToServiceUid[service.Spec.ClusterIP] = service.UID
-// 		a.clusterInfo.mu.Unlock()
-// 		go a.persistSvc(dtoSvc, UPDATE)
-// 	case k8s.DELETE:
-// 		a.clusterInfo.mu.Lock()
-// 		delete(a.clusterInfo.ServiceIPToServiceUid, service.Spec.ClusterIP)
-// 		a.clusterInfo.mu.Unlock()
-// 		go a.persistSvc(dtoSvc, DELETE)
-// 	}
-// }
+	switch d.EventType {
+	case kubernetes.ADD:
+		go a.persistSvc(dtoSvc, ADD)
+	case kubernetes.UPDATE:
+		go a.persistSvc(dtoSvc, UPDATE)
+	case kubernetes.DELETE:
+		go a.persistSvc(dtoSvc, DELETE)
+	}
+}
 
-// func (a *Collector) persistReplicaSet(dto models.ReplicaSet, eventType string) {
-// 	err := a.ds.PersistReplicaSet(dto, eventType)
-// 	if err != nil {
-// 		logger.Logger().Error().Err(err).Msgf("error on persistReplicaset call to %s", eventType)
-// 	}
-// }
+func (a *Collector) persistReplicaSet(rs models.ReplicaSet, eventType string) {
+	rsEvent := models.ConvertRsToRsEvent(rs, eventType)
+	a.sender.ReplicaSetEventChan <- &rsEvent
+}
 
-// func (a *Collector) processReplicaSet(d k8s.K8sResourceMessage) {
-// 	replicaSet := d.Object.(*appsv1.ReplicaSet)
+func (a *Collector) processReplicaSet(d kubernetes.ResourceMessage) {
+	replicaSet := d.Object.(*appsv1.ReplicaSet)
 
-// 	var ownerType, ownerID, ownerName string
-// 	if len(replicaSet.OwnerReferences) > 0 {
-// 		ownerType = replicaSet.OwnerReferences[0].Kind
-// 		ownerID = string(replicaSet.OwnerReferences[0].UID)
-// 		ownerName = replicaSet.OwnerReferences[0].Name
-// 	} else {
-// 		logger.Logger().Debug().Msgf("ReplicaSet %s/%s has no owner, event: %s", replicaSet.Namespace, replicaSet.Name, d.EventType)
-// 	}
+	var ownerType, ownerID, ownerName string
+	if len(replicaSet.OwnerReferences) > 0 {
+		ownerType = replicaSet.OwnerReferences[0].Kind
+		ownerID = string(replicaSet.OwnerReferences[0].UID)
+		ownerName = replicaSet.OwnerReferences[0].Name
+	} else {
+		logger.Logger().Debug().Msgf("ReplicaSet %s/%s has no owner, event: %s", replicaSet.Namespace, replicaSet.Name, d.EventType)
+	}
 
-// 	dtoReplicaSet := models.ReplicaSet{
-// 		UID:       string(replicaSet.UID),
-// 		Name:      ownerName,
-// 		Namespace: replicaSet.Namespace,
-// 		OwnerType: ownerType,
-// 		OwnerID:   ownerID,
-// 		OwnerName: ownerName,
-// 		Replicas:  replicaSet.Status.Replicas,
-// 	}
+	dtoReplicaSet := models.ReplicaSet{
+		UID:       string(replicaSet.UID),
+		Name:      ownerName,
+		Namespace: replicaSet.Namespace,
+		OwnerType: ownerType,
+		OwnerID:   ownerID,
+		OwnerName: ownerName,
+		Replicas:  replicaSet.Status.Replicas,
+	}
 
-// 	switch d.EventType {
-// 	case k8s.ADD:
-// 		go a.persistReplicaSet(dtoReplicaSet, ADD)
-// 	case k8s.UPDATE:
-// 		go a.persistReplicaSet(dtoReplicaSet, UPDATE)
-// 	case k8s.DELETE:
-// 		go a.persistReplicaSet(dtoReplicaSet, DELETE)
-// 	}
-// }
+	switch d.EventType {
+	case kubernetes.ADD:
+		go a.persistReplicaSet(dtoReplicaSet, ADD)
+	case kubernetes.UPDATE:
+		go a.persistReplicaSet(dtoReplicaSet, UPDATE)
+	case kubernetes.DELETE:
+		go a.persistReplicaSet(dtoReplicaSet, DELETE)
+	}
 
-// func (a *Collector) processDeployment(d k8s.K8sResourceMessage) {
-// 	deployment := d.Object.(*appsv1.Deployment)
+}
 
-// 	dto := models.Deployment{
-// 		UID:       string(deployment.UID),
-// 		Name:      deployment.Name,
-// 		Namespace: deployment.Namespace,
-// 		Replicas:  deployment.Status.Replicas,
-// 	}
+func (a *Collector) processDeployment(d kubernetes.ResourceMessage) {
+	deployment := d.Object.(*appsv1.Deployment)
 
-// 	switch d.EventType {
-// 	case k8s.ADD:
-// 		go func() {
-// 			err := a.ds.PersistDeployment(dto, ADD)
-// 			if err != nil {
-// 				logger.Logger().Error().Err(err).Msgf("error on PersistDeployment call to %s, uid: %s", ADD, dto.UID)
-// 			}
-// 		}()
-// 	case k8s.UPDATE:
-// 		go func() {
-// 			err := a.ds.PersistDeployment(dto, UPDATE)
-// 			if err != nil {
-// 				logger.Logger().Error().Err(err).Msgf("error on PersistDeployment call to %s, uid: %s", UPDATE, dto.UID)
-// 			}
-// 		}()
-// 	case k8s.DELETE:
-// 		go func() {
-// 			err := a.ds.PersistDeployment(dto, DELETE)
-// 			if err != nil {
-// 				logger.Logger().Error().Err(err).Msgf("error on PersistDeployment call to %s, uid: %s", DELETE, dto.UID)
-// 			}
-// 		}()
-// 	}
-// }
+	dto := models.Deployment{
+		UID:       string(deployment.UID),
+		Name:      deployment.Name,
+		Namespace: deployment.Namespace,
+		Replicas:  deployment.Status.Replicas,
+	}
 
-// func (a *Collector) processContainer(d k8s.K8sResourceMessage) {
-// 	c := d.Object.(*k8s.Container)
+	switch d.EventType {
+	case kubernetes.ADD:
+		depEvent := models.ConvertDepToDepEvent(dto, ADD)
+		a.sender.DeploymentEventChan <- &depEvent
+	case kubernetes.UPDATE:
+		depEvent := models.ConvertDepToDepEvent(dto, UPDATE)
+		a.sender.DeploymentEventChan <- &depEvent
+	case kubernetes.DELETE:
+		depEvent := models.ConvertDepToDepEvent(dto, DELETE)
+		a.sender.DeploymentEventChan <- &depEvent
+	}
+}
 
-// 	dto := models.Container{
-// 		Name:      c.Name,
-// 		Namespace: c.Namespace,
-// 		PodUID:    c.PodUID,
-// 		Image:     c.Image,
-// 		Ports:     c.Ports,
-// 	}
+func (a *Collector) processContainer(d kubernetes.ResourceMessage) {
+	c := d.Object.(*kubernetes.Container)
 
-// 	switch d.EventType {
-// 	case k8s.ADD:
-// 		go func() {
-// 			err := a.ds.PersistContainer(dto, ADD)
-// 			if err != nil {
-// 				logger.Logger().Error().Err(err).Msgf("error on PersistContainer call to %s", ADD)
-// 			}
-// 		}()
-// 	case k8s.UPDATE:
-// 		go func() {
-// 			err := a.ds.PersistContainer(dto, UPDATE)
-// 			if err != nil {
-// 				logger.Logger().Error().Err(err).Msgf("error on PersistContainer call to %s", UPDATE)
-// 			}
-// 		}()
-// 		// No need for  delete container
-// 	}
-// }
+	dto := models.Container{
+		Name:      c.Name,
+		Namespace: c.Namespace,
+		PodUID:    c.PodUID,
+		Image:     c.Image,
+		Ports:     c.Ports,
+	}
 
-// func (a *Collector) processEndpoints(ep k8s.K8sResourceMessage) {
-// 	endpoints := ep.Object.(*corev1.Endpoints)
+	switch d.EventType {
+	case kubernetes.ADD:
+		cEvent := models.ConvertContainerToContainerEvent(dto, ADD)
+		a.sender.ContainerEventChan <- &cEvent
+	case kubernetes.UPDATE:
+		cEvent := models.ConvertContainerToContainerEvent(dto, UPDATE)
+		a.sender.ContainerEventChan <- &cEvent
+		// No need for  delete container
+	}
+}
 
-// 	// subsets
-// 	adrs := []models.Address{}
+func (a *Collector) processEndpoints(ep kubernetes.ResourceMessage) {
+	endpoints := ep.Object.(*corev1.Endpoints)
 
-// 	// subset[0].address -> ips
-// 	// subset[0].ports -> ports
+	// subsets
+	adrs := []models.Address{}
 
-// 	for _, subset := range endpoints.Subsets {
-// 		ips := []models.AddressIP{}
-// 		ports := []models.AddressPort{}
+	// subset[0].address -> ips
+	// subset[0].ports -> ports
 
-// 		for _, addr := range subset.Addresses {
-// 			// Probably external IP
-// 			if addr.TargetRef == nil {
-// 				ips = append(ips, models.AddressIP{
-// 					IP: addr.IP,
-// 				})
-// 				continue
-// 			}
+	for _, subset := range endpoints.Subsets {
+		ips := []models.AddressIP{}
+		ports := []models.AddressPort{}
 
-// 			// TargetRef: Pod probably
-// 			ips = append(ips, models.AddressIP{
-// 				Type:      string(addr.TargetRef.Kind),
-// 				ID:        string(addr.TargetRef.UID),
-// 				Name:      addr.TargetRef.Name,
-// 				Namespace: addr.TargetRef.Namespace,
-// 				IP:        addr.IP,
-// 			})
-// 		}
+		for _, addr := range subset.Addresses {
+			// Probably external IP
+			if addr.TargetRef == nil {
+				ips = append(ips, models.AddressIP{
+					IP: addr.IP,
+				})
+				continue
+			}
 
-// 		for _, port := range subset.Ports {
-// 			ports = append(ports, models.AddressPort{
-// 				Port:     port.Port,
-// 				Protocol: string(port.Protocol),
-// 			})
-// 		}
+			// TargetRef: Pod probably
+			ips = append(ips, models.AddressIP{
+				Type:      string(addr.TargetRef.Kind),
+				ID:        string(addr.TargetRef.UID),
+				Name:      addr.TargetRef.Name,
+				Namespace: addr.TargetRef.Namespace,
+				IP:        addr.IP,
+			})
+		}
 
-// 		adrs = append(adrs, models.Address{
-// 			IPs:   ips,
-// 			Ports: ports,
-// 		})
-// 	}
+		for _, port := range subset.Ports {
+			ports = append(ports, models.AddressPort{
+				Port:     port.Port,
+				Protocol: string(port.Protocol),
+				Name:     port.Name,
+			})
+		}
 
-// 	dto := models.Endpoints{
-// 		UID:       string(endpoints.UID),
-// 		Name:      endpoints.Name,
-// 		Namespace: endpoints.Namespace,
-// 		Addresses: adrs,
-// 	}
+		adrs = append(adrs, models.Address{
+			IPs:   ips,
+			Ports: ports,
+		})
+	}
 
-// 	switch ep.EventType {
-// 	case k8s.ADD:
-// 		go func() {
-// 			err := a.ds.PersistEndpoints(dto, ADD)
-// 			if err != nil {
-// 				logger.Logger().Error().Err(err).Msgf("error on PersistEndpoints call to %s, uid: %s", ADD, dto.UID)
-// 			}
-// 		}()
-// 	case k8s.UPDATE:
-// 		go func() {
-// 			err := a.ds.PersistEndpoints(dto, UPDATE)
-// 			if err != nil {
-// 				logger.Logger().Error().Err(err).Msgf("error on PersistEndpoints call to %s, uid: %s", UPDATE, dto.UID)
-// 			}
-// 		}()
-// 	case k8s.DELETE:
-// 		go func() {
-// 			err := a.ds.PersistEndpoints(dto, DELETE)
-// 			if err != nil {
-// 				logger.Logger().Error().Err(err).Msgf("error on PersistEndpoints call to %s, uid: %s", DELETE, dto.UID)
-// 			}
-// 		}()
-// 	}
-// }
+	dto := models.Endpoints{
+		UID:       string(endpoints.UID),
+		Name:      endpoints.Name,
+		Namespace: endpoints.Namespace,
+		Addresses: adrs,
+	}
 
-// func (a *Collector) processDaemonSet(d k8s.K8sResourceMessage) {
-// 	daemonSet := d.Object.(*appsv1.DaemonSet)
+	switch ep.EventType {
+	case kubernetes.ADD:
+		epEvent := models.ConvertEpToEpEvent(dto, ADD)
+		a.sender.EndpointEventChan <- &epEvent
+	case kubernetes.UPDATE:
+		epEvent := models.ConvertEpToEpEvent(dto, UPDATE)
+		a.sender.EndpointEventChan <- &epEvent
+	case kubernetes.DELETE:
+		epEvent := models.ConvertEpToEpEvent(dto, DELETE)
+		a.sender.EndpointEventChan <- &epEvent
+	}
+}
 
-// 	dtoDaemonSet := models.DaemonSet{
-// 		UID:       string(daemonSet.UID),
-// 		Name:      daemonSet.Name,
-// 		Namespace: daemonSet.Namespace,
-// 	}
+func (a *Collector) processDaemonSet(d kubernetes.ResourceMessage) {
+	daemonSet := d.Object.(*appsv1.DaemonSet)
 
-// 	switch d.EventType {
-// 	case k8s.ADD:
-// 		go a.ds.PersistDaemonSet(dtoDaemonSet, ADD)
-// 	case k8s.UPDATE:
-// 		go a.ds.PersistDaemonSet(dtoDaemonSet, UPDATE)
-// 	case k8s.DELETE:
-// 		go a.ds.PersistDaemonSet(dtoDaemonSet, DELETE)
-// 	}
-// }
+	dtoDaemonSet := models.DaemonSet{
+		UID:       string(daemonSet.UID),
+		Name:      daemonSet.Name,
+		Namespace: daemonSet.Namespace,
+	}
+
+	switch d.EventType {
+	case kubernetes.ADD:
+		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, ADD)
+		a.sender.DaemonSetEventChan <- &dsEvent
+	case kubernetes.UPDATE:
+		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, UPDATE)
+		a.sender.DaemonSetEventChan <- &dsEvent
+	case kubernetes.DELETE:
+		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, DELETE)
+		a.sender.DaemonSetEventChan <- &dsEvent
+	}
+}
+
+func (a *Collector) processStatefulSet(d kubernetes.ResourceMessage) {
+	statefulSet := d.Object.(*appsv1.StatefulSet)
+
+	dtoStatefulSet := models.StatefulSet{
+		UID:       string(statefulSet.UID),
+		Name:      statefulSet.Name,
+		Namespace: statefulSet.Namespace,
+	}
+
+	switch d.EventType {
+	case kubernetes.ADD:
+		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, ADD)
+		a.sender.StatefulSetEventChan <- &ssEvent
+	case kubernetes.UPDATE:
+		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, UPDATE)
+		a.sender.StatefulSetEventChan <- &ssEvent
+	case kubernetes.DELETE:
+		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, DELETE)
+		a.sender.StatefulSetEventChan <- &ssEvent
+	}
+}
