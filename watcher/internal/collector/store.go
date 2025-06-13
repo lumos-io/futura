@@ -9,19 +9,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// ------------------------------
-
 const (
 	ADD    = "ADD"
 	UPDATE = "UPDATE"
 	DELETE = "DELETE"
 )
 
-func (c *Collector) persistPod(dto models.Pod, eventType string) {
-	err := c.persistPod(dto, eventType)
-	if err != nil {
-		logger.Logger().Error().Err(err).Msgf("error on PersistPod call to %s, uid: %s", eventType, dto.UID)
-	}
+func (c *Collector) persistPod(pod models.Pod, eventType string) {
+	podEvent := models.ConvertPodToPodEvent(pod, eventType)
+	c.sender.PodEventChan <- &podEvent
 }
 
 func (a *Collector) processPod(d kubernetes.ResourceMessage) {
@@ -56,28 +52,17 @@ func (a *Collector) processPod(d kubernetes.ResourceMessage) {
 
 	switch d.EventType {
 	case kubernetes.ADD:
-		a.clusterInfo.k8smu.Lock()
-		a.clusterInfo.PodIPToPodUid[pod.Status.PodIP] = pod.UID
-		a.clusterInfo.k8smu.Unlock()
 		go a.persistPod(dtoPod, ADD)
 	case kubernetes.UPDATE:
-		a.clusterInfo.k8smu.Lock()
-		a.clusterInfo.PodIPToPodUid[pod.Status.PodIP] = pod.UID
-		a.clusterInfo.k8smu.Unlock()
 		go a.persistPod(dtoPod, UPDATE)
 	case kubernetes.DELETE:
-		a.clusterInfo.k8smu.Lock()
-		delete(a.clusterInfo.PodIPToPodUid, pod.Status.PodIP)
-		a.clusterInfo.k8smu.Unlock()
 		go a.persistPod(dtoPod, DELETE)
 	}
 }
 
-func (a *Collector) persistSvc(dto models.Service, eventType string) {
-	err := a.ds.PersistService(dto, eventType)
-	if err != nil {
-		logger.Logger().Error().Err(err).Msgf("error on PersistService call to %s, uid: %s", eventType, dto.UID)
-	}
+func (a *Collector) persistSvc(service models.Service, eventType string) {
+	svcEvent := models.ConvertSvcToSvcEvent(service, eventType)
+	a.sender.ServiceEventChan <- &svcEvent
 }
 
 func (a *Collector) processSvc(d kubernetes.ResourceMessage) {
@@ -115,28 +100,17 @@ func (a *Collector) processSvc(d kubernetes.ResourceMessage) {
 
 	switch d.EventType {
 	case kubernetes.ADD:
-		a.clusterInfo.k8smu.Lock()
-		a.clusterInfo.ServiceIPToServiceUid[service.Spec.ClusterIP] = service.UID
-		a.clusterInfo.k8smu.Unlock()
 		go a.persistSvc(dtoSvc, ADD)
 	case kubernetes.UPDATE:
-		a.clusterInfo.k8smu.Lock()
-		a.clusterInfo.ServiceIPToServiceUid[service.Spec.ClusterIP] = service.UID
-		a.clusterInfo.k8smu.Unlock()
 		go a.persistSvc(dtoSvc, UPDATE)
 	case kubernetes.DELETE:
-		a.clusterInfo.k8smu.Lock()
-		delete(a.clusterInfo.ServiceIPToServiceUid, service.Spec.ClusterIP)
-		a.clusterInfo.k8smu.Unlock()
 		go a.persistSvc(dtoSvc, DELETE)
 	}
 }
 
-func (a *Collector) persistReplicaSet(dto models.ReplicaSet, eventType string) {
-	err := a.ds.PersistReplicaSet(dto, eventType)
-	if err != nil {
-		logger.Logger().Error().Err(err).Msgf("error on persistReplicaset call to %s", eventType)
-	}
+func (a *Collector) persistReplicaSet(rs models.ReplicaSet, eventType string) {
+	rsEvent := models.ConvertRsToRsEvent(rs, eventType)
+	a.sender.ReplicaSetEventChan <- &rsEvent
 }
 
 func (a *Collector) processReplicaSet(d kubernetes.ResourceMessage) {
@@ -184,26 +158,14 @@ func (a *Collector) processDeployment(d kubernetes.ResourceMessage) {
 
 	switch d.EventType {
 	case kubernetes.ADD:
-		go func() {
-			err := a.ds.PersistDeployment(dto, ADD)
-			if err != nil {
-				logger.Logger().Error().Err(err).Msgf("error on PersistDeployment call to %s, uid: %s", ADD, dto.UID)
-			}
-		}()
+		depEvent := models.ConvertDepToDepEvent(dto, ADD)
+		a.sender.DeploymentEventChan <- &depEvent
 	case kubernetes.UPDATE:
-		go func() {
-			err := a.ds.PersistDeployment(dto, UPDATE)
-			if err != nil {
-				logger.Logger().Error().Err(err).Msgf("error on PersistDeployment call to %s, uid: %s", UPDATE, dto.UID)
-			}
-		}()
+		depEvent := models.ConvertDepToDepEvent(dto, UPDATE)
+		a.sender.DeploymentEventChan <- &depEvent
 	case kubernetes.DELETE:
-		go func() {
-			err := a.ds.PersistDeployment(dto, DELETE)
-			if err != nil {
-				logger.Logger().Error().Err(err).Msgf("error on PersistDeployment call to %s, uid: %s", DELETE, dto.UID)
-			}
-		}()
+		depEvent := models.ConvertDepToDepEvent(dto, DELETE)
+		a.sender.DeploymentEventChan <- &depEvent
 	}
 }
 
@@ -220,19 +182,11 @@ func (a *Collector) processContainer(d kubernetes.ResourceMessage) {
 
 	switch d.EventType {
 	case kubernetes.ADD:
-		go func() {
-			err := a.ds.PersistContainer(dto, ADD)
-			if err != nil {
-				logger.Logger().Error().Err(err).Msgf("error on PersistContainer call to %s", ADD)
-			}
-		}()
+		cEvent := models.ConvertContainerToContainerEvent(dto, ADD)
+		a.sender.ContainerEventChan <- &cEvent
 	case kubernetes.UPDATE:
-		go func() {
-			err := a.ds.PersistContainer(dto, UPDATE)
-			if err != nil {
-				logger.Logger().Error().Err(err).Msgf("error on PersistContainer call to %s", UPDATE)
-			}
-		}()
+		cEvent := models.ConvertContainerToContainerEvent(dto, UPDATE)
+		a.sender.ContainerEventChan <- &cEvent
 		// No need for  delete container
 	}
 }
@@ -292,26 +246,14 @@ func (a *Collector) processEndpoints(ep kubernetes.ResourceMessage) {
 
 	switch ep.EventType {
 	case kubernetes.ADD:
-		go func() {
-			err := a.ds.PersistEndpoints(dto, ADD)
-			if err != nil {
-				logger.Logger().Error().Err(err).Msgf("error on PersistEndpoints call to %s, uid: %s", ADD, dto.UID)
-			}
-		}()
+		epEvent := models.ConvertEpToEpEvent(dto, ADD)
+		a.sender.EndpointEventChan <- &epEvent
 	case kubernetes.UPDATE:
-		go func() {
-			err := a.ds.PersistEndpoints(dto, UPDATE)
-			if err != nil {
-				logger.Logger().Error().Err(err).Msgf("error on PersistEndpoints call to %s, uid: %s", UPDATE, dto.UID)
-			}
-		}()
+		epEvent := models.ConvertEpToEpEvent(dto, UPDATE)
+		a.sender.EndpointEventChan <- &epEvent
 	case kubernetes.DELETE:
-		go func() {
-			err := a.ds.PersistEndpoints(dto, DELETE)
-			if err != nil {
-				logger.Logger().Error().Err(err).Msgf("error on PersistEndpoints call to %s, uid: %s", DELETE, dto.UID)
-			}
-		}()
+		epEvent := models.ConvertEpToEpEvent(dto, DELETE)
+		a.sender.EndpointEventChan <- &epEvent
 	}
 }
 
@@ -326,11 +268,14 @@ func (a *Collector) processDaemonSet(d kubernetes.ResourceMessage) {
 
 	switch d.EventType {
 	case kubernetes.ADD:
-		go a.ds.PersistDaemonSet(dtoDaemonSet, ADD)
+		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, ADD)
+		a.sender.DaemonSetEventChan <- &dsEvent
 	case kubernetes.UPDATE:
-		go a.ds.PersistDaemonSet(dtoDaemonSet, UPDATE)
+		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, UPDATE)
+		a.sender.DaemonSetEventChan <- &dsEvent
 	case kubernetes.DELETE:
-		go a.ds.PersistDaemonSet(dtoDaemonSet, DELETE)
+		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, DELETE)
+		a.sender.DaemonSetEventChan <- &dsEvent
 	}
 }
 
@@ -345,10 +290,13 @@ func (a *Collector) processStatefulSet(d kubernetes.ResourceMessage) {
 
 	switch d.EventType {
 	case kubernetes.ADD:
-		go a.ds.PersistStatefulSet(dtoStatefulSet, ADD)
+		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, ADD)
+		a.sender.StatefulSetEventChan <- &ssEvent
 	case kubernetes.UPDATE:
-		go a.ds.PersistStatefulSet(dtoStatefulSet, UPDATE)
+		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, UPDATE)
+		a.sender.StatefulSetEventChan <- &ssEvent
 	case kubernetes.DELETE:
-		go a.ds.PersistStatefulSet(dtoStatefulSet, DELETE)
+		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, DELETE)
+		a.sender.StatefulSetEventChan <- &ssEvent
 	}
 }

@@ -1,4 +1,4 @@
-package webhook
+package sender
 
 import (
 	"bytes"
@@ -13,30 +13,31 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/internal/models"
 )
 
-// Webhook handler implements handler.Handler interface,
-// Notify event to Webhook
-type Webhook struct {
+// Sender handler implements handler.Handler interface,
+// Notify event to Sender
+type Sender struct {
 	URL string
 
 	ctx       context.Context
 	hc        *http.Client
 	batchSize uint64
 
-	podEventChan       chan any // *PodEvent
-	svcEventChan       chan any // *SvcEvent
-	depEventChan       chan any // *DepEvent
-	rsEventChan        chan any // *RsEvent
-	epEventChan        chan any // *EndpointsEvent
-	containerEventChan chan any // *ContainerEvent
-	dsEventChan        chan any // *DaemonSetEvent
-	ssEventChan        chan any // *StatefulSetEvent
-	jobEventChan       chan any // *JobEvent
-	cronJobEventChan   chan any // *CronJobEvent
+	PodEventChan         chan any // *PodEvent
+	ServiceEventChan     chan any // *SvcEvent
+	DeploymentEventChan  chan any // *DepEvent
+	ReplicaSetEventChan  chan any // *RsEvent
+	EndpointEventChan    chan any // *EndpointsEvent
+	ContainerEventChan   chan any // *ContainerEvent
+	DaemonSetEventChan   chan any // *DaemonSetEvent
+	StatefulSetEventChan chan any // *StatefulSetEvent
+	JobEventChan         chan any // *JobEvent
+	CronJobEventChan     chan any // *CronJobEvent
 }
 
 const (
@@ -115,7 +116,7 @@ func getCloudProvider() CloudProvider {
 }
 
 // Init prepares Webhook configuration
-func (w *Webhook) Init(c *config.Configuration) error {
+func New(c *config.Configuration) *Sender {
 	tag = c.Tag
 	batchSize := c.Handler.Webhook.BatchSize
 
@@ -124,27 +125,24 @@ func (w *Webhook) Init(c *config.Configuration) error {
 	// kernelVersion = extractKernelVersion()
 	// cloudProvider = getCloudProvider()
 
-	w.URL = c.Handler.Webhook.URL
-	w.ctx = context.TODO()
-	w.hc = http.DefaultClient
-	w.batchSize = batchSize
-
 	resourceChanSize := 200
-	w.podEventChan = make(chan any, 5*resourceChanSize)
-	w.svcEventChan = make(chan any, 2*resourceChanSize)
-	w.rsEventChan = make(chan any, 2*resourceChanSize)
-	w.depEventChan = make(chan any, 2*resourceChanSize)
-	w.epEventChan = make(chan any, resourceChanSize)
-	w.containerEventChan = make(chan any, 5*resourceChanSize)
-	w.dsEventChan = make(chan any, resourceChanSize)
-	w.ssEventChan = make(chan any, resourceChanSize)
-	w.jobEventChan = make(chan any, 2*resourceChanSize)
-	w.cronJobEventChan = make(chan any, 2*resourceChanSize)
+	s := &Sender{
+		URL:                  c.Handler.Webhook.URL,
+		ctx:                  context.TODO(),
+		hc:                   http.DefaultClient,
+		batchSize:            batchSize,
+		PodEventChan:         make(chan any, 5*resourceChanSize),
+		ServiceEventChan:     make(chan any, 2*resourceChanSize),
+		ReplicaSetEventChan:  make(chan any, 2*resourceChanSize),
+		DeploymentEventChan:  make(chan any, 2*resourceChanSize),
+		EndpointEventChan:    make(chan any, resourceChanSize),
+		ContainerEventChan:   make(chan any, 5*resourceChanSize),
+		DaemonSetEventChan:   make(chan any, resourceChanSize),
+		StatefulSetEventChan: make(chan any, resourceChanSize),
+		JobEventChan:         make(chan any, 2*resourceChanSize),
+		CronJobEventChan:     make(chan any, 2*resourceChanSize),
+	}
 
-	return nil
-}
-
-func (w *Webhook) HandleKubernetesEvent() {
 	// events are resynced every 60 seconds on kubernetes informers
 	// resourceBatchSize ~ burst size, if more than resourceBatchSize events are sent in a moment, blocking can occur
 	// resync period / event interval = 60 / 5 = 12
@@ -152,20 +150,21 @@ func (w *Webhook) HandleKubernetesEvent() {
 	// it can send upto 12k events in 60 seconds
 	// seems safe enough, if not, we can increase the buffer size
 	eventsInterval := 5 * time.Second
-	go w.sendEventsInBatch(w.podEventChan, podEndpoint, eventsInterval)
-	go w.sendEventsInBatch(w.svcEventChan, svcEndpoint, eventsInterval)
-	go w.sendEventsInBatch(w.rsEventChan, rsEndpoint, eventsInterval)
-	go w.sendEventsInBatch(w.depEventChan, depEndpoint, eventsInterval)
-	go w.sendEventsInBatch(w.epEventChan, epEndpoint, eventsInterval)
-	go w.sendEventsInBatch(w.containerEventChan, containerEndpoint, eventsInterval)
-	go w.sendEventsInBatch(w.dsEventChan, dsEndpoint, eventsInterval)
-	go w.sendEventsInBatch(w.ssEventChan, ssEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.PodEventChan, podEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.ServiceEventChan, svcEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.ReplicaSetEventChan, rsEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.DeploymentEventChan, depEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.EndpointEventChan, epEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.ContainerEventChan, containerEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.DaemonSetEventChan, dsEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.StatefulSetEventChan, ssEndpoint, eventsInterval)
 
+	return s
 }
 
 var resourceBatchSize int64 = 50
 
-func (w *Webhook) DoRequest(req *http.Request) error {
+func (w *Sender) DoRequest(req *http.Request) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
@@ -189,7 +188,7 @@ func (w *Webhook) DoRequest(req *http.Request) error {
 	return nil
 }
 
-func (b *Webhook) sendEventsInBatch(ch chan any, endpoint string, interval time.Duration) {
+func (b *Sender) sendEventsInBatch(ch chan any, endpoint string, interval time.Duration) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 
@@ -207,7 +206,7 @@ func (b *Webhook) sendEventsInBatch(ch chan any, endpoint string, interval time.
 	}
 }
 
-func (b *Webhook) send(ch <-chan any, endpoint string) {
+func (b *Sender) send(ch <-chan any, endpoint string) {
 	batch := make([]any, 0, resourceBatchSize)
 	loop := true
 
@@ -226,7 +225,7 @@ func (b *Webhook) send(ch <-chan any, endpoint string) {
 
 	payload := models.EventPayload{
 		Metadata: models.Metadata{
-			IdempotencyKey: string(uuid.NewUUID()),
+			IdempotencyKey: uuid.NewString(),
 			WatcherVersion: tag,
 		},
 		Events: batch,
@@ -235,7 +234,7 @@ func (b *Webhook) send(ch <-chan any, endpoint string) {
 	b.sendToBackend(http.MethodPost, payload, endpoint)
 }
 
-func (w *Webhook) sendToBackend(method string, payload interface{}, endpoint string) {
+func (w *Sender) sendToBackend(method string, payload interface{}, endpoint string) {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		logger.Logger().Error().Msgf("error marshalling batch: %v", err)
@@ -248,63 +247,10 @@ func (w *Webhook) sendToBackend(method string, payload interface{}, endpoint str
 		return
 	}
 
-	// if endpoint == reqEndpoint {
-	// 	logger.Logger().Debug().Str("endpoint", endpoint).Any("payload", payload).Msg("sending batch to backend")
-	// }
 	err = w.DoRequest(httpReq)
 	if err != nil {
 		logger.Logger().Error().Msgf("backend persist error at ep %s : %v", endpoint, err)
 	}
-}
-
-// ------------------------------
-
-func (b *Webhook) PersistPod(pod models.Pod, eventType string) error {
-	podEvent := models.ConvertPodToPodEvent(pod, eventType)
-	b.podEventChan <- &podEvent
-	return nil
-}
-
-func (b *Webhook) PersistService(service models.Service, eventType string) error {
-	svcEvent := models.ConvertSvcToSvcEvent(service, eventType)
-	b.svcEventChan <- &svcEvent
-	return nil
-}
-
-func (b *Webhook) PersistDeployment(d models.Deployment, eventType string) error {
-	depEvent := models.ConvertDepToDepEvent(d, eventType)
-	b.depEventChan <- &depEvent
-	return nil
-}
-
-func (b *Webhook) PersistReplicaSet(rs models.ReplicaSet, eventType string) error {
-	rsEvent := models.ConvertRsToRsEvent(rs, eventType)
-	b.rsEventChan <- &rsEvent
-	return nil
-}
-
-func (b *Webhook) PersistEndpoints(ep models.Endpoints, eventType string) error {
-	epEvent := models.ConvertEpToEpEvent(ep, eventType)
-	b.epEventChan <- &epEvent
-	return nil
-}
-
-func (b *Webhook) PersistDaemonSet(ds models.DaemonSet, eventType string) error {
-	dsEvent := models.ConvertDsToDsEvent(ds, eventType)
-	b.dsEventChan <- &dsEvent
-	return nil
-}
-
-func (b *Webhook) PersistStatefulSet(ss models.StatefulSet, eventType string) error {
-	ssEvent := models.ConvertSsToSsEvent(ss, eventType)
-	b.ssEventChan <- &ssEvent
-	return nil
-}
-
-func (b *Webhook) PersistContainer(c models.Container, eventType string) error {
-	cEvent := models.ConvertContainerToContainerEvent(c, eventType)
-	b.containerEventChan <- &cEvent
-	return nil
 }
 
 type HealthCheckAction string
@@ -314,7 +260,7 @@ const (
 	HealthCheckActionOK   HealthCheckAction = "ok"
 )
 
-func (b *Webhook) SendHealthCheck(tracing bool, metrics bool, logs bool, nsFilter string, k8sVersion string) chan HealthCheckAction {
+func (b *Sender) SendHealthCheck(tracing bool, metrics bool, logs bool, nsFilter string, k8sVersion string) chan HealthCheckAction {
 	t := time.NewTicker(10 * time.Second)
 	// defer t.Stop()
 
@@ -354,23 +300,10 @@ func (b *Webhook) SendHealthCheck(tracing bool, metrics bool, logs bool, nsFilte
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Accept", "application/json")
 
-		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		// defer cancel()
-
-		resp, err := b.c.Do(req.WithContext(ctx))
-		if err != nil {
+		if err := b.DoRequest(req); err != nil {
 			logger.Logger().Error().Msgf("error sending healtcheck request, %v", err)
 			return
 		}
-
-		if resp.StatusCode == http.StatusPaymentRequired {
-			ch <- HealthCheckActionStop
-		} else if resp.StatusCode == http.StatusOK {
-			ch <- HealthCheckActionOK
-		}
-
-		_, _ = io.Copy(io.Discard, resp.Body) // in order to reuse the connection
-		resp.Body.Close()
 	}
 
 	go func() {
@@ -382,31 +315,31 @@ func (b *Webhook) SendHealthCheck(tracing bool, metrics bool, logs bool, nsFilte
 	return ch
 }
 
-func (b *Webhook) scrapeNodeMetrics() (io.Reader, error) {
-	// get node metrics from node-exporter
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%d/inner/metrics", innerMetricsPort), nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating inner metrics request: %v", err)
-	}
+// func (b *Sender) scrapeNodeMetrics() (io.Reader, error) {
+// 	// get node metrics from node-exporter
+// 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%d/inner/metrics", innerMetricsPort), nil)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error creating inner metrics request: %v", err)
+// 	}
 
-	ctx, cancel := context.WithTimeout(b.ctx, 5*time.Second)
-	// defer cancel()
-	// do not defer cancel here, since we return the reader to the caller on success
-	// if deferred, there will be a race condition between the caller and the defer
+// 	ctx, cancel := context.WithTimeout(b.ctx, 5*time.Second)
+// 	// defer cancel()
+// 	// do not defer cancel here, since we return the reader to the caller on success
+// 	// if deferred, there will be a race condition between the caller and the defer
 
-	// use the default client, ds client reads response on success to look for failed events,
-	// therefore body here will be empty
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+// 	// use the default client, ds client reads response on success to look for failed events,
+// 	// therefore body here will be empty
+// 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 
-	if err != nil {
-		cancel()
-		return nil, fmt.Errorf("error sending inner metrics request: %v", err)
-	}
+// 	if err != nil {
+// 		cancel()
+// 		return nil, fmt.Errorf("error sending inner metrics request: %v", err)
+// 	}
 
-	if resp.StatusCode != http.StatusOK {
-		cancel()
-		return nil, fmt.Errorf("inner metrics request not success: %d", resp.StatusCode)
-	}
+// 	if resp.StatusCode != http.StatusOK {
+// 		cancel()
+// 		return nil, fmt.Errorf("inner metrics request not success: %d", resp.StatusCode)
+// 	}
 
-	return resp.Body, nil
-}
+// 	return resp.Body, nil
+// }

@@ -9,9 +9,10 @@ import (
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/opisvigilant/futura/watcher/internal/collector"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/handlers"
-	"github.com/opisvigilant/futura/watcher/internal/kubernetes"
+	"github.com/opisvigilant/futura/watcher/internal/sender"
+
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -46,38 +47,17 @@ events to the backend`,
 			cancel()
 		}()
 
-		// var nsFilterRx *regexp.Regexp
-		// if os.Getenv("EXCLUDE_NAMESPACES") != "" {
-		// 	nsFilterRx = regexp.MustCompile(os.Getenv("EXCLUDE_NAMESPACES"))
-		// }
-
-		// var nsFilterStr string
-		// if nsFilterRx != nil {
-		// 	nsFilterStr = nsFilterRx.String()
-		// }
-
 		// Kubernetes events
-		var kubernetesCollector *kubernetes.Collector
-		kuberneteEvents := make(chan any, 1000)
+		events := make(chan any, 10000)
 
-		var err error
-		kubernetesCollector, err = kubernetes.New(watcherCfg, ctx)
-		if err != nil {
-			panic(err)
-		}
-		k8sVersion := kubernetesCollector.GetK8sVersion()
-		logger.Logger().Info().Msgf("Current Kubernetes version %s", k8sVersion)
-		go kubernetesCollector.Start(kuberneteEvents)
+		// define where to route the events
+		sender := sender.New(watcherCfg)
 
-		// where to route the events
-		eventHandler, err := handlers.New(watcherCfg)
-		if err != nil {
-			panic(fmt.Errorf("initHandler failed"))
-		}
+		// create the generic collector
+		collector := collector.New(watcherCfg, ctx, sender)
+		collector.Run(events)
 
-		go eventHandler.HandleKubernetesEvent()
-
-		<-kubernetesCollector.Done()
+		<-collector.Done()
 		logger.Logger().Info().Msg("Collector done")
 		logger.Logger().Info().Msg("Futura exiting...")
 	},

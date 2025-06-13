@@ -9,7 +9,7 @@ import (
 
 func main() {
 	r := gin.Default()
-	r.POST("/events", func(c *gin.Context) {
+	r.POST("/*any", func(c *gin.Context) {
 		b, err := c.GetRawData()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -25,5 +25,5 @@ func main() {
 			"message": "event accepted",
 		})
 	})
-	r.Run("0.0.0.0:9999") // listen and serve on 0.0.0.0:8080
+	r.Run(":9999") // listen and serve on 0.0.0.0:8080
 }
