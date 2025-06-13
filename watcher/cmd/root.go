@@ -11,8 +11,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/opisvigilant/futura/watcher/internal/collector"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/sender"
-
+	"github.com/opisvigilant/futura/watcher/internal/handlers"
+	"github.com/opisvigilant/futura/watcher/internal/kubernetes"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -47,19 +47,25 @@ events to the backend`,
 			cancel()
 		}()
 
+		// where to route the events
+		eventHandler, err := handlers.New(watcherCfg)
+		if err != nil {
+			panic(fmt.Errorf("initHandler failed"))
+		}
+
 		// Kubernetes events
-		events := make(chan any, 10000)
+		kuberneteEvents := make(chan any, 1000)
+		ctrl, err := kubernetes.New(watcherCfg, kuberneteEvents)
+		if err != nil {
+			panic(fmt.Errorf("controller New failed"))
+		}
+		go ctrl.Start()
 
-		// define where to route the events
-		sender := sender.New(watcherCfg)
+		col := collector.NewCollector(ctx, eventHandler)
+		col.Run(kuberneteEvents)
 
-		// create the generic collector
-		collector := collector.New(watcherCfg, ctx, sender)
-		collector.Run(events)
-
-		<-collector.Done()
+		<-col.Done()
 		logger.Logger().Info().Msg("Collector done")
-		logger.Logger().Info().Msg("Futura exiting...")
 	},
 }
 
