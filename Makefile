@@ -94,3 +94,21 @@ watcher-docker-build:
 .PHONY: watcher-docker-push
 watcher-docker-push: 
 	$(MAKE) -C watcher docker-push
+
+##@ Frontend
+
+.PHONY: frontend-dev
+frontend-dev:
+	$(MAKE) -C frontend dev
+
+.PHONY: frontend-build
+frontend-build:
+	$(MAKE) -C frontend build	
+
+.PHONY: frontend-preview
+frontend-preview:
+	$(MAKE) -C frontend preview
+
+.PHONY: frontend-lint
+frontend-lint:
+	$(MAKE) -C frontend lint

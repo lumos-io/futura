@@ -9,3 +9,7 @@ This is a monorepo containing multiple go modules. To start with, run the follow
 ```make
 $: make dev-env
 ```
+
+## Frontend
+
+You need to have `bun` installed in your system
