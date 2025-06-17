@@ -1,3 +1,7 @@
+PROTO_DIR=proto/messages
+OUT_DIR=proto/gen
+PROTOC_GEN_GO=$(shell which protoc-gen-go)
+PROTOC_GEN_GO_GRPC=$(shell which protoc-gen-go-grpc)
 GO_WORK_FILE=./go.work
 
 PHONY: dev-env
@@ -10,9 +14,21 @@ endif
 	go work use -r .
 	go work sync
 
-PHONY: run-watcher
-run-watcher:
-	go run watcher/main.go
+##@ Proto 
+
+.PHONY: proto-messages
+proto-messages: proto-clean
+	@echo "Generating shared message protos..."
+	mkdir -p $(OUT_DIR)
+	protoc --proto_path=proto --go_out=$(OUT_DIR) --go_opt=paths=source_relative $(wildcard $(PROTO_DIR)/*.proto)
+
+.PHONY: proto-pipeline
+proto-pipeline: 
+	$(MAKE) -C pipeline proto-generate
+
+.PHONY: proto-clean
+proto-clean:
+	rm -rf proto/gen
 
 ##@ Operator Build
 .PHONY: operator-manifests
@@ -77,6 +93,11 @@ operator-undeploy:
 	$(MAKE) -C operator undeploy		
 
 ##@ Watcher Run
+##@ Watcher
+PHONY: run-watcher
+run-watcher:
+	go run watcher/main.go
+
 .PHONY: watcher-e2e
 watcher-e2e:
 	$(MAKE) -C watcher e2e

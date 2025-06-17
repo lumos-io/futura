@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package messages;
 
-option go_package = "github.com/your-org/your-repo/proto/messages;messages";
+option go_package = "github.com/opisvigilant/futura/proto/gen/messages;messages";
 
 message Metadata {
   string cluster_id = 1;
