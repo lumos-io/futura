@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package messages;
+
+option go_package = "github.com/your-org/your-repo/proto/messages;messages";
+
+message Metadata {
+  string cluster_id = 1;
+  string node_name = 2;
+  string namespace = 3;
+  string pod_name = 4;
+  string container_name = 5;
+  string source = 6; // e.g. "watcher", "metrics-agent"
+  string timestamp_utc = 7; // ISO8601 or RFC3339 string
+}
+
+message KubernetesEvent {
+  Metadata metadata = 1;
+
+  string type = 2;        // "Normal" or "Warning"
+  string reason = 3;      // e.g. "Created", "Scheduled", etc.
+  string message = 4;     // Human-readable message
+  string involved_object_kind = 5;
+  string involved_object_name = 6;
+  string involved_object_uid = 7;
+  string event_type = 8;  // "ADDED", "MODIFIED", "DELETED"
+  string source_component = 9;
+  string first_timestamp = 10;
+  string last_timestamp = 11;
+  int32 count = 12;
+}
+
+message ContainerMetric {
+  Metadata metadata = 1;
+
+  double cpu_usage_cores = 2;              // in CPU cores (e.g. 0.25)
+  uint64 memory_usage_bytes = 3;           // current memory usage
+  uint64 memory_working_set_bytes = 4;     // working set size
+  uint64 rx_bytes = 5;                     // network received bytes
+  uint64 tx_bytes = 6;                     // network transmitted bytes
+  uint64 fs_usage_bytes = 7;               // filesystem usage
+  double cpu_limit_cores = 8;              // from spec
+  uint64 memory_limit_bytes = 9;           // from spec
+}

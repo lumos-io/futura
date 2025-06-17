@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pipeline.collect;
+
+import "messages/collect.proto";
+
+service CollectService {
+  rpc SendEvent (messages.K8sEvent) returns (CollectAck);
+  rpc SendMetric (messages.ContainerMetric) returns (CollectAck);
+}
+
+message CollectAck {
+  string status = 1; // "ok", "error"
+  string message = 2;
+}
