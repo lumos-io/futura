@@ -6,8 +6,7 @@ import (
 
 	"github.com/opisvigilant/futura/pipeline/internal/config"
 	"github.com/opisvigilant/futura/pipeline/pkg/stream"
-	pb "github.com/opisvigilant/futura/pipeline/proto/gen/services"
-	msg "github.com/opisvigilant/futura/proto/gen/messages"
+	pb "github.com/opisvigilant/futura/proto/gen/events"
 )
 
 type CollectServer struct {
@@ -27,7 +26,7 @@ func NewCollectServer(config *config.Configuration) (*CollectServer, error) {
 	}, nil
 }
 
-func (s *CollectServer) SendEvent(ctx context.Context, req *msg.KubernetesEventBatch) (*pb.CollectAck, error) {
+func (s *CollectServer) SendEvent(ctx context.Context, req *pb.KubernetesEventBatch) (*pb.CollectAck, error) {
 	for _, event := range req.Events {
 		if err := s.streamClient.Publish("raw.k8s.events", []byte(event.String())); err != nil {
 			return nil, err
@@ -36,7 +35,7 @@ func (s *CollectServer) SendEvent(ctx context.Context, req *msg.KubernetesEventB
 	return &pb.CollectAck{Status: "ok", Message: "event received"}, nil
 }
 
-func (s *CollectServer) SendMetric(ctx context.Context, req *msg.ContainerMetricBatch) (*pb.CollectAck, error) {
+func (s *CollectServer) SendMetric(ctx context.Context, req *pb.ContainerMetricBatch) (*pb.CollectAck, error) {
 	for _, metric := range req.Metrics {
 		if err := s.streamClient.Publish("raw.k8s.metrics", []byte(metric.String())); err != nil {
 			return nil, err

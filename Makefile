@@ -1,4 +1,4 @@
-PROTO_DIR=proto/messages
+PROTO_DIR=proto/events
 OUT_DIR=proto/gen
 PROTOC_GEN_GO=$(shell which protoc-gen-go)
 PROTOC_GEN_GO_GRPC=$(shell which protoc-gen-go-grpc)
@@ -16,15 +16,12 @@ endif
 
 ##@ Proto 
 
-.PHONY: proto-messages
-proto-messages: proto-clean
-	@echo "Generating shared message protos..."
+.PHONY: proto-events
+proto-events: proto-clean
+	@echo "Generating shared events protos..."
 	mkdir -p $(OUT_DIR)
 	protoc --proto_path=proto --go_out=$(OUT_DIR) --go_opt=paths=source_relative $(wildcard $(PROTO_DIR)/*.proto)
 
-.PHONY: proto-pipeline
-proto-pipeline: 
-	$(MAKE) -C pipeline proto-generate
 
 .PHONY: proto-clean
 proto-clean:
