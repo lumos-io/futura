@@ -20,14 +20,6 @@ var rootCmd = &cobra.Command{
 	Long: `This application is used to accepts all the Kubernetes events and metrics-server signals that are pushed by the watcher.
 The events are sent through a pipeline with different stages before landing to the Storage where they can be queried.`,
 	PersistentPreRunE: setupConfiguration,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	Run: func(cmd *cobra.Command, args []string) {
-		if pipelineCfg == nil {
-			panic(fmt.Errorf("configuration has not loaded correctly"))
-		}
-
-	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

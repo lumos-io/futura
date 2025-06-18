@@ -42,3 +42,11 @@ message ContainerMetric {
   double cpu_limit_cores = 8;              // from spec
   uint64 memory_limit_bytes = 9;           // from spec
 }
+
+message KubernetesEventBatch {
+  repeated KubernetesEvent events = 1;
+}
+
+message ContainerMetricBatch {
+  repeated ContainerMetric metrics = 1;
+}

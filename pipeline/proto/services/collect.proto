@@ -7,8 +7,8 @@ option go_package = "github.com/opisvigilant/futura/pipeline/proto/gen;collect";
 import "messages/collect.proto";
 
 service CollectService {
-  rpc SendEvent (messages.KubernetesEvent) returns (CollectAck);
-  rpc SendMetric (messages.ContainerMetric) returns (CollectAck);
+  rpc SendEvent (messages.KubernetesEventBatch) returns (CollectAck);
+  rpc SendMetric (messages.ContainerMetricBatch) returns (CollectAck);
 }
 
 message CollectAck {

@@ -6,8 +6,9 @@ import (
 
 // Config struct contains watcher configuration
 type Configuration struct {
-	Debug bool `toml:"debug"`
-	Nats *Nats `toml:"nats"`
+	Debug   bool     `toml:"debug"`
+	Nats    *Nats    `toml:"nats"`
+	Collect *Collect `toml:"collect"`
 }
 
 type Kubernetes struct {
@@ -18,12 +19,21 @@ type Nats struct {
 	Servers []string `tomls:"servers"`
 }
 
+type Collect struct {
+	Host string `toml:"host"`
+	Port string `toml:"port"`
+}
+
 func Fetch() *Configuration {
 	return &Configuration{
 		Debug: getBoolOrDefault("debug", true),
 		Nats: &Nats{
-			Servers: viper.GetStringSlice(""),
-		}
+			Servers: viper.GetStringSlice("nats.servers"),
+		},
+		Collect: &Collect{
+			Host: getStringOrDefault("collect.host", ""),
+			Port: getStringOrDefault("collect.port", "50051"),
+		},
 	}
 }
 

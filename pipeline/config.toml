@@ -6,3 +6,7 @@ debug = true
 
 [nats]
 servers = ["nats://localhost:4222"]
+
+[collect]
+host = "localhost"
+port = "50051"
