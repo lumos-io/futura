@@ -223,6 +223,7 @@ func (b *Sender) send(ch <-chan any, endpoint string) {
 		return
 	}
 
+	// TODO: make this compatible with the gRPC
 	payload := models.EventPayload{
 		Metadata: models.Metadata{
 			IdempotencyKey: uuid.NewString(),

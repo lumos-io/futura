@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/opisvigilant/futura/pipeline/internal/collect"
-	pb "github.com/opisvigilant/futura/pipeline/proto/gen/services"
+	pb "github.com/opisvigilant/futura/proto/events/gen"
 )
 
 // collectCmd represents the collect command

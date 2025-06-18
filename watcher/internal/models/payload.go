@@ -65,6 +65,7 @@ type DsEvent struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
+
 type SsEvent struct {
 	UID       string `json:"uid"`
 	EventType string `json:"event_type"`
