@@ -7,15 +7,23 @@ import (
 // Config struct contains watcher configuration
 type Configuration struct {
 	Debug bool `toml:"debug"`
+	Nats *Nats `toml:"nats"`
 }
 
 type Kubernetes struct {
 	InCluster bool `toml:"inCluster"`
 }
 
+type Nats struct {
+	Servers []string `tomls:"servers"`
+}
+
 func Fetch() *Configuration {
 	return &Configuration{
 		Debug: getBoolOrDefault("debug", true),
+		Nats: &Nats{
+			Servers: viper.GetStringSlice(""),
+		}
 	}
 }
 
