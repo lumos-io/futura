@@ -24,7 +24,7 @@ type Kubernetes struct {
 
 func Fetch() *Configuration {
 	return &Configuration{
-		Debug:    getBoolOrDefault("debug", true),
+		Debug:    viper.GetBool("debug"),
 		NodeName: getStringOrDefault("nodeName", "localhost"),
 		Tag:      getStringOrDefault("tag", "v0.0.1"),
 		Collect: &Collect{
@@ -32,7 +32,7 @@ func Fetch() *Configuration {
 			Port: getStringOrDefault("collect.port", "50051"),
 		},
 		Kubernetes: &Kubernetes{
-			InCluster: getBoolOrDefault("kubernetes.inCluster", false),
+			InCluster: viper.GetBool("kubernetes.inCluster"),
 		},
 	}
 }
@@ -44,14 +44,6 @@ func (c *Configuration) Validate() error {
 func getStringOrDefault(key string, defaultValue string) string {
 	value := viper.GetString(key)
 	if value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-func getBoolOrDefault(key string, defaultValue bool) bool {
-	value := viper.GetBool(key)
-	if !value {
 		return value
 	}
 	return defaultValue

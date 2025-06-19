@@ -7,6 +7,10 @@ SHARED_PROTO_DIR=../proto
 PROTOC_GEN_GO=$(shell which protoc-gen-go)
 PROTOC_GEN_GO_GRPC=$(shell which protoc-gen-go-grpc)
 
+.PHONY: deploy
+deploy:
+	KO_DOCKER_REPO=docker.io/davideberdin ko apply -f deploy/pipeline.yaml
+
 # SERVICE_PROTOS=$(wildcard $(SERVICE_PROTO_DIR)/*.proto)
 
 # .PHONY: proto-generate proto-clean

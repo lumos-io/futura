@@ -26,7 +26,7 @@ type Collect struct {
 
 func Fetch() *Configuration {
 	return &Configuration{
-		Debug: getBoolOrDefault("debug", true),
+		Debug: viper.GetBool("debug"),
 		Nats: &Nats{
 			Servers: viper.GetStringSlice("nats.servers"),
 		},
@@ -44,14 +44,6 @@ func (c *Configuration) Validate() error {
 func getStringOrDefault(key string, defaultValue string) string {
 	value := viper.GetString(key)
 	if value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-func getBoolOrDefault(key string, defaultValue bool) bool {
-	value := viper.GetBool(key)
-	if !value {
 		return value
 	}
 	return defaultValue

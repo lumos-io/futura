@@ -100,9 +100,9 @@ PHONY: run-watcher
 run-watcher:
 	go run watcher/main.go
 
-.PHONY: watcher-e2e
+.PHONY: watcher-deploy
 watcher-e2e:
-	$(MAKE) -C watcher e2e
+	$(MAKE) -C watcher deploy
 
 .PHONY: watcher-run
 watcher-run:

@@ -32,6 +32,8 @@ type Collector struct {
 func New(cfg *config.Configuration, parentCtx context.Context, sender *sender.Sender) (*Collector, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 
+	logger.Logger().Info().Msgf("in cluster value: %v", cfg.Kubernetes.InCluster)
+
 	k8sClient, err := k8s.New(cfg.Kubernetes.InCluster)
 	if err != nil {
 		defer cancel()

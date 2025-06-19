@@ -10,9 +10,9 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-.PHONY: e2e
-e2e:
-	go run e2e/main.go
+.PHONY: deploy
+deploy:
+	KO_DOCKER_REPO=docker.io/davideberdin ko apply -f deploy/watcher.yaml
 
 .PHONY: run
 run:

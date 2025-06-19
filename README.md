@@ -16,4 +16,6 @@ You need to have `bun` installed in your system
 
 ## Kubernetes
 
-Spin up a `kind` cluster and deploy the manifests that are in the `kind` folder of this project.
+Spin up a `kind` cluster and deploy the manifests that are in the `kind` folder of this project. You also need to have `ko` installed in the system to quickly run the projects in the `kind` cluster.
+
+Make sure to have run `docker login` to push images to the registry.

@@ -1,26 +1,28 @@
 ---
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  name: watcher
+  name: pipeline
   namespace: default
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: watcher
-      app.kubernetes.io/instance: watcher
+      app.kubernetes.io/name: pipeline
+      app.kubernetes.io/instance: pipeline
+  replicas: 1
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: watcher
-        app.kubernetes.io/instance: watcher
+        app.kubernetes.io/name: pipeline
+        app.kubernetes.io/instance: pipeline
     spec:
       restartPolicy: Always
-      serviceAccountName: watcher
+      serviceAccountName: pipeline
       hostNetwork: true
       containers:
-        - name: watcher
-          image: ko://github.com/opisvigilant/futura/watcher
+        - name: pipeline
+          image: ko://github.com/opisvigilant/futura/pipeline
+          args: ["collect"]
           resources:
             limits:
               cpu: "1"
@@ -28,9 +30,9 @@ spec:
             requests: {}
           volumeMounts:
             - name: configuration
-              mountPath: /opt/watcher/config.toml
+              mountPath: /opt/pipeline/config.toml
               subPath: config.toml
       volumes:
         - name: configuration
           configMap:
-            name: watcher-config
+            name: pipeline-config

@@ -8,18 +8,17 @@ metadata:
     app.kubernetes.io/instance: watcher
 data:
   config.toml: |
-    # Configuration file running Norman locally
+    # Configuration file running Watcher locally
 
-    title = "Configuration for Watcher that is running on a pod"
+    title = "Configuration for Watcher Kubernetes"
 
-    debug = false
-    enablePprof = true
+    debug = true
+    nodeName = "locahost"
+    tag = "v0.0.1"
 
-    [handler]
-    [handler.console]
-    color = false
+    [collect]
+    host = "localhost"
+    port = "50051"
 
-    [handler.webhook]
-    url = ""
-    cert = ""
-    tlsSkip = true
+    [kubernetes]
+    inCluster = true
