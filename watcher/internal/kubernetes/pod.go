@@ -1,36 +1,29 @@
 package kubernetes
 
 import (
+	"github.com/opisvigilant/futura/watcher/internal/models"
 	corev1 "k8s.io/api/core/v1"
 )
 
 type Container struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	PodUID    string `json:"pod"` // Pod UID
-	Image     string `json:"image"`
-	Ports     []struct {
-		Port     int32  `json:"port"`
-		Protocol string `json:"protocol"`
-	} `json:"ports"`
+	Name      string               `json:"name"`
+	Namespace string               `json:"namespace"`
+	PodUID    string               `json:"pod"` // Pod UID
+	Image     string               `json:"image"`
+	Ports     []models.AddressPort `json:"ports"`
 }
 
 func getContainers(pod *corev1.Pod) []*Container {
 	containers := make([]*Container, 0)
 
 	for _, container := range pod.Spec.Containers {
-		ports := make([]struct {
-			Port     int32  "json:\"port\""
-			Protocol string "json:\"protocol\""
-		}, 0)
+		ports := make([]models.AddressPort, 0)
 
 		for _, port := range container.Ports {
-			ports = append(ports, struct {
-				Port     int32  "json:\"port\""
-				Protocol string "json:\"protocol\""
-			}{
+			ports = append(ports, models.AddressPort{
 				Port:     port.ContainerPort,
 				Protocol: string(port.Protocol),
+				Name:     port.Name,
 			})
 		}
 

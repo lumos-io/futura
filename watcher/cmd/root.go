@@ -51,7 +51,10 @@ events to the backend`,
 		events := make(chan any, 10000)
 
 		// define where to route the events
-		sender := sender.New(watcherCfg)
+		sender, err := sender.New(watcherCfg)
+		if err != nil {
+			panic(err)
+		}
 
 		// create the generic collector
 		collector := collector.New(watcherCfg, ctx, sender)

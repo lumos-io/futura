@@ -158,7 +158,6 @@ message ContainerPort {
   string protocol = 2;
 }
 
-
 message ContainerMetric {
   Metadata metadata = 1;
 

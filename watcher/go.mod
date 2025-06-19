@@ -5,7 +5,7 @@ go 1.24.1
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/uuid v1.6.0
-	github.com/opisvigilant/futura/proto v0.0.0-20250619115846-a3bc89058a78
+	github.com/opisvigilant/futura/proto v0.0.0-20250619125831-33ea686c35c7
 	github.com/spf13/cobra v1.9.1
 	google.golang.org/grpc v1.73.0
 	k8s.io/api v0.33.1

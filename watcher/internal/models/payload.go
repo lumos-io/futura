@@ -30,12 +30,11 @@ func ConvertPodToPodEvent(pod Pod, eventType string) *pb.PodEvent {
 }
 
 func ConvertSvcToSvcEvent(service Service, eventType string) *pb.SvcEvent {
-	ports := make([]*pb.Port, len(service.Ports))
+	ports := make([]*pb.AddressPort, len(service.Ports))
 	for _, p := range service.Ports {
-		ports = append(ports, &pb.Port{
+		ports = append(ports, &pb.AddressPort{
 			Name:     p.Name,
-			Src:      p.Src,
-			Dest:     p.Dest,
+			Port:     p.Dest,
 			Protocol: p.Protocol,
 		})
 	}
@@ -65,7 +64,7 @@ func ConvertRsToRsEvent(rs ReplicaSet, eventType string) *pb.RsEvent {
 
 func ConvertDsToDsEvent(ds DaemonSet, eventType string) *pb.DsEvent {
 	return &pb.DsEvent{
-		UID:       ds.UID,
+		Uid:       ds.UID,
 		EventType: eventType,
 		Name:      ds.Name,
 		Namespace: ds.Namespace,
@@ -74,7 +73,7 @@ func ConvertDsToDsEvent(ds DaemonSet, eventType string) *pb.DsEvent {
 
 func ConvertSsToSsEvent(ss StatefulSet, eventType string) *pb.SsEvent {
 	return &pb.SsEvent{
-		UID:       ss.UID,
+		Uid:       ss.UID,
 		EventType: eventType,
 		Name:      ss.Name,
 		Namespace: ss.Namespace,
@@ -83,7 +82,7 @@ func ConvertSsToSsEvent(ss StatefulSet, eventType string) *pb.SsEvent {
 
 func ConvertDepToDepEvent(d Deployment, eventType string) *pb.DepEvent {
 	return &pb.DepEvent{
-		UID:       d.UID,
+		Uid:       d.UID,
 		EventType: eventType,
 		Name:      d.Name,
 		Namespace: d.Namespace,
@@ -92,20 +91,37 @@ func ConvertDepToDepEvent(d Deployment, eventType string) *pb.DepEvent {
 }
 
 func ConvertEpToEpEvent(ep Endpoints, eventType string) *pb.EpEvent {
-	addresses := make([]*pb.Address, len(c.Ports))
+	addresses := make([]*pb.Address, len(ep.Addresses))
 	for _, a := range ep.Addresses {
-		addr := &pb.Address{}
+		ips := make([]*pb.AddressIP, len(a.IPs))
 		for _, ip := range a.IPs {
-			addr.
+			ips = append(ips, &pb.AddressIP{
+				Id:        ip.ID,
+				Ip:        ip.IP,
+				Type:      ip.Type,
+				Name:      ip.Name,
+				Namespace: ip.Namespace,
+			})
 		}
-		addresses = append(addresses)
+		ports := make([]*pb.AddressPort, len(a.Ports))
+		for _, port := range a.Ports {
+			ports = append(ports, &pb.AddressPort{
+				Port:     port.Port,
+				Protocol: port.Protocol,
+				Name:     port.Name,
+			})
+		}
+		addresses = append(addresses, &pb.Address{
+			Ips:   ips,
+			Ports: ports,
+		})
 	}
 	return &pb.EpEvent{
-		UID:       ep.UID,
+		Uid:       ep.UID,
 		EventType: eventType,
 		Name:      ep.Name,
 		Namespace: ep.Namespace,
-		Addresses: ep.Addresses,
+		Addresses: addresses,
 	}
 }
 
@@ -113,7 +129,11 @@ func ConvertContainerToContainerEvent(c Container, eventType string) *pb.Contain
 	ports := make([]*pb.ContainerPort, len(c.Ports))
 	for _, p := range c.Ports {
 		ports = append(ports, &pb.ContainerPort{
-			Port:     p.Port,
+			Port: &pb.AddressPort{
+				Port:     p.Port,
+				Protocol: p.Protocol,
+				Name:     p.Name,
+			},
 			Protocol: p.Protocol,
 		})
 	}

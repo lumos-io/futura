@@ -68,7 +68,11 @@ func (a *Collector) processPod(d kubernetes.ResourceMessage) {
 
 func (a *Collector) persistSvc(service models.Service, eventType string) {
 	svcEvent := models.ConvertSvcToSvcEvent(service, eventType)
-	a.sender.ServiceEventChan <- &svcEvent
+	a.sender.ServiceEventChan <- &pb.KubernetesEvent{
+		Event: &pb.KubernetesEvent_Svc{
+			Svc: svcEvent,
+		},
+	}
 }
 
 func (a *Collector) processSvc(d kubernetes.ResourceMessage) {
@@ -116,7 +120,11 @@ func (a *Collector) processSvc(d kubernetes.ResourceMessage) {
 
 func (a *Collector) persistReplicaSet(rs models.ReplicaSet, eventType string) {
 	rsEvent := models.ConvertRsToRsEvent(rs, eventType)
-	a.sender.ReplicaSetEventChan <- &rsEvent
+	a.sender.ReplicaSetEventChan <- &pb.KubernetesEvent{
+		Event: &pb.KubernetesEvent_Rs{
+			Rs: rsEvent,
+		},
+	}
 }
 
 func (a *Collector) processReplicaSet(d kubernetes.ResourceMessage) {
@@ -162,38 +170,53 @@ func (a *Collector) processDeployment(d kubernetes.ResourceMessage) {
 		Replicas:  deployment.Status.Replicas,
 	}
 
+	var depEvent *pb.DepEvent
 	switch d.EventType {
 	case kubernetes.ADD:
-		depEvent := models.ConvertDepToDepEvent(dto, ADD)
-		a.sender.DeploymentEventChan <- &depEvent
+		depEvent = models.ConvertDepToDepEvent(dto, ADD)
 	case kubernetes.UPDATE:
-		depEvent := models.ConvertDepToDepEvent(dto, UPDATE)
-		a.sender.DeploymentEventChan <- &depEvent
+		depEvent = models.ConvertDepToDepEvent(dto, UPDATE)
 	case kubernetes.DELETE:
-		depEvent := models.ConvertDepToDepEvent(dto, DELETE)
-		a.sender.DeploymentEventChan <- &depEvent
+		depEvent = models.ConvertDepToDepEvent(dto, DELETE)
+	}
+	a.sender.DeploymentEventChan <- &pb.KubernetesEvent{
+		Event: &pb.KubernetesEvent_Dep{
+			Dep: depEvent,
+		},
 	}
 }
 
 func (a *Collector) processContainer(d kubernetes.ResourceMessage) {
 	c := d.Object.(*kubernetes.Container)
 
+	ports := make([]models.AddressPort, len(c.Ports))
+	for _, port := range c.Ports {
+		ports = append(ports, models.AddressPort{
+			Port:     port.Port,
+			Protocol: port.Protocol,
+			Name:     port.Name,
+		})
+	}
+
 	dto := models.Container{
 		Name:      c.Name,
 		Namespace: c.Namespace,
 		PodUID:    c.PodUID,
 		Image:     c.Image,
-		Ports:     c.Ports,
+		Ports:     ports,
 	}
 
+	var cEvent *pb.ContainerEvent
 	switch d.EventType {
 	case kubernetes.ADD:
-		cEvent := models.ConvertContainerToContainerEvent(dto, ADD)
-		a.sender.ContainerEventChan <- &cEvent
+		cEvent = models.ConvertContainerToContainerEvent(dto, ADD)
 	case kubernetes.UPDATE:
-		cEvent := models.ConvertContainerToContainerEvent(dto, UPDATE)
-		a.sender.ContainerEventChan <- &cEvent
-		// No need for  delete container
+		cEvent = models.ConvertContainerToContainerEvent(dto, UPDATE)
+	}
+	a.sender.ContainerEventChan <- &pb.KubernetesEvent{
+		Event: &pb.KubernetesEvent_Container{
+			Container: cEvent,
+		},
 	}
 }
 
@@ -250,16 +273,19 @@ func (a *Collector) processEndpoints(ep kubernetes.ResourceMessage) {
 		Addresses: adrs,
 	}
 
+	var epEvent *pb.EpEvent
 	switch ep.EventType {
 	case kubernetes.ADD:
-		epEvent := models.ConvertEpToEpEvent(dto, ADD)
-		a.sender.EndpointEventChan <- &epEvent
+		epEvent = models.ConvertEpToEpEvent(dto, ADD)
 	case kubernetes.UPDATE:
-		epEvent := models.ConvertEpToEpEvent(dto, UPDATE)
-		a.sender.EndpointEventChan <- &epEvent
+		epEvent = models.ConvertEpToEpEvent(dto, UPDATE)
 	case kubernetes.DELETE:
-		epEvent := models.ConvertEpToEpEvent(dto, DELETE)
-		a.sender.EndpointEventChan <- &epEvent
+		epEvent = models.ConvertEpToEpEvent(dto, DELETE)
+	}
+	a.sender.EndpointEventChan <- &pb.KubernetesEvent{
+		Event: &pb.KubernetesEvent_Ep{
+			Ep: epEvent,
+		},
 	}
 }
 
@@ -272,16 +298,19 @@ func (a *Collector) processDaemonSet(d kubernetes.ResourceMessage) {
 		Namespace: daemonSet.Namespace,
 	}
 
+	var dsEvent *pb.DsEvent
 	switch d.EventType {
 	case kubernetes.ADD:
-		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, ADD)
-		a.sender.DaemonSetEventChan <- &dsEvent
+		dsEvent = models.ConvertDsToDsEvent(dtoDaemonSet, ADD)
 	case kubernetes.UPDATE:
-		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, UPDATE)
-		a.sender.DaemonSetEventChan <- &dsEvent
+		dsEvent = models.ConvertDsToDsEvent(dtoDaemonSet, UPDATE)
 	case kubernetes.DELETE:
-		dsEvent := models.ConvertDsToDsEvent(dtoDaemonSet, DELETE)
-		a.sender.DaemonSetEventChan <- &dsEvent
+		dsEvent = models.ConvertDsToDsEvent(dtoDaemonSet, DELETE)
+	}
+	a.sender.DaemonSetEventChan <- &pb.KubernetesEvent{
+		Event: &pb.KubernetesEvent_Ds{
+			Ds: dsEvent,
+		},
 	}
 }
 
@@ -294,15 +323,18 @@ func (a *Collector) processStatefulSet(d kubernetes.ResourceMessage) {
 		Namespace: statefulSet.Namespace,
 	}
 
+	var ssEvent *pb.SsEvent
 	switch d.EventType {
 	case kubernetes.ADD:
-		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, ADD)
-		a.sender.StatefulSetEventChan <- &ssEvent
+		ssEvent = models.ConvertSsToSsEvent(dtoStatefulSet, ADD)
 	case kubernetes.UPDATE:
-		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, UPDATE)
-		a.sender.StatefulSetEventChan <- &ssEvent
+		ssEvent = models.ConvertSsToSsEvent(dtoStatefulSet, UPDATE)
 	case kubernetes.DELETE:
-		ssEvent := models.ConvertSsToSsEvent(dtoStatefulSet, DELETE)
-		a.sender.StatefulSetEventChan <- &ssEvent
+		ssEvent = models.ConvertSsToSsEvent(dtoStatefulSet, DELETE)
+	}
+	a.sender.StatefulSetEventChan <- &pb.KubernetesEvent{
+		Event: &pb.KubernetesEvent_Ss{
+			Ss: ssEvent,
+		},
 	}
 }

@@ -13,3 +13,7 @@ $: make dev-env
 ## Frontend
 
 You need to have `bun` installed in your system
+
+## Kubernetes
+
+Spin up a `kind` cluster and deploy the manifests that are in the `kind` folder of this project.
