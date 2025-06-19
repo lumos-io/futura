@@ -6,15 +6,9 @@ debug = true
 nodeName = "localhost"
 tag = "v0.0.1"
 
-[handler]
-[handler.console]
-color = true
-
-[handler.webhook]
-url = "http://localhost:9999/events"
-batchSize = 1000
-cert = ""
-tlsSkip = true
+[collect]
+host = "localhost"
+port = "50051"
 
 [kubernetes]
 inCluster = false # true when the agent is deployed within the kubernetes cluster

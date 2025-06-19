@@ -1,9 +1,7 @@
 package sender
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -13,20 +11,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc"
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/internal/models"
+
+	pb "github.com/opisvigilant/futura/proto/events/gen"
 )
 
 // Sender handler implements handler.Handler interface,
 // Notify event to Sender
 type Sender struct {
-	URL string
-
 	ctx       context.Context
-	hc        *http.Client
-	batchSize uint64
+	pbc       pb.CollectServiceClient
+	batchSize int
 
 	PodEventChan         chan any // *PodEvent
 	ServiceEventChan     chan any // *SvcEvent
@@ -39,20 +38,6 @@ type Sender struct {
 	JobEventChan         chan any // *JobEvent
 	CronJobEventChan     chan any // *CronJobEvent
 }
-
-const (
-	podEndpoint         = "/pod/"
-	svcEndpoint         = "/svc/"
-	rsEndpoint          = "/replicaset/"
-	depEndpoint         = "/deployment/"
-	epEndpoint          = "/endpoint/"
-	containerEndpoint   = "/container/"
-	dsEndpoint          = "/daemonset/"
-	ssEndpoint          = "/statefulset/"
-	jobEndpoint         = "/job/"
-	cronJobEndpoint     = "/cronjob/"
-	healthCheckEndpoint = "/healthcheck/"
-)
 
 var tag string
 var kernelVersion string
@@ -116,21 +101,27 @@ func getCloudProvider() CloudProvider {
 }
 
 // Init prepares Webhook configuration
-func New(c *config.Configuration) *Sender {
+func New(c *config.Configuration) (*Sender, error) {
 	tag = c.Tag
-	batchSize := c.Handler.Webhook.BatchSize
 
 	logger.Logger().Info().Str("tag", tag).Msg("watcher tag")
 
 	// kernelVersion = extractKernelVersion()
 	// cloudProvider = getCloudProvider()
 
+	address := fmt.Sprintf("%s:%s", c.Collect.Host, c.Collect.Port)
+	conn, err := grpc.NewClient(address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to gRPC server: %v", err)
+	}
+
+	client := pb.NewCollectServiceClient(conn)
+
 	resourceChanSize := 200
 	s := &Sender{
-		URL:                  c.Handler.Webhook.URL,
 		ctx:                  context.TODO(),
-		hc:                   http.DefaultClient,
-		batchSize:            batchSize,
+		batchSize:            1000,
+		pbc:                  client,
 		PodEventChan:         make(chan any, 5*resourceChanSize),
 		ServiceEventChan:     make(chan any, 2*resourceChanSize),
 		ReplicaSetEventChan:  make(chan any, 2*resourceChanSize),
@@ -150,45 +141,21 @@ func New(c *config.Configuration) *Sender {
 	// it can send upto 12k events in 60 seconds
 	// seems safe enough, if not, we can increase the buffer size
 	eventsInterval := 5 * time.Second
-	go s.sendEventsInBatch(s.PodEventChan, podEndpoint, eventsInterval)
-	go s.sendEventsInBatch(s.ServiceEventChan, svcEndpoint, eventsInterval)
-	go s.sendEventsInBatch(s.ReplicaSetEventChan, rsEndpoint, eventsInterval)
-	go s.sendEventsInBatch(s.DeploymentEventChan, depEndpoint, eventsInterval)
-	go s.sendEventsInBatch(s.EndpointEventChan, epEndpoint, eventsInterval)
-	go s.sendEventsInBatch(s.ContainerEventChan, containerEndpoint, eventsInterval)
-	go s.sendEventsInBatch(s.DaemonSetEventChan, dsEndpoint, eventsInterval)
-	go s.sendEventsInBatch(s.StatefulSetEventChan, ssEndpoint, eventsInterval)
+	go s.sendEventsInBatch(s.PodEventChan, eventsInterval)
+	go s.sendEventsInBatch(s.ServiceEventChan, eventsInterval)
+	go s.sendEventsInBatch(s.ReplicaSetEventChan, eventsInterval)
+	go s.sendEventsInBatch(s.DeploymentEventChan, eventsInterval)
+	go s.sendEventsInBatch(s.EndpointEventChan, eventsInterval)
+	go s.sendEventsInBatch(s.ContainerEventChan, eventsInterval)
+	go s.sendEventsInBatch(s.DaemonSetEventChan, eventsInterval)
+	go s.sendEventsInBatch(s.StatefulSetEventChan, eventsInterval)
 
-	return s
+	return s, nil
 }
 
 var resourceBatchSize int64 = 50
 
-func (w *Sender) DoRequest(req *http.Request) error {
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	ctx, cancel := context.WithTimeout(w.ctx, 30*time.Second)
-	defer cancel()
-
-	resp, err := w.hc.Do(req.WithContext(ctx))
-	if err != nil {
-		return fmt.Errorf("error sending http request: %v", err)
-	}
-	defer func() {
-		_, _ = io.Copy(io.Discard, resp.Body) // in order to reuse the connection
-		resp.Body.Close()
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("req failed: %d, %s", resp.StatusCode, string(body))
-	}
-
-	return nil
-}
-
-func (b *Sender) sendEventsInBatch(ch chan any, endpoint string, interval time.Duration) {
+func (b *Sender) sendEventsInBatch(ch chan any, interval time.Duration) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 
@@ -201,12 +168,12 @@ func (b *Sender) sendEventsInBatch(ch chan any, endpoint string, interval time.D
 			randomDuration := time.Duration(rand.Intn(50)) * time.Millisecond
 			time.Sleep(randomDuration)
 
-			b.send(ch, endpoint)
+			b.send(ch)
 		}
 	}
 }
 
-func (b *Sender) send(ch <-chan any, endpoint string) {
+func (b *Sender) send(ch <-chan any) {
 	batch := make([]any, 0, resourceBatchSize)
 	loop := true
 
@@ -222,37 +189,22 @@ func (b *Sender) send(ch <-chan any, endpoint string) {
 	if len(batch) == 0 {
 		return
 	}
+	
+	// payload := models.EventPayload{
+	// 	Metadata: models.Metadata{
+	// 		IdempotencyKey: uuid.NewString(),
+	// 		WatcherVersion: tag,
+	// 	},
+	// 	Events: batch,
+	// }
 
-	// TODO: make this compatible with the gRPC
-	payload := models.EventPayload{
-		Metadata: models.Metadata{
-			IdempotencyKey: uuid.NewString(),
-			WatcherVersion: tag,
-		},
-		Events: batch,
+	payload := &pb.KubernetesEventBatch{
+		
 	}
 
-	b.sendToBackend(http.MethodPost, payload, endpoint)
+
 }
 
-func (w *Sender) sendToBackend(method string, payload interface{}, endpoint string) {
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		logger.Logger().Error().Msgf("error marshalling batch: %v", err)
-		return
-	}
-
-	httpReq, err := http.NewRequest(method, w.URL, bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		logger.Logger().Error().Msgf("error creating http request: %v", err)
-		return
-	}
-
-	err = w.DoRequest(httpReq)
-	if err != nil {
-		logger.Logger().Error().Msgf("backend persist error at ep %s : %v", endpoint, err)
-	}
-}
 
 type HealthCheckAction string
 
@@ -262,56 +214,56 @@ const (
 )
 
 func (b *Sender) SendHealthCheck(tracing bool, metrics bool, logs bool, nsFilter string, k8sVersion string) chan HealthCheckAction {
-	t := time.NewTicker(10 * time.Second)
+	// t := time.NewTicker(10 * time.Second)
 	// defer t.Stop()
 
 	ch := make(chan HealthCheckAction)
 
-	createHealthCheckPayload := func() models.HealthCheckPayload {
-		return models.HealthCheckPayload{
-			Metadata: models.Metadata{
-				IdempotencyKey: uuid.NewString(),
-				WatcherVersion: tag,
-			},
-			Telemetry: struct {
-				KernelVersion string `json:"kernel_version"`
-				K8sVersion    string `json:"k8s_version"`
-				CloudProvider string `json:"cloud_provider"`
-			}{
-				KernelVersion: kernelVersion,
-				K8sVersion:    k8sVersion,
-				CloudProvider: string(cloudProvider),
-			},
-		}
-	}
+	// createHealthCheckPayload := func() models.HealthCheckPayload {
+	// 	return models.HealthCheckPayload{
+	// 		Metadata: models.Metadata{
+	// 			IdempotencyKey: uuid.NewString(),
+	// 			WatcherVersion: tag,
+	// 		},
+	// 		Telemetry: struct {
+	// 			KernelVersion string `json:"kernel_version"`
+	// 			K8sVersion    string `json:"k8s_version"`
+	// 			CloudProvider string `json:"cloud_provider"`
+	// 		}{
+	// 			KernelVersion: kernelVersion,
+	// 			K8sVersion:    k8sVersion,
+	// 			CloudProvider: string(cloudProvider),
+	// 		},
+	// 	}
+	// }
 
-	f := func() {
-		payloadBytes, err := json.Marshal(createHealthCheckPayload())
-		if err != nil {
-			logger.Logger().Error().Msgf("error marshalling batch: %v", err)
-			return
-		}
+	// f := func() {
+	// 	payloadBytes, err := json.Marshal(createHealthCheckPayload())
+	// 	if err != nil {
+	// 		logger.Logger().Error().Msgf("error marshalling batch: %v", err)
+	// 		return
+	// 	}
 
-		req, err := http.NewRequest(http.MethodPut, b.URL, bytes.NewBuffer(payloadBytes))
-		if err != nil {
-			logger.Logger().Error().Msgf("error creating http request: %v", err)
-			return
-		}
+	// 	req, err := http.NewRequest(http.MethodPut, b.URL, bytes.NewBuffer(payloadBytes))
+	// 	if err != nil {
+	// 		logger.Logger().Error().Msgf("error creating http request: %v", err)
+	// 		return
+	// 	}
 
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Accept", "application/json")
+	// 	req.Header.Set("Content-Type", "application/json")
+	// 	req.Header.Set("Accept", "application/json")
 
-		if err := b.DoRequest(req); err != nil {
-			logger.Logger().Error().Msgf("error sending healtcheck request, %v", err)
-			return
-		}
-	}
+	// 	if err := b.DoRequest(req); err != nil {
+	// 		logger.Logger().Error().Msgf("error sending healtcheck request, %v", err)
+	// 		return
+	// 	}
+	// }
 
-	go func() {
-		for range t.C {
-			f()
-		}
-	}()
+	// go func() {
+	// 	for range t.C {
+	// 		f()
+	// 	}
+	// }()
 
 	return ch
 }

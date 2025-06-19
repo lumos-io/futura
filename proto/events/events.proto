@@ -4,31 +4,155 @@ package events;
 
 option go_package = "github.com/opisvigilant/futura/proto/gen/events;events";
 
+// -----------------------------
+// Shared Messages
+// -----------------------------
+
 message Metadata {
-  string cluster_id = 1;
-  string node_name = 2;
-  string namespace = 3;
-  string pod_name = 4;
-  string container_name = 5;
-  string source = 6; // e.g. "watcher", "metrics-agent"
-  string timestamp_utc = 7; // ISO8601 or RFC3339 string
+  string idempotency_key = 1;
+  string watcher_version = 2;
+  string cluster_id = 3;
+  string node_name = 4;
 }
 
-message KubernetesEvent {
+// Main batch message
+message KubernetesEventBatch {
   Metadata metadata = 1;
-
-  string type = 2;        // "Normal" or "Warning"
-  string reason = 3;      // e.g. "Created", "Scheduled", etc.
-  string message = 4;     // Human-readable message
-  string involved_object_kind = 5;
-  string involved_object_name = 6;
-  string involved_object_uid = 7;
-  string event_type = 8;  // "ADDED", "MODIFIED", "DELETED"
-  string source_component = 9;
-  string first_timestamp = 10;
-  string last_timestamp = 11;
-  int32 count = 12;
+  repeated KubernetesEvent events = 2;
 }
+
+// Envelope for all possible event types
+message KubernetesEvent {
+  oneof event {
+    PodEvent pod = 1;
+    SvcEvent svc = 2;
+    RsEvent rs = 3;
+    DsEvent ds = 4;
+    SsEvent ss = 5;
+    DepEvent dep = 6;
+    EpEvent ep = 7;
+    ContainerEvent container = 8;
+    JobEvent job = 9;
+    CronJobEvent cronjob = 10;
+  }
+}
+
+// -----------------------------
+// Event Type Messages
+// -----------------------------
+
+message PodEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+  string ip = 5;
+  string owner_type = 6;
+  string owner_name = 7;
+  string owner_id = 8;
+}
+
+message SvcEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+  string type = 5;
+  repeated string cluster_ips = 6;
+  repeated Port ports = 7;
+}
+
+message RsEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+  int32 replicas = 5;
+  string owner_type = 6;
+  string owner_name = 7;
+  string owner_id = 8;
+}
+
+message DsEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+}
+
+message SsEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+}
+
+message DepEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+  int32 replicas = 5;
+}
+
+message EpEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+  repeated Address addresses = 5;
+}
+
+message ContainerEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+  string pod = 5;
+  string image = 6;
+  repeated ContainerPort ports = 7;
+}
+
+message JobEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+  string owner_type = 5;
+  string owner_name = 6;
+  string owner_id = 7;
+}
+
+message CronJobEvent {
+  string uid = 1;
+  string event_type = 2;
+  string name = 3;
+  string namespace = 4;
+}
+
+// -----------------------------
+// Reused Structures
+// -----------------------------
+
+message Port {
+  string name = 1;
+  int32 src = 2;
+  int32 dest = 3;
+  string protocol = 4;
+}
+
+message Address {
+  string ip = 1;
+  string node_name = 2;
+  string target_ref_kind = 3;
+  string target_ref_name = 4;
+}
+
+message ContainerPort {
+  int32 port = 1;
+  string protocol = 2;
+}
+
 
 message ContainerMetric {
   Metadata metadata = 1;
@@ -41,10 +165,6 @@ message ContainerMetric {
   uint64 fs_usage_bytes = 7;               // filesystem usage
   double cpu_limit_cores = 8;              // from spec
   uint64 memory_limit_bytes = 9;           // from spec
-}
-
-message KubernetesEventBatch {
-  repeated KubernetesEvent events = 1;
 }
 
 message ContainerMetricBatch {

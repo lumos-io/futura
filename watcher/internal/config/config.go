@@ -6,31 +6,16 @@ import (
 
 // Config struct contains watcher configuration
 type Configuration struct {
-	Debug    bool   `toml:"debug"`
-	NodeName string `toml:"nodeName"`
-	Tag      string `toml:"tag"`
-	// Handlers know how to send notifications to specific services.
-	Handler    *Handler    `toml:"handler"`
+	Debug      bool        `toml:"debug"`
+	NodeName   string      `toml:"nodeName"`
+	Tag        string      `toml:"tag"`
+	Collect    *Collect    `toml:"collect"`
 	Kubernetes *Kubernetes `toml:"kubernetes"`
 }
 
-// Handler contains Handler configuration
-type Handler struct {
-	Console *Console `toml:"console"`
-	Webhook *Webhook `toml:"webhook"`
-}
-
-// Console contains the stdoutput configuration
-type Console struct {
-	Color bool `toml:"color"`
-}
-
-// Webhook contains Webhook configuration
-type Webhook struct {
-	URL       string `toml:"url"`
-	BatchSize uint64 `toml:"batchSize"`
-	Cert      string `toml:"cert"`
-	TlsSkip   bool   `toml:"tlsSkip"`
+type Collect struct {
+	Host string `toml:"host"`
+	Port string `toml:"port"`
 }
 
 type Kubernetes struct {
@@ -42,16 +27,9 @@ func Fetch() *Configuration {
 		Debug:    getBoolOrDefault("debug", true),
 		NodeName: getStringOrDefault("nodeName", "localhost"),
 		Tag:      getStringOrDefault("tag", "v0.0.1"),
-		Handler: &Handler{
-			Console: &Console{
-				Color: getBoolOrDefault("handler.console", true),
-			},
-			Webhook: &Webhook{
-				URL:       getStringOrDefault("handler.webhook.url", ""),
-				BatchSize: getUInt64OrDefault("handler.webhook.batchSize", 1000),
-				Cert:      getStringOrDefault("handler.webhook.cert", ""),
-				TlsSkip:   getBoolOrDefault("handler.webhook.tlsSkip", true),
-			},
+		Collect: &Collect{
+			Host: getStringOrDefault("collect.host", ""),
+			Port: getStringOrDefault("collect.port", "50051"),
 		},
 		Kubernetes: &Kubernetes{
 			InCluster: getBoolOrDefault("kubernetes.inCluster", false),

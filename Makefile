@@ -30,7 +30,7 @@ proto-events: proto-clean
 
 .PHONY: proto-clean
 proto-clean:
-	rm -rf proto/gen
+	rm -rf proto/events/gen
 
 ##@ Operator Build
 .PHONY: operator-manifests
