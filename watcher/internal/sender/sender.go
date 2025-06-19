@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/google/uuid"
 	"github.com/opisvigilant/futura/watcher/internal/config"
@@ -111,7 +112,7 @@ func New(c *config.Configuration) (*Sender, error) {
 	}
 
 	address := fmt.Sprintf("%s:%s", c.Collect.Host, c.Collect.Port)
-	conn, err := grpc.NewClient(address)
+	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to gRPC server: %v", err)
 	}

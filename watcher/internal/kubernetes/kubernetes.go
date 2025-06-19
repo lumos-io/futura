@@ -2,25 +2,19 @@ package kubernetes
 
 import (
 	"context"
-	"flag"
-	"fmt"
-	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
+	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
 	appsv1 "k8s.io/client-go/informers/apps/v1"
 	v1 "k8s.io/client-go/informers/core/v1"
 
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
 type ResourceType string
@@ -63,52 +57,17 @@ type Collector struct {
 	Events chan any
 }
 
-func New(c *config.Configuration, parentCtx context.Context) (*Collector, error) {
+func New(k8sClient *k8s.Client, c *config.Configuration, parentCtx context.Context) (*Collector, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
-	// get incluster kubeconfig
-	var kubeconfig *string
-	var kubeConfig *rest.Config
 
-	if !c.Kubernetes.InCluster {
-		var err error
-		if home := homedir.HomeDir(); home != "" {
-			kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-		} else {
-			kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-		}
-
-		flag.Parse()
-
-		kubeConfig, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
-		if err != nil {
-			defer cancel()
-			panic(err)
-		}
-	} else {
-		// in cluster config, default
-		var err error
-		kubeConfig, err = rest.InClusterConfig()
-		if err != nil {
-			defer cancel()
-			return nil, fmt.Errorf("unable to get incluster kubeconfig: %w", err)
-		}
-	}
-
-	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
+	var err error
+	k8sVersion, err = k8sClient.GetVersion()
 	if err != nil {
 		defer cancel()
-		return nil, fmt.Errorf("unable to create kubeClient: %w", err)
+		return nil, err
 	}
 
-	version, err := kubeClient.ServerVersion()
-	if err != nil {
-		defer cancel()
-		return nil, fmt.Errorf("unable to get k8s server version: %w", err)
-	}
-
-	k8sVersion = version.String()
-
-	factory := informers.NewSharedInformerFactory(kubeClient, resyncPeriod)
+	factory := informers.NewSharedInformerFactory(k8sClient.RawClient(), resyncPeriod)
 
 	collector := &Collector{
 		ctx:              ctx,

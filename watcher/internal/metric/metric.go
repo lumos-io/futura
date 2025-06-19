@@ -4,24 +4,21 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/internal/models"
+	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -32,15 +29,15 @@ type Collector struct {
 	ctx      context.Context
 	doneChan chan struct{} // done signal for metricCollector
 
-	pbc                 pb.CollectServiceClient
-	kubernetesInCluster bool
+	pbc       pb.CollectServiceClient
+	k8sClient *k8s.Client
 }
 
-func New(cfg *config.Configuration, parentCtx context.Context) (*Collector, error) {
+func New(k8sClient *k8s.Client, cfg *config.Configuration, parentCtx context.Context) (*Collector, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	address := fmt.Sprintf("%s:%s", cfg.Collect.Host, cfg.Collect.Port)
-	conn, err := grpc.NewClient(address)
+	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		defer cancel()
 		return nil, fmt.Errorf("failed to connect to gRPC server: %v", err)
@@ -49,10 +46,10 @@ func New(cfg *config.Configuration, parentCtx context.Context) (*Collector, erro
 	client := pb.NewCollectServiceClient(conn)
 
 	collector := &Collector{
-		ctx:                 ctx,
-		doneChan:            make(chan struct{}),
-		pbc:                 client,
-		kubernetesInCluster: cfg.Kubernetes.InCluster,
+		ctx:       ctx,
+		doneChan:  make(chan struct{}),
+		pbc:       client,
+		k8sClient: k8sClient,
 	}
 
 	go func(c *Collector) {
@@ -65,38 +62,6 @@ func New(cfg *config.Configuration, parentCtx context.Context) (*Collector, erro
 }
 
 func (c *Collector) Start(interval time.Duration, excludedNamespaces []string) error {
-	// get incluster kubeconfig
-	var kubeconfig *string
-	var kubeConfig *rest.Config
-
-	if !c.kubernetesInCluster {
-		var err error
-		if home := homedir.HomeDir(); home != "" {
-			kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-		} else {
-			kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-		}
-
-		flag.Parse()
-
-		kubeConfig, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
-		if err != nil {
-			return err
-		}
-	} else {
-		// in cluster config, default
-		var err error
-		kubeConfig, err = rest.InClusterConfig()
-		if err != nil {
-			return fmt.Errorf("unable to get incluster kubeconfig: %w", err)
-		}
-	}
-
-	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
-	if err != nil {
-		return fmt.Errorf("unable to create kubeClient: %w", err)
-	}
-
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -127,16 +92,16 @@ func (c *Collector) Start(interval time.Duration, excludedNamespaces []string) e
 			for _, pod := range summary.Pods {
 				ns := pod.PodRef.Namespace
 				name := pod.PodRef.Name
-				for _, c := range pod.Containers {
-					cpu := float64(c.CPU.UsageNanoCores) / 1e9
-					mem := c.Memory.UsageBytes
-					memWS := c.Memory.WorkingSetBytes
-					fs := c.Rootfs.UsedBytes
-					rx := c.Network.RxBytes
-					tx := c.Network.TxBytes
+				for _, container := range pod.Containers {
+					cpu := float64(container.CPU.UsageNanoCores) / 1e9
+					mem := container.Memory.UsageBytes
+					memWS := container.Memory.WorkingSetBytes
+					fs := container.Rootfs.UsedBytes
+					rx := container.Network.RxBytes
+					tx := container.Network.TxBytes
 
 					// PodSpec limits
-					cpuLimit, memLimit := getLimitsForContainer(kubeClient, ns, name, c.Name)
+					cpuLimit, memLimit := getLimitsForContainer(c.k8sClient.RawClient(), ns, name, container.Name)
 
 					batch = append(batch, &pb.ContainerMetric{
 						Metadata: &pb.MetricMetadata{
@@ -144,7 +109,7 @@ func (c *Collector) Start(interval time.Duration, excludedNamespaces []string) e
 							NodeName:      hostname,
 							Namespace:     ns,
 							PodName:       name,
-							ContainerName: c.Name,
+							ContainerName: container.Name,
 							Source:        "kubelet",
 							TimestampUtc:  time.Now().UTC().Format(time.RFC3339),
 						},
@@ -177,7 +142,7 @@ func (c *Collector) Start(interval time.Duration, excludedNamespaces []string) e
 func readToken() (string, error) {
 	b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
-		return "", fmt.Errorf("failed to read token: %v", err)
+		return "", fmt.Errorf("failed to read file: %v", err)
 	}
 	return strings.TrimSpace(string(b)), nil
 }
@@ -217,10 +182,10 @@ func getLimitsForContainer(client *kubernetes.Clientset, ns, podName, containerN
 		return 0, 0
 	}
 
-	for _, c := range pod.Spec.Containers {
-		if c.Name == containerName {
-			cpu := float64(c.Resources.Limits.Cpu().MilliValue()) / 1000.0
-			mem := uint64(c.Resources.Limits.Memory().Value())
+	for _, container := range pod.Spec.Containers {
+		if container.Name == containerName {
+			cpu := float64(container.Resources.Limits.Cpu().MilliValue()) / 1000.0
+			mem := uint64(container.Resources.Limits.Memory().Value())
 			return cpu, mem
 		}
 	}

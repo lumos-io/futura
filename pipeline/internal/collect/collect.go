@@ -28,18 +28,20 @@ func NewCollectServer(config *config.Configuration) (*CollectServer, error) {
 
 func (s *CollectServer) SendEvent(ctx context.Context, req *pb.KubernetesEventBatch) (*pb.CollectAck, error) {
 	for _, event := range req.Events {
-		if err := s.streamClient.Publish("raw.k8s.events", []byte(event.String())); err != nil {
-			return nil, err
-		}
+		fmt.Println(event)
+		// if err := s.streamClient.Publish("raw.k8s.events", []byte(event.String())); err != nil {
+		// 	return nil, err
+		// }
 	}
 	return &pb.CollectAck{Status: "ok", Message: "event received"}, nil
 }
 
 func (s *CollectServer) SendMetric(ctx context.Context, req *pb.ContainerMetricBatch) (*pb.CollectAck, error) {
 	for _, metric := range req.Metrics {
-		if err := s.streamClient.Publish("raw.k8s.metrics", []byte(metric.String())); err != nil {
-			return nil, err
-		}
+		fmt.Println(metric)
+		// if err := s.streamClient.Publish("raw.k8s.metrics", []byte(metric.String())); err != nil {
+		// 	return nil, err
+		// }
 	}
 	return &pb.CollectAck{Status: "ok", Message: "metric received"}, nil
 }

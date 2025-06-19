@@ -13,6 +13,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/internal/metric"
 	"github.com/opisvigilant/futura/watcher/internal/sender"
+	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 )
 
 type Collector struct {
@@ -30,13 +31,20 @@ type Collector struct {
 
 func New(cfg *config.Configuration, parentCtx context.Context, sender *sender.Sender) (*Collector, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
-	kubernetesCollector, err := kubernetes.New(cfg, parentCtx)
+
+	k8sClient, err := k8s.New(cfg.Kubernetes.InCluster)
 	if err != nil {
 		defer cancel()
 		return nil, err
 	}
 
-	metricCollector, err := metric.New(cfg, parentCtx)
+	kubernetesCollector, err := kubernetes.New(k8sClient, cfg, parentCtx)
+	if err != nil {
+		defer cancel()
+		return nil, err
+	}
+
+	metricCollector, err := metric.New(k8sClient, cfg, parentCtx)
 	if err != nil {
 		defer cancel()
 		return nil, err

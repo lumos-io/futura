@@ -1,8 +1,7 @@
-version: "3.9"
-
 services:
   nats:
     image: docker.io/nats:2.9.22
+    container_name: nats
     ports:
       - "4222:4222"
       - "8222:8222"
@@ -16,3 +15,6 @@ services:
       - "--http_port=8222"
       - "--js"
       - "--sd=/data"
+
+volumes:
+  nats:
