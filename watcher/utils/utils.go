@@ -21,6 +21,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const (
+	WatcherVersion string = "v0.0.1"
+)
+
 // GetClient returns a k8s clientset to the request from inside of cluster
 func GetClient() kubernetes.Interface {
 	config, err := rest.InClusterConfig()

@@ -7,6 +7,8 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+
+	pb "github.com/opisvigilant/futura/proto/events/gen"
 )
 
 const (
@@ -17,7 +19,11 @@ const (
 
 func (c *Collector) persistPod(pod models.Pod, eventType string) {
 	podEvent := models.ConvertPodToPodEvent(pod, eventType)
-	c.sender.PodEventChan <- &podEvent
+	c.sender.PodEventChan <- &pb.KubernetesEvent{
+		Event: &pb.KubernetesEvent_Pod{
+			Pod: podEvent,
+		},
+	}
 }
 
 func (a *Collector) processPod(d kubernetes.ResourceMessage) {

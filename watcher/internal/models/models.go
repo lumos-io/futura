@@ -101,12 +101,9 @@ type Address struct {
 }
 
 type Container struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	PodUID    string `json:"pod"` // Pod UID
-	Image     string `json:"image"`
-	Ports     []struct {
-		Port     int32  `json:"port"`
-		Protocol string `json:"protocol"`
-	} `json:"ports"`
+	Name      string        `json:"name"`
+	Namespace string        `json:"namespace"`
+	PodUID    string        `json:"pod"` // Pod UID
+	Image     string        `json:"image"`
+	Ports     []AddressPort `json:"ports"`
 }

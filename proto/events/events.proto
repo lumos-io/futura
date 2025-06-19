@@ -59,7 +59,7 @@ message SvcEvent {
   string namespace = 4;
   string type = 5;
   repeated string cluster_ips = 6;
-  repeated Port ports = 7;
+  repeated AddressPort ports = 7;
 }
 
 message RsEvent {
@@ -131,25 +131,30 @@ message CronJobEvent {
 }
 
 // -----------------------------
-// Reused Structures
+// Address Structures
 // -----------------------------
 
-message Port {
-  string name = 1;
-  int32 src = 2;
-  int32 dest = 3;
-  string protocol = 4;
+message AddressIP {
+  string type = 1;       // "pod" or "external"
+  string id = 2;         // Pod UID or empty
+  string name = 3;
+  string namespace = 4;  // Pod namespace or empty
+  string ip = 5;         // IP address
+}
+
+message AddressPort {
+  int32 port = 1;
+  string protocol = 2;  // "TCP" or "UDP"
+  string name = 3;
 }
 
 message Address {
-  string ip = 1;
-  string node_name = 2;
-  string target_ref_kind = 3;
-  string target_ref_name = 4;
+  repeated AddressIP ips = 1;
+  repeated AddressPort ports = 2;
 }
 
 message ContainerPort {
-  int32 port = 1;
+  AddressPort port = 1;
   string protocol = 2;
 }
 

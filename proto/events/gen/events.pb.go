@@ -461,7 +461,7 @@ type SvcEvent struct {
 	Namespace     string                 `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	Type          string                 `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
 	ClusterIps    []string               `protobuf:"bytes,6,rep,name=cluster_ips,json=clusterIps,proto3" json:"cluster_ips,omitempty"`
-	Ports         []*Port                `protobuf:"bytes,7,rep,name=ports,proto3" json:"ports,omitempty"`
+	Ports         []*AddressPort         `protobuf:"bytes,7,rep,name=ports,proto3" json:"ports,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -538,7 +538,7 @@ func (x *SvcEvent) GetClusterIps() []string {
 	return nil
 }
 
-func (x *SvcEvent) GetPorts() []*Port {
+func (x *SvcEvent) GetPorts() []*AddressPort {
 	if x != nil {
 		return x.Ports
 	}
@@ -1185,30 +1185,31 @@ func (x *CronJobEvent) GetNamespace() string {
 	return ""
 }
 
-type Port struct {
+type AddressIP struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Src           int32                  `protobuf:"varint,2,opt,name=src,proto3" json:"src,omitempty"`
-	Dest          int32                  `protobuf:"varint,3,opt,name=dest,proto3" json:"dest,omitempty"`
-	Protocol      string                 `protobuf:"bytes,4,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"` // "pod" or "external"
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`     // Pod UID or empty
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Namespace     string                 `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"` // Pod namespace or empty
+	Ip            string                 `protobuf:"bytes,5,opt,name=ip,proto3" json:"ip,omitempty"`               // IP address
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Port) Reset() {
-	*x = Port{}
+func (x *AddressIP) Reset() {
+	*x = AddressIP{}
 	mi := &file_events_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Port) String() string {
+func (x *AddressIP) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Port) ProtoMessage() {}
+func (*AddressIP) ProtoMessage() {}
 
-func (x *Port) ProtoReflect() protoreflect.Message {
+func (x *AddressIP) ProtoReflect() protoreflect.Message {
 	mi := &file_events_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1220,52 +1221,117 @@ func (x *Port) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Port.ProtoReflect.Descriptor instead.
-func (*Port) Descriptor() ([]byte, []int) {
+// Deprecated: Use AddressIP.ProtoReflect.Descriptor instead.
+func (*AddressIP) Descriptor() ([]byte, []int) {
 	return file_events_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *Port) GetName() string {
+func (x *AddressIP) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *AddressIP) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AddressIP) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *Port) GetSrc() int32 {
+func (x *AddressIP) GetNamespace() string {
 	if x != nil {
-		return x.Src
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *AddressIP) GetIp() string {
+	if x != nil {
+		return x.Ip
+	}
+	return ""
+}
+
+type AddressPort struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Port          int32                  `protobuf:"varint,1,opt,name=port,proto3" json:"port,omitempty"`
+	Protocol      string                 `protobuf:"bytes,2,opt,name=protocol,proto3" json:"protocol,omitempty"` // "TCP" or "UDP"
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddressPort) Reset() {
+	*x = AddressPort{}
+	mi := &file_events_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddressPort) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddressPort) ProtoMessage() {}
+
+func (x *AddressPort) ProtoReflect() protoreflect.Message {
+	mi := &file_events_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddressPort.ProtoReflect.Descriptor instead.
+func (*AddressPort) Descriptor() ([]byte, []int) {
+	return file_events_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *AddressPort) GetPort() int32 {
+	if x != nil {
+		return x.Port
 	}
 	return 0
 }
 
-func (x *Port) GetDest() int32 {
-	if x != nil {
-		return x.Dest
-	}
-	return 0
-}
-
-func (x *Port) GetProtocol() string {
+func (x *AddressPort) GetProtocol() string {
 	if x != nil {
 		return x.Protocol
 	}
 	return ""
 }
 
+func (x *AddressPort) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 type Address struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ip            string                 `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
-	NodeName      string                 `protobuf:"bytes,2,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
-	TargetRefKind string                 `protobuf:"bytes,3,opt,name=target_ref_kind,json=targetRefKind,proto3" json:"target_ref_kind,omitempty"`
-	TargetRefName string                 `protobuf:"bytes,4,opt,name=target_ref_name,json=targetRefName,proto3" json:"target_ref_name,omitempty"`
+	Ips           []*AddressIP           `protobuf:"bytes,1,rep,name=ips,proto3" json:"ips,omitempty"`
+	Ports         []*AddressPort         `protobuf:"bytes,2,rep,name=ports,proto3" json:"ports,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Address) Reset() {
 	*x = Address{}
-	mi := &file_events_proto_msgTypes[14]
+	mi := &file_events_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1277,7 +1343,7 @@ func (x *Address) String() string {
 func (*Address) ProtoMessage() {}
 
 func (x *Address) ProtoReflect() protoreflect.Message {
-	mi := &file_events_proto_msgTypes[14]
+	mi := &file_events_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1290,40 +1356,26 @@ func (x *Address) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Address.ProtoReflect.Descriptor instead.
 func (*Address) Descriptor() ([]byte, []int) {
-	return file_events_proto_rawDescGZIP(), []int{14}
+	return file_events_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *Address) GetIp() string {
+func (x *Address) GetIps() []*AddressIP {
 	if x != nil {
-		return x.Ip
+		return x.Ips
 	}
-	return ""
+	return nil
 }
 
-func (x *Address) GetNodeName() string {
+func (x *Address) GetPorts() []*AddressPort {
 	if x != nil {
-		return x.NodeName
+		return x.Ports
 	}
-	return ""
-}
-
-func (x *Address) GetTargetRefKind() string {
-	if x != nil {
-		return x.TargetRefKind
-	}
-	return ""
-}
-
-func (x *Address) GetTargetRefName() string {
-	if x != nil {
-		return x.TargetRefName
-	}
-	return ""
+	return nil
 }
 
 type ContainerPort struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Port          int32                  `protobuf:"varint,1,opt,name=port,proto3" json:"port,omitempty"`
+	Port          *AddressPort           `protobuf:"bytes,1,opt,name=port,proto3" json:"port,omitempty"`
 	Protocol      string                 `protobuf:"bytes,2,opt,name=protocol,proto3" json:"protocol,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1331,7 +1383,7 @@ type ContainerPort struct {
 
 func (x *ContainerPort) Reset() {
 	*x = ContainerPort{}
-	mi := &file_events_proto_msgTypes[15]
+	mi := &file_events_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1343,7 +1395,7 @@ func (x *ContainerPort) String() string {
 func (*ContainerPort) ProtoMessage() {}
 
 func (x *ContainerPort) ProtoReflect() protoreflect.Message {
-	mi := &file_events_proto_msgTypes[15]
+	mi := &file_events_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1356,14 +1408,14 @@ func (x *ContainerPort) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerPort.ProtoReflect.Descriptor instead.
 func (*ContainerPort) Descriptor() ([]byte, []int) {
-	return file_events_proto_rawDescGZIP(), []int{15}
+	return file_events_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *ContainerPort) GetPort() int32 {
+func (x *ContainerPort) GetPort() *AddressPort {
 	if x != nil {
 		return x.Port
 	}
-	return 0
+	return nil
 }
 
 func (x *ContainerPort) GetProtocol() string {
@@ -1390,7 +1442,7 @@ type ContainerMetric struct {
 
 func (x *ContainerMetric) Reset() {
 	*x = ContainerMetric{}
-	mi := &file_events_proto_msgTypes[16]
+	mi := &file_events_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1402,7 +1454,7 @@ func (x *ContainerMetric) String() string {
 func (*ContainerMetric) ProtoMessage() {}
 
 func (x *ContainerMetric) ProtoReflect() protoreflect.Message {
-	mi := &file_events_proto_msgTypes[16]
+	mi := &file_events_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1415,7 +1467,7 @@ func (x *ContainerMetric) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerMetric.ProtoReflect.Descriptor instead.
 func (*ContainerMetric) Descriptor() ([]byte, []int) {
-	return file_events_proto_rawDescGZIP(), []int{16}
+	return file_events_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ContainerMetric) GetMetadata() *Metadata {
@@ -1490,7 +1542,7 @@ type ContainerMetricBatch struct {
 
 func (x *ContainerMetricBatch) Reset() {
 	*x = ContainerMetricBatch{}
-	mi := &file_events_proto_msgTypes[17]
+	mi := &file_events_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1502,7 +1554,7 @@ func (x *ContainerMetricBatch) String() string {
 func (*ContainerMetricBatch) ProtoMessage() {}
 
 func (x *ContainerMetricBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_events_proto_msgTypes[17]
+	mi := &file_events_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1515,7 +1567,7 @@ func (x *ContainerMetricBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerMetricBatch.ProtoReflect.Descriptor instead.
 func (*ContainerMetricBatch) Descriptor() ([]byte, []int) {
-	return file_events_proto_rawDescGZIP(), []int{17}
+	return file_events_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ContainerMetricBatch) GetMetrics() []*ContainerMetric {
@@ -1535,7 +1587,7 @@ type CollectAck struct {
 
 func (x *CollectAck) Reset() {
 	*x = CollectAck{}
-	mi := &file_events_proto_msgTypes[18]
+	mi := &file_events_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1547,7 +1599,7 @@ func (x *CollectAck) String() string {
 func (*CollectAck) ProtoMessage() {}
 
 func (x *CollectAck) ProtoReflect() protoreflect.Message {
-	mi := &file_events_proto_msgTypes[18]
+	mi := &file_events_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1560,7 +1612,7 @@ func (x *CollectAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectAck.ProtoReflect.Descriptor instead.
 func (*CollectAck) Descriptor() ([]byte, []int) {
-	return file_events_proto_rawDescGZIP(), []int{18}
+	return file_events_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CollectAck) GetStatus() string {
@@ -1615,7 +1667,7 @@ const file_events_proto_rawDesc = "" +
 	"owner_type\x18\x06 \x01(\tR\townerType\x12\x1d\n" +
 	"\n" +
 	"owner_name\x18\a \x01(\tR\townerName\x12\x19\n" +
-	"\bowner_id\x18\b \x01(\tR\aownerId\"\xc6\x01\n" +
+	"\bowner_id\x18\b \x01(\tR\aownerId\"\xcd\x01\n" +
 	"\bSvcEvent\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\tR\x03uid\x12\x1d\n" +
 	"\n" +
@@ -1624,8 +1676,8 @@ const file_events_proto_rawDesc = "" +
 	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12\x12\n" +
 	"\x04type\x18\x05 \x01(\tR\x04type\x12\x1f\n" +
 	"\vcluster_ips\x18\x06 \x03(\tR\n" +
-	"clusterIps\x12\"\n" +
-	"\x05ports\x18\a \x03(\v2\f.events.PortR\x05ports\"\xe1\x01\n" +
+	"clusterIps\x12)\n" +
+	"\x05ports\x18\a \x03(\v2\x13.events.AddressPortR\x05ports\"\xe1\x01\n" +
 	"\aRsEvent\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\tR\x03uid\x12\x1d\n" +
 	"\n" +
@@ -1689,19 +1741,22 @@ const file_events_proto_rawDesc = "" +
 	"\n" +
 	"event_type\x18\x02 \x01(\tR\teventType\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1c\n" +
-	"\tnamespace\x18\x04 \x01(\tR\tnamespace\"\\\n" +
-	"\x04Port\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
-	"\x03src\x18\x02 \x01(\x05R\x03src\x12\x12\n" +
-	"\x04dest\x18\x03 \x01(\x05R\x04dest\x12\x1a\n" +
-	"\bprotocol\x18\x04 \x01(\tR\bprotocol\"\x86\x01\n" +
-	"\aAddress\x12\x0e\n" +
-	"\x02ip\x18\x01 \x01(\tR\x02ip\x12\x1b\n" +
-	"\tnode_name\x18\x02 \x01(\tR\bnodeName\x12&\n" +
-	"\x0ftarget_ref_kind\x18\x03 \x01(\tR\rtargetRefKind\x12&\n" +
-	"\x0ftarget_ref_name\x18\x04 \x01(\tR\rtargetRefName\"?\n" +
-	"\rContainerPort\x12\x12\n" +
+	"\tnamespace\x18\x04 \x01(\tR\tnamespace\"q\n" +
+	"\tAddressIP\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1c\n" +
+	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12\x0e\n" +
+	"\x02ip\x18\x05 \x01(\tR\x02ip\"Q\n" +
+	"\vAddressPort\x12\x12\n" +
 	"\x04port\x18\x01 \x01(\x05R\x04port\x12\x1a\n" +
+	"\bprotocol\x18\x02 \x01(\tR\bprotocol\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\"Y\n" +
+	"\aAddress\x12#\n" +
+	"\x03ips\x18\x01 \x03(\v2\x11.events.AddressIPR\x03ips\x12)\n" +
+	"\x05ports\x18\x02 \x03(\v2\x13.events.AddressPortR\x05ports\"T\n" +
+	"\rContainerPort\x12'\n" +
+	"\x04port\x18\x01 \x01(\v2\x13.events.AddressPortR\x04port\x12\x1a\n" +
 	"\bprotocol\x18\x02 \x01(\tR\bprotocol\"\x80\x03\n" +
 	"\x0fContainerMetric\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.events.MetadataR\bmetadata\x12&\n" +
@@ -1736,7 +1791,7 @@ func file_events_proto_rawDescGZIP() []byte {
 	return file_events_proto_rawDescData
 }
 
-var file_events_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_events_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_events_proto_goTypes = []any{
 	(*Metadata)(nil),             // 0: events.Metadata
 	(*KubernetesEventBatch)(nil), // 1: events.KubernetesEventBatch
@@ -1751,12 +1806,13 @@ var file_events_proto_goTypes = []any{
 	(*ContainerEvent)(nil),       // 10: events.ContainerEvent
 	(*JobEvent)(nil),             // 11: events.JobEvent
 	(*CronJobEvent)(nil),         // 12: events.CronJobEvent
-	(*Port)(nil),                 // 13: events.Port
-	(*Address)(nil),              // 14: events.Address
-	(*ContainerPort)(nil),        // 15: events.ContainerPort
-	(*ContainerMetric)(nil),      // 16: events.ContainerMetric
-	(*ContainerMetricBatch)(nil), // 17: events.ContainerMetricBatch
-	(*CollectAck)(nil),           // 18: events.CollectAck
+	(*AddressIP)(nil),            // 13: events.AddressIP
+	(*AddressPort)(nil),          // 14: events.AddressPort
+	(*Address)(nil),              // 15: events.Address
+	(*ContainerPort)(nil),        // 16: events.ContainerPort
+	(*ContainerMetric)(nil),      // 17: events.ContainerMetric
+	(*ContainerMetricBatch)(nil), // 18: events.ContainerMetricBatch
+	(*CollectAck)(nil),           // 19: events.CollectAck
 }
 var file_events_proto_depIdxs = []int32{
 	0,  // 0: events.KubernetesEventBatch.metadata:type_name -> events.Metadata
@@ -1771,20 +1827,23 @@ var file_events_proto_depIdxs = []int32{
 	10, // 9: events.KubernetesEvent.container:type_name -> events.ContainerEvent
 	11, // 10: events.KubernetesEvent.job:type_name -> events.JobEvent
 	12, // 11: events.KubernetesEvent.cronjob:type_name -> events.CronJobEvent
-	13, // 12: events.SvcEvent.ports:type_name -> events.Port
-	14, // 13: events.EpEvent.addresses:type_name -> events.Address
-	15, // 14: events.ContainerEvent.ports:type_name -> events.ContainerPort
-	0,  // 15: events.ContainerMetric.metadata:type_name -> events.Metadata
-	16, // 16: events.ContainerMetricBatch.metrics:type_name -> events.ContainerMetric
-	1,  // 17: events.CollectService.SendEvent:input_type -> events.KubernetesEventBatch
-	17, // 18: events.CollectService.SendMetric:input_type -> events.ContainerMetricBatch
-	18, // 19: events.CollectService.SendEvent:output_type -> events.CollectAck
-	18, // 20: events.CollectService.SendMetric:output_type -> events.CollectAck
-	19, // [19:21] is the sub-list for method output_type
-	17, // [17:19] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	14, // 12: events.SvcEvent.ports:type_name -> events.AddressPort
+	15, // 13: events.EpEvent.addresses:type_name -> events.Address
+	16, // 14: events.ContainerEvent.ports:type_name -> events.ContainerPort
+	13, // 15: events.Address.ips:type_name -> events.AddressIP
+	14, // 16: events.Address.ports:type_name -> events.AddressPort
+	14, // 17: events.ContainerPort.port:type_name -> events.AddressPort
+	0,  // 18: events.ContainerMetric.metadata:type_name -> events.Metadata
+	17, // 19: events.ContainerMetricBatch.metrics:type_name -> events.ContainerMetric
+	1,  // 20: events.CollectService.SendEvent:input_type -> events.KubernetesEventBatch
+	18, // 21: events.CollectService.SendMetric:input_type -> events.ContainerMetricBatch
+	19, // 22: events.CollectService.SendEvent:output_type -> events.CollectAck
+	19, // 23: events.CollectService.SendMetric:output_type -> events.CollectAck
+	22, // [22:24] is the sub-list for method output_type
+	20, // [20:22] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_events_proto_init() }
@@ -1810,7 +1869,7 @@ func file_events_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_events_proto_rawDesc), len(file_events_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

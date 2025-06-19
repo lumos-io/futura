@@ -1,13 +1,12 @@
 package models
 
-type Metadata struct {
-	IdempotencyKey string `json:"idempotency_key"`
-	WatcherVersion string `json:"watcher_version"`
-}
+import (
+	pb "github.com/opisvigilant/futura/proto/events/gen"
+)
 
 type HealthCheckPayload struct {
-	Metadata Metadata `json:"metadata"`
-	Info     struct {
+	// Metadata Metadata `json:"metadata"`
+	Info struct {
 		MetricsEnabled bool `json:"metrics"`
 	} `json:"watcher_info"`
 	Telemetry struct {
@@ -17,131 +16,55 @@ type HealthCheckPayload struct {
 	} `json:"telemetry"`
 }
 
-type EventPayload struct {
-	Metadata Metadata `json:"metadata"`
-	Events   []any    `json:"events"`
-}
-
-type PodEvent struct {
-	UID       string `json:"uid"`
-	EventType string `json:"event_type"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	IP        string `json:"ip"`
-	OwnerType string `json:"owner_type"`
-	OwnerName string `json:"owner_name"`
-	OwnerID   string `json:"owner_id"`
-}
-
-type SvcEvent struct {
-	UID        string   `json:"uid"`
-	EventType  string   `json:"event_type"`
-	Name       string   `json:"name"`
-	Namespace  string   `json:"namespace"`
-	Type       string   `json:"type"`
-	ClusterIPs []string `json:"cluster_ips"`
-	Ports      []struct {
-		Name     string `json:"name"`
-		Src      int32  `json:"src"`
-		Dest     int32  `json:"dest"`
-		Protocol string `json:"protocol"`
-	} `json:"ports"`
-}
-
-type RsEvent struct {
-	UID       string `json:"uid"`
-	EventType string `json:"event_type"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Replicas  int32  `json:"replicas"`
-	OwnerType string `json:"owner_type"`
-	OwnerName string `json:"owner_name"`
-	OwnerID   string `json:"owner_id"`
-}
-
-type DsEvent struct {
-	UID       string `json:"uid"`
-	EventType string `json:"event_type"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-type SsEvent struct {
-	UID       string `json:"uid"`
-	EventType string `json:"event_type"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-type DepEvent struct {
-	UID       string `json:"uid"`
-	EventType string `json:"event_type"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Replicas  int32  `json:"replicas"`
-}
-
-type EpEvent struct {
-	UID       string    `json:"uid"`
-	EventType string    `json:"event_type"`
-	Name      string    `json:"name"`
-	Namespace string    `json:"namespace"`
-	Addresses []Address `json:"addresses"`
-}
-
-type ContainerEvent struct {
-	UID       string `json:"uid"`
-	EventType string `json:"event_type"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Pod       string `json:"pod"`
-	Image     string `json:"image"`
-	Ports     []struct {
-		Port     int32  `json:"port"`
-		Protocol string `json:"protocol"`
-	} `json:"ports"`
-}
-
-func ConvertPodToPodEvent(pod Pod, eventType string) PodEvent {
-	return PodEvent{
-		UID:       pod.UID,
+func ConvertPodToPodEvent(pod Pod, eventType string) *pb.PodEvent {
+	return &pb.PodEvent{
+		Uid:       pod.UID,
 		EventType: eventType,
 		Name:      pod.Name,
 		Namespace: pod.Namespace,
-		IP:        pod.IP,
+		Ip:        pod.IP,
 		OwnerType: pod.OwnerType,
 		OwnerName: pod.OwnerName,
-		OwnerID:   pod.OwnerID,
+		OwnerId:   pod.OwnerID,
 	}
 }
 
-func ConvertSvcToSvcEvent(service Service, eventType string) SvcEvent {
-	return SvcEvent{
-		UID:        service.UID,
+func ConvertSvcToSvcEvent(service Service, eventType string) *pb.SvcEvent {
+	ports := make([]*pb.Port, len(service.Ports))
+	for _, p := range service.Ports {
+		ports = append(ports, &pb.Port{
+			Name:     p.Name,
+			Src:      p.Src,
+			Dest:     p.Dest,
+			Protocol: p.Protocol,
+		})
+	}
+	return &pb.SvcEvent{
+		Uid:        service.UID,
+		ClusterIps: service.ClusterIPs,
 		EventType:  eventType,
 		Name:       service.Name,
 		Namespace:  service.Namespace,
 		Type:       service.Type,
-		ClusterIPs: service.ClusterIPs,
-		Ports:      service.Ports,
+		Ports:      ports,
 	}
 }
 
-func ConvertRsToRsEvent(rs ReplicaSet, eventType string) RsEvent {
-	return RsEvent{
-		UID:       rs.UID,
+func ConvertRsToRsEvent(rs ReplicaSet, eventType string) *pb.RsEvent {
+	return &pb.RsEvent{
+		Uid:       rs.UID,
 		EventType: eventType,
 		Name:      rs.Name,
 		Namespace: rs.Namespace,
 		Replicas:  rs.Replicas,
 		OwnerType: rs.OwnerType,
 		OwnerName: rs.OwnerName,
-		OwnerID:   rs.OwnerID,
+		OwnerId:   rs.OwnerID,
 	}
 }
 
-func ConvertDsToDsEvent(ds DaemonSet, eventType string) DsEvent {
-	return DsEvent{
+func ConvertDsToDsEvent(ds DaemonSet, eventType string) *pb.DsEvent {
+	return &pb.DsEvent{
 		UID:       ds.UID,
 		EventType: eventType,
 		Name:      ds.Name,
@@ -149,8 +72,8 @@ func ConvertDsToDsEvent(ds DaemonSet, eventType string) DsEvent {
 	}
 }
 
-func ConvertSsToSsEvent(ss StatefulSet, eventType string) SsEvent {
-	return SsEvent{
+func ConvertSsToSsEvent(ss StatefulSet, eventType string) *pb.SsEvent {
+	return &pb.SsEvent{
 		UID:       ss.UID,
 		EventType: eventType,
 		Name:      ss.Name,
@@ -158,8 +81,8 @@ func ConvertSsToSsEvent(ss StatefulSet, eventType string) SsEvent {
 	}
 }
 
-func ConvertDepToDepEvent(d Deployment, eventType string) DepEvent {
-	return DepEvent{
+func ConvertDepToDepEvent(d Deployment, eventType string) *pb.DepEvent {
+	return &pb.DepEvent{
 		UID:       d.UID,
 		EventType: eventType,
 		Name:      d.Name,
@@ -168,8 +91,16 @@ func ConvertDepToDepEvent(d Deployment, eventType string) DepEvent {
 	}
 }
 
-func ConvertEpToEpEvent(ep Endpoints, eventType string) EpEvent {
-	return EpEvent{
+func ConvertEpToEpEvent(ep Endpoints, eventType string) *pb.EpEvent {
+	addresses := make([]*pb.Address, len(c.Ports))
+	for _, a := range ep.Addresses {
+		addr := &pb.Address{}
+		for _, ip := range a.IPs {
+			addr.
+		}
+		addresses = append(addresses)
+	}
+	return &pb.EpEvent{
 		UID:       ep.UID,
 		EventType: eventType,
 		Name:      ep.Name,
@@ -178,13 +109,20 @@ func ConvertEpToEpEvent(ep Endpoints, eventType string) EpEvent {
 	}
 }
 
-func ConvertContainerToContainerEvent(c Container, eventType string) ContainerEvent {
-	return ContainerEvent{
+func ConvertContainerToContainerEvent(c Container, eventType string) *pb.ContainerEvent {
+	ports := make([]*pb.ContainerPort, len(c.Ports))
+	for _, p := range c.Ports {
+		ports = append(ports, &pb.ContainerPort{
+			Port:     p.Port,
+			Protocol: p.Protocol,
+		})
+	}
+	return &pb.ContainerEvent{
 		EventType: eventType,
 		Name:      c.Name,
 		Namespace: c.Namespace,
 		Pod:       c.PodUID,
 		Image:     c.Image,
-		Ports:     c.Ports,
+		Ports:     ports,
 	}
 }

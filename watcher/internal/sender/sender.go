@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 
+	"github.com/google/uuid"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
-	"github.com/opisvigilant/futura/watcher/internal/models"
+	"github.com/opisvigilant/futura/watcher/utils"
 
 	pb "github.com/opisvigilant/futura/proto/events/gen"
 )
@@ -27,16 +27,16 @@ type Sender struct {
 	pbc       pb.CollectServiceClient
 	batchSize int
 
-	PodEventChan         chan any // *PodEvent
-	ServiceEventChan     chan any // *SvcEvent
-	DeploymentEventChan  chan any // *DepEvent
-	ReplicaSetEventChan  chan any // *RsEvent
-	EndpointEventChan    chan any // *EndpointsEvent
-	ContainerEventChan   chan any // *ContainerEvent
-	DaemonSetEventChan   chan any // *DaemonSetEvent
-	StatefulSetEventChan chan any // *StatefulSetEvent
-	JobEventChan         chan any // *JobEvent
-	CronJobEventChan     chan any // *CronJobEvent
+	PodEventChan         chan *pb.KubernetesEvent // *PodEvent
+	ServiceEventChan     chan *pb.KubernetesEvent // *SvcEvent
+	DeploymentEventChan  chan *pb.KubernetesEvent // *DepEvent
+	ReplicaSetEventChan  chan *pb.KubernetesEvent // *RsEvent
+	EndpointEventChan    chan *pb.KubernetesEvent // *EndpointsEvent
+	ContainerEventChan   chan *pb.KubernetesEvent // *ContainerEvent
+	DaemonSetEventChan   chan *pb.KubernetesEvent // *DaemonSetEvent
+	StatefulSetEventChan chan *pb.KubernetesEvent // *StatefulSetEvent
+	JobEventChan         chan *pb.KubernetesEvent // *JobEvent
+	CronJobEventChan     chan *pb.KubernetesEvent // *CronJobEvent
 }
 
 var tag string
@@ -122,16 +122,16 @@ func New(c *config.Configuration) (*Sender, error) {
 		ctx:                  context.TODO(),
 		batchSize:            1000,
 		pbc:                  client,
-		PodEventChan:         make(chan any, 5*resourceChanSize),
-		ServiceEventChan:     make(chan any, 2*resourceChanSize),
-		ReplicaSetEventChan:  make(chan any, 2*resourceChanSize),
-		DeploymentEventChan:  make(chan any, 2*resourceChanSize),
-		EndpointEventChan:    make(chan any, resourceChanSize),
-		ContainerEventChan:   make(chan any, 5*resourceChanSize),
-		DaemonSetEventChan:   make(chan any, resourceChanSize),
-		StatefulSetEventChan: make(chan any, resourceChanSize),
-		JobEventChan:         make(chan any, 2*resourceChanSize),
-		CronJobEventChan:     make(chan any, 2*resourceChanSize),
+		PodEventChan:         make(chan *pb.KubernetesEvent, 5*resourceChanSize),
+		ServiceEventChan:     make(chan *pb.KubernetesEvent, 2*resourceChanSize),
+		ReplicaSetEventChan:  make(chan *pb.KubernetesEvent, 2*resourceChanSize),
+		DeploymentEventChan:  make(chan *pb.KubernetesEvent, 2*resourceChanSize),
+		EndpointEventChan:    make(chan *pb.KubernetesEvent, resourceChanSize),
+		ContainerEventChan:   make(chan *pb.KubernetesEvent, 5*resourceChanSize),
+		DaemonSetEventChan:   make(chan *pb.KubernetesEvent, resourceChanSize),
+		StatefulSetEventChan: make(chan *pb.KubernetesEvent, resourceChanSize),
+		JobEventChan:         make(chan *pb.KubernetesEvent, 2*resourceChanSize),
+		CronJobEventChan:     make(chan *pb.KubernetesEvent, 2*resourceChanSize),
 	}
 
 	// events are resynced every 60 seconds on kubernetes informers
@@ -155,7 +155,7 @@ func New(c *config.Configuration) (*Sender, error) {
 
 var resourceBatchSize int64 = 50
 
-func (b *Sender) sendEventsInBatch(ch chan any, interval time.Duration) {
+func (b *Sender) sendEventsInBatch(ch chan *pb.KubernetesEvent, interval time.Duration) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 
@@ -173,8 +173,8 @@ func (b *Sender) sendEventsInBatch(ch chan any, interval time.Duration) {
 	}
 }
 
-func (b *Sender) send(ch <-chan any) {
-	batch := make([]any, 0, resourceBatchSize)
+func (b *Sender) send(ch <-chan *pb.KubernetesEvent) {
+	batch := make([]*pb.KubernetesEvent, 0, resourceBatchSize)
 	loop := true
 
 	for i := 0; (i < int(resourceBatchSize)) && loop; i++ {
@@ -189,22 +189,26 @@ func (b *Sender) send(ch <-chan any) {
 	if len(batch) == 0 {
 		return
 	}
-	
-	// payload := models.EventPayload{
-	// 	Metadata: models.Metadata{
-	// 		IdempotencyKey: uuid.NewString(),
-	// 		WatcherVersion: tag,
-	// 	},
-	// 	Events: batch,
-	// }
 
 	payload := &pb.KubernetesEventBatch{
-		
+		Metadata: &pb.Metadata{
+			IdempotencyKey: uuid.NewString(),
+			WatcherVersion: utils.WatcherVersion,
+			// FIXME: change the below
+			ClusterId: "00000000000000",
+			NodeName:  "blablabla",
+		},
+		Events: batch,
 	}
 
+	// Send the batch to the server
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
+	if _, err := b.pbc.SendEvent(ctx, payload); err != nil {
+		log.Fatalf("SendEventBatch failed: %v", err)
+	}
 }
-
 
 type HealthCheckAction string
 
