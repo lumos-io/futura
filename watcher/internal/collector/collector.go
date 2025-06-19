@@ -6,10 +6,12 @@ package collector
 
 import (
 	"context"
+	"time"
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/kubernetes"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
+	"github.com/opisvigilant/futura/watcher/internal/metric"
 	"github.com/opisvigilant/futura/watcher/internal/sender"
 )
 
@@ -20,22 +22,31 @@ type Collector struct {
 	doneChan chan struct{} // done signal for kubernetesCollector
 
 	kubernetesCollector *kubernetes.Collector
+	metricCollector     *metric.Collector
 
 	// send data to datastore
 	sender *sender.Sender
 }
 
-func New(cfg *config.Configuration, parentCtx context.Context, sender *sender.Sender) *Collector {
+func New(cfg *config.Configuration, parentCtx context.Context, sender *sender.Sender) (*Collector, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 	kubernetesCollector, err := kubernetes.New(cfg, parentCtx)
 	if err != nil {
-		panic(err)
+		defer cancel()
+		return nil, err
+	}
+
+	metricCollector, err := metric.New(cfg, parentCtx)
+	if err != nil {
+		defer cancel()
+		return nil, err
 	}
 
 	collector := &Collector{
 		ctx:                 ctx,
 		doneChan:            make(chan struct{}),
 		kubernetesCollector: kubernetesCollector,
+		metricCollector:     metricCollector,
 		sender:              sender,
 	}
 
@@ -45,16 +56,14 @@ func New(cfg *config.Configuration, parentCtx context.Context, sender *sender.Se
 		c.close()
 	}(collector)
 
-	return collector
+	return collector, nil
 }
 
 func (c *Collector) Run(events chan any) {
 	go c.kubernetesCollector.Start(events)
+	go c.metricCollector.Start(60*time.Second, []string{})
 
 	go c.processk8s(events)
-
-	//TODO: progress metrics-server signal here
-	// ...
 }
 
 func (c *Collector) processk8s(events <-chan any) {

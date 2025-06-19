@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"strings"
@@ -40,8 +39,8 @@ type Sender struct {
 }
 
 var tag string
-var kernelVersion string
-var cloudProvider CloudProvider
+var kernelVersion string = ""
+var cloudProvider CloudProvider = ""
 
 func extractKernelVersion() string {
 	// Path to the /proc/version file
@@ -106,8 +105,10 @@ func New(c *config.Configuration) (*Sender, error) {
 
 	logger.Logger().Info().Str("tag", tag).Msg("watcher tag")
 
-	// kernelVersion = extractKernelVersion()
-	// cloudProvider = getCloudProvider()
+	if c.Kubernetes.InCluster {
+		kernelVersion = extractKernelVersion()
+		cloudProvider = getCloudProvider()
+	}
 
 	address := fmt.Sprintf("%s:%s", c.Collect.Host, c.Collect.Port)
 	conn, err := grpc.NewClient(address)
@@ -190,13 +191,21 @@ func (b *Sender) send(ch <-chan *pb.KubernetesEvent) {
 		return
 	}
 
+	hostname := ""
+	hostname, err := os.Hostname()
+	if err != nil {
+		logger.Logger().Error().Msgf("Failed to fetch hostname: %v", err)
+	}
+
 	payload := &pb.KubernetesEventBatch{
 		Metadata: &pb.Metadata{
 			IdempotencyKey: uuid.NewString(),
 			WatcherVersion: utils.WatcherVersion,
 			// FIXME: change the below
-			ClusterId: "00000000000000",
-			NodeName:  "blablabla",
+			ClusterId:     "00000000000000",
+			NodeName:      hostname,
+			KernelVersion: kernelVersion,
+			CloudProvider: string(cloudProvider),
 		},
 		Events: batch,
 	}
@@ -206,7 +215,7 @@ func (b *Sender) send(ch <-chan *pb.KubernetesEvent) {
 	defer cancel()
 
 	if _, err := b.pbc.SendEvent(ctx, payload); err != nil {
-		log.Fatalf("SendEventBatch failed: %v", err)
+		logger.Logger().Error().Msgf("SendEvent failed: %v", err)
 	}
 }
 

@@ -13,6 +13,8 @@ message Metadata {
   string watcher_version = 2;
   string cluster_id = 3;
   string node_name = 4;
+  string cloud_provider = 5;
+  string kernel_version = 6;
 }
 
 // Main batch message
@@ -162,8 +164,18 @@ message ContainerPort {
 // Metric Structures
 // -----------------------------
 
+message MetricMetadata {
+  string cluster_id = 1;
+  string node_name = 2;
+  string namespace = 3;
+  string pod_name = 4;
+  string container_name = 5;
+  string source = 6;
+  string timestamp_utc = 7;
+}
+
 message ContainerMetric {
-  Metadata metadata = 1;
+  MetricMetadata metadata = 1;
 
   double cpu_usage_cores = 2;              // in CPU cores (e.g. 0.25)
   uint64 memory_usage_bytes = 3;           // current memory usage

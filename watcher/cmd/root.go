@@ -57,7 +57,10 @@ events to the backend`,
 		}
 
 		// create the generic collector
-		collector := collector.New(watcherCfg, ctx, sender)
+		collector, err := collector.New(watcherCfg, ctx, sender)
+		if err != nil {
+			panic(err)
+		}
 		collector.Run(events)
 
 		<-collector.Done()

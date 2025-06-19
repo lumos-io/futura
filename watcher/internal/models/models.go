@@ -107,3 +107,33 @@ type Container struct {
 	Image     string        `json:"image"`
 	Ports     []AddressPort `json:"ports"`
 }
+
+type MetricSummary struct {
+	Node struct {
+		NodeName string `json:"nodeName"`
+	} `json:"node"`
+	Pods []struct {
+		PodRef struct {
+			Name      string `json:"name"`
+			Namespace string `json:"namespace"`
+			UID       string `json:"uid"`
+		} `json:"podRef"`
+		Containers []struct {
+			Name string `json:"name"`
+			CPU  struct {
+				UsageNanoCores uint64 `json:"usageNanoCores"`
+			} `json:"cpu"`
+			Memory struct {
+				UsageBytes      uint64 `json:"usageBytes"`
+				WorkingSetBytes uint64 `json:"workingSetBytes"`
+			} `json:"memory"`
+			Rootfs struct {
+				UsedBytes uint64 `json:"usedBytes"`
+			} `json:"rootfs"`
+			Network struct {
+				RxBytes uint64 `json:"rxBytes"`
+				TxBytes uint64 `json:"txBytes"`
+			} `json:"network"`
+		} `json:"containers"`
+	} `json:"pods"`
+}

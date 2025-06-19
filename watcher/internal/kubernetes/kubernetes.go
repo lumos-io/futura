@@ -94,13 +94,13 @@ func New(c *config.Configuration, parentCtx context.Context) (*Collector, error)
 		}
 	}
 
-	clientset, err := kubernetes.NewForConfig(kubeConfig)
+	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		defer cancel()
-		return nil, fmt.Errorf("unable to create clientset: %w", err)
+		return nil, fmt.Errorf("unable to create kubeClient: %w", err)
 	}
 
-	version, err := clientset.ServerVersion()
+	version, err := kubeClient.ServerVersion()
 	if err != nil {
 		defer cancel()
 		return nil, fmt.Errorf("unable to get k8s server version: %w", err)
@@ -108,7 +108,7 @@ func New(c *config.Configuration, parentCtx context.Context) (*Collector, error)
 
 	k8sVersion = version.String()
 
-	factory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
+	factory := informers.NewSharedInformerFactory(kubeClient, resyncPeriod)
 
 	collector := &Collector{
 		ctx:              ctx,
