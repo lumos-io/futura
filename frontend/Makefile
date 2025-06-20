@@ -1,15 +1,19 @@
-.PHONY: dev
-dev: ## Run bun 
+.PHONY: install dev
+dev: ## Run bun 	
 	bun run dev
 
-.PHONY: build
+.PHONY: install build
 build: ## Run bun 
 	bun run build
 
-.PHONY: preview
+.PHONY: install preview
 preview: ## Run bun 
 	bun run preview
 
 .PHONY: lint
 lint: ## Run bun 
 	bun run lint
+
+.PHONY: install
+install:
+	bun install

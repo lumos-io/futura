@@ -13,7 +13,7 @@
           inherit system;
         };
 
-        go = pkgs.go_1_22;
+        go = pkgs.go_1_24;
 
         # Plugins and other tools
         tools = with pkgs; [
@@ -24,14 +24,31 @@
           ko
           kind
           bun
+          nodejs_22          
         ];
 
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = tools;
-          shellHook = ''
+
+          # Set English locale for all tools
+          LANG = "en_US.UTF-8";
+          LC_ALL = "en_US.UTF-8";
+
+          shellHook = ''            
+            set -a
+            if [ -f .env.local ]; then
+              echo "📄 Loading environment from .env.local"
+              . .env.local
+            else
+              echo "⚠️  .env.local not found"
+            fi
+            set +a
+
+            ./scripts/docker-login.sh
+            ./scripts/setup-tools.sh
+
             echo "🚀 Development environment ready!"
-            echo "🔧 Available: Go, protoc, protoc-gen-go, ko, kind, bun"
           '';
         };
       });

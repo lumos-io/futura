@@ -30,3 +30,5 @@ Dockerfile.cross
 *.swp
 *.swo
 *~
+
+.env.local

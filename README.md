@@ -2,20 +2,10 @@
 
 This monorepo contains all the code to make the OpisVigilant platform working with the except of the infrastructure
 
-## Workspaces
+## Nix Development setup
 
-This is a monorepo containing multiple go modules. To start with, run the following make command
+This project uses `nix` to make it more portable and reproduciable.
 
-```make
-$: make dev-env
-```
+### .env file
 
-## Frontend
-
-You need to have `bun` installed in your system
-
-## Kubernetes
-
-Spin up a `kind` cluster and deploy the manifests that are in the `kind` folder of this project. You also need to have `ko` installed in the system to quickly run the projects in the `kind` cluster.
-
-Make sure to have run `docker login` to push images to the registry.
+You need to create a `.env.local` file where you add secrets that shouldn't be part of the git commit. Nix will try to read the file and stop in case it cannot find it. A `.env.tmp` file is committed with the variables that need to be used.
