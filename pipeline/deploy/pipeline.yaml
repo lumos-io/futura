@@ -17,12 +17,12 @@ spec:
         app.kubernetes.io/instance: pipeline
     spec:
       restartPolicy: Always
-      serviceAccountName: pipeline
-      hostNetwork: true
       containers:
         - name: pipeline
           image: ko://github.com/opisvigilant/futura/pipeline
           args: ["collect"]
+          ports:
+            - containerPort: 50051 # Added container port 50051
           resources:
             limits:
               cpu: "1"
@@ -36,3 +36,41 @@ spec:
         - name: configuration
           configMap:
             name: pipeline-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pipeline
+  namespace: default
+spec:
+  selector:
+    app.kubernetes.io/name: pipeline
+    app.kubernetes.io/instance: pipeline
+  ports:
+    - protocol: TCP
+      port: 50051 # Service port
+      targetPort: 50051 # Container port
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipeline-config
+  namespace: default
+  labels:
+    app.kubernetes.io/name: pipeline
+    app.kubernetes.io/instance: pipeline
+data:
+  config.toml: |
+    # Configuration file running Pipeline locally
+
+    title = "Configuration for Pipeline"
+
+    debug = true
+
+    [nats]
+    servers = ["nats://nats.default:4222"]
+
+    [collect]
+    host = "0.0.0.0"
+    port = "50051"

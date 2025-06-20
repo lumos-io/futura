@@ -4,8 +4,12 @@ This monorepo contains all the code to make the OpisVigilant platform working wi
 
 ## Nix Development setup
 
-This project uses `nix` to make it more portable and reproduciable.
+This project uses `nix` to make it more portable. To install nix, you can run the following command `curl -fsSL https://install.determinate.systems/nix | sh -s -- install --determinate`.
 
 ### .env file
 
 You need to create a `.env.local` file where you add secrets that shouldn't be part of the git commit. Nix will try to read the file and stop in case it cannot find it. A `.env.tmp` file is committed with the variables that need to be used.
+
+### Run the shell
+
+Assuming `nix` has been installed correctly and the `.env.local` is available, you can proceed with `nix develop` to enter the environment.

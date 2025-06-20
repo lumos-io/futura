@@ -76,10 +76,8 @@ func (c *Collector) Start(interval time.Duration, excludedNamespaces []string) e
 	for {
 		select {
 		case <-ticker.C:
-			hostname, err := os.Hostname()
-			if err != nil {
-				return err
-			}
+			// This comes from the Deployment manifest
+			hostname := os.Getenv("NODE_NAME")
 
 			summary, err := fetchSummary(hostname)
 			if err != nil {

@@ -11,8 +11,8 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: deploy
-deploy:
-	KO_DOCKER_REPO=docker.io/davideberdin ko apply -f deploy/watcher.yaml
+deploy:	
+	KO_DOCKER_REPO=docker.io/davideberdin ko apply -f ./deploy/watcher.yaml
 
 .PHONY: run
 run:

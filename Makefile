@@ -96,12 +96,8 @@ operator-undeploy:
 
 ##@ Watcher Run
 ##@ Watcher
-PHONY: run-watcher
-run-watcher:
-	go run watcher/main.go
-
 .PHONY: watcher-deploy
-watcher-e2e:
+watcher-deploy:
 	$(MAKE) -C watcher deploy
 
 .PHONY: watcher-run
@@ -135,3 +131,12 @@ frontend-preview:
 .PHONY: frontend-lint
 frontend-lint:
 	$(MAKE) -C frontend lint
+
+##@ Pipeline
+.PHONY: pipeline-deploy
+pipeline-deploy:
+	$(MAKE) -C pipeline deploy
+
+.PHONY: pipeline-run
+pipeline-run:
+	$(MAKE) -C pipeline run
