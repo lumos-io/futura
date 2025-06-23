@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
 	"golang.org/x/oauth2"
@@ -83,8 +84,7 @@ func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string)
 	db := models.GetDB()
 
 	// Check if user exists
-	err = db.Where("provider = ? AND provider_id = ?", provider, userInfo.ID).First(&user).Error
-	if err != nil {
+	if err := db.Where("provider = ? AND provider_id = ?", provider, userInfo.ID).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Create new user
 			user = models.User{
@@ -92,6 +92,7 @@ func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string)
 				Email:      userInfo.Email,
 				Provider:   provider,
 				ProviderID: userInfo.ID,
+				Avatar:     userInfo.Avatar,
 			}
 
 			// Create personal/default organization
@@ -130,20 +131,36 @@ func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string)
 		}
 	}
 
-	jwtToken, err := utils.GenerateJWT(user)
+	accessToken, err := utils.GenerateAccessToken(user)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate token", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate access token", nil)
+		return
+	}
+
+	refreshToken, err := utils.GenerateRefreshToken(user)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token", nil)
 		return
 	}
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "access_token",
-		Value:    jwtToken,
-		Expires:  time.Now().Add(24 * time.Hour),
+		Value:    accessToken,
+		Expires:  time.Now().Add(15 * time.Minute),
 		HttpOnly: true,
 		Secure:   os.Getenv("APP_ENV") == "production",
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		HttpOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "production",
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/auth/refresh", // limit cookie to refresh endpoint
 	})
 
 	c.Redirect(http.StatusTemporaryRedirect, os.Getenv("FRONTEND_URL"))
@@ -151,9 +168,10 @@ func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string)
 
 // Simplified user info response struct
 type OAuthUserInfo struct {
-	ID    string
-	Email string
-	Name  string
+	ID     string
+	Email  string
+	Name   string
+	Avatar string
 }
 
 func fetchUserInfo(client *http.Client, provider string) (OAuthUserInfo, error) {
@@ -166,14 +184,15 @@ func fetchUserInfo(client *http.Client, provider string) (OAuthUserInfo, error) 
 		}
 		defer resp.Body.Close()
 		var body struct {
-			ID    string `json:"id"`
-			Email string `json:"email"`
-			Name  string `json:"name"`
+			ID      string `json:"id"`
+			Email   string `json:"email"`
+			Name    string `json:"name"`
+			Picture string `json:"picture"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 			return userInfo, err
 		}
-		userInfo = OAuthUserInfo{ID: body.ID, Email: body.Email, Name: body.Name}
+		userInfo = OAuthUserInfo{ID: body.ID, Email: body.Email, Name: body.Name, Avatar: body.Picture}
 	} else if provider == "github" {
 		resp, err := client.Get("https://api.github.com/user")
 		if err != nil {
@@ -181,10 +200,11 @@ func fetchUserInfo(client *http.Client, provider string) (OAuthUserInfo, error) 
 		}
 		defer resp.Body.Close()
 		var body struct {
-			ID    int    `json:"id"`
-			Email string `json:"email"`
-			Name  string `json:"name"`
-			Login string `json:"login"`
+			ID     int    `json:"id"`
+			Email  string `json:"email"`
+			Name   string `json:"name"`
+			Login  string `json:"login"`
+			Avatar string `json:"avatar_url"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 			return userInfo, err
@@ -211,9 +231,10 @@ func fetchUserInfo(client *http.Client, provider string) (OAuthUserInfo, error) 
 			}
 		}
 		userInfo = OAuthUserInfo{
-			ID:    fmt.Sprintf("%d", body.ID),
-			Email: email,
-			Name:  body.Name,
+			ID:     fmt.Sprintf("%d", body.ID),
+			Email:  email,
+			Name:   body.Name,
+			Avatar: body.Avatar,
 		}
 	}
 	return userInfo, nil
@@ -226,4 +247,73 @@ func MeHandler(c *gin.Context) {
 		return
 	}
 	utils.RespondOK(c, user)
+}
+
+func RefreshToken(c *gin.Context) {
+	cookie, err := c.Request.Cookie("refresh_token")
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "NO_REFRESH_TOKEN", "Missing refresh token", nil)
+		return
+	}
+
+	tokenStr := cookie.Value
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
+		return utils.GetJWTSecret(), nil
+	})
+	if err != nil || !token.Valid {
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_TOKEN", "Invalid refresh token", nil)
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || claims["type"] != "refresh" {
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_CLAIMS", "Invalid refresh claims", nil)
+		return
+	}
+
+	userID, ok := claims["user_id"].(float64)
+	if !ok {
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_USER", "Invalid user in token", nil)
+		return
+	}
+
+	var user models.User
+	if err := models.GetDB().First(&user, uint(userID)).Error; err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "USER_NOT_FOUND", "User not found", nil)
+		return
+	}
+
+	newAccessToken, err := utils.GenerateAccessToken(user)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "TOKEN_ERROR", "Failed to generate new access token", nil)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"access_token": newAccessToken,
+	})
+}
+
+func Logout(c *gin.Context) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Expires:  time.Now().Add(-1),
+		HttpOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "production",
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Expires:  time.Now().Add(-1),
+		HttpOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "production",
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/auth/refresh", // limit cookie to refresh endpoint
+	})
+
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out"})
 }

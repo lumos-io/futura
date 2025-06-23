@@ -1,14 +1,11 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Placeholder from "@/assets/placeholder.svg";
+import { useAuth } from "@/hooks/auth_provider";
 
 export default function LoginPage() {
-  const handleGitHubLogin = () => {
-    window.location.href = "/auth/github/login";
-  };
-  const handleGoogleLogin = () => {
-    window.location.href = "/auth/google/login";
-  };
+  const { login } = useAuth();
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -26,7 +23,9 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={handleGitHubLogin}
+                onClick={() => {
+                  login("github");
+                }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                   <path
@@ -44,7 +43,9 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={handleGoogleLogin}
+                onClick={() => {
+                  login("google");
+                }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

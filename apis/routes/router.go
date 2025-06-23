@@ -16,6 +16,7 @@ import (
 func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 	router := gin.Default()
 
+	// observability
 	router.Use(middleware.TraceIDMiddleware())
 
 	// ref: https://github.com/gin-gonic/gin/issues/3709
@@ -37,6 +38,8 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 		auth.GET("/github/login", controllers.GithubLogin)
 		auth.GET("/github/callback", controllers.GithubCallback)
 		auth.GET("/me", middleware.AuthMiddleware(), controllers.MeHandler)
+		auth.POST("/logout", middleware.AuthMiddleware(), controllers.Logout)
+		auth.POST("/refresh", controllers.RefreshToken)
 	}
 
 	// Protected routes
