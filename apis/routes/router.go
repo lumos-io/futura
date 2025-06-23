@@ -3,8 +3,8 @@ package routes
 import (
 	"embed"
 	"fmt"
-	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-contrib/static"
@@ -17,6 +17,17 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 	router := gin.Default()
 
 	router.Use(middleware.TraceIDMiddleware())
+
+	// ref: https://github.com/gin-gonic/gin/issues/3709
+	// Frontend serving
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	distDir := fmt.Sprintf("%s/public/", dir)
+	// viteStaticFS := os.DirFS(distDir)
+	router.Use(static.Serve("/", static.LocalFile(distDir, false)))
 
 	// Auth routes
 	auth := router.Group("/auth")
@@ -50,26 +61,20 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 		}
 	}
 
-	// Frontend serving
-	dir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
-	distDir := fmt.Sprintf("%s/public/", dir)
-	viteStaticFS := os.DirFS(distDir)
-
-	// ref: https://github.com/gin-gonic/gin/issues/3709
-	router.Use(static.Serve("/", static.LocalFile(distDir, true)))
 	router.NoRoute(func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.RequestURI, "/assets") {
-			c.FileFromFS(c.Request.URL.Path, http.FS(viteStaticFS))
+		path := c.Request.URL.Path
+		// API routes: do nothing
+		if strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/auth") {
+			c.Next()
 			return
 		}
-		if !strings.HasPrefix(c.Request.RequestURI, "/api") {
-			c.FileFromFS("", http.FS(viteStaticFS))
+		// Static assets (e.g. /assets/index.js)
+		if strings.HasPrefix(path, "/assets") {
+			c.File(filepath.Join(distDir, path))
 			return
 		}
+		// For all other routes (e.g. /dashboard), serve index.html
+		c.File(filepath.Join(distDir, "index.html"))
 	})
 
 	return router, nil

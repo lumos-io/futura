@@ -11,14 +11,13 @@ function App() {
   useEffect(() => {
     fetch("/auth/me", { credentials: "include" })
       .then(async (res) => {
+        const body = await res.json();
         if (!res.ok) {
-          throw new Error("Not authenticated");
+          throw new Error("unauthenticated");
         }
-        const data = await res.json();
-        setUser(data.user);
+        setUser(body.data);
       })
-      .catch((err) => {
-        console.error("Auth check failed:", err);
+      .catch(() => {
         setUser(null);
       })
       .finally(() => setLoading(false));
