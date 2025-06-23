@@ -42,7 +42,7 @@ var collectCmd = &cobra.Command{
 		go func() {
 			// capture sigterm and other system call here
 			<-signalCh
-			fmt.Println("Shutting down collecto stage...")
+			fmt.Println("Shutting down collector stage...")
 		}()
 
 		grpcServer := grpc.NewServer()

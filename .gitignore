@@ -32,3 +32,6 @@ Dockerfile.cross
 *~
 
 .env.local
+.env
+
+data/

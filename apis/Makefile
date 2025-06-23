@@ -5,3 +5,8 @@ fmt: ## Run go fmt against code.
 .PHONY: vet
 vet: ## Run go vet against code.
 	go vet ./...
+
+
+.PHONY: run
+run: 
+	go run main.go

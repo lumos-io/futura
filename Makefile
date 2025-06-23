@@ -140,3 +140,9 @@ pipeline-deploy:
 .PHONY: pipeline-run
 pipeline-run:
 	$(MAKE) -C pipeline run
+
+
+##@ APIs
+.PHONY: apis-run
+apis-run: frontend-build
+	$(MAKE) -C apis run

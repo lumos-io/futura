@@ -11,4 +11,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    outDir: "../apis/public", // Build frontend into the Go backend
+    emptyOutDir: true,
+  },
 })

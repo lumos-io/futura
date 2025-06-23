@@ -8,5 +8,6 @@ type User struct {
 	Email          string `gorm:"uniqueIndex"`
 	Provider       string // "google" or "github"
 	ProviderID     string
-	OrganizationID uint
+	OrganizationID *uint         // Nullable foreign key to the *default* org
+	Organization   *Organization // The default org pointer (optional)
 }

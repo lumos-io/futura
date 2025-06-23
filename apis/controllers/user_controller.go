@@ -1,1 +1,130 @@
 package controllers
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/opisvigilant/futura/apis/models"
+	"github.com/opisvigilant/futura/apis/utils"
+)
+
+func GetUsers(c *gin.Context) {
+	orgID, err := parseOrgID(c)
+	if err != nil {
+		return
+	}
+
+	var users []models.User
+	if err := models.GetDB().Where("organization_id = ?", orgID).Find(&users).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to fetch users", nil)
+		return
+	}
+	utils.RespondOK(c, users)
+}
+
+func CreateUser(c *gin.Context) {
+	orgID, err := parseOrgID(c)
+	if err != nil {
+		return
+	}
+
+	var input struct {
+		Name  string `json:"name" binding:"required"`
+		Email string `json:"email" binding:"required,email"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error(), nil)
+		return
+	}
+
+	user := models.User{
+		Name:           input.Name,
+		Email:          input.Email,
+		OrganizationID: orgID,
+	}
+
+	if err := models.GetDB().Create(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to create user", nil)
+		return
+	}
+	utils.RespondCreated(c, user)
+}
+
+func UpdateUser(c *gin.Context) {
+	orgID, err := parseOrgID(c)
+	if err != nil {
+		return
+	}
+
+	userID, err := strconv.Atoi(c.Param("user_id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid user_id", nil)
+		return
+	}
+
+	var user models.User
+	if err := models.GetDB().Where("id = ? AND organization_id = ?", userID, orgID).First(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "User not found in this organization", nil)
+		return
+	}
+
+	var input struct {
+		Name  string `json:"name"`
+		Email string `json:"email" binding:"omitempty,email"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error(), nil)
+		return
+	}
+
+	if input.Name != "" {
+		user.Name = input.Name
+	}
+	if input.Email != "" {
+		user.Email = input.Email
+	}
+
+	if err := models.GetDB().Save(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to update user", nil)
+		return
+	}
+	utils.RespondOK(c, user)
+}
+
+func DeleteUser(c *gin.Context) {
+	orgID, err := parseOrgID(c)
+	if err != nil {
+		return
+	}
+
+	userID, err := strconv.Atoi(c.Param("user_id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid user_id", nil)
+		return
+	}
+
+	var user models.User
+	if err := models.GetDB().Where("id = ? AND organization_id = ?", userID, orgID).First(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "User not found in this organization", nil)
+		return
+	}
+
+	if err := models.GetDB().Delete(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to delete user", nil)
+		return
+	}
+	utils.RespondOK(c, nil)
+}
+
+// helper to extract org ID
+func parseOrgID(c *gin.Context) (*uint, error) {
+	orgID, err := strconv.Atoi(c.Param("org_id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Invalid organization_id", nil)
+		return nil, err
+	}
+	res := new(uint)
+	*res = uint(orgID)
+	return res, nil
+}
