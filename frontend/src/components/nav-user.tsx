@@ -25,15 +25,22 @@ import {
 import { useAuth } from "@/hooks/auth_provider";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/components/theme-provider";
+import { useState } from "react";
 
 export function NavUser() {
-  const { isMobile } = useSidebar();
+  const [isDark, setIsDark] = useState(false);
   const { setTheme } = useTheme();
+  const { isMobile } = useSidebar();
   const { user, logout } = useAuth();
 
   const switchTheme = () => {
-    setTheme("dark")
-  }
+    if (isDark) {
+      setTheme("light");
+    } else {
+      setTheme("dark");
+    }
+    setIsDark(!isDark);
+  };
 
   return (
     <SidebarMenu>
@@ -76,10 +83,8 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch checked={isDark} onCheckedChange={switchTheme} />
+                Toggle {isDark ? "Light" : "Dark"} Mode
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
