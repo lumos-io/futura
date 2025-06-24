@@ -11,6 +11,7 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   login: (provider: string) => void;
+  isAuthenticated: () => boolean;
   logout: () => void;
   refresh: () => Promise<void>;
 };
@@ -49,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Not authenticated");
       }
 
-      const body = await res.json();      
+      const body = await res.json();
       setUser(body.data);
     } catch {
       setUser(null);
@@ -96,6 +97,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     window.location.href = `/auth/${provider}/login`;
   };
 
+  const isAuthenticated = () => {
+    const res = localStorage.getItem("isAuthenticated");
+    if (res == "true") {
+      return true;
+    }
+    return false;
+  };
+
   // Set isAuthenticated on mount if it's a fresh login
   useEffect(() => {
     fetchUser();
@@ -108,7 +117,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
+    <AuthContext.Provider
+      value={{ user, loading, isAuthenticated, login, logout, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );

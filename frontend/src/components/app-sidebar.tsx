@@ -1,19 +1,18 @@
 import * as React from "react";
 import {
-  AudioWaveform,
   BookOpen,
-  Bot,
-  Command,
   Frame,
   GalleryVerticalEnd,
   Map,
+  NetworkIcon,
   PieChart,
-  Settings2,
+  Store,
+  ServerIcon,
   SquareTerminal,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
+import { NavKubernetes } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
@@ -24,132 +23,128 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-// This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   teams: [
     {
       name: "Futura",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Clusters",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Overview",
+          url: "/dashboard/clusters/overview",
+          isActive: true,
         },
         {
-          title: "Starred",
-          url: "#",
+          title: "Workloads Health",
+          url: "/dashboard/clusters/workloads-health",
+          isActive: false,
         },
         {
-          title: "Settings",
-          url: "#",
+          title: "Services",
+          url: "/dashboard/clusters/services",
+          isActive: false,
+        },
+        {
+          title: "Jobs",
+          url: "/dashboard/clusters/jobs",
+          isActive: false,
+        },
+        {
+          title: "Events",
+          url: "/dashboard/clusters/events",
+          isActive: false,
         },
       ],
     },
     {
-      title: "Models",
+      title: "Infrastructure",
       url: "#",
-      icon: Bot,
+      icon: Map,
       items: [
         {
-          title: "Genesis",
-          url: "#",
+          title: "Health Overview",
+          url: "/dashboard/infrastructure/health-overview",
+          isActive: false,
         },
         {
-          title: "Explorer",
-          url: "#",
+          title: "Cost Optimization",
+          url: "/dashboard/infrastructure/cost-optimization",
+          isActive: false,
         },
         {
-          title: "Quantum",
-          url: "#",
+          title: "Vulnerabilities",
+          url: "/dashboard/infrastructure/vulnerabilities",
+          isActive: false,
         },
       ],
     },
     {
-      title: "Documentation",
+      title: "Access Management",
       url: "#",
       icon: BookOpen,
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: "Users",
+          url: "/dashboard/access-management/users",
+          isActive: false,
         },
         {
-          title: "Get Started",
-          url: "#",
+          title: "Teams",
+          url: "/dashboard/access-management/teams",
+          isActive: false,
         },
         {
-          title: "Tutorials",
-          url: "#",
+          title: "API Keys",
+          url: "/dashboard/access-management/api-keys",
+          isActive: false,
         },
         {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
+          title: "Audit Trail",
+          url: "/dashboard/access-management/audit-trail",
+          isActive: false,
         },
       ],
     },
   ],
-  projects: [
+  kubernetes: [
     {
-      name: "Design Engineering",
-      url: "#",
+      name: "Nodes",
+      url: "/dashboard/kubernetes/nodes",
       icon: Frame,
+      isActive: false,
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
+      name: "Namespaces",
+      url: "/dashboard/kubernetes/namespaces",
       icon: PieChart,
+      isActive: false,
     },
     {
-      name: "Travel",
-      url: "#",
-      icon: Map,
+      name: "Workloads",
+      url: "/dashboard/kubernetes/workloads",
+      icon: ServerIcon,
+      isActive: false,
+    },
+    {
+      name: "Network",
+      url: "/dashboard/kubernetes/network",
+      icon: NetworkIcon,
+      isActive: false,
+    },
+    {
+      name: "Storage",
+      url: "/dashboard/kubernetes/storage",
+      icon: Store,
+      isActive: false,
     },
   ],
 };
@@ -162,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavKubernetes kubernetes={data.kubernetes} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
