@@ -1,10 +1,10 @@
 import React from "react";
 
-interface WorkloadsHealthProps {
+interface JobsProps {
   title: string;
 }
 
-const ClusterWorkloadsHealth: React.FC<WorkloadsHealthProps> = ({ title }) => {
+const ClusterJobs: React.FC<JobsProps> = ({ title }) => {
   return (
     <div
       style={{
@@ -19,4 +19,4 @@ const ClusterWorkloadsHealth: React.FC<WorkloadsHealthProps> = ({ title }) => {
   );
 };
 
-export default ClusterWorkloadsHealth;
+export default ClusterJobs;

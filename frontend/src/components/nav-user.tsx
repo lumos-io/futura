@@ -4,7 +4,6 @@ import {
   ChevronsUpDown,
   CreditCard,
   LogOut,
-  Sparkles,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,11 +23,17 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/auth_provider";
+import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/components/theme-provider";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-
+  const { setTheme } = useTheme();
   const { user, logout } = useAuth();
+
+  const switchTheme = () => {
+    setTheme("dark")
+  }
 
   return (
     <SidebarMenu>
@@ -71,8 +76,10 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

@@ -41,27 +41,22 @@ const data = {
         {
           title: "Overview",
           url: "/dashboard/clusters/overview",
-          isActive: true,
         },
         {
           title: "Workloads Health",
           url: "/dashboard/clusters/workloads-health",
-          isActive: false,
         },
         {
           title: "Services",
           url: "/dashboard/clusters/services",
-          isActive: false,
         },
         {
           title: "Jobs",
           url: "/dashboard/clusters/jobs",
-          isActive: false,
         },
         {
           title: "Events",
           url: "/dashboard/clusters/events",
-          isActive: false,
         },
       ],
     },
@@ -73,17 +68,14 @@ const data = {
         {
           title: "Health Overview",
           url: "/dashboard/infrastructure/health-overview",
-          isActive: false,
         },
         {
           title: "Cost Optimization",
           url: "/dashboard/infrastructure/cost-optimization",
-          isActive: false,
         },
         {
           title: "Vulnerabilities",
           url: "/dashboard/infrastructure/vulnerabilities",
-          isActive: false,
         },
       ],
     },
@@ -95,22 +87,18 @@ const data = {
         {
           title: "Users",
           url: "/dashboard/access-management/users",
-          isActive: false,
         },
         {
           title: "Teams",
           url: "/dashboard/access-management/teams",
-          isActive: false,
         },
         {
           title: "API Keys",
           url: "/dashboard/access-management/api-keys",
-          isActive: false,
         },
         {
           title: "Audit Trail",
           url: "/dashboard/access-management/audit-trail",
-          isActive: false,
         },
       ],
     },
@@ -120,31 +108,26 @@ const data = {
       name: "Nodes",
       url: "/dashboard/kubernetes/nodes",
       icon: Frame,
-      isActive: false,
     },
     {
       name: "Namespaces",
       url: "/dashboard/kubernetes/namespaces",
       icon: PieChart,
-      isActive: false,
     },
     {
       name: "Workloads",
       url: "/dashboard/kubernetes/workloads",
       icon: ServerIcon,
-      isActive: false,
     },
     {
       name: "Network",
       url: "/dashboard/kubernetes/network",
       icon: NetworkIcon,
-      isActive: false,
     },
     {
       name: "Storage",
       url: "/dashboard/kubernetes/storage",
       icon: Store,
-      isActive: false,
     },
   ],
 };

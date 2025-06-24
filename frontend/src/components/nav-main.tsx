@@ -34,7 +34,6 @@ type NavMainProps = {
 type NavSubItem = {
   title: string;
   url: string;
-  isActive: boolean;
 };
 
 export function NavMain({ items }: NavMainProps) {

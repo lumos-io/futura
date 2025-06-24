@@ -1,10 +1,10 @@
 import React from "react";
 
-interface WorkloadsHealthProps {
+interface KubernetesNodesProps {
   title: string;
 }
 
-const ClusterWorkloadsHealth: React.FC<WorkloadsHealthProps> = ({ title }) => {
+const KubernetesNodes: React.FC<KubernetesNodesProps> = ({ title }) => {
   return (
     <div
       style={{
@@ -19,4 +19,4 @@ const ClusterWorkloadsHealth: React.FC<WorkloadsHealthProps> = ({ title }) => {
   );
 };
 
-export default ClusterWorkloadsHealth;
+export default KubernetesNodes;
