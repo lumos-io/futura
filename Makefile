@@ -1,7 +1,8 @@
-PROTO_DIR=proto/events
-OUT_DIR=proto/events/gen
+PROTO_DIR=proto
+OUT_DIR=proto/gen
 PROTOC_GEN_GO=$(shell which protoc-gen-go)
 PROTOC_GEN_GO_GRPC=$(shell which protoc-gen-go-grpc)
+PROTO_FILES := $(shell find $(PROTO_DIR) -name '*.proto')
 GO_WORK_FILE=./go.work
 
 PHONY: dev-env
@@ -19,18 +20,19 @@ endif
 .PHONY: proto-events
 proto-events: proto-clean
 	@echo "Generating shared events protos..."
+	@find $(PROTO_DIR) -name "*.proto"
 	mkdir -p $(OUT_DIR)
 	protoc --proto_path=$(PROTO_DIR) \
 		--go_out=$(OUT_DIR) \
 		--go-grpc_out=$(OUT_DIR) \
 		--go-grpc_opt=paths=source_relative \
 		--go_opt=paths=source_relative \
-		$(wildcard $(PROTO_DIR)/*.proto)
+		$(PROTO_FILES)
 
 
 .PHONY: proto-clean
 proto-clean:
-	rm -rf proto/events/gen
+	rm -rf proto/gen
 
 ##@ Operator Build
 .PHONY: operator-manifests
