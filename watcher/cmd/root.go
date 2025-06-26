@@ -1,19 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"runtime/debug"
-	"syscall"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/opisvigilant/futura/watcher/internal/collector"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/sender"
 
-	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -36,36 +29,36 @@ events to the backend`,
 			panic(fmt.Errorf("configuration has not loaded correctly"))
 		}
 
-		debug.SetGCPercent(80)
-		ctx, cancel := context.WithCancel(context.Background())
+		// debug.SetGCPercent(80)
+		// ctx, cancel := context.WithCancel(context.Background())
 
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		go func() {
-			<-c
-			signal.Stop(c)
-			cancel()
-		}()
+		// c := make(chan os.Signal, 1)
+		// signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		// go func() {
+		// 	<-c
+		// 	signal.Stop(c)
+		// 	cancel()
+		// }()
 
-		// Kubernetes events
-		events := make(chan any, 10000)
+		// // Kubernetes events
+		// events := make(chan any, 10000)
 
-		// define where to route the events
-		sender, err := sender.New(watcherCfg)
-		if err != nil {
-			panic(err)
-		}
+		// // define where to route the events
+		// sender, err := sender.New(watcherCfg)
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		// create the generic collector
-		collector, err := collector.New(watcherCfg, ctx, sender)
-		if err != nil {
-			panic(err)
-		}
-		collector.Run(events)
+		// // create the generic collector
+		// collector, err := collector.New(watcherCfg, ctx, sender)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// collector.Run(events)
 
-		<-collector.Done()
-		logger.Logger().Info().Msg("Collector done")
-		logger.Logger().Info().Msg("Futura exiting...")
+		// <-collector.Done()
+		// logger.Logger().Info().Msg("Collector done")
+		// logger.Logger().Info().Msg("Futura exiting...")
 	},
 }
 
