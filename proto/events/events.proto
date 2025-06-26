@@ -8,9 +8,7 @@ message Metadata {
   string idempotency_key = 1;
   string watcher_version = 2;
   string cluster_id = 3;
-  string node_name = 4;
-  string cloud_provider = 5;
-  string kernel_version = 6;
+  string cloud_provider = 5;  
 }
 
 // Main batch message
@@ -21,19 +19,22 @@ message KubernetesEventBatch {
 
 // Envelope for all possible event types
 message KubernetesEvent {
-  string ObjectKind = 1;
-  string ObjectName = 2;
-  string ObjectUID = 3;
-  string ObjectFieldPath = 4;
-  int64 ObjectTimestamp = 5;  // UNIX timestamp
-  string ObjectNamespace = 6;
-  int32 EventSeverityNumber = 7;
-  string EventSeverityText = 8;
-  string EventReason = 9;
-  string EventAction = 10;
-  string EventStartTime = 11;
-  string EventName = 12;
-  string EventMessage = 13;
-  string EventUID = 14;
-  int64 EventCount = 15;
+  string object_kind = 1;
+  string object_name = 2;
+  string object_uid = 3;  
+  string object_fieldpath = 4;
+  int64 object_timestamp = 5;  // UNIX timestamp
+  string object_namespace = 6;
+  int32 event_severity_number = 7;
+  string event_severity_text = 8;
+  string event_reason = 9;
+  string event_action = 10;
+  string event_starttime = 11;
+  string event_name = 12;
+  string event_message = 13;
+  string event_uid = 14;
+  int64 event_count = 15;
+  string object_api_version = 16;
+  string object_resource_version = 17;
+  string node_name = 18;
 }

@@ -1,11 +1,17 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"runtime/debug"
+	"syscall"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/opisvigilant/futura/watcher/internal/collector"
 	"github.com/opisvigilant/futura/watcher/internal/config"
+	"github.com/opisvigilant/futura/watcher/internal/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,36 +35,35 @@ events to the backend`,
 			panic(fmt.Errorf("configuration has not loaded correctly"))
 		}
 
-		// debug.SetGCPercent(80)
-		// ctx, cancel := context.WithCancel(context.Background())
+		debug.SetGCPercent(80)
+		ctx, cancel := context.WithCancel(context.Background())
 
-		// c := make(chan os.Signal, 1)
-		// signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		// go func() {
-		// 	<-c
-		// 	signal.Stop(c)
-		// 	cancel()
-		// }()
+		collector, err := collector.New(watcherCfg)
+		if err != nil {
+			panic(err)
+		}
 
-		// // Kubernetes events
-		// events := make(chan any, 10000)
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			<-c
+			signal.Stop(c)
+			logger.Logger().Info().Msg("Shutdown signal received...")
+			if err := collector.Shutdown(ctx); err != nil {
+				logger.Logger().Error().Err(err).Msg("error during shutdown")
+			}
+			cancel()
+		}()
 
-		// // define where to route the events
-		// sender, err := sender.New(watcherCfg)
-		// if err != nil {
-		// 	panic(err)
-		// }
+		if err := collector.Start(ctx); err != nil {
+			panic(err)
+		}
 
-		// // create the generic collector
-		// collector, err := collector.New(watcherCfg, ctx, sender)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// collector.Run(events)
+		logger.Logger().Info().Msg("Collector started. Waiting for shutdown signal...")
+		<-ctx.Done()
 
-		// <-collector.Done()
-		// logger.Logger().Info().Msg("Collector done")
-		// logger.Logger().Info().Msg("Futura exiting...")
+		logger.Logger().Info().Msg("Collector done")
+		logger.Logger().Info().Msg("Futura exiting...")
 	},
 }
 

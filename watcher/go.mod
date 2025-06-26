@@ -7,6 +7,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/opisvigilant/futura/proto v0.0.0-20250619125831-33ea686c35c7
 	github.com/spf13/cobra v1.9.1
+	go.opentelemetry.io/otel v1.35.0
+	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.73.0
 	k8s.io/api v0.33.1
 	k8s.io/apimachinery v0.33.1
@@ -44,6 +46,7 @@ require (
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
+	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect

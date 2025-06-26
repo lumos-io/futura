@@ -103,7 +103,7 @@ watcher-deploy:
 	$(MAKE) -C watcher deploy
 
 .PHONY: watcher-run
-watcher-run:
+watcher-run:	
 	$(MAKE) -C watcher run
 
 ##@ Watcher Docker

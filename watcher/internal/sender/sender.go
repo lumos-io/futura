@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"google.golang.org/grpc"
@@ -15,71 +14,73 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/utils"
 
-	pb "github.com/opisvigilant/futura/proto/events/gen"
+	pbev "github.com/opisvigilant/futura/proto/gen/events"
+	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
 )
 
 // Sender handler implements handler.Handler interface,
 // Notify event to Sender
 type Sender struct {
 	ctx       context.Context
-	pbc       pb.CollectServiceClient
+	pbc       pbsvc.CollectServiceClient
 	batchSize int
 
-	PodEventChan         chan *pb.KubernetesEvent // *PodEvent
-	ServiceEventChan     chan *pb.KubernetesEvent // *SvcEvent
-	DeploymentEventChan  chan *pb.KubernetesEvent // *DepEvent
-	ReplicaSetEventChan  chan *pb.KubernetesEvent // *RsEvent
-	EndpointEventChan    chan *pb.KubernetesEvent // *EndpointsEvent
-	ContainerEventChan   chan *pb.KubernetesEvent // *ContainerEvent
-	DaemonSetEventChan   chan *pb.KubernetesEvent // *DaemonSetEvent
-	StatefulSetEventChan chan *pb.KubernetesEvent // *StatefulSetEvent
-	JobEventChan         chan *pb.KubernetesEvent // *JobEvent
-	CronJobEventChan     chan *pb.KubernetesEvent // *CronJobEvent
+	KubernetesEventChan chan *pbev.KubernetesEvent
 }
 
 // Init prepares Webhook configuration
-func New(c *config.Configuration) (*Sender, error) {
-	address := fmt.Sprintf("%s:%s", c.Collect.Host, c.Collect.Port)
+func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
+	address := fmt.Sprintf("%s:%s", config.Collect.Host, config.Collect.Port)
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to gRPC server: %v", err)
 	}
 
-	client := pb.NewCollectServiceClient(conn)
+	client := pbsvc.NewCollectServiceClient(conn)
 
+	resourceChanSize := 200
 	s := &Sender{
-		batchSize: 1000,
-		pbc:       client,
+		ctx:                 ctx,
+		batchSize:           1000,
+		pbc:                 client,
+		KubernetesEventChan: make(chan *pbev.KubernetesEvent, 5*resourceChanSize),
 	}
+
+	// events are resynced every 60 seconds on kubernetes informers
+	// resourceBatchSize ~ burst size, if more than resourceBatchSize events are sent in a moment, blocking can occur
+	// resync period / event interval = 60 / 5 = 12
+	// 12 * resourceBatchSize = 12 * 1000 = 12000
+	// it can send upto 12k events in 60 seconds
+	// seems safe enough, if not, we can increase the buffer size
+	eventsInterval := 5 * time.Second
+	go s.sendEventsInBatch(s.KubernetesEventChan, eventsInterval)
 
 	return s, nil
 }
 
-var resourceBatchSize int64 = 50
-
-func (b *Sender) sendEventsInBatch(ch chan *pb.KubernetesEvent, interval time.Duration) {
+func (s *Sender) sendEventsInBatch(ch chan *pbev.KubernetesEvent, interval time.Duration) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 
 	for {
 		select {
-		case <-b.ctx.Done():
+		case <-s.ctx.Done():
 			logger.Logger().Info().Msg("stopping sending events to backend")
 			return
 		case <-t.C:
 			randomDuration := time.Duration(rand.Intn(50)) * time.Millisecond
 			time.Sleep(randomDuration)
 
-			b.send(ch)
+			s.send(ch)
 		}
 	}
 }
 
-func (b *Sender) send(ch <-chan *pb.KubernetesEvent) {
-	batch := make([]*pb.KubernetesEvent, 0, resourceBatchSize)
+func (s *Sender) send(ch <-chan *pbev.KubernetesEvent) {
+	batch := make([]*pbev.KubernetesEvent, 0, s.batchSize)
 	loop := true
 
-	for i := 0; (i < int(resourceBatchSize)) && loop; i++ {
+	for i := 0; (i < s.batchSize) && loop; i++ {
 		select {
 		case ev := <-ch:
 			batch = append(batch, ev)
@@ -92,11 +93,14 @@ func (b *Sender) send(ch <-chan *pb.KubernetesEvent) {
 		return
 	}
 
-	payload := &pb.KubernetesEventBatch{
-		Metadata: &pb.Metadata{
+	payload := &pbev.KubernetesEventBatch{
+		Metadata: &pbev.Metadata{
 			IdempotencyKey: uuid.NewString(),
 			WatcherVersion: utils.WatcherVersion,
-			NodeName:       os.Getenv("NODE_NAME"),
+			// FIXME: later to be fixed or enriched
+			ClusterId: "",
+			// FIXME: later to be fixed or enriched
+			CloudProvider: "",
 		},
 		Events: batch,
 	}
@@ -105,7 +109,7 @@ func (b *Sender) send(ch <-chan *pb.KubernetesEvent) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if _, err := b.pbc.SendEvent(ctx, payload); err != nil {
+	if _, err := s.pbc.SendEvent(ctx, payload); err != nil {
 		logger.Logger().Error().Msgf("SendEvent failed: %v", err)
 	}
 }

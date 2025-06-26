@@ -26,9 +26,7 @@ type Metadata struct {
 	IdempotencyKey string                 `protobuf:"bytes,1,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
 	WatcherVersion string                 `protobuf:"bytes,2,opt,name=watcher_version,json=watcherVersion,proto3" json:"watcher_version,omitempty"`
 	ClusterId      string                 `protobuf:"bytes,3,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
-	NodeName       string                 `protobuf:"bytes,4,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
 	CloudProvider  string                 `protobuf:"bytes,5,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
-	KernelVersion  string                 `protobuf:"bytes,6,opt,name=kernel_version,json=kernelVersion,proto3" json:"kernel_version,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -84,23 +82,9 @@ func (x *Metadata) GetClusterId() string {
 	return ""
 }
 
-func (x *Metadata) GetNodeName() string {
-	if x != nil {
-		return x.NodeName
-	}
-	return ""
-}
-
 func (x *Metadata) GetCloudProvider() string {
 	if x != nil {
 		return x.CloudProvider
-	}
-	return ""
-}
-
-func (x *Metadata) GetKernelVersion() string {
-	if x != nil {
-		return x.KernelVersion
 	}
 	return ""
 }
@@ -160,24 +144,27 @@ func (x *KubernetesEventBatch) GetEvents() []*KubernetesEvent {
 
 // Envelope for all possible event types
 type KubernetesEvent struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	ObjectKind          string                 `protobuf:"bytes,1,opt,name=ObjectKind,proto3" json:"ObjectKind,omitempty"`
-	ObjectName          string                 `protobuf:"bytes,2,opt,name=ObjectName,proto3" json:"ObjectName,omitempty"`
-	ObjectUID           string                 `protobuf:"bytes,3,opt,name=ObjectUID,proto3" json:"ObjectUID,omitempty"`
-	ObjectFieldPath     string                 `protobuf:"bytes,4,opt,name=ObjectFieldPath,proto3" json:"ObjectFieldPath,omitempty"`
-	ObjectTimestamp     int64                  `protobuf:"varint,5,opt,name=ObjectTimestamp,proto3" json:"ObjectTimestamp,omitempty"` // UNIX timestamp
-	ObjectNamespace     string                 `protobuf:"bytes,6,opt,name=ObjectNamespace,proto3" json:"ObjectNamespace,omitempty"`
-	EventSeverityNumber int32                  `protobuf:"varint,7,opt,name=EventSeverityNumber,proto3" json:"EventSeverityNumber,omitempty"`
-	EventSeverityText   string                 `protobuf:"bytes,8,opt,name=EventSeverityText,proto3" json:"EventSeverityText,omitempty"`
-	EventReason         string                 `protobuf:"bytes,9,opt,name=EventReason,proto3" json:"EventReason,omitempty"`
-	EventAction         string                 `protobuf:"bytes,10,opt,name=EventAction,proto3" json:"EventAction,omitempty"`
-	EventStartTime      string                 `protobuf:"bytes,11,opt,name=EventStartTime,proto3" json:"EventStartTime,omitempty"`
-	EventName           string                 `protobuf:"bytes,12,opt,name=EventName,proto3" json:"EventName,omitempty"`
-	EventMessage        string                 `protobuf:"bytes,13,opt,name=EventMessage,proto3" json:"EventMessage,omitempty"`
-	EventUID            string                 `protobuf:"bytes,14,opt,name=EventUID,proto3" json:"EventUID,omitempty"`
-	EventCount          int64                  `protobuf:"varint,15,opt,name=EventCount,proto3" json:"EventCount,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	ObjectKind            string                 `protobuf:"bytes,1,opt,name=object_kind,json=objectKind,proto3" json:"object_kind,omitempty"`
+	ObjectName            string                 `protobuf:"bytes,2,opt,name=object_name,json=objectName,proto3" json:"object_name,omitempty"`
+	ObjectUid             string                 `protobuf:"bytes,3,opt,name=object_uid,json=objectUid,proto3" json:"object_uid,omitempty"`
+	ObjectFieldpath       string                 `protobuf:"bytes,4,opt,name=object_fieldpath,json=objectFieldpath,proto3" json:"object_fieldpath,omitempty"`
+	ObjectTimestamp       int64                  `protobuf:"varint,5,opt,name=object_timestamp,json=objectTimestamp,proto3" json:"object_timestamp,omitempty"` // UNIX timestamp
+	ObjectNamespace       string                 `protobuf:"bytes,6,opt,name=object_namespace,json=objectNamespace,proto3" json:"object_namespace,omitempty"`
+	EventSeverityNumber   int32                  `protobuf:"varint,7,opt,name=event_severity_number,json=eventSeverityNumber,proto3" json:"event_severity_number,omitempty"`
+	EventSeverityText     string                 `protobuf:"bytes,8,opt,name=event_severity_text,json=eventSeverityText,proto3" json:"event_severity_text,omitempty"`
+	EventReason           string                 `protobuf:"bytes,9,opt,name=event_reason,json=eventReason,proto3" json:"event_reason,omitempty"`
+	EventAction           string                 `protobuf:"bytes,10,opt,name=event_action,json=eventAction,proto3" json:"event_action,omitempty"`
+	EventStarttime        string                 `protobuf:"bytes,11,opt,name=event_starttime,json=eventStarttime,proto3" json:"event_starttime,omitempty"`
+	EventName             string                 `protobuf:"bytes,12,opt,name=event_name,json=eventName,proto3" json:"event_name,omitempty"`
+	EventMessage          string                 `protobuf:"bytes,13,opt,name=event_message,json=eventMessage,proto3" json:"event_message,omitempty"`
+	EventUid              string                 `protobuf:"bytes,14,opt,name=event_uid,json=eventUid,proto3" json:"event_uid,omitempty"`
+	EventCount            int64                  `protobuf:"varint,15,opt,name=event_count,json=eventCount,proto3" json:"event_count,omitempty"`
+	ObjectApiVersion      string                 `protobuf:"bytes,16,opt,name=object_api_version,json=objectApiVersion,proto3" json:"object_api_version,omitempty"`
+	ObjectResourceVersion string                 `protobuf:"bytes,17,opt,name=object_resource_version,json=objectResourceVersion,proto3" json:"object_resource_version,omitempty"`
+	NodeName              string                 `protobuf:"bytes,18,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *KubernetesEvent) Reset() {
@@ -224,16 +211,16 @@ func (x *KubernetesEvent) GetObjectName() string {
 	return ""
 }
 
-func (x *KubernetesEvent) GetObjectUID() string {
+func (x *KubernetesEvent) GetObjectUid() string {
 	if x != nil {
-		return x.ObjectUID
+		return x.ObjectUid
 	}
 	return ""
 }
 
-func (x *KubernetesEvent) GetObjectFieldPath() string {
+func (x *KubernetesEvent) GetObjectFieldpath() string {
 	if x != nil {
-		return x.ObjectFieldPath
+		return x.ObjectFieldpath
 	}
 	return ""
 }
@@ -280,9 +267,9 @@ func (x *KubernetesEvent) GetEventAction() string {
 	return ""
 }
 
-func (x *KubernetesEvent) GetEventStartTime() string {
+func (x *KubernetesEvent) GetEventStarttime() string {
 	if x != nil {
-		return x.EventStartTime
+		return x.EventStarttime
 	}
 	return ""
 }
@@ -301,9 +288,9 @@ func (x *KubernetesEvent) GetEventMessage() string {
 	return ""
 }
 
-func (x *KubernetesEvent) GetEventUID() string {
+func (x *KubernetesEvent) GetEventUid() string {
 	if x != nil {
-		return x.EventUID
+		return x.EventUid
 	}
 	return ""
 }
@@ -315,45 +302,66 @@ func (x *KubernetesEvent) GetEventCount() int64 {
 	return 0
 }
 
+func (x *KubernetesEvent) GetObjectApiVersion() string {
+	if x != nil {
+		return x.ObjectApiVersion
+	}
+	return ""
+}
+
+func (x *KubernetesEvent) GetObjectResourceVersion() string {
+	if x != nil {
+		return x.ObjectResourceVersion
+	}
+	return ""
+}
+
+func (x *KubernetesEvent) GetNodeName() string {
+	if x != nil {
+		return x.NodeName
+	}
+	return ""
+}
+
 var File_events_events_proto protoreflect.FileDescriptor
 
 const file_events_events_proto_rawDesc = "" +
 	"\n" +
-	"\x13events/events.proto\x12\x06events\"\xe6\x01\n" +
+	"\x13events/events.proto\x12\x06events\"\xa2\x01\n" +
 	"\bMetadata\x12'\n" +
 	"\x0fidempotency_key\x18\x01 \x01(\tR\x0eidempotencyKey\x12'\n" +
 	"\x0fwatcher_version\x18\x02 \x01(\tR\x0ewatcherVersion\x12\x1d\n" +
 	"\n" +
-	"cluster_id\x18\x03 \x01(\tR\tclusterId\x12\x1b\n" +
-	"\tnode_name\x18\x04 \x01(\tR\bnodeName\x12%\n" +
-	"\x0ecloud_provider\x18\x05 \x01(\tR\rcloudProvider\x12%\n" +
-	"\x0ekernel_version\x18\x06 \x01(\tR\rkernelVersion\"u\n" +
+	"cluster_id\x18\x03 \x01(\tR\tclusterId\x12%\n" +
+	"\x0ecloud_provider\x18\x05 \x01(\tR\rcloudProvider\"u\n" +
 	"\x14KubernetesEventBatch\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.events.MetadataR\bmetadata\x12/\n" +
-	"\x06events\x18\x02 \x03(\v2\x17.events.KubernetesEventR\x06events\"\xb7\x04\n" +
-	"\x0fKubernetesEvent\x12\x1e\n" +
+	"\x06events\x18\x02 \x03(\v2\x17.events.KubernetesEventR\x06events\"\xcb\x05\n" +
+	"\x0fKubernetesEvent\x12\x1f\n" +
+	"\vobject_kind\x18\x01 \x01(\tR\n" +
+	"objectKind\x12\x1f\n" +
+	"\vobject_name\x18\x02 \x01(\tR\n" +
+	"objectName\x12\x1d\n" +
 	"\n" +
-	"ObjectKind\x18\x01 \x01(\tR\n" +
-	"ObjectKind\x12\x1e\n" +
+	"object_uid\x18\x03 \x01(\tR\tobjectUid\x12)\n" +
+	"\x10object_fieldpath\x18\x04 \x01(\tR\x0fobjectFieldpath\x12)\n" +
+	"\x10object_timestamp\x18\x05 \x01(\x03R\x0fobjectTimestamp\x12)\n" +
+	"\x10object_namespace\x18\x06 \x01(\tR\x0fobjectNamespace\x122\n" +
+	"\x15event_severity_number\x18\a \x01(\x05R\x13eventSeverityNumber\x12.\n" +
+	"\x13event_severity_text\x18\b \x01(\tR\x11eventSeverityText\x12!\n" +
+	"\fevent_reason\x18\t \x01(\tR\veventReason\x12!\n" +
+	"\fevent_action\x18\n" +
+	" \x01(\tR\veventAction\x12'\n" +
+	"\x0fevent_starttime\x18\v \x01(\tR\x0eeventStarttime\x12\x1d\n" +
 	"\n" +
-	"ObjectName\x18\x02 \x01(\tR\n" +
-	"ObjectName\x12\x1c\n" +
-	"\tObjectUID\x18\x03 \x01(\tR\tObjectUID\x12(\n" +
-	"\x0fObjectFieldPath\x18\x04 \x01(\tR\x0fObjectFieldPath\x12(\n" +
-	"\x0fObjectTimestamp\x18\x05 \x01(\x03R\x0fObjectTimestamp\x12(\n" +
-	"\x0fObjectNamespace\x18\x06 \x01(\tR\x0fObjectNamespace\x120\n" +
-	"\x13EventSeverityNumber\x18\a \x01(\x05R\x13EventSeverityNumber\x12,\n" +
-	"\x11EventSeverityText\x18\b \x01(\tR\x11EventSeverityText\x12 \n" +
-	"\vEventReason\x18\t \x01(\tR\vEventReason\x12 \n" +
-	"\vEventAction\x18\n" +
-	" \x01(\tR\vEventAction\x12&\n" +
-	"\x0eEventStartTime\x18\v \x01(\tR\x0eEventStartTime\x12\x1c\n" +
-	"\tEventName\x18\f \x01(\tR\tEventName\x12\"\n" +
-	"\fEventMessage\x18\r \x01(\tR\fEventMessage\x12\x1a\n" +
-	"\bEventUID\x18\x0e \x01(\tR\bEventUID\x12\x1e\n" +
-	"\n" +
-	"EventCount\x18\x0f \x01(\x03R\n" +
-	"EventCountB8Z6github.com/opisvigilant/futura/proto/gen/events;eventsb\x06proto3"
+	"event_name\x18\f \x01(\tR\teventName\x12#\n" +
+	"\revent_message\x18\r \x01(\tR\feventMessage\x12\x1b\n" +
+	"\tevent_uid\x18\x0e \x01(\tR\beventUid\x12\x1f\n" +
+	"\vevent_count\x18\x0f \x01(\x03R\n" +
+	"eventCount\x12,\n" +
+	"\x12object_api_version\x18\x10 \x01(\tR\x10objectApiVersion\x126\n" +
+	"\x17object_resource_version\x18\x11 \x01(\tR\x15objectResourceVersion\x12\x1b\n" +
+	"\tnode_name\x18\x12 \x01(\tR\bnodeNameB8Z6github.com/opisvigilant/futura/proto/gen/events;eventsb\x06proto3"
 
 var (
 	file_events_events_proto_rawDescOnce sync.Once

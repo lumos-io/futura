@@ -1,200 +1,175 @@
 package metric
 
-import (
-	"context"
-	"crypto/tls"
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"os"
-	"strings"
-	"time"
+// type Collector struct {
+// 	ctx      context.Context
+// 	doneChan chan struct{} // done signal for metricCollector
 
-	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/logger"
-	"github.com/opisvigilant/futura/watcher/internal/models"
-	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"k8s.io/client-go/kubernetes"
+// 	pbc       pb.CollectServiceClient
+// 	k8sClient *k8s.Client
+// }
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+// func New(k8sClient *k8s.Client, cfg *config.Configuration, parentCtx context.Context) (*Collector, error) {
+// 	ctx, cancel := context.WithCancel(parentCtx)
 
-	pb "github.com/opisvigilant/futura/proto/events/gen"
-)
+// 	address := fmt.Sprintf("%s:%s", cfg.Collect.Host, cfg.Collect.Port)
+// 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+// 	if err != nil {
+// 		defer cancel()
+// 		return nil, fmt.Errorf("failed to connect to gRPC server: %v", err)
+// 	}
 
-type Collector struct {
-	ctx      context.Context
-	doneChan chan struct{} // done signal for metricCollector
+// 	client := pb.NewCollectServiceClient(conn)
 
-	pbc       pb.CollectServiceClient
-	k8sClient *k8s.Client
-}
+// 	collector := &Collector{
+// 		ctx:       ctx,
+// 		doneChan:  make(chan struct{}),
+// 		pbc:       client,
+// 		k8sClient: k8sClient,
+// 	}
 
-func New(k8sClient *k8s.Client, cfg *config.Configuration, parentCtx context.Context) (*Collector, error) {
-	ctx, cancel := context.WithCancel(parentCtx)
+// 	go func(c *Collector) {
+// 		<-c.ctx.Done() // wait for context to be cancelled
+// 		defer cancel()
+// 		c.close()
+// 	}(collector)
 
-	address := fmt.Sprintf("%s:%s", cfg.Collect.Host, cfg.Collect.Port)
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		defer cancel()
-		return nil, fmt.Errorf("failed to connect to gRPC server: %v", err)
-	}
+// 	return collector, nil
+// }
 
-	client := pb.NewCollectServiceClient(conn)
+// func (c *Collector) Start(interval time.Duration, excludedNamespaces []string) error {
+// 	ticker := time.NewTicker(interval)
+// 	defer ticker.Stop()
 
-	collector := &Collector{
-		ctx:       ctx,
-		doneChan:  make(chan struct{}),
-		pbc:       client,
-		k8sClient: k8sClient,
-	}
+// 	// Convert exclude list to map for fast lookup
+// 	excludeMap := make(map[string]bool)
+// 	for _, ns := range excludedNamespaces {
+// 		excludeMap[strings.TrimSpace(ns)] = true
+// 	}
 
-	go func(c *Collector) {
-		<-c.ctx.Done() // wait for context to be cancelled
-		defer cancel()
-		c.close()
-	}(collector)
+// 	ctx := context.Background()
 
-	return collector, nil
-}
+// 	for {
+// 		select {
+// 		case <-ticker.C:
+// 			// This comes from the Deployment manifest
+// 			hostname := os.Getenv("NODE_NAME")
 
-func (c *Collector) Start(interval time.Duration, excludedNamespaces []string) error {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
+// 			summary, err := fetchSummary(hostname)
+// 			if err != nil {
+// 				log.Printf("summary error: %v", err)
+// 				continue
+// 			}
 
-	// Convert exclude list to map for fast lookup
-	excludeMap := make(map[string]bool)
-	for _, ns := range excludedNamespaces {
-		excludeMap[strings.TrimSpace(ns)] = true
-	}
+// 			var batch []*pb.ContainerMetric
 
-	ctx := context.Background()
+// 			// for each pod collect the utilization metrics
+// 			for _, pod := range summary.Pods {
+// 				ns := pod.PodRef.Namespace
+// 				name := pod.PodRef.Name
+// 				for _, container := range pod.Containers {
+// 					cpu := float64(container.CPU.UsageNanoCores) / 1e9
+// 					mem := container.Memory.UsageBytes
+// 					memWS := container.Memory.WorkingSetBytes
+// 					fs := container.Rootfs.UsedBytes
+// 					rx := container.Network.RxBytes
+// 					tx := container.Network.TxBytes
 
-	for {
-		select {
-		case <-ticker.C:
-			// This comes from the Deployment manifest
-			hostname := os.Getenv("NODE_NAME")
+// 					// PodSpec limits
+// 					cpuLimit, memLimit := getLimitsForContainer(c.k8sClient.RawClient(), ns, name, container.Name)
 
-			summary, err := fetchSummary(hostname)
-			if err != nil {
-				log.Printf("summary error: %v", err)
-				continue
-			}
+// 					batch = append(batch, &pb.ContainerMetric{
+// 						Metadata: &pb.MetricMetadata{
+// 							ClusterId:     "my-cluster",
+// 							NodeName:      hostname,
+// 							Namespace:     ns,
+// 							PodName:       name,
+// 							ContainerName: container.Name,
+// 							Source:        "kubelet",
+// 							TimestampUtc:  time.Now().UTC().Format(time.RFC3339),
+// 						},
+// 						CpuUsageCores:         cpu,
+// 						MemoryUsageBytes:      mem,
+// 						MemoryWorkingSetBytes: memWS,
+// 						RxBytes:               rx,
+// 						TxBytes:               tx,
+// 						FsUsageBytes:          fs,
+// 						CpuLimitCores:         cpuLimit,
+// 						MemoryLimitBytes:      memLimit,
+// 					})
+// 				}
+// 			}
 
-			var batch []*pb.ContainerMetric
+// 			_, err = c.pbc.SendMetric(ctx, &pb.ContainerMetricBatch{
+// 				Metrics: batch,
+// 			})
+// 			if err != nil {
+// 				return err
+// 			}
+// 			logger.Logger().Info().Msgf("✅ Sent %d metrics", len(batch))
+// 		case <-ctx.Done():
+// 			logger.Logger().Info().Msg("Shutting down metrics scraper...")
+// 			return nil
+// 		}
+// 	}
+// }
 
-			// for each pod collect the utilization metrics
-			for _, pod := range summary.Pods {
-				ns := pod.PodRef.Namespace
-				name := pod.PodRef.Name
-				for _, container := range pod.Containers {
-					cpu := float64(container.CPU.UsageNanoCores) / 1e9
-					mem := container.Memory.UsageBytes
-					memWS := container.Memory.WorkingSetBytes
-					fs := container.Rootfs.UsedBytes
-					rx := container.Network.RxBytes
-					tx := container.Network.TxBytes
+// func readToken() (string, error) {
+// 	b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to read file: %v", err)
+// 	}
+// 	return strings.TrimSpace(string(b)), nil
+// }
 
-					// PodSpec limits
-					cpuLimit, memLimit := getLimitsForContainer(c.k8sClient.RawClient(), ns, name, container.Name)
+// func fetchSummary(kubeletHost string) (*models.MetricSummary, error) {
+// 	url := fmt.Sprintf("https://%s:10250/stats/summary", kubeletHost)
+// 	client := &http.Client{
+// 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+// 	}
+// 	req, _ := http.NewRequest("GET", url, nil)
+// 	token, err := readToken()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-					batch = append(batch, &pb.ContainerMetric{
-						Metadata: &pb.MetricMetadata{
-							ClusterId:     "my-cluster",
-							NodeName:      hostname,
-							Namespace:     ns,
-							PodName:       name,
-							ContainerName: container.Name,
-							Source:        "kubelet",
-							TimestampUtc:  time.Now().UTC().Format(time.RFC3339),
-						},
-						CpuUsageCores:         cpu,
-						MemoryUsageBytes:      mem,
-						MemoryWorkingSetBytes: memWS,
-						RxBytes:               rx,
-						TxBytes:               tx,
-						FsUsageBytes:          fs,
-						CpuLimitCores:         cpuLimit,
-						MemoryLimitBytes:      memLimit,
-					})
-				}
-			}
+// 	req.Header.Set("Authorization", "Bearer "+token)
 
-			_, err = c.pbc.SendMetric(ctx, &pb.ContainerMetricBatch{
-				Metrics: batch,
-			})
-			if err != nil {
-				return err
-			}
-			logger.Logger().Info().Msgf("✅ Sent %d metrics", len(batch))
-		case <-ctx.Done():
-			logger.Logger().Info().Msg("Shutting down metrics scraper...")
-			return nil
-		}
-	}
-}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer resp.Body.Close()
 
-func readToken() (string, error) {
-	b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-	if err != nil {
-		return "", fmt.Errorf("failed to read file: %v", err)
-	}
-	return strings.TrimSpace(string(b)), nil
-}
+// 	body, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	var summary models.MetricSummary
+// 	err = json.Unmarshal(body, &summary)
+// 	return &summary, err
+// }
 
-func fetchSummary(kubeletHost string) (*models.MetricSummary, error) {
-	url := fmt.Sprintf("https://%s:10250/stats/summary", kubeletHost)
-	client := &http.Client{
-		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
-	}
-	req, _ := http.NewRequest("GET", url, nil)
-	token, err := readToken()
-	if err != nil {
-		return nil, err
-	}
+// func getLimitsForContainer(client *kubernetes.Clientset, ns, podName, containerName string) (float64, uint64) {
+// 	pod, err := client.CoreV1().Pods(ns).Get(context.Background(), podName, metav1.GetOptions{})
+// 	if err != nil {
+// 		log.Printf("cannot get pod %s/%s: %v", ns, podName, err)
+// 		return 0, 0
+// 	}
 
-	req.Header.Set("Authorization", "Bearer "+token)
+// 	for _, container := range pod.Spec.Containers {
+// 		if container.Name == containerName {
+// 			cpu := float64(container.Resources.Limits.Cpu().MilliValue()) / 1000.0
+// 			mem := uint64(container.Resources.Limits.Memory().Value())
+// 			return cpu, mem
+// 		}
+// 	}
+// 	return 0, 0
+// }
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+// func (c *Collector) Done() <-chan struct{} {
+// 	return c.doneChan
+// }
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	var summary models.MetricSummary
-	err = json.Unmarshal(body, &summary)
-	return &summary, err
-}
-
-func getLimitsForContainer(client *kubernetes.Clientset, ns, podName, containerName string) (float64, uint64) {
-	pod, err := client.CoreV1().Pods(ns).Get(context.Background(), podName, metav1.GetOptions{})
-	if err != nil {
-		log.Printf("cannot get pod %s/%s: %v", ns, podName, err)
-		return 0, 0
-	}
-
-	for _, container := range pod.Spec.Containers {
-		if container.Name == containerName {
-			cpu := float64(container.Resources.Limits.Cpu().MilliValue()) / 1000.0
-			mem := uint64(container.Resources.Limits.Memory().Value())
-			return cpu, mem
-		}
-	}
-	return 0, 0
-}
-
-func (c *Collector) Done() <-chan struct{} {
-	return c.doneChan
-}
-
-func (c *Collector) close() {
-	logger.Logger().Info().Msg("MetricCollector closing...")
-}
+// func (c *Collector) close() {
+// 	logger.Logger().Info().Msg("MetricCollector closing...")
+// }

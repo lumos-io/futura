@@ -7,13 +7,14 @@ import (
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/logger"
+	"github.com/opisvigilant/futura/watcher/internal/sender"
 	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.uber.org/zap"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
+
+	pbev "github.com/opisvigilant/futura/proto/gen/events"
 )
 
 type KubernetesEventsCollector struct {
@@ -39,12 +40,17 @@ func (kec *KubernetesEventsCollector) Start(ctx context.Context) error {
 		return err
 	}
 
+	s, err := sender.New(ctx, kec.config)
+	if err != nil {
+		return err
+	}
+
 	logger.Logger().Info().Msg("starting to watch namespaces for the events.")
 	if len(kec.config.Kubernetes.Namespaces) == 0 {
-		kec.startWatch(corev1.NamespaceAll, k8sClient)
+		kec.startWatch(corev1.NamespaceAll, k8sClient, s)
 	} else {
 		for _, ns := range kec.config.Kubernetes.Namespaces {
-			kec.startWatch(ns, k8sClient)
+			kec.startWatch(ns, k8sClient, s)
 		}
 	}
 	return nil
@@ -62,17 +68,21 @@ func (kec *KubernetesEventsCollector) Shutdown(context.Context) error {
 	return nil
 }
 
-func (kec *KubernetesEventsCollector) startWatch(ns string, client *k8s.Client) {
+func (kec *KubernetesEventsCollector) startWatch(ns string, client *k8s.Client, sender *sender.Sender) {
 	stopperChan := make(chan struct{})
 	kec.stopperChanList = append(kec.stopperChanList, stopperChan)
 	kec.startWatchingNamespace(client, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj any) {
 			ev := obj.(*corev1.Event)
-			kec.handleEvent(ev)
+			kec.handleEvent(ev, sender)
 		},
 		UpdateFunc: func(_, obj any) {
 			ev := obj.(*corev1.Event)
-			kec.handleEvent(ev)
+			kec.handleEvent(ev, sender)
+		},
+		DeleteFunc: func(obj any) {
+			ev := obj.(*corev1.Event)
+			kec.handleEvent(ev, sender)
 		},
 	}, ns, stopperChan)
 }
@@ -91,11 +101,51 @@ func (kec *KubernetesEventsCollector) startWatchingNamespace(clientset *k8s.Clie
 	go controller.Run(stopper)
 }
 
-func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event) {
+var severityMap = map[string]int{
+	"normal":  9,
+	"warning": 13,
+}
+
+func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *sender.Sender) {
 	if kec.allowEvent(ev) {
 		// extract event
+		kev := &pbev.KubernetesEvent{
+			ObjectKind:            ev.InvolvedObject.Kind,
+			ObjectName:            ev.InvolvedObject.Name,
+			ObjectUid:             string(ev.InvolvedObject.UID),
+			ObjectFieldpath:       ev.InvolvedObject.FieldPath,
+			ObjectApiVersion:      ev.InvolvedObject.APIVersion,
+			ObjectResourceVersion: ev.InvolvedObject.ResourceVersion,
+			ObjectTimestamp:       getEventTimestamp(ev).UnixMilli(),
+			ObjectNamespace:       ev.InvolvedObject.Namespace,
+			EventMessage:          ev.Message,
+			EventReason:           ev.Reason,
+			EventAction:           ev.Action,
+			EventStarttime:        ev.CreationTimestamp.String(),
+			EventName:             ev.Name,
+			EventUid:              string(ev.UID),
+			NodeName:              ev.Source.Host,
+		}
+
+		// Set the "SeverityNumber" and "SeverityText" if a known type of
+		// severity is found.
+		if severityNumber, ok := severityMap[strings.ToLower(ev.Type)]; ok {
+			kev.EventSeverityNumber = int32(severityNumber)
+			kev.EventSeverityText = ev.Type
+		} else {
+			logger.Logger().Debug().Msgf("unknown severity type %s", ev.Type)
+		}
+
+		// "Count" field of k8s event will be '0' in case it is
+		// not present in the collected event from k8s.
+		if ev.Count != 0 {
+			kev.EventCount = int64(ev.Count)
+		}
+
+		logger.Logger().Trace().Msgf("%v", kev)
 
 		// send it to a channel for the sender
+		sender.KubernetesEventChan <- kev
 	}
 }
 
@@ -122,72 +172,4 @@ func getEventTimestamp(ev *corev1.Event) time.Time {
 	}
 
 	return eventTimestamp
-}
-
-var severityMap = map[string]int{
-	"normal":  9,
-	"warning": 13,
-}
-
-type KubernetesEvent struct {
-	ObjectKind          string
-	ObjectName          string
-	ObjectUID           string
-	ObjectFieldPath     string
-	ObjectTimestamp     time.Time
-	ObjectNamespace     string
-	EventSeverityNumber int
-	EventSeverityText   string
-	EventReason         string
-	EventAction         string
-	EventStartTime      string
-	EventName           string
-	EventMessage        string
-	EventUID            string
-	EventCount          int64
-}
-
-func X(ev *corev1.Event) {
-
-	resourceAttrs := rl.Resource().Attributes()
-	resourceAttrs.EnsureCapacity(totalResourceAttributes)
-
-	resourceAttrs.PutStr(string(semconv.K8SNodeNameKey), ev.Source.Host)
-
-	// Attributes related to the object causing the event.
-	resourceAttrs.PutStr("k8s.object.kind", ev.InvolvedObject.Kind)
-	resourceAttrs.PutStr("k8s.object.name", ev.InvolvedObject.Name)
-	resourceAttrs.PutStr("k8s.object.uid", string(ev.InvolvedObject.UID))
-	resourceAttrs.PutStr("k8s.object.fieldpath", ev.InvolvedObject.FieldPath)
-	resourceAttrs.PutStr("k8s.object.api_version", ev.InvolvedObject.APIVersion)
-	resourceAttrs.PutStr("k8s.object.resource_version", ev.InvolvedObject.ResourceVersion)
-
-	timestamp := getEventTimestamp(ev)
-
-	// The Message field contains description about the event,
-	// which is best suited for the "Body" of the LogRecordSlice.
-	message := ev.Message
-
-	// Set the "SeverityNumber" and "SeverityText" if a known type of
-	// severity is found.
-	if severityNumber, ok := severityMap[strings.ToLower(ev.Type)]; ok {
-		sn := severityNumber
-		severityText := ev.Type
-	} else {
-		logger.Debug("unknown severity type", zap.String("type", ev.Type))
-	}
-
-	attrs.PutStr("k8s.event.reason", ev.Reason)
-	attrs.PutStr("k8s.event.action", ev.Action)
-	attrs.PutStr("k8s.event.start_time", ev.CreationTimestamp.String())
-	attrs.PutStr("k8s.event.name", ev.Name)
-	attrs.PutStr("k8s.event.uid", string(ev.UID))
-	attrs.PutStr(string(semconv.K8SNamespaceNameKey), ev.InvolvedObject.Namespace)
-
-	// "Count" field of k8s event will be '0' in case it is
-	// not present in the collected event from k8s.
-	if ev.Count != 0 {
-		attrs.PutInt("k8s.event.count", int64(ev.Count))
-	}
-
 }
