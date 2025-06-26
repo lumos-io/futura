@@ -25,178 +25,19 @@ message KubernetesEventBatch {
 
 // Envelope for all possible event types
 message KubernetesEvent {
-  oneof event {
-    PodEvent pod = 1;
-    SvcEvent svc = 2;
-    RsEvent rs = 3;
-    DsEvent ds = 4;
-    SsEvent ss = 5;
-    DepEvent dep = 6;
-    EpEvent ep = 7;
-    ContainerEvent container = 8;
-    JobEvent job = 9;
-    CronJobEvent cronjob = 10;
-  }
-}
-
-// -----------------------------
-// Event Type Messages
-// -----------------------------
-
-message PodEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-  string ip = 5;
-  string owner_type = 6;
-  string owner_name = 7;
-  string owner_id = 8;
-}
-
-message SvcEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-  string type = 5;
-  repeated string cluster_ips = 6;
-  repeated AddressPort ports = 7;
-}
-
-message RsEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-  int32 replicas = 5;
-  string owner_type = 6;
-  string owner_name = 7;
-  string owner_id = 8;
-}
-
-message DsEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-}
-
-message SsEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-}
-
-message DepEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-  int32 replicas = 5;
-}
-
-message EpEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-  repeated Address addresses = 5;
-}
-
-message ContainerEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-  string pod = 5;
-  string image = 6;
-  repeated ContainerPort ports = 7;
-}
-
-message JobEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-  string owner_type = 5;
-  string owner_name = 6;
-  string owner_id = 7;
-}
-
-message CronJobEvent {
-  string uid = 1;
-  string event_type = 2;
-  string name = 3;
-  string namespace = 4;
-}
-
-// -----------------------------
-// Address Structures
-// -----------------------------
-
-message AddressIP {
-  string type = 1;       // "pod" or "external"
-  string id = 2;         // Pod UID or empty
-  string name = 3;
-  string namespace = 4;  // Pod namespace or empty
-  string ip = 5;         // IP address
-}
-
-message AddressPort {
-  int32 port = 1;
-  string protocol = 2;  // "TCP" or "UDP"
-  string name = 3;
-}
-
-message Address {
-  repeated AddressIP ips = 1;
-  repeated AddressPort ports = 2;
-}
-
-message ContainerPort {
-  AddressPort port = 1;
-  string protocol = 2;
-}
-
-// -----------------------------
-// Metric Structures
-// -----------------------------
-
-message MetricMetadata {
-  string cluster_id = 1;
-  string node_name = 2;
-  string namespace = 3;
-  string pod_name = 4;
-  string container_name = 5;
-  string source = 6;
-  string timestamp_utc = 7;
-}
-
-message ContainerMetric {
-  MetricMetadata metadata = 1;
-
-  double cpu_usage_cores = 2;              // in CPU cores (e.g. 0.25)
-  uint64 memory_usage_bytes = 3;           // current memory usage
-  uint64 memory_working_set_bytes = 4;     // working set size
-  uint64 rx_bytes = 5;                     // network received bytes
-  uint64 tx_bytes = 6;                     // network transmitted bytes
-  uint64 fs_usage_bytes = 7;               // filesystem usage
-  double cpu_limit_cores = 8;              // from spec
-  uint64 memory_limit_bytes = 9;           // from spec
-}
-
-message ContainerMetricBatch {
-  repeated ContainerMetric metrics = 1;
-}
-
-service CollectService {
-  rpc SendEvent (KubernetesEventBatch) returns (CollectAck);
-  rpc SendMetric (ContainerMetricBatch) returns (CollectAck);
-}
-
-message CollectAck {
-  string status = 1; // "ok", "error"
-  string message = 2;
+  string ObjectKind = 1;
+  string ObjectName = 2;
+  string ObjectUID = 3;
+  string ObjectFieldPath = 4;
+  int64 ObjectTimestamp = 5;  // UNIX timestamp
+  string ObjectNamespace = 6;
+  int32 EventSeverityNumber = 7;
+  string EventSeverityText = 8;
+  string EventReason = 9;
+  string EventAction = 10;
+  string EventStartTime = 11;
+  string EventName = 12;
+  string EventMessage = 13;
+  string EventUID = 14;
+  int64 EventCount = 15;
 }

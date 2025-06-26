@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package cluster;
+
+option go_package = "github.com/opisvigilant/futura/proto/gen/cluster;cluster";

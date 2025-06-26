@@ -19,7 +19,8 @@ type Collect struct {
 }
 
 type Kubernetes struct {
-	InCluster bool `toml:"inCluster"`
+	InCluster  bool     `toml:"inCluster"`
+	Namespaces []string `toml:"namespaces"`
 }
 
 func Fetch() *Configuration {
@@ -32,7 +33,8 @@ func Fetch() *Configuration {
 			Port: getStringOrDefault("collect.port", "50051"),
 		},
 		Kubernetes: &Kubernetes{
-			InCluster: viper.GetBool("kubernetes.inCluster"),
+			InCluster:  viper.GetBool("kubernetes.inCluster"),
+			Namespaces: viper.GetStringSlice("kubernetes.namespaces"),
 		},
 	}
 }
@@ -44,14 +46,6 @@ func (c *Configuration) Validate() error {
 func getStringOrDefault(key string, defaultValue string) string {
 	value := viper.GetString(key)
 	if value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-func getUInt64OrDefault(key string, defaultValue uint64) uint64 {
-	value := viper.GetUint64(key)
-	if value != defaultValue {
 		return value
 	}
 	return defaultValue

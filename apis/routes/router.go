@@ -39,7 +39,7 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 		auth.GET("/github/callback", controllers.GithubCallback)
 		auth.GET("/me", middleware.AuthMiddleware(), controllers.MeHandler)
 		auth.POST("/logout", middleware.AuthMiddleware(), controllers.Logout)
-		auth.POST("/refresh", controllers.RefreshToken)
+		auth.POST("/refresh", middleware.AuthMiddleware(), controllers.RefreshToken)
 	}
 
 	// Protected routes

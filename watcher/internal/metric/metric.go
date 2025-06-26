@@ -87,6 +87,7 @@ func (c *Collector) Start(interval time.Duration, excludedNamespaces []string) e
 
 			var batch []*pb.ContainerMetric
 
+			// for each pod collect the utilization metrics
 			for _, pod := range summary.Pods {
 				ns := pod.PodRef.Namespace
 				name := pod.PodRef.Name
