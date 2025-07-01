@@ -2,16 +2,18 @@ package events
 
 import (
 	"context"
+
 	"strings"
 	"time"
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/internal/sender"
-	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
+	"github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 
+	"github.com/rs/zerolog/log"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
@@ -35,7 +37,10 @@ func New(config *config.Configuration) *KubernetesEventsCollector {
 func (kec *KubernetesEventsCollector) Start(ctx context.Context) error {
 	kec.ctx, kec.cancel = context.WithCancel(ctx)
 
-	k8sClient, err := k8s.New(kec.config.Kubernetes.InCluster)
+	k8sClient, err := kubernetes.MakeClient(kubernetes.APIConfig{
+		AuthType: kubernetes.AuthType(kec.config.Kubernetes.AuthType),
+		Context:  kec.config.Kubernetes.KubeContextName,
+	})
 	if err != nil {
 		return err
 	}
@@ -45,7 +50,7 @@ func (kec *KubernetesEventsCollector) Start(ctx context.Context) error {
 		return err
 	}
 
-	logger.Logger().Info().Msg("starting to watch namespaces for the events.")
+	log.Logger.Info().Msg("starting to watch namespaces for the events.")
 	if len(kec.config.Kubernetes.Namespaces) == 0 {
 		kec.startWatch(corev1.NamespaceAll, k8sClient, s)
 	} else {
@@ -68,7 +73,7 @@ func (kec *KubernetesEventsCollector) Shutdown(context.Context) error {
 	return nil
 }
 
-func (kec *KubernetesEventsCollector) startWatch(ns string, client *k8s.Client, sender *sender.Sender) {
+func (kec *KubernetesEventsCollector) startWatch(ns string, client k8s.Interface, sender *sender.Sender) {
 	stopperChan := make(chan struct{})
 	kec.stopperChanList = append(kec.stopperChanList, stopperChan)
 	kec.startWatchingNamespace(client, cache.ResourceEventHandlerFuncs{
@@ -89,8 +94,8 @@ func (kec *KubernetesEventsCollector) startWatch(ns string, client *k8s.Client, 
 
 // startWatchingNamespace creates an informer and starts
 // watching a specific namespace for the events.
-func (kec *KubernetesEventsCollector) startWatchingNamespace(clientset *k8s.Client, handlers cache.ResourceEventHandlerFuncs, ns string, stopper chan struct{}) {
-	client := clientset.RawClient().CoreV1().RESTClient()
+func (kec *KubernetesEventsCollector) startWatchingNamespace(clientset k8s.Interface, handlers cache.ResourceEventHandlerFuncs, ns string, stopper chan struct{}) {
+	client := clientset.CoreV1().RESTClient()
 	watchList := cache.NewListWatchFromClient(client, "events", ns, fields.Everything())
 	_, controller := cache.NewInformerWithOptions(cache.InformerOptions{
 		ListerWatcher: watchList,
@@ -133,7 +138,7 @@ func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *send
 			kev.EventSeverityNumber = int32(severityNumber)
 			kev.EventSeverityText = ev.Type
 		} else {
-			logger.Logger().Debug().Msgf("unknown severity type %s", ev.Type)
+			log.Logger.Debug().Msgf("unknown severity type %s", ev.Type)
 		}
 
 		// "Count" field of k8s event will be '0' in case it is
@@ -142,7 +147,7 @@ func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *send
 			kev.EventCount = int64(ev.Count)
 		}
 
-		logger.Logger().Trace().Msgf("%v", kev)
+		log.Logger.Trace().Msgf("%v", kev)
 
 		// send it to a channel for the sender
 		sender.KubernetesEventChan <- kev

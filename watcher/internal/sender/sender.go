@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/logger"
 	"github.com/opisvigilant/futura/watcher/utils"
+	"github.com/rs/zerolog/log"
 
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
@@ -65,7 +65,7 @@ func (s *Sender) sendEventsInBatch(ch chan *pbev.KubernetesEvent, interval time.
 	for {
 		select {
 		case <-s.ctx.Done():
-			logger.Logger().Info().Msg("stopping sending events to backend")
+			log.Logger.Info().Msg("stopping sending events to backend")
 			return
 		case <-t.C:
 			randomDuration := time.Duration(rand.Intn(50)) * time.Millisecond
@@ -110,6 +110,6 @@ func (s *Sender) send(ch <-chan *pbev.KubernetesEvent) {
 	defer cancel()
 
 	if _, err := s.pbc.SendEvent(ctx, payload); err != nil {
-		logger.Logger().Error().Msgf("SendEvent failed: %v", err)
+		log.Logger.Error().Msgf("SendEvent failed: %v", err)
 	}
 }

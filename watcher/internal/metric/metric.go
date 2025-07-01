@@ -105,9 +105,9 @@ package metric
 // 			if err != nil {
 // 				return err
 // 			}
-// 			logger.Logger().Info().Msgf("✅ Sent %d metrics", len(batch))
+// 			log.Logger.Info().Msgf("✅ Sent %d metrics", len(batch))
 // 		case <-ctx.Done():
-// 			logger.Logger().Info().Msg("Shutting down metrics scraper...")
+// 			log.Logger.Info().Msg("Shutting down metrics scraper...")
 // 			return nil
 // 		}
 // 	}
@@ -171,5 +171,5 @@ package metric
 // }
 
 // func (c *Collector) close() {
-// 	logger.Logger().Info().Msg("MetricCollector closing...")
+// 	log.Logger.Info().Msg("MetricCollector closing...")
 // }

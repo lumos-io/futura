@@ -5,7 +5,8 @@ import (
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/events"
-	"github.com/opisvigilant/futura/watcher/internal/logger"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Collector struct {
@@ -25,7 +26,7 @@ func New(config *config.Configuration) (*Collector, error) {
 
 func (c *Collector) Start(ctx context.Context) error {
 	if err := c.kubernetesEventsCollector.Start(ctx); err != nil {
-		logger.Logger().Fatal().Err(err).Msg("failed to start the kubernetes events collector...")
+		log.Logger.Fatal().Err(err).Msg("failed to start the kubernetes events collector...")
 		return err
 	}
 

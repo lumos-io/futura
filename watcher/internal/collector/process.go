@@ -35,11 +35,11 @@ package collector
 // 		ownerID = string(pod.OwnerReferences[0].UID)
 // 		ownerName = pod.OwnerReferences[0].Name
 // 	} else {
-// 		logger.Logger().Debug().Msgf("Pod %s/%s has no owner, event: %s", pod.Namespace, pod.Name, d.EventType)
+// 		log.Logger.Debug().Msgf("Pod %s/%s has no owner, event: %s", pod.Namespace, pod.Name, d.EventType)
 // 	}
 
 // 	if pod.Status.PodIP == "" {
-// 		logger.Logger().Debug().Msgf("Pod %s/%s has no IP, event: %s", pod.Namespace, pod.Name, d.EventType)
+// 		log.Logger.Debug().Msgf("Pod %s/%s has no IP, event: %s", pod.Namespace, pod.Name, d.EventType)
 // 		return
 // 	}
 
@@ -136,7 +136,7 @@ package collector
 // 		ownerID = string(replicaSet.OwnerReferences[0].UID)
 // 		ownerName = replicaSet.OwnerReferences[0].Name
 // 	} else {
-// 		logger.Logger().Debug().Msgf("ReplicaSet %s/%s has no owner, event: %s", replicaSet.Namespace, replicaSet.Name, d.EventType)
+// 		log.Logger.Debug().Msgf("ReplicaSet %s/%s has no owner, event: %s", replicaSet.Namespace, replicaSet.Name, d.EventType)
 // 	}
 
 // 	dtoReplicaSet := models.ReplicaSet{

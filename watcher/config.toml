@@ -11,5 +11,14 @@ host = "localhost"
 port = "50051"
 
 [kubernetes]
-inCluster = false # true when the agent is deployed within the kubernetes cluster
+authType = "kubeConfig" # required, valid values are `none`, `serviceAccount`, `kubeConfig`
+kubeContextName = "kind-dev-cluster"
 namespaces = []
+distribution = "kubernetes" # either openshift or kubernetes
+collectionInterval = "" # in seconds, default is 10
+metadataCollectionInterval = "" # in minutes, default is 5
+leaseName = "futura" # required
+leaseNamespace = "futura" # required
+leaseDuration = "" # in seconds, default is 15
+renewDeadline = "" # in seconds, default is 10
+retryPeriod = "" # in seconds, default is 2
