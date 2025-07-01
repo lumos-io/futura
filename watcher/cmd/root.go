@@ -11,7 +11,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/opisvigilant/futura/watcher/internal/collector"
 	"github.com/opisvigilant/futura/watcher/internal/config"
-	"github.com/opisvigilant/futura/watcher/internal/logger"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -35,6 +36,13 @@ events to the backend`,
 			panic(fmt.Errorf("configuration has not loaded correctly"))
 		}
 
+		zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		if watcherCfg.Debug {
+			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		}
+
 		debug.SetGCPercent(80)
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -48,9 +56,9 @@ events to the backend`,
 		go func() {
 			<-c
 			signal.Stop(c)
-			logger.Logger().Info().Msg("Shutdown signal received...")
+			log.Logger.Info().Msg("Shutdown signal received...")
 			if err := collector.Shutdown(ctx); err != nil {
-				logger.Logger().Error().Err(err).Msg("error during shutdown")
+				log.Logger.Error().Err(err).Msg("error during shutdown")
 			}
 			cancel()
 		}()
@@ -59,11 +67,11 @@ events to the backend`,
 			panic(err)
 		}
 
-		logger.Logger().Info().Msg("Collector started. Waiting for shutdown signal...")
+		log.Logger.Info().Msg("Collector started. Waiting for shutdown signal...")
 		<-ctx.Done()
 
-		logger.Logger().Info().Msg("Collector done")
-		logger.Logger().Info().Msg("Futura exiting...")
+		log.Logger.Info().Msg("Collector done")
+		log.Logger.Info().Msg("Futura exiting...")
 	},
 }
 
