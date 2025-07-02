@@ -70,8 +70,8 @@ func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbclu
 			containerSpec.Name = c.Name
 			containerSpec.ContainerId = utils.StripContainerID(cs.ContainerID)
 			containerSpec.Image = cs.Image
-			containerSpec.RestartsCount = cs.RestartCount
-			containerSpec.Ready = boolToInt32(cs.Ready)
+			containerSpec.RestartsCount = int64(cs.RestartCount)
+			containerSpec.Ready = boolToInt64(cs.Ready)
 			if cs.LastTerminationState.Terminated != nil {
 				containerSpec.LastTerminationState.State = &pbcluster.ContainerState_Terminated{
 					Terminated: &pbcluster.ContainerStateTerminated{
@@ -138,7 +138,7 @@ func GetMetadata(pod *corev1.Pod, cs corev1.ContainerStatus) *metadata.Kubernete
 	}
 }
 
-func boolToInt32(b bool) int32 {
+func boolToInt64(b bool) int64 {
 	if b {
 		return 1
 	}

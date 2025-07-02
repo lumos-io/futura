@@ -1,9 +1,5 @@
 package metadata
 
-import (
-	"time"
-)
-
 // ResourceID is the Kubernetes UID of the resource. In case of
 // containers, this value is the container id.
 type ResourceID string
@@ -54,36 +50,36 @@ type MetadataUpdate struct {
 }
 
 // GetEntityEvents processes metadata updates and returns entity events that describe the metadata changes.
-func GetEntityEvents(oldMetadata, newMetadata map[ResourceID]*KubernetesMetadata, timestamp time.Time, reportingInterval time.Duration) EntityEventsSlice {
-	out := new(EntityEventsSlice)
+// func GetEntityEvents(oldMetadata, newMetadata map[ResourceID]*KubernetesMetadata, timestamp time.Time, reportingInterval time.Duration) EntityEventsSlice {
+// 	out := new(EntityEventsSlice)
 
-	for id, oldObj := range oldMetadata {
-		if _, ok := newMetadata[id]; !ok {
-			// An object was present, but no longer is. Create a "delete" event.
-			entityEvent := out.AppendEmpty()
-			entityEvent.SetTimestamp(timestamp)
-			entityEvent.ID().PutStr(oldObj.ResourceIDKey, string(oldObj.ResourceID))
-			deleteEvent := entityEvent.SetEntityDelete()
-			deleteEvent.SetEntityType(oldObj.EntityType)
-		}
-	}
+// 	for id, oldObj := range oldMetadata {
+// 		if _, ok := newMetadata[id]; !ok {
+// 			// An object was present, but no longer is. Create a "delete" event.
+// 			entityEvent := out.AppendEmpty()
+// 			entityEvent.SetTimestamp(timestamp)
+// 			entityEvent.ID().PutStr(oldObj.ResourceIDKey, string(oldObj.ResourceID))
+// 			deleteEvent := entityEvent.SetEntityDelete()
+// 			deleteEvent.SetEntityType(oldObj.EntityType)
+// 		}
+// 	}
 
-	// All "new" are current objects. Create "state" events. "old" state does not matter.
-	for _, newObj := range newMetadata {
-		entityEvent := out.AppendEmpty()
-		entityEvent.SetTimestamp(timestamp)
-		entityEvent.ID().PutStr(newObj.ResourceIDKey, string(newObj.ResourceID))
-		state := entityEvent.SetEntityState()
-		state.SetEntityType(newObj.EntityType)
-		if reportingInterval != 0 {
-			state.SetInterval(reportingInterval)
-		}
+// 	// All "new" are current objects. Create "state" events. "old" state does not matter.
+// 	for _, newObj := range newMetadata {
+// 		entityEvent := out.AppendEmpty()
+// 		entityEvent.SetTimestamp(timestamp)
+// 		entityEvent.ID().PutStr(newObj.ResourceIDKey, string(newObj.ResourceID))
+// 		state := entityEvent.SetEntityState()
+// 		state.SetEntityType(newObj.EntityType)
+// 		if reportingInterval != 0 {
+// 			state.SetInterval(reportingInterval)
+// 		}
 
-		attrs := state.Attributes()
-		for k, v := range newObj.Metadata {
-			attrs.PutStr(k, v)
-		}
-	}
+// 		attrs := state.Attributes()
+// 		for k, v := range newObj.Metadata {
+// 			attrs.PutStr(k, v)
+// 		}
+// 	}
 
-	return out
-}
+// 	return out
+// }

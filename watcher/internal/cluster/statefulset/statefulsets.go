@@ -39,10 +39,10 @@ func RecordMetrics(ss *appsv1.StatefulSet, ts time.Time) *pbcluster.KubernetesOb
 
 	obj := &pbcluster.KubernetesObjectMetadata{
 		Timestamp:       timestamppb.New(ts),
-		Replicas:        int32(*ss.Spec.Replicas),
-		ReadyReplicas:   int32(ss.Status.ReadyReplicas),
-		UpdatedReplicas: int32(ss.Status.UpdatedReplicas),
-		CurrentReplicas: int32(ss.Status.CurrentReplicas),
+		Replicas:        int64(*ss.Spec.Replicas),
+		ReadyReplicas:   int64(ss.Status.ReadyReplicas),
+		UpdatedReplicas: int64(ss.Status.UpdatedReplicas),
+		CurrentReplicas: int64(ss.Status.CurrentReplicas),
 		Uid:             string(ss.UID),
 		Name:            ss.Name,
 		Namespace:       ss.Namespace,

@@ -15,33 +15,56 @@ import (
 func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	obj := &pbcluster.KubernetesObjectMetadata{
 		Timestamp: timestamppb.New(ts),
-		Extra:     make(map[string]string),
+		Name:      crq.Name,
+		Uid:       string(crq.UID),
 	}
+
+	clusterQuota := &pbcluster.ClusterResourceQuotaMetadata{
+		Name: crq.Name,
+		Uid:  string(crq.UID),
+	}
+
 	for k, v := range crq.Status.Total.Hard {
 		val := extractValue(k, v)
-		obj.Extra[string(k)] = string(val)
+		clusterQuota.TotalLimits = append(clusterQuota.TotalLimits, &pbcluster.QuotaResource{
+			Resource: string(k),
+			Value:    val,
+		})
 	}
 
 	for k, v := range crq.Status.Total.Used {
 		val := extractValue(k, v)
-		obj.Extra[string(k)] = string(val)
+		clusterQuota.TotalUsage = append(clusterQuota.TotalUsage, &pbcluster.QuotaResource{
+			Resource: string(k),
+			Value:    val,
+		})
 	}
 
 	for _, ns := range crq.Status.Namespaces {
+		nsQuota := &pbcluster.NamespaceQuota{
+			Namespace: ns.Namespace,
+		}
+
 		for k, v := range ns.Status.Hard {
 			val := extractValue(k, v)
-			obj.Extra[string(k)] = string(val)
-			mb.RecordOpenshiftAppliedclusterquotaLimitDataPoint(ts, val, ns.Namespace, string(k))
+			nsQuota.Limits = append(nsQuota.Limits, &pbcluster.QuotaResource{
+				Resource: string(k),
+				Value:    val,
+			})
 		}
 
 		for k, v := range ns.Status.Used {
 			val := extractValue(k, v)
-			mb.RecordOpenshiftAppliedclusterquotaUsedDataPoint(ts, val, ns.Namespace, string(k))
+			nsQuota.Usage = append(nsQuota.Usage, &pbcluster.QuotaResource{
+				Resource: string(k),
+				Value:    val,
+			})
 		}
+
+		clusterQuota.Quotas = append(clusterQuota.Quotas, nsQuota)
 	}
 
-	obj.Name = crq.Name
-	obj.Uid = string(crq.UID)
+	obj.ClusterQuota = clusterQuota
 
 	return obj
 }

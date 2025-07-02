@@ -12,17 +12,17 @@ import (
 
 func RecordMetrics(hpa *autoscalingv2.HorizontalPodAutoscaler, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	obj := &pbcluster.KubernetesObjectMetadata{
-		Timestamp:      timestamppb.New(ts),
-		ReadyReplicas:  int32(hpa.Status.CurrentReplicas),
-		Replicas:       int32(hpa.Status.DesiredReplicas),
-		Kind:           hpa.Kind,
-		Uid:            string(hpa.UID),
-		Name:           hpa.Name,
-		Namespace:      hpa.Namespace,
-		ApiVersion:     hpa.APIVersion,
-		MaxReplicas:    int32(hpa.Spec.MaxReplicas),
-		MinReplicas:    int32(*hpa.Spec.MinReplicas),
-		ScaleTargetRef: hpa.Spec.ScaleTargetRef.Name,
+		Timestamp:         timestamppb.New(ts),
+		ReadyReplicas:     int64(hpa.Status.CurrentReplicas),
+		Replicas:          int64(hpa.Status.DesiredReplicas),
+		Kind:              hpa.Kind,
+		Uid:               string(hpa.UID),
+		Name:              hpa.Name,
+		Namespace:         hpa.Namespace,
+		ApiVersion:        hpa.APIVersion,
+		HpaMaxReplicas:    int64(hpa.Spec.MaxReplicas),
+		HpaMinReplicas:    int64(*hpa.Spec.MinReplicas),
+		HpaScaleTargetRef: hpa.Spec.ScaleTargetRef.Name,
 	}
 
 	return obj

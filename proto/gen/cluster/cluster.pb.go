@@ -90,13 +90,14 @@ type KubernetesObjectMetadata struct {
 	NodeName          string                 `protobuf:"bytes,9,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
 	Status            string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
 	Phase             string                 `protobuf:"bytes,11,opt,name=phase,proto3" json:"phase,omitempty"`
-	RestartCount      int32                  `protobuf:"varint,12,opt,name=restart_count,json=restartCount,proto3" json:"restart_count,omitempty"`
+	RestartCount      int64                  `protobuf:"varint,12,opt,name=restart_count,json=restartCount,proto3" json:"restart_count,omitempty"`
 	OwnerKind         string                 `protobuf:"bytes,13,opt,name=owner_kind,json=ownerKind,proto3" json:"owner_kind,omitempty"`
 	OwnerName         string                 `protobuf:"bytes,14,opt,name=owner_name,json=ownerName,proto3" json:"owner_name,omitempty"`
-	Replicas          int32                  `protobuf:"varint,15,opt,name=replicas,proto3" json:"replicas,omitempty"`
-	ReadyReplicas     int32                  `protobuf:"varint,16,opt,name=ready_replicas,json=readyReplicas,proto3" json:"ready_replicas,omitempty"`
-	AvailableReplicas int32                  `protobuf:"varint,17,opt,name=available_replicas,json=availableReplicas,proto3" json:"available_replicas,omitempty"`
-	UpdatedReplicas   int32                  `protobuf:"varint,18,opt,name=updated_replicas,json=updatedReplicas,proto3" json:"updated_replicas,omitempty"`
+	Replicas          int64                  `protobuf:"varint,15,opt,name=replicas,proto3" json:"replicas,omitempty"`
+	ReadyReplicas     int64                  `protobuf:"varint,16,opt,name=ready_replicas,json=readyReplicas,proto3" json:"ready_replicas,omitempty"`
+	AvailableReplicas int64                  `protobuf:"varint,17,opt,name=available_replicas,json=availableReplicas,proto3" json:"available_replicas,omitempty"`
+	UpdatedReplicas   int64                  `protobuf:"varint,18,opt,name=updated_replicas,json=updatedReplicas,proto3" json:"updated_replicas,omitempty"`
+	CurrentReplicas   int64                  `protobuf:"varint,43,opt,name=current_replicas,json=currentReplicas,proto3" json:"current_replicas,omitempty"`
 	Containers        []*ContainerSpec       `protobuf:"bytes,19,rep,name=containers,proto3" json:"containers,omitempty"`
 	Volumes           []*VolumeSpec          `protobuf:"bytes,20,rep,name=volumes,proto3" json:"volumes,omitempty"`
 	Tolerations       []string               `protobuf:"bytes,21,rep,name=tolerations,proto3" json:"tolerations,omitempty"`
@@ -104,17 +105,17 @@ type KubernetesObjectMetadata struct {
 	Extra             map[string]string      `protobuf:"bytes,23,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ApiVersion        string                 `protobuf:"bytes,24,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
 	// for HPA
-	HpaMaxReplicas    int32  `protobuf:"varint,25,opt,name=hpa_max_replicas,json=hpaMaxReplicas,proto3" json:"hpa_max_replicas,omitempty"`
-	HpaMinReplicas    int32  `protobuf:"varint,26,opt,name=hpa_min_replicas,json=hpaMinReplicas,proto3" json:"hpa_min_replicas,omitempty"`
+	HpaMaxReplicas    int64  `protobuf:"varint,25,opt,name=hpa_max_replicas,json=hpaMaxReplicas,proto3" json:"hpa_max_replicas,omitempty"`
+	HpaMinReplicas    int64  `protobuf:"varint,26,opt,name=hpa_min_replicas,json=hpaMinReplicas,proto3" json:"hpa_min_replicas,omitempty"`
 	HpaScaleTargetRef string `protobuf:"bytes,27,opt,name=hpa_scale_target_ref,json=hpaScaleTargetRef,proto3" json:"hpa_scale_target_ref,omitempty"`
 	// for Job
-	JobActive      int32 `protobuf:"varint,28,opt,name=job_active,json=jobActive,proto3" json:"job_active,omitempty"`
-	JobFailed      int32 `protobuf:"varint,29,opt,name=job_failed,json=jobFailed,proto3" json:"job_failed,omitempty"`
-	JobSucceeded   int32 `protobuf:"varint,30,opt,name=job_succeeded,json=jobSucceeded,proto3" json:"job_succeeded,omitempty"`
-	JobParallelism int32 `protobuf:"varint,31,opt,name=job_parallelism,json=jobParallelism,proto3" json:"job_parallelism,omitempty"`
-	JobCompletions int32 `protobuf:"varint,32,opt,name=job_completions,json=jobCompletions,proto3" json:"job_completions,omitempty"`
+	JobActive      int64 `protobuf:"varint,28,opt,name=job_active,json=jobActive,proto3" json:"job_active,omitempty"`
+	JobFailed      int64 `protobuf:"varint,29,opt,name=job_failed,json=jobFailed,proto3" json:"job_failed,omitempty"`
+	JobSucceeded   int64 `protobuf:"varint,30,opt,name=job_succeeded,json=jobSucceeded,proto3" json:"job_succeeded,omitempty"`
+	JobParallelism int64 `protobuf:"varint,31,opt,name=job_parallelism,json=jobParallelism,proto3" json:"job_parallelism,omitempty"`
+	JobCompletions int64 `protobuf:"varint,32,opt,name=job_completions,json=jobCompletions,proto3" json:"job_completions,omitempty"`
 	// for Namespace
-	NsPhaseValue int32 `protobuf:"varint,33,opt,name=ns_phase_value,json=nsPhaseValue,proto3" json:"ns_phase_value,omitempty"`
+	NsPhaseValue int64 `protobuf:"varint,33,opt,name=ns_phase_value,json=nsPhaseValue,proto3" json:"ns_phase_value,omitempty"`
 	// for Node
 	KubeletVersion          string                `protobuf:"bytes,34,opt,name=kubelet_version,json=kubeletVersion,proto3" json:"kubelet_version,omitempty"`
 	OsType                  string                `protobuf:"bytes,35,opt,name=os_type,json=osType,proto3" json:"os_type,omitempty"`
@@ -123,8 +124,13 @@ type KubernetesObjectMetadata struct {
 	ContainerRuntimeVersion string                `protobuf:"bytes,38,opt,name=container_runtime_version,json=containerRuntimeVersion,proto3" json:"container_runtime_version,omitempty"`
 	Conditions              []*NodeCondition      `protobuf:"bytes,39,rep,name=conditions,proto3" json:"conditions,omitempty"`
 	Allocatable             *AllocatableResources `protobuf:"bytes,40,opt,name=allocatable,proto3" json:"allocatable,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// for Pod
+	PodReason string `protobuf:"bytes,41,opt,name=pod_reason,json=podReason,proto3" json:"pod_reason,omitempty"`
+	QosClass  string `protobuf:"bytes,42,opt,name=qos_class,json=qosClass,proto3" json:"qos_class,omitempty"`
+	// Cluster quota
+	ClusterQuota  *ClusterResourceQuotaMetadata `protobuf:"bytes,44,opt,name=cluster_quota,json=clusterQuota,proto3" json:"cluster_quota,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *KubernetesObjectMetadata) Reset() {
@@ -234,7 +240,7 @@ func (x *KubernetesObjectMetadata) GetPhase() string {
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetRestartCount() int32 {
+func (x *KubernetesObjectMetadata) GetRestartCount() int64 {
 	if x != nil {
 		return x.RestartCount
 	}
@@ -255,30 +261,37 @@ func (x *KubernetesObjectMetadata) GetOwnerName() string {
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetReplicas() int32 {
+func (x *KubernetesObjectMetadata) GetReplicas() int64 {
 	if x != nil {
 		return x.Replicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetReadyReplicas() int32 {
+func (x *KubernetesObjectMetadata) GetReadyReplicas() int64 {
 	if x != nil {
 		return x.ReadyReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetAvailableReplicas() int32 {
+func (x *KubernetesObjectMetadata) GetAvailableReplicas() int64 {
 	if x != nil {
 		return x.AvailableReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetUpdatedReplicas() int32 {
+func (x *KubernetesObjectMetadata) GetUpdatedReplicas() int64 {
 	if x != nil {
 		return x.UpdatedReplicas
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetCurrentReplicas() int64 {
+	if x != nil {
+		return x.CurrentReplicas
 	}
 	return 0
 }
@@ -325,14 +338,14 @@ func (x *KubernetesObjectMetadata) GetApiVersion() string {
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetHpaMaxReplicas() int32 {
+func (x *KubernetesObjectMetadata) GetHpaMaxReplicas() int64 {
 	if x != nil {
 		return x.HpaMaxReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetHpaMinReplicas() int32 {
+func (x *KubernetesObjectMetadata) GetHpaMinReplicas() int64 {
 	if x != nil {
 		return x.HpaMinReplicas
 	}
@@ -346,42 +359,42 @@ func (x *KubernetesObjectMetadata) GetHpaScaleTargetRef() string {
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetJobActive() int32 {
+func (x *KubernetesObjectMetadata) GetJobActive() int64 {
 	if x != nil {
 		return x.JobActive
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetJobFailed() int32 {
+func (x *KubernetesObjectMetadata) GetJobFailed() int64 {
 	if x != nil {
 		return x.JobFailed
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetJobSucceeded() int32 {
+func (x *KubernetesObjectMetadata) GetJobSucceeded() int64 {
 	if x != nil {
 		return x.JobSucceeded
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetJobParallelism() int32 {
+func (x *KubernetesObjectMetadata) GetJobParallelism() int64 {
 	if x != nil {
 		return x.JobParallelism
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetJobCompletions() int32 {
+func (x *KubernetesObjectMetadata) GetJobCompletions() int64 {
 	if x != nil {
 		return x.JobCompletions
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetNsPhaseValue() int32 {
+func (x *KubernetesObjectMetadata) GetNsPhaseValue() int64 {
 	if x != nil {
 		return x.NsPhaseValue
 	}
@@ -437,6 +450,27 @@ func (x *KubernetesObjectMetadata) GetAllocatable() *AllocatableResources {
 	return nil
 }
 
+func (x *KubernetesObjectMetadata) GetPodReason() string {
+	if x != nil {
+		return x.PodReason
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetQosClass() string {
+	if x != nil {
+		return x.QosClass
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetClusterQuota() *ClusterResourceQuotaMetadata {
+	if x != nil {
+		return x.ClusterQuota
+	}
+	return nil
+}
+
 // Represents a container and its resource specs.
 type ContainerSpec struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
@@ -444,8 +478,8 @@ type ContainerSpec struct {
 	Image                string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
 	Resources            *ContainerResources    `protobuf:"bytes,3,opt,name=resources,proto3" json:"resources,omitempty"`
 	ContainerId          string                 `protobuf:"bytes,4,opt,name=containerId,proto3" json:"containerId,omitempty"`
-	RestartsCount        int32                  `protobuf:"varint,5,opt,name=restarts_count,json=restartsCount,proto3" json:"restarts_count,omitempty"`
-	Ready                int32                  `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"`
+	RestartsCount        int64                  `protobuf:"varint,5,opt,name=restarts_count,json=restartsCount,proto3" json:"restarts_count,omitempty"`
+	Ready                int64                  `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"`
 	State                *ContainerState        `protobuf:"bytes,7,opt,name=state,proto3" json:"state,omitempty"`
 	LastTerminationState *ContainerState        `protobuf:"bytes,8,opt,name=last_termination_state,json=lastTerminationState,proto3" json:"last_termination_state,omitempty"`
 	ImageTag             string                 `protobuf:"bytes,9,opt,name=image_tag,json=imageTag,proto3" json:"image_tag,omitempty"`
@@ -511,14 +545,14 @@ func (x *ContainerSpec) GetContainerId() string {
 	return ""
 }
 
-func (x *ContainerSpec) GetRestartsCount() int32 {
+func (x *ContainerSpec) GetRestartsCount() int64 {
 	if x != nil {
 		return x.RestartsCount
 	}
 	return 0
 }
 
-func (x *ContainerSpec) GetReady() int32 {
+func (x *ContainerSpec) GetReady() int64 {
 	if x != nil {
 		return x.Ready
 	}
@@ -921,8 +955,8 @@ func (x *ContainerStateRunning) GetStartedAt() *timestamppb.Timestamp {
 // A terminated state of a container (exited or killed)
 type ContainerStateTerminated struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ExitCode      int32                  `protobuf:"varint,1,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
-	Signal        int32                  `protobuf:"varint,2,opt,name=signal,proto3" json:"signal,omitempty"`
+	ExitCode      int64                  `protobuf:"varint,1,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
+	Signal        int64                  `protobuf:"varint,2,opt,name=signal,proto3" json:"signal,omitempty"`
 	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
 	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
@@ -962,14 +996,14 @@ func (*ContainerStateTerminated) Descriptor() ([]byte, []int) {
 	return file_cluster_cluster_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *ContainerStateTerminated) GetExitCode() int32 {
+func (x *ContainerStateTerminated) GetExitCode() int64 {
 	if x != nil {
 		return x.ExitCode
 	}
 	return 0
 }
 
-func (x *ContainerStateTerminated) GetSignal() int32 {
+func (x *ContainerStateTerminated) GetSignal() int64 {
 	if x != nil {
 		return x.Signal
 	}
@@ -1155,6 +1189,194 @@ func (x *AllocatableResources) GetOthers() map[string]string {
 	return nil
 }
 
+type ClusterResourceQuotaMetadata struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Uid           string                 `protobuf:"bytes,2,opt,name=uid,proto3" json:"uid,omitempty"`
+	TotalLimits   []*QuotaResource       `protobuf:"bytes,3,rep,name=total_limits,json=totalLimits,proto3" json:"total_limits,omitempty"`
+	TotalUsage    []*QuotaResource       `protobuf:"bytes,4,rep,name=total_usage,json=totalUsage,proto3" json:"total_usage,omitempty"`
+	Quotas        []*NamespaceQuota      `protobuf:"bytes,5,rep,name=quotas,proto3" json:"quotas,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClusterResourceQuotaMetadata) Reset() {
+	*x = ClusterResourceQuotaMetadata{}
+	mi := &file_cluster_cluster_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClusterResourceQuotaMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClusterResourceQuotaMetadata) ProtoMessage() {}
+
+func (x *ClusterResourceQuotaMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClusterResourceQuotaMetadata.ProtoReflect.Descriptor instead.
+func (*ClusterResourceQuotaMetadata) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ClusterResourceQuotaMetadata) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ClusterResourceQuotaMetadata) GetUid() string {
+	if x != nil {
+		return x.Uid
+	}
+	return ""
+}
+
+func (x *ClusterResourceQuotaMetadata) GetTotalLimits() []*QuotaResource {
+	if x != nil {
+		return x.TotalLimits
+	}
+	return nil
+}
+
+func (x *ClusterResourceQuotaMetadata) GetTotalUsage() []*QuotaResource {
+	if x != nil {
+		return x.TotalUsage
+	}
+	return nil
+}
+
+func (x *ClusterResourceQuotaMetadata) GetQuotas() []*NamespaceQuota {
+	if x != nil {
+		return x.Quotas
+	}
+	return nil
+}
+
+type NamespaceQuota struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Namespace     string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Limits        []*QuotaResource       `protobuf:"bytes,2,rep,name=limits,proto3" json:"limits,omitempty"`
+	Usage         []*QuotaResource       `protobuf:"bytes,3,rep,name=usage,proto3" json:"usage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NamespaceQuota) Reset() {
+	*x = NamespaceQuota{}
+	mi := &file_cluster_cluster_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NamespaceQuota) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NamespaceQuota) ProtoMessage() {}
+
+func (x *NamespaceQuota) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NamespaceQuota.ProtoReflect.Descriptor instead.
+func (*NamespaceQuota) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *NamespaceQuota) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *NamespaceQuota) GetLimits() []*QuotaResource {
+	if x != nil {
+		return x.Limits
+	}
+	return nil
+}
+
+func (x *NamespaceQuota) GetUsage() []*QuotaResource {
+	if x != nil {
+		return x.Usage
+	}
+	return nil
+}
+
+type QuotaResource struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Resource      string                 `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"` // e.g. "cpu", "memory", "count/pods"
+	Value         int64                  `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`      // raw string, like "500m" or "2Gi"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuotaResource) Reset() {
+	*x = QuotaResource{}
+	mi := &file_cluster_cluster_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuotaResource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuotaResource) ProtoMessage() {}
+
+func (x *QuotaResource) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuotaResource.ProtoReflect.Descriptor instead.
+func (*QuotaResource) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *QuotaResource) GetResource() string {
+	if x != nil {
+		return x.Resource
+	}
+	return ""
+}
+
+func (x *QuotaResource) GetValue() int64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
 var File_cluster_cluster_proto protoreflect.FileDescriptor
 
 const file_cluster_cluster_proto_rawDesc = "" +
@@ -1162,7 +1384,7 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"\x8a\x01\n" +
 	"\x1dKubernetesObjectMetadataBatch\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12;\n" +
-	"\aobjects\x18\x02 \x03(\v2!.cluster.KubernetesObjectMetadataR\aobjects\"\xf4\x0e\n" +
+	"\aobjects\x18\x02 \x03(\v2!.cluster.KubernetesObjectMetadataR\aobjects\"\xa7\x10\n" +
 	"\x18KubernetesObjectMetadata\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
@@ -1176,15 +1398,16 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x06status\x18\n" +
 	" \x01(\tR\x06status\x12\x14\n" +
 	"\x05phase\x18\v \x01(\tR\x05phase\x12#\n" +
-	"\rrestart_count\x18\f \x01(\x05R\frestartCount\x12\x1d\n" +
+	"\rrestart_count\x18\f \x01(\x03R\frestartCount\x12\x1d\n" +
 	"\n" +
 	"owner_kind\x18\r \x01(\tR\townerKind\x12\x1d\n" +
 	"\n" +
 	"owner_name\x18\x0e \x01(\tR\townerName\x12\x1a\n" +
-	"\breplicas\x18\x0f \x01(\x05R\breplicas\x12%\n" +
-	"\x0eready_replicas\x18\x10 \x01(\x05R\rreadyReplicas\x12-\n" +
-	"\x12available_replicas\x18\x11 \x01(\x05R\x11availableReplicas\x12)\n" +
-	"\x10updated_replicas\x18\x12 \x01(\x05R\x0fupdatedReplicas\x126\n" +
+	"\breplicas\x18\x0f \x01(\x03R\breplicas\x12%\n" +
+	"\x0eready_replicas\x18\x10 \x01(\x03R\rreadyReplicas\x12-\n" +
+	"\x12available_replicas\x18\x11 \x01(\x03R\x11availableReplicas\x12)\n" +
+	"\x10updated_replicas\x18\x12 \x01(\x03R\x0fupdatedReplicas\x12)\n" +
+	"\x10current_replicas\x18+ \x01(\x03R\x0fcurrentReplicas\x126\n" +
 	"\n" +
 	"containers\x18\x13 \x03(\v2\x16.cluster.ContainerSpecR\n" +
 	"containers\x12-\n" +
@@ -1194,17 +1417,17 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x05extra\x18\x17 \x03(\v2,.cluster.KubernetesObjectMetadata.ExtraEntryR\x05extra\x12\x1f\n" +
 	"\vapi_version\x18\x18 \x01(\tR\n" +
 	"apiVersion\x12(\n" +
-	"\x10hpa_max_replicas\x18\x19 \x01(\x05R\x0ehpaMaxReplicas\x12(\n" +
-	"\x10hpa_min_replicas\x18\x1a \x01(\x05R\x0ehpaMinReplicas\x12/\n" +
+	"\x10hpa_max_replicas\x18\x19 \x01(\x03R\x0ehpaMaxReplicas\x12(\n" +
+	"\x10hpa_min_replicas\x18\x1a \x01(\x03R\x0ehpaMinReplicas\x12/\n" +
 	"\x14hpa_scale_target_ref\x18\x1b \x01(\tR\x11hpaScaleTargetRef\x12\x1d\n" +
 	"\n" +
-	"job_active\x18\x1c \x01(\x05R\tjobActive\x12\x1d\n" +
+	"job_active\x18\x1c \x01(\x03R\tjobActive\x12\x1d\n" +
 	"\n" +
-	"job_failed\x18\x1d \x01(\x05R\tjobFailed\x12#\n" +
-	"\rjob_succeeded\x18\x1e \x01(\x05R\fjobSucceeded\x12'\n" +
-	"\x0fjob_parallelism\x18\x1f \x01(\x05R\x0ejobParallelism\x12'\n" +
-	"\x0fjob_completions\x18  \x01(\x05R\x0ejobCompletions\x12$\n" +
-	"\x0ens_phase_value\x18! \x01(\x05R\fnsPhaseValue\x12'\n" +
+	"job_failed\x18\x1d \x01(\x03R\tjobFailed\x12#\n" +
+	"\rjob_succeeded\x18\x1e \x01(\x03R\fjobSucceeded\x12'\n" +
+	"\x0fjob_parallelism\x18\x1f \x01(\x03R\x0ejobParallelism\x12'\n" +
+	"\x0fjob_completions\x18  \x01(\x03R\x0ejobCompletions\x12$\n" +
+	"\x0ens_phase_value\x18! \x01(\x03R\fnsPhaseValue\x12'\n" +
 	"\x0fkubelet_version\x18\" \x01(\tR\x0ekubeletVersion\x12\x17\n" +
 	"\aos_type\x18# \x01(\tR\x06osType\x12\x19\n" +
 	"\bos_image\x18$ \x01(\tR\aosImage\x12+\n" +
@@ -1213,7 +1436,11 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
 	"conditions\x18' \x03(\v2\x16.cluster.NodeConditionR\n" +
 	"conditions\x12?\n" +
-	"\vallocatable\x18( \x01(\v2\x1d.cluster.AllocatableResourcesR\vallocatable\x1a9\n" +
+	"\vallocatable\x18( \x01(\v2\x1d.cluster.AllocatableResourcesR\vallocatable\x12\x1d\n" +
+	"\n" +
+	"pod_reason\x18) \x01(\tR\tpodReason\x12\x1b\n" +
+	"\tqos_class\x18* \x01(\tR\bqosClass\x12J\n" +
+	"\rcluster_quota\x18, \x01(\v2%.cluster.ClusterResourceQuotaMetadataR\fclusterQuota\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
@@ -1232,8 +1459,8 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x129\n" +
 	"\tresources\x18\x03 \x01(\v2\x1b.cluster.ContainerResourcesR\tresources\x12 \n" +
 	"\vcontainerId\x18\x04 \x01(\tR\vcontainerId\x12%\n" +
-	"\x0erestarts_count\x18\x05 \x01(\x05R\rrestartsCount\x12\x14\n" +
-	"\x05ready\x18\x06 \x01(\x05R\x05ready\x12-\n" +
+	"\x0erestarts_count\x18\x05 \x01(\x03R\rrestartsCount\x12\x14\n" +
+	"\x05ready\x18\x06 \x01(\x03R\x05ready\x12-\n" +
 	"\x05state\x18\a \x01(\v2\x17.cluster.ContainerStateR\x05state\x12M\n" +
 	"\x16last_termination_state\x18\b \x01(\v2\x17.cluster.ContainerStateR\x14lastTerminationState\x12\x1b\n" +
 	"\timage_tag\x18\t \x01(\tR\bimageTag\"\x82\x01\n" +
@@ -1263,8 +1490,8 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
 	"started_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\"\x9c\x02\n" +
 	"\x18ContainerStateTerminated\x12\x1b\n" +
-	"\texit_code\x18\x01 \x01(\x05R\bexitCode\x12\x16\n" +
-	"\x06signal\x18\x02 \x01(\x05R\x06signal\x12\x16\n" +
+	"\texit_code\x18\x01 \x01(\x03R\bexitCode\x12\x16\n" +
+	"\x06signal\x18\x02 \x01(\x03R\x06signal\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x129\n" +
 	"\n" +
@@ -1285,7 +1512,21 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x06others\x18\x05 \x03(\v2).cluster.AllocatableResources.OthersEntryR\x06others\x1a9\n" +
 	"\vOthersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B:Z8github.com/opisvigilant/futura/proto/gen/cluster;clusterb\x06proto3"
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe9\x01\n" +
+	"\x1cClusterResourceQuotaMetadata\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
+	"\x03uid\x18\x02 \x01(\tR\x03uid\x129\n" +
+	"\ftotal_limits\x18\x03 \x03(\v2\x16.cluster.QuotaResourceR\vtotalLimits\x127\n" +
+	"\vtotal_usage\x18\x04 \x03(\v2\x16.cluster.QuotaResourceR\n" +
+	"totalUsage\x12/\n" +
+	"\x06quotas\x18\x05 \x03(\v2\x17.cluster.NamespaceQuotaR\x06quotas\"\x8c\x01\n" +
+	"\x0eNamespaceQuota\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12.\n" +
+	"\x06limits\x18\x02 \x03(\v2\x16.cluster.QuotaResourceR\x06limits\x12,\n" +
+	"\x05usage\x18\x03 \x03(\v2\x16.cluster.QuotaResourceR\x05usage\"A\n" +
+	"\rQuotaResource\x12\x1a\n" +
+	"\bresource\x18\x01 \x01(\tR\bresource\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05valueB:Z8github.com/opisvigilant/futura/proto/gen/cluster;clusterb\x06proto3"
 
 var (
 	file_cluster_cluster_proto_rawDescOnce sync.Once
@@ -1299,7 +1540,7 @@ func file_cluster_cluster_proto_rawDescGZIP() []byte {
 	return file_cluster_cluster_proto_rawDescData
 }
 
-var file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_cluster_cluster_proto_goTypes = []any{
 	(*KubernetesObjectMetadataBatch)(nil), // 0: cluster.KubernetesObjectMetadataBatch
 	(*KubernetesObjectMetadata)(nil),      // 1: cluster.KubernetesObjectMetadata
@@ -1313,43 +1554,52 @@ var file_cluster_cluster_proto_goTypes = []any{
 	(*ContainerStateTerminated)(nil),      // 9: cluster.ContainerStateTerminated
 	(*NodeCondition)(nil),                 // 10: cluster.NodeCondition
 	(*AllocatableResources)(nil),          // 11: cluster.AllocatableResources
-	nil,                                   // 12: cluster.KubernetesObjectMetadata.LabelsEntry
-	nil,                                   // 13: cluster.KubernetesObjectMetadata.AnnotationsEntry
-	nil,                                   // 14: cluster.KubernetesObjectMetadata.AffinityEntry
-	nil,                                   // 15: cluster.KubernetesObjectMetadata.ExtraEntry
-	nil,                                   // 16: cluster.AllocatableResources.OthersEntry
-	(*common.Metadata)(nil),               // 17: common.Metadata
-	(*timestamppb.Timestamp)(nil),         // 18: google.protobuf.Timestamp
+	(*ClusterResourceQuotaMetadata)(nil),  // 12: cluster.ClusterResourceQuotaMetadata
+	(*NamespaceQuota)(nil),                // 13: cluster.NamespaceQuota
+	(*QuotaResource)(nil),                 // 14: cluster.QuotaResource
+	nil,                                   // 15: cluster.KubernetesObjectMetadata.LabelsEntry
+	nil,                                   // 16: cluster.KubernetesObjectMetadata.AnnotationsEntry
+	nil,                                   // 17: cluster.KubernetesObjectMetadata.AffinityEntry
+	nil,                                   // 18: cluster.KubernetesObjectMetadata.ExtraEntry
+	nil,                                   // 19: cluster.AllocatableResources.OthersEntry
+	(*common.Metadata)(nil),               // 20: common.Metadata
+	(*timestamppb.Timestamp)(nil),         // 21: google.protobuf.Timestamp
 }
 var file_cluster_cluster_proto_depIdxs = []int32{
-	17, // 0: cluster.KubernetesObjectMetadataBatch.metadata:type_name -> common.Metadata
+	20, // 0: cluster.KubernetesObjectMetadataBatch.metadata:type_name -> common.Metadata
 	1,  // 1: cluster.KubernetesObjectMetadataBatch.objects:type_name -> cluster.KubernetesObjectMetadata
-	18, // 2: cluster.KubernetesObjectMetadata.timestamp:type_name -> google.protobuf.Timestamp
-	12, // 3: cluster.KubernetesObjectMetadata.labels:type_name -> cluster.KubernetesObjectMetadata.LabelsEntry
-	13, // 4: cluster.KubernetesObjectMetadata.annotations:type_name -> cluster.KubernetesObjectMetadata.AnnotationsEntry
+	21, // 2: cluster.KubernetesObjectMetadata.timestamp:type_name -> google.protobuf.Timestamp
+	15, // 3: cluster.KubernetesObjectMetadata.labels:type_name -> cluster.KubernetesObjectMetadata.LabelsEntry
+	16, // 4: cluster.KubernetesObjectMetadata.annotations:type_name -> cluster.KubernetesObjectMetadata.AnnotationsEntry
 	2,  // 5: cluster.KubernetesObjectMetadata.containers:type_name -> cluster.ContainerSpec
 	5,  // 6: cluster.KubernetesObjectMetadata.volumes:type_name -> cluster.VolumeSpec
-	14, // 7: cluster.KubernetesObjectMetadata.affinity:type_name -> cluster.KubernetesObjectMetadata.AffinityEntry
-	15, // 8: cluster.KubernetesObjectMetadata.extra:type_name -> cluster.KubernetesObjectMetadata.ExtraEntry
+	17, // 7: cluster.KubernetesObjectMetadata.affinity:type_name -> cluster.KubernetesObjectMetadata.AffinityEntry
+	18, // 8: cluster.KubernetesObjectMetadata.extra:type_name -> cluster.KubernetesObjectMetadata.ExtraEntry
 	10, // 9: cluster.KubernetesObjectMetadata.conditions:type_name -> cluster.NodeCondition
 	11, // 10: cluster.KubernetesObjectMetadata.allocatable:type_name -> cluster.AllocatableResources
-	3,  // 11: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
-	6,  // 12: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
-	6,  // 13: cluster.ContainerSpec.last_termination_state:type_name -> cluster.ContainerState
-	4,  // 14: cluster.ContainerResources.limits:type_name -> cluster.ResourceQuantities
-	4,  // 15: cluster.ContainerResources.requests:type_name -> cluster.ResourceQuantities
-	7,  // 16: cluster.ContainerState.waiting:type_name -> cluster.ContainerStateWaiting
-	8,  // 17: cluster.ContainerState.running:type_name -> cluster.ContainerStateRunning
-	9,  // 18: cluster.ContainerState.terminated:type_name -> cluster.ContainerStateTerminated
-	18, // 19: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
-	18, // 20: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
-	18, // 21: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
-	16, // 22: cluster.AllocatableResources.others:type_name -> cluster.AllocatableResources.OthersEntry
-	23, // [23:23] is the sub-list for method output_type
-	23, // [23:23] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	12, // 11: cluster.KubernetesObjectMetadata.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
+	3,  // 12: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
+	6,  // 13: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
+	6,  // 14: cluster.ContainerSpec.last_termination_state:type_name -> cluster.ContainerState
+	4,  // 15: cluster.ContainerResources.limits:type_name -> cluster.ResourceQuantities
+	4,  // 16: cluster.ContainerResources.requests:type_name -> cluster.ResourceQuantities
+	7,  // 17: cluster.ContainerState.waiting:type_name -> cluster.ContainerStateWaiting
+	8,  // 18: cluster.ContainerState.running:type_name -> cluster.ContainerStateRunning
+	9,  // 19: cluster.ContainerState.terminated:type_name -> cluster.ContainerStateTerminated
+	21, // 20: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
+	21, // 21: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
+	21, // 22: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
+	19, // 23: cluster.AllocatableResources.others:type_name -> cluster.AllocatableResources.OthersEntry
+	14, // 24: cluster.ClusterResourceQuotaMetadata.total_limits:type_name -> cluster.QuotaResource
+	14, // 25: cluster.ClusterResourceQuotaMetadata.total_usage:type_name -> cluster.QuotaResource
+	13, // 26: cluster.ClusterResourceQuotaMetadata.quotas:type_name -> cluster.NamespaceQuota
+	14, // 27: cluster.NamespaceQuota.limits:type_name -> cluster.QuotaResource
+	14, // 28: cluster.NamespaceQuota.usage:type_name -> cluster.QuotaResource
+	29, // [29:29] is the sub-list for method output_type
+	29, // [29:29] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_cluster_cluster_proto_init() }
@@ -1368,7 +1618,7 @@ func file_cluster_cluster_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cluster_cluster_proto_rawDesc), len(file_cluster_cluster_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

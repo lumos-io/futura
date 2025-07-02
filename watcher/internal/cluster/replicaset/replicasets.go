@@ -4,6 +4,7 @@ import (
 	"time"
 
 	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,16 +27,14 @@ func Transform(rs *appsv1.ReplicaSet) *appsv1.ReplicaSet {
 func RecordMetrics(rs *appsv1.ReplicaSet, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	obj := &pbcluster.KubernetesObjectMetadata{
 		Timestamp: timestamppb.New(ts),
+		Namespace: rs.Namespace,
+		Name:      rs.Name,
+		Uid:       string(rs.UID),
 	}
 	if rs.Spec.Replicas != nil {
-		mb.RecordK8sReplicasetDesiredDataPoint(ts, int64(*rs.Spec.Replicas))
-		mb.RecordK8sReplicasetAvailableDataPoint(ts, int64(rs.Status.AvailableReplicas))
+		obj.Replicas = int64(*rs.Spec.Replicas)
+		obj.AvailableReplicas = int64(rs.Status.AvailableReplicas)
 	}
-
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sNamespaceName(rs.Namespace)
-	rb.SetK8sReplicasetName(rs.Name)
-	rb.SetK8sReplicasetUID(string(rs.UID))
 
 	return obj
 }

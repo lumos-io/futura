@@ -11,6 +11,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/cluster/service"
 	"github.com/opisvigilant/futura/watcher/utils"
 	"github.com/rs/zerolog/log"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
@@ -21,7 +22,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -76,7 +76,7 @@ func RecordMetrics(pod *corev1.Pod, ts time.Time) *pbcluster.KubernetesObjectMet
 	obj := &pbcluster.KubernetesObjectMetadata{
 		Timestamp:  timestamppb.New(ts),
 		Status:     string(pod.Status.Phase),
-		Reason:     string(pod.Status.Reason),
+		PodReason:  string(pod.Status.Reason),
 		Namespace:  pod.Namespace,
 		NodeName:   pod.Spec.NodeName,
 		Name:       pod.Name,
@@ -188,10 +188,16 @@ func collectPodJobProperties(pod *corev1.Pod, jobStore cache.Store) map[string]s
 	if jobRef != nil {
 		job, exists, err := jobStore.GetByKey(utils.GetIDForCache(pod.Namespace, jobRef.Name))
 		if err != nil {
-			logError(err, jobRef, pod.UID)
+			log.Logger.Error().Err(err).
+				Str(string(conventions.K8SPodUIDKey), string(pod.UID)).
+				Str(string(conventions.K8SJobUIDKey), string(jobRef.UID)).
+				Msg("Failed to get resource from store, properties from it will not be synced.")
 			return nil
 		} else if !exists {
-			logDebug(jobRef, pod.UID)
+			log.Logger.Debug().
+				Str(string(conventions.K8SPodUIDKey), string(pod.UID)).
+				Str(string(conventions.K8SJobUIDKey), string(jobRef.UID)).
+				Msg("Resource does not exist in store, properties from it will not be synced.")
 			return nil
 		}
 
@@ -211,10 +217,16 @@ func collectPodReplicaSetProperties(pod *corev1.Pod, replicaSetstore cache.Store
 	if rsRef != nil {
 		replicaSet, exists, err := replicaSetstore.GetByKey(utils.GetIDForCache(pod.Namespace, rsRef.Name))
 		if err != nil {
-			logError(err, rsRef, pod.UID)
+			log.Logger.Error().Err(err).
+				Str(string(conventions.K8SPodUIDKey), string(pod.UID)).
+				Str(string(conventions.K8SJobUIDKey), string(rsRef.UID)).
+				Msg("Failed to get resource from store, properties from it will not be synced.")
 			return nil
 		} else if !exists {
-			logDebug(rsRef, pod.UID)
+			log.Logger.Debug().
+				Str(string(conventions.K8SPodUIDKey), string(pod.UID)).
+				Str(string(conventions.K8SJobUIDKey), string(rsRef.UID)).
+				Msg("Resource does not exist in store, properties from it will not be synced.")
 			return nil
 		}
 
@@ -225,21 +237,6 @@ func collectPodReplicaSetProperties(pod *corev1.Pod, replicaSetstore cache.Store
 		return getWorkloadProperties(rsRef, string(conventions.K8SReplicaSetNameKey))
 	}
 	return nil
-}
-
-func logDebug(ref *v1.OwnerReference, podUID types.UID) {
-	log.Logger.Debug().
-		Str(string(conventions.K8SPodUIDKey), string(podUID)).
-		Str(string(conventions.K8SJobUIDKey), string(ref.UID)).
-		Msg("Resource does not exist in store, properties from it will not be synced.")
-}
-
-func logError(err error, ref *v1.OwnerReference, podUID types.UID) {
-	log.Logger.Error().
-		Msg("Failed to get resource from store, properties from it will not be synced.").
-		Str(string(conventions.K8SPodUIDKey), string(podUID)).
-		Str(string(conventions.K8SJobUIDKey), string(ref.UID)).
-		Err(err)
 }
 
 // getWorkloadProperties returns workload metadata for provided owner reference.

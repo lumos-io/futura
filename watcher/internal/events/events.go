@@ -135,7 +135,7 @@ func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *send
 		// Set the "SeverityNumber" and "SeverityText" if a known type of
 		// severity is found.
 		if severityNumber, ok := severityMap[strings.ToLower(ev.Type)]; ok {
-			kev.EventSeverityNumber = int32(severityNumber)
+			kev.EventSeverityNumber = int64(severityNumber)
 			kev.EventSeverityText = ev.Type
 		} else {
 			log.Logger.Debug().Msgf("unknown severity type %s", ev.Type)
