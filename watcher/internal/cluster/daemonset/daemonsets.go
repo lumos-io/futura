@@ -26,17 +26,15 @@ func Transform(ds *appsv1.DaemonSet) *appsv1.DaemonSet {
 
 func RecordMetrics(ds *appsv1.DaemonSet, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	obj := &pbcluster.KubernetesObjectMetadata{
-		Timestamp: timestamppb.New(ts),
-		Namespace: ds.Namespace,
-		Name:      ds.Name,
-		Uid:       string(ds.UID),
+		Timestamp:                       timestamppb.New(ts),
+		Namespace:                       ds.Namespace,
+		Name:                            ds.Name,
+		Uid:                             string(ds.UID),
+		DaemonsetCurrentNumberScheduled: int64(ds.Status.CurrentNumberScheduled),
+		DaemonsetDesiredNumberScheduled: int64(ds.Status.DesiredNumberScheduled),
+		DaemonsetNumberMisscheduled:     int64(ds.Status.NumberMisscheduled),
+		DaemonsetNumberReady:            int64(ds.Status.NumberReady),
 	}
-
-	// TODO: how do I store the below data???
-	// mb.RecordK8sDaemonsetCurrentScheduledNodesDataPoint(ts, int64(ds.Status.CurrentNumberScheduled))
-	// mb.RecordK8sDaemonsetDesiredScheduledNodesDataPoint(ts, int64(ds.Status.DesiredNumberScheduled))
-	// mb.RecordK8sDaemonsetMisscheduledNodesDataPoint(ts, int64(ds.Status.NumberMisscheduled))
-	// mb.RecordK8sDaemonsetReadyNodesDataPoint(ts, int64(ds.Status.NumberReady))
 
 	return obj
 }

@@ -22,7 +22,7 @@ func RecordMetrics(cj *batchv1.CronJob, ts time.Time) *pbcluster.KubernetesObjec
 		Kind:      cj.Kind,
 		Namespace: cj.Namespace,
 		Uid:       string(cj.UID),
-		Name:      cj.Name,
+		Name:      cj.Name,		
 	}
 
 	// TODO: how do I store the active cronjobs??

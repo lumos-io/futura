@@ -32,7 +32,13 @@ const (
 // RecordSpecMetrics metricizes values from the container spec.
 // This includes values like resource requests and limits.
 func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbcluster.ContainerSpec {
-	containerSpec := &pbcluster.ContainerSpec{}
+	containerSpec := &pbcluster.ContainerSpec{
+		Resources: &pbcluster.ContainerResources{
+			Requests: &pbcluster.ResourceQuantities{},
+			Limits:   &pbcluster.ResourceQuantities{},
+		},
+		LastTerminationState: &pbcluster.ContainerState{},
+	}
 	for k, r := range c.Resources.Requests {
 		//exhaustive:ignore
 		switch k {

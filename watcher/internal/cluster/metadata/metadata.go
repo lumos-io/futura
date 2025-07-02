@@ -11,6 +11,24 @@ import (
 	"github.com/opisvigilant/futura/watcher/utils"
 )
 
+type EventType string
+
+const (
+	EventTypeSnapshot EventType = "snapshot"
+	EventTypeUpdate   EventType = "update"
+	EventTypeDelete   EventType = "delete"
+)
+
+type KubernetesResourceEvent struct {
+	Type      EventType // snapshot, update, delete
+	Resource  string    // e.g. "Pod", "Node", "Deployment"
+	UID       string
+	Name      string
+	Namespace string
+	Metadata  map[string]string // optional, keep it small
+	Timestamp time.Time
+}
+
 // KubernetesMetadata associates a resource to a set of properties.
 type KubernetesMetadata struct {
 	// The type of the entity, e.g. k8s.pod

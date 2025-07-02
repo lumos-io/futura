@@ -60,7 +60,7 @@ func Fetch() *Configuration {
 			Namespaces:                 viper.GetStringSlice("kubernetes.namespaces"),
 			Distribution:               getStringOrDefault("kubernetes.distribution", "kubernetes"),
 			CollectionInterval:         convertDurationStringToTime(getStringOrDefault("kubernetes.collectionInterval", "10")),
-			MetadataCollectionInterval: convertDurationStringToTime(getStringOrDefault("kubernetes.metadataCollectionInterval", "300")),
+			MetadataCollectionInterval: convertDurationStringToTime(getStringOrDefault("kubernetes.metadataCollectionInterval", "30")),
 			LeaseName:                  viper.GetString("kubernetes.leaseName"),
 			LeaseNamespace:             viper.GetString("kubernetes.leaseNamespace"),
 			LeaseDuration:              convertDurationStringToTime(getStringOrDefault("kubernetes.leaseDuration", "15")),
