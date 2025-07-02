@@ -4,16 +4,11 @@ package events;
 
 option go_package = "github.com/opisvigilant/futura/proto/gen/events;events";
 
-message Metadata {
-  string idempotency_key = 1;
-  string watcher_version = 2;
-  string cluster_id = 3;
-  string cloud_provider = 5;  
-}
+import "common/metadata.proto";
 
 // Main batch message
 message KubernetesEventBatch {
-  Metadata metadata = 1;
+  common.Metadata metadata = 1;
   repeated KubernetesEvent events = 2;
 }
 

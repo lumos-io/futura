@@ -7,6 +7,20 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/opisvigilant/futura/watcher/internal/cluster/cronjob"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/daemonset"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/deployment"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/gvk"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/hpa"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/jobs"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/namespace"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/node"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/pod"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/replicaset"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/replicationcontroller"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/service"
+	"github.com/opisvigilant/futura/watcher/internal/cluster/statefulset"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/rs/zerolog/log"
 
@@ -43,29 +57,22 @@ type resourceWatcher struct {
 	client            kubernetes.Interface
 	osQuotaClient     quotaclientset.Interface
 	informerFactories []sharedInformer
+	metadataStore     *metadata.Store
 
 	initialTimeout      time.Duration
 	initialSyncDone     *atomic.Bool
 	initialSyncTimedOut *atomic.Bool
 	config              *config.Configuration
-
-	// For mocking.
-	// makeClient               func(apiConf k8sconfig.APIConfig) (kubernetes.Interface, error)
-	// makeOpenShiftQuotaClient func(apiConf k8sconfig.APIConfig) (quotaclientset.Interface, error)
 }
 
-// type metadataConsumer func(metadata []*experimentalmetricmetadata.MetadataUpdate) error
-
 // newResourceWatcher creates a Kubernetes resource watcher.
-func newResourceWatcher(cfg *config.Configuration) *resourceWatcher {
+func newResourceWatcher(cfg *config.Configuration, metadataStore *metadata.Store) *resourceWatcher {
 	return &resourceWatcher{
-		// metadataStore:       metadataStore,
+		metadataStore:       metadataStore,
 		initialSyncDone:     &atomic.Bool{},
 		initialSyncTimedOut: &atomic.Bool{},
 		initialTimeout:      defaultInitialSyncTimeout,
 		config:              cfg,
-		// makeClient:               k8sconfig.MakeClient,
-		// makeOpenShiftQuotaClient: k8sconfig.MakeOpenShiftQuotaClient,
 	}
 }
 
@@ -225,6 +232,29 @@ func (rw *resourceWatcher) startWatchingResources(ctx context.Context, inf share
 	return timedContextForInitialSync
 }
 
+// Only highly utilized objects are transformed here while others are kept as is.
+func transformObject(object any) (any, error) {
+	switch o := object.(type) {
+	case *corev1.Pod:
+		return pod.Transform(o), nil
+	case *corev1.Node:
+		return node.Transform(o), nil
+	case *appsv1.ReplicaSet:
+		return replicaset.Transform(o), nil
+	case *batchv1.Job:
+		return jobs.Transform(o), nil
+	case *appsv1.Deployment:
+		return deployment.Transform(o), nil
+	case *appsv1.DaemonSet:
+		return daemonset.Transform(o), nil
+	case *appsv1.StatefulSet:
+		return statefulset.Transform(o), nil
+	case *corev1.Service:
+		return service.Transform(o), nil
+	}
+	return object, nil
+}
+
 // setupInformer adds event handlers to informers and setups a metadataStore.
 func (rw *resourceWatcher) setupInformer(gvk schema.GroupVersionKind, informer cache.SharedIndexInformer) {
 	err := informer.SetTransform(transformObject)
@@ -246,7 +276,7 @@ func (rw *resourceWatcher) onAdd(obj any) {
 
 	rw.objMetadata(obj)
 
-	// send the data here?
+	// Append the data to an object
 }
 
 func (rw *resourceWatcher) onUpdate(oldObj, newObj any) {
@@ -256,7 +286,7 @@ func (rw *resourceWatcher) onUpdate(oldObj, newObj any) {
 
 	rw.objMetadata(newObj)
 
-	// send the data here?
+	// Append the data to an object
 }
 
 func (rw *resourceWatcher) onDelete(oldObj any) {
@@ -264,14 +294,14 @@ func (rw *resourceWatcher) onDelete(oldObj any) {
 
 	rw.objMetadata(oldObj)
 
-	// send the data here?
+	// Append the data to an object
 }
 
 // objMetadata returns the metadata for the given object.
-func (rw *resourceWatcher) objMetadata(obj any) map[experimentalmetricmetadata.ResourceID]*metadata.KubernetesMetadata {
+func (rw *resourceWatcher) objMetadata(obj any) map[metadata.ResourceID]*metadata.KubernetesMetadata {
 	switch o := obj.(type) {
 	case *corev1.Pod:
-		return pod.GetMetadata(o, rw.metadataStore, log.Logger)
+		return pod.GetMetadata(o, rw.metadataStore)
 	case *corev1.Node:
 		return node.GetMetadata(o)
 	case *corev1.ReplicationController:

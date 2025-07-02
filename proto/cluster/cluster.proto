@@ -3,3 +3,72 @@ syntax = "proto3";
 package cluster;
 
 option go_package = "github.com/opisvigilant/futura/proto/gen/cluster;cluster";
+
+import "google/protobuf/timestamp.proto";
+import "common/metadata.proto";
+
+// Main batch message
+message KubernetesObjectMetadataBatch {
+  common.Metadata metadata = 1;
+  repeated KubernetesObjectMetadata objects = 2;
+}
+
+// Represents a generic Kubernetes object with rich metadata.
+message KubernetesObjectMetadata {
+  google.protobuf.Timestamp timestamp = 1;
+  string type = 2; // snapshot | update | delete
+
+  string kind = 3;
+  string namespace = 4;
+  string name = 5;
+  string uid = 6;
+
+  map<string, string> labels = 7;
+  map<string, string> annotations = 8;
+
+  string node_name = 9;
+  string status = 10;
+  string phase = 11;
+  int32 restart_count = 12;
+
+  string owner_kind = 13;
+  string owner_name = 14;
+
+  int32 replicas = 15;
+  int32 ready_replicas = 16;
+  int32 available_replicas = 17;
+  int32 updated_replicas = 18;
+
+  repeated ContainerSpec containers = 19;
+  repeated VolumeSpec volumes = 20;
+
+  repeated string tolerations = 21;
+  map<string, string> affinity = 22;
+
+  map<string, string> extra = 23;
+}
+
+// Represents a container and its resource specs.
+message ContainerSpec {
+  string name = 1;
+  string image = 2;
+  ContainerResources resources = 3;
+}
+
+// CPU/Memory requests and limits for a container.
+message ContainerResources {
+  ResourceQuantities limits = 1;
+  ResourceQuantities requests = 2;
+}
+
+// Quantity strings, e.g. "500m", "128Mi"
+message ResourceQuantities {
+  string cpu = 1;
+  string memory = 2;
+}
+
+// Volumes attached to a pod
+message VolumeSpec {
+  string name = 1;
+  string type = 2; // EmptyDir, PVC, ConfigMap, etc.
+}
