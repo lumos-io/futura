@@ -7,9 +7,12 @@
 package cluster
 
 import (
+	common "github.com/opisvigilant/futura/proto/gen/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,19 +23,610 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Main batch message
+type KubernetesObjectMetadataBatch struct {
+	state         protoimpl.MessageState      `protogen:"open.v1"`
+	Metadata      *common.Metadata            `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Objects       []*KubernetesObjectMetadata `protobuf:"bytes,2,rep,name=objects,proto3" json:"objects,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KubernetesObjectMetadataBatch) Reset() {
+	*x = KubernetesObjectMetadataBatch{}
+	mi := &file_cluster_cluster_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KubernetesObjectMetadataBatch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KubernetesObjectMetadataBatch) ProtoMessage() {}
+
+func (x *KubernetesObjectMetadataBatch) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KubernetesObjectMetadataBatch.ProtoReflect.Descriptor instead.
+func (*KubernetesObjectMetadataBatch) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *KubernetesObjectMetadataBatch) GetMetadata() *common.Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *KubernetesObjectMetadataBatch) GetObjects() []*KubernetesObjectMetadata {
+	if x != nil {
+		return x.Objects
+	}
+	return nil
+}
+
+// Represents a generic Kubernetes object with rich metadata.
+type KubernetesObjectMetadata struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Timestamp         *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Type              string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"` // snapshot | update | delete
+	Kind              string                 `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	Namespace         string                 `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Name              string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
+	Uid               string                 `protobuf:"bytes,6,opt,name=uid,proto3" json:"uid,omitempty"`
+	Labels            map[string]string      `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Annotations       map[string]string      `protobuf:"bytes,8,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	NodeName          string                 `protobuf:"bytes,9,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	Status            string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
+	Phase             string                 `protobuf:"bytes,11,opt,name=phase,proto3" json:"phase,omitempty"`
+	RestartCount      int32                  `protobuf:"varint,12,opt,name=restart_count,json=restartCount,proto3" json:"restart_count,omitempty"`
+	OwnerKind         string                 `protobuf:"bytes,13,opt,name=owner_kind,json=ownerKind,proto3" json:"owner_kind,omitempty"`
+	OwnerName         string                 `protobuf:"bytes,14,opt,name=owner_name,json=ownerName,proto3" json:"owner_name,omitempty"`
+	Replicas          int32                  `protobuf:"varint,15,opt,name=replicas,proto3" json:"replicas,omitempty"`
+	ReadyReplicas     int32                  `protobuf:"varint,16,opt,name=ready_replicas,json=readyReplicas,proto3" json:"ready_replicas,omitempty"`
+	AvailableReplicas int32                  `protobuf:"varint,17,opt,name=available_replicas,json=availableReplicas,proto3" json:"available_replicas,omitempty"`
+	UpdatedReplicas   int32                  `protobuf:"varint,18,opt,name=updated_replicas,json=updatedReplicas,proto3" json:"updated_replicas,omitempty"`
+	Containers        []*ContainerSpec       `protobuf:"bytes,19,rep,name=containers,proto3" json:"containers,omitempty"`
+	Volumes           []*VolumeSpec          `protobuf:"bytes,20,rep,name=volumes,proto3" json:"volumes,omitempty"`
+	Tolerations       []string               `protobuf:"bytes,21,rep,name=tolerations,proto3" json:"tolerations,omitempty"`
+	Affinity          map[string]string      `protobuf:"bytes,22,rep,name=affinity,proto3" json:"affinity,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Extra             map[string]string      `protobuf:"bytes,23,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *KubernetesObjectMetadata) Reset() {
+	*x = KubernetesObjectMetadata{}
+	mi := &file_cluster_cluster_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KubernetesObjectMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KubernetesObjectMetadata) ProtoMessage() {}
+
+func (x *KubernetesObjectMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KubernetesObjectMetadata.ProtoReflect.Descriptor instead.
+func (*KubernetesObjectMetadata) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *KubernetesObjectMetadata) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
+func (x *KubernetesObjectMetadata) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetUid() string {
+	if x != nil {
+		return x.Uid
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *KubernetesObjectMetadata) GetAnnotations() map[string]string {
+	if x != nil {
+		return x.Annotations
+	}
+	return nil
+}
+
+func (x *KubernetesObjectMetadata) GetNodeName() string {
+	if x != nil {
+		return x.NodeName
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetPhase() string {
+	if x != nil {
+		return x.Phase
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetRestartCount() int32 {
+	if x != nil {
+		return x.RestartCount
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetOwnerKind() string {
+	if x != nil {
+		return x.OwnerKind
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetOwnerName() string {
+	if x != nil {
+		return x.OwnerName
+	}
+	return ""
+}
+
+func (x *KubernetesObjectMetadata) GetReplicas() int32 {
+	if x != nil {
+		return x.Replicas
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetReadyReplicas() int32 {
+	if x != nil {
+		return x.ReadyReplicas
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetAvailableReplicas() int32 {
+	if x != nil {
+		return x.AvailableReplicas
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetUpdatedReplicas() int32 {
+	if x != nil {
+		return x.UpdatedReplicas
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetContainers() []*ContainerSpec {
+	if x != nil {
+		return x.Containers
+	}
+	return nil
+}
+
+func (x *KubernetesObjectMetadata) GetVolumes() []*VolumeSpec {
+	if x != nil {
+		return x.Volumes
+	}
+	return nil
+}
+
+func (x *KubernetesObjectMetadata) GetTolerations() []string {
+	if x != nil {
+		return x.Tolerations
+	}
+	return nil
+}
+
+func (x *KubernetesObjectMetadata) GetAffinity() map[string]string {
+	if x != nil {
+		return x.Affinity
+	}
+	return nil
+}
+
+func (x *KubernetesObjectMetadata) GetExtra() map[string]string {
+	if x != nil {
+		return x.Extra
+	}
+	return nil
+}
+
+// Represents a container and its resource specs.
+type ContainerSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Image         string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
+	Resources     *ContainerResources    `protobuf:"bytes,3,opt,name=resources,proto3" json:"resources,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerSpec) Reset() {
+	*x = ContainerSpec{}
+	mi := &file_cluster_cluster_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerSpec) ProtoMessage() {}
+
+func (x *ContainerSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerSpec.ProtoReflect.Descriptor instead.
+func (*ContainerSpec) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ContainerSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ContainerSpec) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *ContainerSpec) GetResources() *ContainerResources {
+	if x != nil {
+		return x.Resources
+	}
+	return nil
+}
+
+// CPU/Memory requests and limits for a container.
+type ContainerResources struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limits        *ResourceQuantities    `protobuf:"bytes,1,opt,name=limits,proto3" json:"limits,omitempty"`
+	Requests      *ResourceQuantities    `protobuf:"bytes,2,opt,name=requests,proto3" json:"requests,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerResources) Reset() {
+	*x = ContainerResources{}
+	mi := &file_cluster_cluster_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerResources) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerResources) ProtoMessage() {}
+
+func (x *ContainerResources) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerResources.ProtoReflect.Descriptor instead.
+func (*ContainerResources) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ContainerResources) GetLimits() *ResourceQuantities {
+	if x != nil {
+		return x.Limits
+	}
+	return nil
+}
+
+func (x *ContainerResources) GetRequests() *ResourceQuantities {
+	if x != nil {
+		return x.Requests
+	}
+	return nil
+}
+
+// Quantity strings, e.g. "500m", "128Mi"
+type ResourceQuantities struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Cpu           string                 `protobuf:"bytes,1,opt,name=cpu,proto3" json:"cpu,omitempty"`
+	Memory        string                 `protobuf:"bytes,2,opt,name=memory,proto3" json:"memory,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResourceQuantities) Reset() {
+	*x = ResourceQuantities{}
+	mi := &file_cluster_cluster_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResourceQuantities) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResourceQuantities) ProtoMessage() {}
+
+func (x *ResourceQuantities) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResourceQuantities.ProtoReflect.Descriptor instead.
+func (*ResourceQuantities) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ResourceQuantities) GetCpu() string {
+	if x != nil {
+		return x.Cpu
+	}
+	return ""
+}
+
+func (x *ResourceQuantities) GetMemory() string {
+	if x != nil {
+		return x.Memory
+	}
+	return ""
+}
+
+// Volumes attached to a pod
+type VolumeSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"` // EmptyDir, PVC, ConfigMap, etc.
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VolumeSpec) Reset() {
+	*x = VolumeSpec{}
+	mi := &file_cluster_cluster_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VolumeSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VolumeSpec) ProtoMessage() {}
+
+func (x *VolumeSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VolumeSpec.ProtoReflect.Descriptor instead.
+func (*VolumeSpec) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *VolumeSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *VolumeSpec) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
 var File_cluster_cluster_proto protoreflect.FileDescriptor
 
 const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
-	"\x15cluster/cluster.proto\x12\aclusterB:Z8github.com/opisvigilant/futura/proto/gen/cluster;clusterb\x06proto3"
+	"\x15cluster/cluster.proto\x12\acluster\x1a\x15common/metadata.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8a\x01\n" +
+	"\x1dKubernetesObjectMetadataBatch\x12,\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12;\n" +
+	"\aobjects\x18\x02 \x03(\v2!.cluster.KubernetesObjectMetadataR\aobjects\"\xb4\t\n" +
+	"\x18KubernetesObjectMetadata\x128\n" +
+	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
+	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x1c\n" +
+	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12\x12\n" +
+	"\x04name\x18\x05 \x01(\tR\x04name\x12\x10\n" +
+	"\x03uid\x18\x06 \x01(\tR\x03uid\x12E\n" +
+	"\x06labels\x18\a \x03(\v2-.cluster.KubernetesObjectMetadata.LabelsEntryR\x06labels\x12T\n" +
+	"\vannotations\x18\b \x03(\v22.cluster.KubernetesObjectMetadata.AnnotationsEntryR\vannotations\x12\x1b\n" +
+	"\tnode_name\x18\t \x01(\tR\bnodeName\x12\x16\n" +
+	"\x06status\x18\n" +
+	" \x01(\tR\x06status\x12\x14\n" +
+	"\x05phase\x18\v \x01(\tR\x05phase\x12#\n" +
+	"\rrestart_count\x18\f \x01(\x05R\frestartCount\x12\x1d\n" +
+	"\n" +
+	"owner_kind\x18\r \x01(\tR\townerKind\x12\x1d\n" +
+	"\n" +
+	"owner_name\x18\x0e \x01(\tR\townerName\x12\x1a\n" +
+	"\breplicas\x18\x0f \x01(\x05R\breplicas\x12%\n" +
+	"\x0eready_replicas\x18\x10 \x01(\x05R\rreadyReplicas\x12-\n" +
+	"\x12available_replicas\x18\x11 \x01(\x05R\x11availableReplicas\x12)\n" +
+	"\x10updated_replicas\x18\x12 \x01(\x05R\x0fupdatedReplicas\x126\n" +
+	"\n" +
+	"containers\x18\x13 \x03(\v2\x16.cluster.ContainerSpecR\n" +
+	"containers\x12-\n" +
+	"\avolumes\x18\x14 \x03(\v2\x13.cluster.VolumeSpecR\avolumes\x12 \n" +
+	"\vtolerations\x18\x15 \x03(\tR\vtolerations\x12K\n" +
+	"\baffinity\x18\x16 \x03(\v2/.cluster.KubernetesObjectMetadata.AffinityEntryR\baffinity\x12B\n" +
+	"\x05extra\x18\x17 \x03(\v2,.cluster.KubernetesObjectMetadata.ExtraEntryR\x05extra\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
+	"\x10AnnotationsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a;\n" +
+	"\rAffinityEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a8\n" +
+	"\n" +
+	"ExtraEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"t\n" +
+	"\rContainerSpec\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05image\x18\x02 \x01(\tR\x05image\x129\n" +
+	"\tresources\x18\x03 \x01(\v2\x1b.cluster.ContainerResourcesR\tresources\"\x82\x01\n" +
+	"\x12ContainerResources\x123\n" +
+	"\x06limits\x18\x01 \x01(\v2\x1b.cluster.ResourceQuantitiesR\x06limits\x127\n" +
+	"\brequests\x18\x02 \x01(\v2\x1b.cluster.ResourceQuantitiesR\brequests\">\n" +
+	"\x12ResourceQuantities\x12\x10\n" +
+	"\x03cpu\x18\x01 \x01(\tR\x03cpu\x12\x16\n" +
+	"\x06memory\x18\x02 \x01(\tR\x06memory\"4\n" +
+	"\n" +
+	"VolumeSpec\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04typeB:Z8github.com/opisvigilant/futura/proto/gen/cluster;clusterb\x06proto3"
 
-var file_cluster_cluster_proto_goTypes = []any{}
+var (
+	file_cluster_cluster_proto_rawDescOnce sync.Once
+	file_cluster_cluster_proto_rawDescData []byte
+)
+
+func file_cluster_cluster_proto_rawDescGZIP() []byte {
+	file_cluster_cluster_proto_rawDescOnce.Do(func() {
+		file_cluster_cluster_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_cluster_cluster_proto_rawDesc), len(file_cluster_cluster_proto_rawDesc)))
+	})
+	return file_cluster_cluster_proto_rawDescData
+}
+
+var file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_cluster_cluster_proto_goTypes = []any{
+	(*KubernetesObjectMetadataBatch)(nil), // 0: cluster.KubernetesObjectMetadataBatch
+	(*KubernetesObjectMetadata)(nil),      // 1: cluster.KubernetesObjectMetadata
+	(*ContainerSpec)(nil),                 // 2: cluster.ContainerSpec
+	(*ContainerResources)(nil),            // 3: cluster.ContainerResources
+	(*ResourceQuantities)(nil),            // 4: cluster.ResourceQuantities
+	(*VolumeSpec)(nil),                    // 5: cluster.VolumeSpec
+	nil,                                   // 6: cluster.KubernetesObjectMetadata.LabelsEntry
+	nil,                                   // 7: cluster.KubernetesObjectMetadata.AnnotationsEntry
+	nil,                                   // 8: cluster.KubernetesObjectMetadata.AffinityEntry
+	nil,                                   // 9: cluster.KubernetesObjectMetadata.ExtraEntry
+	(*common.Metadata)(nil),               // 10: common.Metadata
+	(*timestamppb.Timestamp)(nil),         // 11: google.protobuf.Timestamp
+}
 var file_cluster_cluster_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	10, // 0: cluster.KubernetesObjectMetadataBatch.metadata:type_name -> common.Metadata
+	1,  // 1: cluster.KubernetesObjectMetadataBatch.objects:type_name -> cluster.KubernetesObjectMetadata
+	11, // 2: cluster.KubernetesObjectMetadata.timestamp:type_name -> google.protobuf.Timestamp
+	6,  // 3: cluster.KubernetesObjectMetadata.labels:type_name -> cluster.KubernetesObjectMetadata.LabelsEntry
+	7,  // 4: cluster.KubernetesObjectMetadata.annotations:type_name -> cluster.KubernetesObjectMetadata.AnnotationsEntry
+	2,  // 5: cluster.KubernetesObjectMetadata.containers:type_name -> cluster.ContainerSpec
+	5,  // 6: cluster.KubernetesObjectMetadata.volumes:type_name -> cluster.VolumeSpec
+	8,  // 7: cluster.KubernetesObjectMetadata.affinity:type_name -> cluster.KubernetesObjectMetadata.AffinityEntry
+	9,  // 8: cluster.KubernetesObjectMetadata.extra:type_name -> cluster.KubernetesObjectMetadata.ExtraEntry
+	3,  // 9: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
+	4,  // 10: cluster.ContainerResources.limits:type_name -> cluster.ResourceQuantities
+	4,  // 11: cluster.ContainerResources.requests:type_name -> cluster.ResourceQuantities
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_cluster_cluster_proto_init() }
@@ -46,12 +640,13 @@ func file_cluster_cluster_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cluster_cluster_proto_rawDesc), len(file_cluster_cluster_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   0,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cluster_cluster_proto_goTypes,
 		DependencyIndexes: file_cluster_cluster_proto_depIdxs,
+		MessageInfos:      file_cluster_cluster_proto_msgTypes,
 	}.Build()
 	File_cluster_cluster_proto = out.File
 	file_cluster_cluster_proto_goTypes = nil

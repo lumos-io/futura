@@ -16,20 +16,14 @@ type (
 	StopCallback  = func()
 )
 
-// LeaderElection Interface allows the invoker to set the callback functions
-// that would be invoked when the leader wins or loss the election.
-type LeaderElection interface {
-	SetCallBackFuncs(StartCallback, StopCallback)
-}
-
 // SetCallBackFuncs set the functions that can be invoked when the leader wins or loss the election
-func (lee *leaderElection) SetCallBackFuncs(onStartLeading StartCallback, onStopLeading StopCallback) {
+func (lee *K8sLeaderElection) SetCallBackFuncs(onStartLeading StartCallback, onStopLeading StopCallback) {
 	lee.onStartedLeading = append(lee.onStartedLeading, onStartLeading)
 	lee.onStoppedLeading = append(lee.onStoppedLeading, onStopLeading)
 }
 
-// leaderElection is the main struct implementing the extension's behavior.
-type leaderElection struct {
+// K8sLeaderElection is the main struct implementing the extension's behavior.
+type K8sLeaderElection struct {
 	config *config.Configuration
 	client kubernetes.Interface
 
@@ -41,22 +35,31 @@ type leaderElection struct {
 	onStoppedLeading []StopCallback
 }
 
+func NewK8sLeaderElection(config *config.Configuration, client kubernetes.Interface, leaseHolderID string) *K8sLeaderElection {
+	return &K8sLeaderElection{
+		config:        config,
+		client:        client,
+		leaseHolderID: leaseHolderID,
+		waitGroup:     sync.WaitGroup{},
+	}
+}
+
 // If the receiver sets a callback function then it would be invoked when the leader wins the election
-func (lee *leaderElection) startedLeading(ctx context.Context) {
+func (lee *K8sLeaderElection) startedLeading(ctx context.Context) {
 	for _, callback := range lee.onStartedLeading {
 		callback(ctx)
 	}
 }
 
 // If the receiver sets a callback function then it would be invoked when the leader loss the election
-func (lee *leaderElection) stoppedLeading() {
+func (lee *K8sLeaderElection) stoppedLeading() {
 	for _, callback := range lee.onStoppedLeading {
 		callback()
 	}
 }
 
 // Start begins the extension's processing.
-func (lee *leaderElection) Start(_ context.Context) error {
+func (lee *K8sLeaderElection) Start(_ context.Context) error {
 	log.Logger.Info().Msgf("Starting k8s leader elector with UUID `%s`", lee.leaseHolderID)
 
 	ctx := context.Background()
@@ -85,7 +88,7 @@ func (lee *leaderElection) Start(_ context.Context) error {
 }
 
 // Shutdown ends the extension's processing.
-func (lee *leaderElection) Shutdown(context.Context) error {
+func (lee *K8sLeaderElection) Shutdown(context.Context) error {
 	log.Logger.Info().Msgf("Stopping k8s leader elector with UUID `%s`", lee.leaseHolderID)
 	if lee.cancel != nil {
 		lee.cancel()
@@ -94,11 +97,11 @@ func (lee *leaderElection) Shutdown(context.Context) error {
 	return nil
 }
 
-func newK8sLeaderElector(cfg *config.Configuration, client kubernetes.Interface, onStartedLeading func(context.Context), onStoppedLeading func(), identity string) (*leaderelection.LeaderElector, error) {
+func newK8sLeaderElector(config *config.Configuration, client kubernetes.Interface, onStartedLeading func(context.Context), onStoppedLeading func(), identity string) (*leaderelection.LeaderElector, error) {
 	resourceLock, err := resourcelock.New(
 		resourcelock.LeasesResourceLock,
-		cfg.Kubernetes.LeaseNamespace,
-		cfg.Kubernetes.LeaseName,
+		config.Kubernetes.LeaseNamespace,
+		config.Kubernetes.LeaseName,
 		client.CoreV1(),
 		client.CoordinationV1(),
 		resourcelock.ResourceLockConfig{
@@ -110,9 +113,9 @@ func newK8sLeaderElector(cfg *config.Configuration, client kubernetes.Interface,
 
 	leConfig := leaderelection.LeaderElectionConfig{
 		Lock:          resourceLock,
-		LeaseDuration: cfg.Kubernetes.LeaseDuration,
-		RenewDeadline: cfg.Kubernetes.RenewDuration,
-		RetryPeriod:   cfg.Kubernetes.RetryPeriod,
+		LeaseDuration: config.Kubernetes.LeaseDuration,
+		RenewDeadline: config.Kubernetes.RenewDuration,
+		RetryPeriod:   config.Kubernetes.RetryPeriod,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: onStartedLeading,
 			OnStoppedLeading: onStoppedLeading,

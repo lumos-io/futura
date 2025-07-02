@@ -5,7 +5,8 @@ go 1.24.1
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/uuid v1.6.0
-	github.com/opisvigilant/futura/proto v0.0.0-20250619125831-33ea686c35c7
+	github.com/openshift/api v0.0.0-20250620092249-a8cbc218cd2c
+	github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277
 	github.com/spf13/cobra v1.9.1
 	go.opentelemetry.io/otel v1.35.0
 	go.uber.org/zap v1.27.0
@@ -36,8 +37,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/onsi/ginkgo/v2 v2.23.4 // indirect
 	github.com/onsi/gomega v1.37.0 // indirect
-	github.com/openshift/api v0.0.0-20250620092249-a8cbc218cd2c // indirect
-	github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
