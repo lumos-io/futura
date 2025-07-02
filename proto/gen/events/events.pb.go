@@ -84,7 +84,7 @@ type KubernetesEvent struct {
 	ObjectFieldpath       string                 `protobuf:"bytes,4,opt,name=object_fieldpath,json=objectFieldpath,proto3" json:"object_fieldpath,omitempty"`
 	ObjectTimestamp       int64                  `protobuf:"varint,5,opt,name=object_timestamp,json=objectTimestamp,proto3" json:"object_timestamp,omitempty"` // UNIX timestamp
 	ObjectNamespace       string                 `protobuf:"bytes,6,opt,name=object_namespace,json=objectNamespace,proto3" json:"object_namespace,omitempty"`
-	EventSeverityNumber   int32                  `protobuf:"varint,7,opt,name=event_severity_number,json=eventSeverityNumber,proto3" json:"event_severity_number,omitempty"`
+	EventSeverityNumber   int64                  `protobuf:"varint,7,opt,name=event_severity_number,json=eventSeverityNumber,proto3" json:"event_severity_number,omitempty"`
 	EventSeverityText     string                 `protobuf:"bytes,8,opt,name=event_severity_text,json=eventSeverityText,proto3" json:"event_severity_text,omitempty"`
 	EventReason           string                 `protobuf:"bytes,9,opt,name=event_reason,json=eventReason,proto3" json:"event_reason,omitempty"`
 	EventAction           string                 `protobuf:"bytes,10,opt,name=event_action,json=eventAction,proto3" json:"event_action,omitempty"`
@@ -172,7 +172,7 @@ func (x *KubernetesEvent) GetObjectNamespace() string {
 	return ""
 }
 
-func (x *KubernetesEvent) GetEventSeverityNumber() int32 {
+func (x *KubernetesEvent) GetEventSeverityNumber() int64 {
 	if x != nil {
 		return x.EventSeverityNumber
 	}
@@ -274,7 +274,7 @@ const file_events_events_proto_rawDesc = "" +
 	"\x10object_fieldpath\x18\x04 \x01(\tR\x0fobjectFieldpath\x12)\n" +
 	"\x10object_timestamp\x18\x05 \x01(\x03R\x0fobjectTimestamp\x12)\n" +
 	"\x10object_namespace\x18\x06 \x01(\tR\x0fobjectNamespace\x122\n" +
-	"\x15event_severity_number\x18\a \x01(\x05R\x13eventSeverityNumber\x12.\n" +
+	"\x15event_severity_number\x18\a \x01(\x03R\x13eventSeverityNumber\x12.\n" +
 	"\x13event_severity_text\x18\b \x01(\tR\x11eventSeverityText\x12!\n" +
 	"\fevent_reason\x18\t \x01(\tR\veventReason\x12!\n" +
 	"\fevent_action\x18\n" +

@@ -20,7 +20,7 @@ message KubernetesEvent {
   string object_fieldpath = 4;
   int64 object_timestamp = 5;  // UNIX timestamp
   string object_namespace = 6;
-  int32 event_severity_number = 7;
+  int64 event_severity_number = 7;
   string event_severity_text = 8;
   string event_reason = 9;
   string event_action = 10;

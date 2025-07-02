@@ -7,26 +7,26 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 
 	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 )
 
 func RecordMetrics(j *batchv1.Job, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	obj := &pbcluster.KubernetesObjectMetadata{
-		Timestamp: timestamppb.New(ts),
-		Namespace: j.Namespace,
-		Name:      j.Name,
-		Uid:       string(j.UID),
+		Timestamp:    timestamppb.New(ts),
+		Namespace:    j.Namespace,
+		Name:         j.Name,
+		Uid:          string(j.UID),
+		JobActive:    int64(j.Status.Active),
+		JobFailed:    int64(j.Status.Failed),
+		JobSucceeded: int64(j.Status.Succeeded),
 	}
-
-	mb.RecordK8sJobActivePodsDataPoint(ts, int64(j.Status.Active))
-	mb.RecordK8sJobFailedPodsDataPoint(ts, int64(j.Status.Failed))
-	mb.RecordK8sJobSuccessfulPodsDataPoint(ts, int64(j.Status.Succeeded))
 
 	if j.Spec.Completions != nil {
-		mb.RecordK8sJobDesiredSuccessfulPodsDataPoint(ts, int64(*j.Spec.Completions))
+		obj.JobCompletions = int64(*j.Spec.Completions)
 	}
 	if j.Spec.Parallelism != nil {
-		mb.RecordK8sJobMaxParallelPodsDataPoint(ts, int64(*j.Spec.Parallelism))
+		obj.JobParallelism = int64(*j.Spec.Parallelism)
 	}
 
 	return obj

@@ -29,15 +29,16 @@ message KubernetesObjectMetadata {
   string node_name = 9;
   string status = 10;
   string phase = 11;
-  int32 restart_count = 12;
+  int64 restart_count = 12;
 
   string owner_kind = 13;
   string owner_name = 14;
 
-  int32 replicas = 15;
-  int32 ready_replicas = 16;
-  int32 available_replicas = 17;
-  int32 updated_replicas = 18;
+  int64 replicas = 15;
+  int64 ready_replicas = 16;
+  int64 available_replicas = 17;
+  int64 updated_replicas = 18;
+  int64 current_replicas = 43;
 
   repeated ContainerSpec containers = 19;
   repeated VolumeSpec volumes = 20;
@@ -50,19 +51,19 @@ message KubernetesObjectMetadata {
   string api_version = 24;
 
   // for HPA
-  int32 hpa_max_replicas = 25;
-  int32 hpa_min_replicas = 26;
+  int64 hpa_max_replicas = 25;
+  int64 hpa_min_replicas = 26;
   string hpa_scale_target_ref = 27;
 
   // for Job
-  int32 job_active = 28;
-  int32 job_failed = 29;
-  int32 job_succeeded = 30;
-  int32 job_parallelism = 31;
-  int32 job_completions = 32;
+  int64 job_active = 28;
+  int64 job_failed = 29;
+  int64 job_succeeded = 30;
+  int64 job_parallelism = 31;
+  int64 job_completions = 32;
 
   // for Namespace
-  int32 ns_phase_value = 33;
+  int64 ns_phase_value = 33;
 
   // for Node
   string kubelet_version = 34;
@@ -77,6 +78,9 @@ message KubernetesObjectMetadata {
   // for Pod
   string pod_reason = 41;
   string qos_class = 42;
+
+  // Cluster quota
+  ClusterResourceQuotaMetadata cluster_quota = 44;
 }
 
 // Represents a container and its resource specs.
@@ -85,8 +89,8 @@ message ContainerSpec {
   string image = 2;
   ContainerResources resources = 3;
   string containerId = 4;
-  int32 restarts_count = 5;
-  int32 ready = 6;
+  int64 restarts_count = 5;
+  int64 ready = 6;
   ContainerState state = 7;
   ContainerState last_termination_state = 8;
   string image_tag = 9;
@@ -134,8 +138,8 @@ message ContainerStateRunning {
 
 // A terminated state of a container (exited or killed)
 message ContainerStateTerminated {
-  int32 exit_code = 1;
-  int32 signal = 2;
+  int64 exit_code = 1;
+  int64 signal = 2;
   string reason = 3;
   string message = 4;
   google.protobuf.Timestamp started_at = 5;
@@ -156,4 +160,25 @@ message AllocatableResources {
   string pods = 3;
   string ephemeral_storage = 4;
   map<string, string> others = 5;
+}
+
+message ClusterResourceQuotaMetadata {
+  string name = 1;
+  string uid = 2;
+
+  repeated QuotaResource total_limits = 3;
+  repeated QuotaResource total_usage = 4;
+
+  repeated NamespaceQuota quotas = 5;
+}
+
+message NamespaceQuota {
+  string namespace = 1;
+  repeated QuotaResource limits = 2;
+  repeated QuotaResource usage = 3;
+}
+
+message QuotaResource {
+  string resource = 1; // e.g. "cpu", "memory", "count/pods"
+  int64 value = 2;    // raw string, like "500m" or "2Gi"
 }

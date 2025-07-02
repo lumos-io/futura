@@ -31,8 +31,8 @@ func RecordMetrics(dep *appsv1.Deployment, ts time.Time) *pbcluster.KubernetesOb
 		Namespace:         dep.Namespace,
 		Name:              dep.Name,
 		Uid:               string(dep.UID),
-		Replicas:          int32(*dep.Spec.Replicas),
-		AvailableReplicas: int32(dep.Status.AvailableReplicas),
+		Replicas:          int64(*dep.Spec.Replicas),
+		AvailableReplicas: int64(dep.Status.AvailableReplicas),
 	}
 	return obj
 }

@@ -1,6 +1,7 @@
 package resourcequota
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -12,13 +13,17 @@ import (
 func RecordMetrics(rq *corev1.ResourceQuota, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	obj := &pbcluster.KubernetesObjectMetadata{
 		Timestamp: timestamppb.New(ts),
+		Namespace: rq.Namespace,
+		Name:      rq.Name,
+		Uid:       string(rq.UID),
+		Extra:     make(map[string]string),
 	}
 	for k, v := range rq.Status.Hard {
 		val := v.Value()
 		if strings.HasSuffix(string(k), ".cpu") {
 			val = v.MilliValue()
 		}
-		mb.RecordK8sResourceQuotaHardLimitDataPoint(ts, val, string(k))
+		obj.Extra[string(k)] = fmt.Sprint(val)
 	}
 
 	for k, v := range rq.Status.Used {
@@ -26,13 +31,8 @@ func RecordMetrics(rq *corev1.ResourceQuota, ts time.Time) *pbcluster.Kubernetes
 		if strings.HasSuffix(string(k), ".cpu") {
 			val = v.MilliValue()
 		}
-		mb.RecordK8sResourceQuotaUsedDataPoint(ts, val, string(k))
+		obj.Extra[string(k)] = fmt.Sprint(val)
 	}
-
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sResourcequotaUID(string(rq.UID))
-	rb.SetK8sResourcequotaName(rq.Name)
-	rb.SetK8sNamespaceName(rq.Namespace)
 
 	return obj
 }

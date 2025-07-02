@@ -18,12 +18,11 @@ const (
 
 func RecordMetrics(ns *corev1.Namespace, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	obj := &pbcluster.KubernetesObjectMetadata{
-		Timestamp: timestamppb.New(ts),
-		Uid:       string(ns.UID),
-		Name:      ns.Name,
+		Timestamp:    timestamppb.New(ts),
+		Uid:          string(ns.UID),
+		Name:         ns.Name,
+		NsPhaseValue: int64(namespacePhaseValues[ns.Status.Phase]),
 	}
-
-	mb.RecordK8sNamespacePhaseDataPoint(ts, int64(namespacePhaseValues[ns.Status.Phase]))
 
 	return obj
 }
