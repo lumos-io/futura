@@ -17,9 +17,9 @@ endif
 
 ##@ Proto 
 
-.PHONY: proto-events
-proto-events: proto-clean
-	@echo "Generating shared events protos..."
+.PHONY: proto-files
+proto-files: proto-clean
+	@echo "Generating shared protos..."
 	@find $(PROTO_DIR) -name "*.proto"
 	mkdir -p $(OUT_DIR)
 	protoc --proto_path=$(PROTO_DIR) \

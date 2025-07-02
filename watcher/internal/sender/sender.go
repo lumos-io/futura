@@ -14,6 +14,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/utils"
 	"github.com/rs/zerolog/log"
 
+	pbcm "github.com/opisvigilant/futura/proto/gen/common"
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
 )
@@ -94,7 +95,7 @@ func (s *Sender) send(ch <-chan *pbev.KubernetesEvent) {
 	}
 
 	payload := &pbev.KubernetesEventBatch{
-		Metadata: &pbev.Metadata{
+		Metadata: &pbcm.Metadata{
 			IdempotencyKey: uuid.NewString(),
 			WatcherVersion: utils.WatcherVersion,
 			// FIXME: later to be fixed or enriched

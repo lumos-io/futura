@@ -7,9 +7,9 @@ import (
 	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
 	"github.com/rs/zerolog/log"
 	conventions "go.opentelemetry.io/otel/semconv/v1.6.1"
-	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 
+	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"github.com/opisvigilant/futura/watcher/utils"
 )
@@ -32,18 +32,18 @@ const (
 // RecordSpecMetrics metricizes values from the container spec.
 // This includes values like resource requests and limits.
 func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbcluster.ContainerSpec {
-	obj := &pbcluster.ContainerSpec{}
+	containerSpec := &pbcluster.ContainerSpec{}
 	for k, r := range c.Resources.Requests {
 		//exhaustive:ignore
 		switch k {
 		case corev1.ResourceCPU:
-			obj.Resources.Requests.Cpu = fmt.Sprintf("%v", float64(r.MilliValue())/1000.0)
+			containerSpec.Resources.Requests.Cpu = fmt.Sprintf("%v", float64(r.MilliValue())/1000.0)
 		case corev1.ResourceMemory:
-			obj.Resources.Requests.Memory = fmt.Sprintf("%v", r.Value())
+			containerSpec.Resources.Requests.Memory = fmt.Sprintf("%v", r.Value())
 		case corev1.ResourceStorage:
-			obj.Resources.Requests.Storage = fmt.Sprintf("%v", r.Value())
+			containerSpec.Resources.Requests.Storage = fmt.Sprintf("%v", r.Value())
 		case corev1.ResourceEphemeralStorage:
-			obj.Resources.Requests.EphemeralStorage = fmt.Sprintf("%v", r.Value())
+			containerSpec.Resources.Requests.EphemeralStorage = fmt.Sprintf("%v", r.Value())
 		default:
 			log.Logger.Debug().Msgf("unsupported request type `%v`", k)
 		}
@@ -52,57 +52,54 @@ func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbclu
 		//exhaustive:ignore
 		switch k {
 		case corev1.ResourceCPU:
-			obj.Resources.Limits.Cpu = fmt.Sprintf("%v", float64(l.MilliValue())/1000.0)
+			containerSpec.Resources.Limits.Cpu = fmt.Sprintf("%v", float64(l.MilliValue())/1000.0)
 		case corev1.ResourceMemory:
-			obj.Resources.Limits.Memory = fmt.Sprintf("%v", l.Value())
+			containerSpec.Resources.Limits.Memory = fmt.Sprintf("%v", l.Value())
 		case corev1.ResourceStorage:
-			obj.Resources.Limits.Storage = fmt.Sprintf("%v", l.Value())
+			containerSpec.Resources.Limits.Storage = fmt.Sprintf("%v", l.Value())
 		case corev1.ResourceEphemeralStorage:
-			obj.Resources.Limits.EphemeralStorage = fmt.Sprintf("%v", l.Value())
+			containerSpec.Resources.Limits.EphemeralStorage = fmt.Sprintf("%v", l.Value())
 		default:
 			log.Logger.Debug().Msgf("unsupported request type `%v`", k)
 		}
 	}
 
-	var containerID string
 	var imageStr string
 	for _, cs := range pod.Status.ContainerStatuses {
 		if cs.Name == c.Name {
-			obj.ContainerID = cs.ContainerID
-			obj.Image = cs.Image
-			obj.RestartsCount = int64(cs.RestartCount)
-			obj.Ready = boolToInt64(cs.Ready)
-
+			containerSpec.Name = c.Name
+			containerSpec.ContainerId = utils.StripContainerID(cs.ContainerID)
+			containerSpec.Image = cs.Image
+			containerSpec.RestartsCount = cs.RestartCount
+			containerSpec.Ready = boolToInt32(cs.Ready)
 			if cs.LastTerminationState.Terminated != nil {
-				obj.LastTerminationState.Terminated.Reason = cs.LastTerminationState.Terminated.Reason
+				containerSpec.LastTerminationState.State = &pbcluster.ContainerState_Terminated{
+					Terminated: &pbcluster.ContainerStateTerminated{
+						Reason: cs.LastTerminationState.Terminated.Reason,
+					},
+				}
 			}
 			break
 		}
 	}
 
-	rb.SetK8sPodUID(string(pod.UID))
-	rb.SetK8sPodName(pod.Name)
-	rb.SetK8sNodeName(pod.Spec.NodeName)
-	rb.SetK8sNamespaceName(pod.Namespace)
-	rb.SetContainerID(utils.StripContainerID(containerID))
-	rb.SetK8sContainerName(c.Name)
-	image, err := docker.ParseImageName(imageStr)
+	image, err := utils.ParseImageName(imageStr)
 	if err != nil {
-		docker.LogParseError(err, imageStr, logger)
+		log.Logger.Error().Err(err).Msgf("error parsing the container image `%s`", imageStr)
 	} else {
-		rb.SetContainerImageName(image.Repository)
-		rb.SetContainerImageTag(image.Tag)
+		containerSpec.ImageTag = image.Tag
 	}
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+
+	return containerSpec
 }
 
-func GetMetadata(pod *corev1.Pod, cs corev1.ContainerStatus, logger *zap.Logger) *metadata.KubernetesMetadata {
+func GetMetadata(pod *corev1.Pod, cs corev1.ContainerStatus) *metadata.KubernetesMetadata {
 	mdata := map[string]string{}
 
 	imageStr := cs.Image
-	image, err := docker.ParseImageName(cs.Image)
+	image, err := utils.ParseImageName(cs.Image)
 	if err != nil {
-		docker.LogParseError(err, imageStr, logger)
+		log.Logger.Error().Err(err).Msgf("error parsing the container image `%s`", imageStr)
 	} else {
 		mdata[containerImageName] = image.Repository
 		mdata[containerImageTag] = image.Tag
@@ -141,7 +138,7 @@ func GetMetadata(pod *corev1.Pod, cs corev1.ContainerStatus, logger *zap.Logger)
 	}
 }
 
-func boolToInt64(b bool) int64 {
+func boolToInt32(b bool) int32 {
 	if b {
 		return 1
 	}

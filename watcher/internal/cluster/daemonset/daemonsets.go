@@ -3,7 +3,10 @@ package daemonset
 import (
 	"time"
 
+	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -21,17 +24,21 @@ func Transform(ds *appsv1.DaemonSet) *appsv1.DaemonSet {
 	}
 }
 
-func RecordMetrics(mb *metadata.MetricsBuilder, ds *appsv1.DaemonSet, ts time.Time) {
-	mb.RecordK8sDaemonsetCurrentScheduledNodesDataPoint(ts, int64(ds.Status.CurrentNumberScheduled))
-	mb.RecordK8sDaemonsetDesiredScheduledNodesDataPoint(ts, int64(ds.Status.DesiredNumberScheduled))
-	mb.RecordK8sDaemonsetMisscheduledNodesDataPoint(ts, int64(ds.Status.NumberMisscheduled))
-	mb.RecordK8sDaemonsetReadyNodesDataPoint(ts, int64(ds.Status.NumberReady))
+func RecordMetrics(ds *appsv1.DaemonSet, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp: timestamppb.New(ts),
+		Namespace: ds.Namespace,
+		Name:      ds.Name,
+		Uid:       string(ds.UID),
+	}
 
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sNamespaceName(ds.Namespace)
-	rb.SetK8sDaemonsetName(ds.Name)
-	rb.SetK8sDaemonsetUID(string(ds.UID))
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+	// TODO: how do I store the below data???
+	// mb.RecordK8sDaemonsetCurrentScheduledNodesDataPoint(ts, int64(ds.Status.CurrentNumberScheduled))
+	// mb.RecordK8sDaemonsetDesiredScheduledNodesDataPoint(ts, int64(ds.Status.DesiredNumberScheduled))
+	// mb.RecordK8sDaemonsetMisscheduledNodesDataPoint(ts, int64(ds.Status.NumberMisscheduled))
+	// mb.RecordK8sDaemonsetReadyNodesDataPoint(ts, int64(ds.Status.NumberReady))
+
+	return obj
 }
 
 func GetMetadata(ds *appsv1.DaemonSet) map[metadata.ResourceID]*metadata.KubernetesMetadata {

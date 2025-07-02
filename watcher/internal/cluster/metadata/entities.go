@@ -10,15 +10,6 @@ type ResourceID string
 
 type EntityEventsSlice []string
 
-// MetadataExporter provides an interface to implement
-// ConsumeMetadata in Exporters that support metadata.
-// Type, functionality, and interface not guaranteed to be stable or permanent.
-type MetadataExporter interface {
-	// ConsumeMetadata will be invoked every time there's an
-	// update to a resource that results in one or more MetadataUpdate.
-	ConsumeMetadata(metadata []*MetadataUpdate) error
-}
-
 // MetadataDelta keeps track of changes to metadata on resources.
 // The fields on this struct should help determine if there have
 // been changes to resource metadata such as Kubernetes labels.
@@ -64,7 +55,7 @@ type MetadataUpdate struct {
 
 // GetEntityEvents processes metadata updates and returns entity events that describe the metadata changes.
 func GetEntityEvents(oldMetadata, newMetadata map[ResourceID]*KubernetesMetadata, timestamp time.Time, reportingInterval time.Duration) EntityEventsSlice {
-	out := NewEntityEventsSlice()
+	out := new(EntityEventsSlice)
 
 	for id, oldObj := range oldMetadata {
 		if _, ok := newMetadata[id]; !ok {

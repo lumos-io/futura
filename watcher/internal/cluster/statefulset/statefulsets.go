@@ -3,7 +3,10 @@ package statefulset
 import (
 	"time"
 
+	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -29,19 +32,23 @@ func Transform(statefulset *appsv1.StatefulSet) *appsv1.StatefulSet {
 	}
 }
 
-func RecordMetrics(mb *metadata.MetricsBuilder, ss *appsv1.StatefulSet, ts time.Time) {
+func RecordMetrics(ss *appsv1.StatefulSet, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	if ss.Spec.Replicas == nil {
-		return
+		return nil
 	}
-	mb.RecordK8sStatefulsetDesiredPodsDataPoint(ts, int64(*ss.Spec.Replicas))
-	mb.RecordK8sStatefulsetReadyPodsDataPoint(ts, int64(ss.Status.ReadyReplicas))
-	mb.RecordK8sStatefulsetCurrentPodsDataPoint(ts, int64(ss.Status.CurrentReplicas))
-	mb.RecordK8sStatefulsetUpdatedPodsDataPoint(ts, int64(ss.Status.UpdatedReplicas))
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sStatefulsetUID(string(ss.UID))
-	rb.SetK8sStatefulsetName(ss.Name)
-	rb.SetK8sNamespaceName(ss.Namespace)
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp:       timestamppb.New(ts),
+		Replicas:        int32(*ss.Spec.Replicas),
+		ReadyReplicas:   int32(ss.Status.ReadyReplicas),
+		UpdatedReplicas: int32(ss.Status.UpdatedReplicas),
+		CurrentReplicas: int32(ss.Status.CurrentReplicas),
+		Uid:             string(ss.UID),
+		Name:            ss.Name,
+		Namespace:       ss.Namespace,
+	}
+
+	return obj
 }
 
 func GetMetadata(ss *appsv1.StatefulSet) map[metadata.ResourceID]*metadata.KubernetesMetadata {

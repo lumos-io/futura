@@ -5,9 +5,12 @@ import (
 	"strings"
 	"time"
 
+	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
+	"github.com/opisvigilant/futura/watcher/pkg/strcase"
 	"github.com/opisvigilant/futura/watcher/utils"
 	conventions "go.opentelemetry.io/otel/semconv/v1.18.0"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -42,79 +45,66 @@ func Transform(node *corev1.Node) *corev1.Node {
 	return newNode
 }
 
-func RecordMetrics(mb *metadata.MetricsBuilder, node *corev1.Node, ts time.Time) {
-	for _, c := range node.Status.Conditions {
-		mb.RecordK8sNodeConditionDataPoint(ts, nodeConditionValues[c.Status], string(c.Type))
+func RecordMetrics(node *corev1.Node, nodeConditionTypesToReport, allocatableTypesToReport []string, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp:   timestamppb.New(ts),
+		Uid:         string(node.UID),
+		Name:        node.Name,
+		Kind:        "Node",
+		Labels:      node.Labels,
+		Annotations: node.Annotations,
 	}
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sNodeUID(string(node.UID))
-	rb.SetK8sNodeName(node.Name)
-	rb.SetK8sKubeletVersion(node.Status.NodeInfo.KubeletVersion)
 
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+	// Node Info
+	obj.KubeletVersion = node.Status.NodeInfo.KubeletVersion
+	obj.OsType = node.Status.NodeInfo.OperatingSystem
+	obj.OsImage = node.Status.NodeInfo.OSImage
+
+	runtime, version := parseContainerRuntime(node.Status.NodeInfo.ContainerRuntimeVersion)
+	obj.ContainerRuntime = runtime
+	obj.ContainerRuntimeVersion = version
+
+	// Node Conditions
+	for _, cond := range node.Status.Conditions {
+		obj.Conditions = append(obj.Conditions, &pbcluster.NodeCondition{
+			Type:    string(cond.Type),
+			Status:  string(cond.Status),
+			Reason:  cond.Reason,
+			Message: cond.Message,
+		})
+	}
+
+	// Allocatable Resources
+	alloc := &pbcluster.AllocatableResources{
+		Others: make(map[string]string),
+	}
+	for res, quantity := range node.Status.Allocatable {
+		val := quantity.String()
+		switch res {
+		case corev1.ResourceCPU:
+			alloc.Cpu = val
+		case corev1.ResourceMemory:
+			alloc.Memory = val
+		case corev1.ResourcePods:
+			alloc.Pods = val
+		case corev1.ResourceEphemeralStorage:
+			alloc.EphemeralStorage = val
+		default:
+			alloc.Others[string(res)] = val
+		}
+	}
+	obj.Allocatable = alloc
+
+	return obj
 }
 
-func CustomMetrics(rb *metadata.ResourceBuilder, node *corev1.Node, nodeConditionTypesToReport, allocatableTypesToReport []string, ts time.Time) pmetric.ResourceMetrics {
-	rm := pmetric.NewResourceMetrics()
-
-	sm := rm.ScopeMetrics().AppendEmpty()
-	// Adding 'node condition type' metrics
-	for _, nodeConditionTypeValue := range nodeConditionTypesToReport {
-		v1NodeConditionTypeValue := corev1.NodeConditionType(nodeConditionTypeValue)
-		m := sm.Metrics().AppendEmpty()
-		m.SetName(getNodeConditionMetric(nodeConditionTypeValue))
-		m.SetDescription(fmt.Sprintf("%v condition status of the node (true=1, false=0, unknown=-1)", nodeConditionTypeValue))
-		m.SetUnit("")
-		g := m.SetEmptyGauge()
-		dp := g.DataPoints().AppendEmpty()
-		dp.SetIntValue(nodeConditionValue(node, v1NodeConditionTypeValue))
-		dp.SetTimestamp(ts)
+func parseContainerRuntime(runtimeStr string) (string, string) {
+	// e.g. "docker://20.10.7" or "containerd://1.6.21"
+	parts := strings.Split(runtimeStr, "://")
+	if len(parts) != 2 {
+		return "", ""
 	}
-
-	// Adding 'node allocatable type' metrics
-	for _, nodeAllocatableTypeValue := range allocatableTypesToReport {
-		v1NodeAllocatableTypeValue := corev1.ResourceName(nodeAllocatableTypeValue)
-		quantity, ok := node.Status.Allocatable[v1NodeAllocatableTypeValue]
-		if !ok {
-			set.Logger.Debug(fmt.Errorf("allocatable type %v not found in node %v", nodeAllocatableTypeValue,
-				node.GetName()).Error())
-			continue
-		}
-		m := sm.Metrics().AppendEmpty()
-		m.SetName(getNodeAllocatableMetric(nodeAllocatableTypeValue))
-		m.SetDescription(fmt.Sprintf("Amount of %v allocatable on the node", nodeAllocatableTypeValue))
-		m.SetUnit(getNodeAllocatableUnit(v1NodeAllocatableTypeValue))
-		g := m.SetEmptyGauge()
-		dp := g.DataPoints().AppendEmpty()
-		setNodeAllocatableValue(dp, v1NodeAllocatableTypeValue, quantity)
-		dp.SetTimestamp(ts)
-	}
-
-	if sm.Metrics().Len() == 0 {
-		return pmetric.NewResourceMetrics()
-	}
-
-	// TODO: Generate a schema URL for the node metrics in the metadata package and use them here.
-	rm.SetSchemaUrl(conventions.SchemaURL)
-	sm.Scope().SetName("github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver")
-	sm.Scope().SetVersion(set.BuildInfo.Version)
-
-	rb.SetK8sNodeUID(string(node.UID))
-	rb.SetK8sNodeName(node.Name)
-	rb.SetK8sKubeletVersion(node.Status.NodeInfo.KubeletVersion)
-	rb.SetOsType(node.Status.NodeInfo.OperatingSystem)
-
-	runtime, version := getContainerRuntimeInfo(node.Status.NodeInfo.ContainerRuntimeVersion)
-	if runtime != "" {
-		rb.SetContainerRuntime(runtime)
-	}
-	if version != "" {
-		rb.SetContainerRuntimeVersion(version)
-	}
-
-	rb.SetOsDescription(node.Status.NodeInfo.OSImage)
-	rb.Emit().MoveTo(rm.Resource())
-	return rm
+	return parts[0], parts[1]
 }
 
 var nodeConditionValues = map[corev1.ConditionStatus]int64{
@@ -197,12 +187,12 @@ func getNodeAllocatableUnit(res corev1.ResourceName) string {
 	}
 }
 
-func setNodeAllocatableValue(dp pmetric.NumberDataPoint, res corev1.ResourceName, q resource.Quantity) {
+func setNodeAllocatableValue(res corev1.ResourceName, q resource.Quantity) float64 {
 	switch res {
 	case corev1.ResourceCPU:
-		dp.SetDoubleValue(float64(q.MilliValue()) / 1000.0)
+		return float64(q.MilliValue()) / 1000.0
 	default:
-		dp.SetIntValue(q.Value())
+		return float64(q.Value())
 	}
 }
 

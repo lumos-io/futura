@@ -5,26 +5,32 @@ import (
 	"time"
 
 	quotav1 "github.com/openshift/api/quota/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
+	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
 )
 
-func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) {
+func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp: timestamppb.New(ts),
+		Extra:     make(map[string]string),
+	}
 	for k, v := range crq.Status.Total.Hard {
 		val := extractValue(k, v)
-		mb.RecordOpenshiftClusterquotaLimitDataPoint(ts, val, string(k))
+		obj.Extra[string(k)] = string(val)
 	}
 
 	for k, v := range crq.Status.Total.Used {
 		val := extractValue(k, v)
-		mb.RecordOpenshiftClusterquotaUsedDataPoint(ts, val, string(k))
+		obj.Extra[string(k)] = string(val)
 	}
 
 	for _, ns := range crq.Status.Namespaces {
 		for k, v := range ns.Status.Hard {
 			val := extractValue(k, v)
+			obj.Extra[string(k)] = string(val)
 			mb.RecordOpenshiftAppliedclusterquotaLimitDataPoint(ts, val, ns.Namespace, string(k))
 		}
 
@@ -34,10 +40,10 @@ func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) {
 		}
 	}
 
-	rb := mb.NewResourceBuilder()
-	rb.SetOpenshiftClusterquotaName(crq.Name)
-	rb.SetOpenshiftClusterquotaUID(string(crq.UID))
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+	obj.Name = crq.Name
+	obj.Uid = string(crq.UID)
+
+	return obj
 }
 
 func extractValue(k v1.ResourceName, v resource.Quantity) int64 {

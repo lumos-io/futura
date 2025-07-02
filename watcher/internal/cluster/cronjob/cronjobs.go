@@ -3,7 +3,10 @@ package cronjob
 import (
 	"time"
 
+	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	batchv1 "k8s.io/api/batch/v1"
 )
 
@@ -13,14 +16,19 @@ const (
 	cronJobKeyConcurrencyPolicy = "concurrency_policy"
 )
 
-func RecordMetrics(mb *metadata.MetricsBuilder, cj *batchv1.CronJob, ts time.Time) {
-	mb.RecordK8sCronjobActiveJobsDataPoint(ts, int64(len(cj.Status.Active)))
+func RecordMetrics(cj *batchv1.CronJob, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp: timestamppb.New(ts),
+		Kind:      cj.Kind,
+		Namespace: cj.Namespace,
+		Uid:       string(cj.UID),
+		Name:      cj.Name,
+	}
 
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sNamespaceName(cj.Namespace)
-	rb.SetK8sCronjobUID(string(cj.UID))
-	rb.SetK8sCronjobName(cj.Name)
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+	// TODO: how do I store the active cronjobs??
+	// mb.RecordK8sCronjobActiveJobsDataPoint(ts, int64(len(cj.Status.Active)))
+
+	return obj
 }
 
 func GetMetadata(cj *batchv1.CronJob) map[metadata.ResourceID]*metadata.KubernetesMetadata {
