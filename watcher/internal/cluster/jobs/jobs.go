@@ -3,12 +3,21 @@ package jobs
 import (
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
 	batchv1 "k8s.io/api/batch/v1"
 
+	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 )
 
-func RecordMetrics(mb *metadata.MetricsBuilder, j *batchv1.Job, ts time.Time) {
+func RecordMetrics(j *batchv1.Job, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp: timestamppb.New(ts),
+		Namespace: j.Namespace,
+		Name:      j.Name,
+		Uid:       string(j.UID),
+	}
+
 	mb.RecordK8sJobActivePodsDataPoint(ts, int64(j.Status.Active))
 	mb.RecordK8sJobFailedPodsDataPoint(ts, int64(j.Status.Failed))
 	mb.RecordK8sJobSuccessfulPodsDataPoint(ts, int64(j.Status.Succeeded))
@@ -20,11 +29,7 @@ func RecordMetrics(mb *metadata.MetricsBuilder, j *batchv1.Job, ts time.Time) {
 		mb.RecordK8sJobMaxParallelPodsDataPoint(ts, int64(*j.Spec.Parallelism))
 	}
 
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sNamespaceName(j.Namespace)
-	rb.SetK8sJobName(j.Name)
-	rb.SetK8sJobUID(string(j.UID))
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+	return obj
 }
 
 // Transform transforms the job to remove the fields that we don't use to reduce RAM utilization.

@@ -10,11 +10,12 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/service"
 	"github.com/opisvigilant/futura/watcher/utils"
+	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
 
 	conventions "go.opentelemetry.io/otel/semconv/v1.6.1"
-	"go.uber.org/zap"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -72,20 +73,22 @@ func Transform(pod *corev1.Pod) *corev1.Pod {
 }
 
 func RecordMetrics(pod *corev1.Pod, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{}
-
-	obj.Status = string(pod.Status.Phase)
-	obj.Reason = string(pod.Status.Reason)
-	obj.Namespace = pod.Namespace	
-	obj.NodeName = pod.Spec.NodeName
-	obj.Name = pod.Name
-	obj.Uid = string(pod.UID)
-	obj.QOSClass = string(pod.Status.QOSClass)
-				
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp:  timestamppb.New(ts),
+		Status:     string(pod.Status.Phase),
+		Reason:     string(pod.Status.Reason),
+		Namespace:  pod.Namespace,
+		NodeName:   pod.Spec.NodeName,
+		Name:       pod.Name,
+		Uid:        string(pod.UID),
+		QosClass:   string(pod.Status.QOSClass),
+		Containers: make([]*pbcluster.ContainerSpec, 1),
+	}
 
 	for _, c := range pod.Spec.Containers {
-		container.RecordSpecMetrics(c, pod, ts)
+		obj.Containers = append(obj.Containers, container.RecordSpecMetrics(c, pod, ts))
 	}
+	return obj
 }
 
 func reasonToInt(reason string) int32 {
@@ -157,11 +160,11 @@ func GetMetadata(pod *corev1.Pod, mc *metadata.Store) map[metadata.ResourceID]*m
 	}
 
 	if store := mc.Get(gvk.Job); store != nil {
-		meta = utils.MergeStringMaps(meta, collectPodJobProperties(pod, store, logger))
+		meta = utils.MergeStringMaps(meta, collectPodJobProperties(pod, store))
 	}
 
 	if store := mc.Get(gvk.ReplicaSet); store != nil {
-		meta = utils.MergeStringMaps(meta, collectPodReplicaSetProperties(pod, store, logger))
+		meta = utils.MergeStringMaps(meta, collectPodReplicaSetProperties(pod, store))
 	}
 
 	meta[constants.K8sKeyNamespaceName] = pod.Namespace
@@ -175,20 +178,20 @@ func GetMetadata(pod *corev1.Pod, mc *metadata.Store) map[metadata.ResourceID]*m
 			ResourceID:    podID,
 			Metadata:      meta,
 		},
-	}, getPodContainerProperties(pod, logger))
+	}, getPodContainerProperties(pod))
 }
 
 // collectPodJobProperties checks if pod owner of type Job is cached. Check owners reference
 // on Job to see if it was created by a CronJob. Sync metadata accordingly.
-func collectPodJobProperties(pod *corev1.Pod, jobStore cache.Store, logger *zap.Logger) map[string]string {
+func collectPodJobProperties(pod *corev1.Pod, jobStore cache.Store) map[string]string {
 	jobRef := utils.FindOwnerWithKind(pod.OwnerReferences, constants.K8sKindJob)
 	if jobRef != nil {
 		job, exists, err := jobStore.GetByKey(utils.GetIDForCache(pod.Namespace, jobRef.Name))
 		if err != nil {
-			logError(err, jobRef, pod.UID, logger)
+			logError(err, jobRef, pod.UID)
 			return nil
 		} else if !exists {
-			logDebug(jobRef, pod.UID, logger)
+			logDebug(jobRef, pod.UID)
 			return nil
 		}
 
@@ -203,15 +206,15 @@ func collectPodJobProperties(pod *corev1.Pod, jobStore cache.Store, logger *zap.
 
 // collectPodReplicaSetProperties checks if pod owner of type ReplicaSet is cached. Check owners reference
 // on ReplicaSet to see if it was created by a Deployment. Sync metadata accordingly.
-func collectPodReplicaSetProperties(pod *corev1.Pod, replicaSetstore cache.Store, logger *zap.Logger) map[string]string {
+func collectPodReplicaSetProperties(pod *corev1.Pod, replicaSetstore cache.Store) map[string]string {
 	rsRef := utils.FindOwnerWithKind(pod.OwnerReferences, constants.K8sKindReplicaSet)
 	if rsRef != nil {
 		replicaSet, exists, err := replicaSetstore.GetByKey(utils.GetIDForCache(pod.Namespace, rsRef.Name))
 		if err != nil {
-			logError(err, rsRef, pod.UID, logger)
+			logError(err, rsRef, pod.UID)
 			return nil
 		} else if !exists {
-			logDebug(rsRef, pod.UID, logger)
+			logDebug(rsRef, pod.UID)
 			return nil
 		}
 
@@ -224,21 +227,19 @@ func collectPodReplicaSetProperties(pod *corev1.Pod, replicaSetstore cache.Store
 	return nil
 }
 
-func logDebug(ref *v1.OwnerReference, podUID types.UID, logger *zap.Logger) {
-	logger.Debug(
-		"Resource does not exist in store, properties from it will not be synced.",
-		zap.String(string(conventions.K8SPodUIDKey), string(podUID)),
-		zap.String(string(conventions.K8SJobUIDKey), string(ref.UID)),
-	)
+func logDebug(ref *v1.OwnerReference, podUID types.UID) {
+	log.Logger.Debug().
+		Str(string(conventions.K8SPodUIDKey), string(podUID)).
+		Str(string(conventions.K8SJobUIDKey), string(ref.UID)).
+		Msg("Resource does not exist in store, properties from it will not be synced.")
 }
 
-func logError(err error, ref *v1.OwnerReference, podUID types.UID, logger *zap.Logger) {
-	logger.Error(
-		"Failed to get resource from store, properties from it will not be synced.",
-		zap.String(string(conventions.K8SPodUIDKey), string(podUID)),
-		zap.String(string(conventions.K8SJobUIDKey), string(ref.UID)),
-		zap.Error(err),
-	)
+func logError(err error, ref *v1.OwnerReference, podUID types.UID) {
+	log.Logger.Error().
+		Msg("Failed to get resource from store, properties from it will not be synced.").
+		Str(string(conventions.K8SPodUIDKey), string(podUID)).
+		Str(string(conventions.K8SJobUIDKey), string(ref.UID)).
+		Err(err)
 }
 
 // getWorkloadProperties returns workload metadata for provided owner reference.
@@ -252,10 +253,10 @@ func getWorkloadProperties(ref *v1.OwnerReference, labelKey string) map[string]s
 	}
 }
 
-func getPodContainerProperties(pod *corev1.Pod, logger *zap.Logger) map[metadata.ResourceID]*metadata.KubernetesMetadata {
+func getPodContainerProperties(pod *corev1.Pod) map[metadata.ResourceID]*metadata.KubernetesMetadata {
 	km := map[metadata.ResourceID]*metadata.KubernetesMetadata{}
 	for _, cs := range pod.Status.ContainerStatuses {
-		md := container.GetMetadata(pod, cs, logger)
+		md := container.GetMetadata(pod, cs)
 		km[md.ResourceID] = md
 	}
 	return km

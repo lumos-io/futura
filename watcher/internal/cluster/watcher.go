@@ -269,32 +269,28 @@ func (rw *resourceWatcher) setupInformer(gvk schema.GroupVersionKind, informer c
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("error adding event handler to informer")
 	}
+	rw.metadataStore.Setup(gvk, informer.GetStore())
 }
 
 func (rw *resourceWatcher) onAdd(obj any) {
 	rw.waitForInitialInformerSync()
 
-	rw.objMetadata(obj)
-
 	// Append the data to an object
+	rw.syncMetadataUpdate(map[metadata.ResourceID]*metadata.KubernetesMetadata{}, rw.objMetadata(obj))
 }
 
 func (rw *resourceWatcher) onUpdate(oldObj, newObj any) {
 	rw.waitForInitialInformerSync()
 
-	rw.objMetadata(oldObj)
-
-	rw.objMetadata(newObj)
-
 	// Append the data to an object
+	rw.syncMetadataUpdate(rw.objMetadata(oldObj), rw.objMetadata(newObj))
 }
 
 func (rw *resourceWatcher) onDelete(oldObj any) {
 	rw.waitForInitialInformerSync()
 
-	rw.objMetadata(oldObj)
-
 	// Append the data to an object
+	rw.syncMetadataUpdate(rw.objMetadata(oldObj), map[metadata.ResourceID]*metadata.KubernetesMetadata{})
 }
 
 // objMetadata returns the metadata for the given object.
@@ -338,4 +334,15 @@ func (rw *resourceWatcher) waitForInitialInformerSync() {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func (rw *resourceWatcher) syncMetadataUpdate(oldMetadata, newMetadata map[metadata.ResourceID]*metadata.KubernetesMetadata) {
+	// TODO: how do I send these information? to a new object/service?
+	// timestamp := time.Now()
+
+	// metadataUpdate := metadata.GetMetadataUpdate(oldMetadata, newMetadata)
+
+	// Represent metadata update as entity events.
+	// entityEvents := metadata.GetEntityEvents(oldMetadata, newMetadata, timestamp, rw.config.Kubernetes.MetadataCollectionInterval)
+
 }

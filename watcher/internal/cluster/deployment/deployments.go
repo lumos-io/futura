@@ -3,8 +3,11 @@ package deployment
 import (
 	"time"
 
+	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	conventions "go.opentelemetry.io/otel/semconv/v1.6.1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -22,14 +25,16 @@ func Transform(deployment *appsv1.Deployment) *appsv1.Deployment {
 	}
 }
 
-func RecordMetrics(mb *metadata.MetricsBuilder, dep *appsv1.Deployment, ts time.Time) {
-	mb.RecordK8sDeploymentDesiredDataPoint(ts, int64(*dep.Spec.Replicas))
-	mb.RecordK8sDeploymentAvailableDataPoint(ts, int64(dep.Status.AvailableReplicas))
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sDeploymentName(dep.Name)
-	rb.SetK8sDeploymentUID(string(dep.UID))
-	rb.SetK8sNamespaceName(dep.Namespace)
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+func RecordMetrics(dep *appsv1.Deployment, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp:         timestamppb.New(ts),
+		Namespace:         dep.Namespace,
+		Name:              dep.Name,
+		Uid:               string(dep.UID),
+		Replicas:          int32(*dep.Spec.Replicas),
+		AvailableReplicas: int32(dep.Status.AvailableReplicas),
+	}
+	return obj
 }
 
 func GetMetadata(dep *appsv1.Deployment) map[metadata.ResourceID]*metadata.KubernetesMetadata {

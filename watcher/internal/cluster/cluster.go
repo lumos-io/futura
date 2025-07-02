@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/opisvigilant/futura/watcher/internal/cluster/collection"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
@@ -13,6 +14,7 @@ import (
 )
 
 type KubernetesClusterCollector struct {
+	dataCollector    *collection.DataCollector
 	resourceWatcher  *resourceWatcher
 	k8sLeaderElector *k8s.K8sLeaderElection
 
@@ -65,12 +67,11 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 			select {
 			case <-ticker.C:
 				// TODO: Read the data here
-				// ....
-				log.Logger.Info().Msgf("%v", "bananaassssssss")
+				data := kr.dataCollector.CollectMetricData(time.Now())
+				log.Logger.Info().Msgf("%v", data)
 
 				// TODO: Send the data here
-				// ....
-				log.Logger.Info().Msgf("%v", "sendersssssssss")
+				// ...
 			case <-ctx.Done():
 				return
 			}
@@ -92,7 +93,6 @@ func (kr *KubernetesClusterCollector) Start(ctx context.Context) error {
 			kr.stopReceiver()
 		},
 	)
-
 	return nil
 }
 

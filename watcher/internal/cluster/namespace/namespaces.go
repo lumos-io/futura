@@ -4,7 +4,9 @@ import (
 	"strings"
 	"time"
 
+	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -14,12 +16,16 @@ const (
 	k8sNamespacePhase        = "k8s.namespace.phase"
 )
 
-func RecordMetrics(mb *metadata.MetricsBuilder, ns *corev1.Namespace, ts time.Time) {
+func RecordMetrics(ns *corev1.Namespace, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+	obj := &pbcluster.KubernetesObjectMetadata{
+		Timestamp: timestamppb.New(ts),
+		Uid:       string(ns.UID),
+		Name:      ns.Name,
+	}
+
 	mb.RecordK8sNamespacePhaseDataPoint(ts, int64(namespacePhaseValues[ns.Status.Phase]))
-	rb := mb.NewResourceBuilder()
-	rb.SetK8sNamespaceUID(string(ns.UID))
-	rb.SetK8sNamespaceName(ns.Name)
-	mb.EmitForResource(metadata.WithResource(rb.Emit()))
+
+	return obj
 }
 
 var namespacePhaseValues = map[corev1.NamespacePhase]int32{

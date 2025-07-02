@@ -46,6 +46,37 @@ message KubernetesObjectMetadata {
   map<string, string> affinity = 22;
 
   map<string, string> extra = 23;
+
+  string api_version = 24;
+
+  // for HPA
+  int32 hpa_max_replicas = 25;
+  int32 hpa_min_replicas = 26;
+  string hpa_scale_target_ref = 27;
+
+  // for Job
+  int32 job_active = 28;
+  int32 job_failed = 29;
+  int32 job_succeeded = 30;
+  int32 job_parallelism = 31;
+  int32 job_completions = 32;
+
+  // for Namespace
+  int32 ns_phase_value = 33;
+
+  // for Node
+  string kubelet_version = 34;
+  string os_type = 35;
+  string os_image = 36;
+  string container_runtime = 37;
+  string container_runtime_version = 38;
+
+  repeated NodeCondition conditions = 39;
+  AllocatableResources allocatable = 40;
+
+  // for Pod
+  string pod_reason = 41;
+  string qos_class = 42;
 }
 
 // Represents a container and its resource specs.
@@ -53,6 +84,12 @@ message ContainerSpec {
   string name = 1;
   string image = 2;
   ContainerResources resources = 3;
+  string containerId = 4;
+  int32 restarts_count = 5;
+  int32 ready = 6;
+  ContainerState state = 7;
+  ContainerState last_termination_state = 8;
+  string image_tag = 9;
 }
 
 // CPU/Memory requests and limits for a container.
@@ -65,10 +102,58 @@ message ContainerResources {
 message ResourceQuantities {
   string cpu = 1;
   string memory = 2;
+  string storage = 3;  
+  string ephemeral_storage = 4;
 }
 
 // Volumes attached to a pod
 message VolumeSpec {
   string name = 1;
   string type = 2; // EmptyDir, PVC, ConfigMap, etc.
+}
+
+// Represents the state of a container: only one of waiting, running, or terminated may be set.
+message ContainerState {
+  oneof state {
+    ContainerStateWaiting waiting = 1;
+    ContainerStateRunning running = 2;
+    ContainerStateTerminated terminated = 3;
+  }
+}
+
+// A waiting state of a container (not yet started)
+message ContainerStateWaiting {
+  string reason = 1;
+  string message = 2;
+}
+
+// A running state of a container (currently executing)
+message ContainerStateRunning {
+  google.protobuf.Timestamp started_at = 1;
+}
+
+// A terminated state of a container (exited or killed)
+message ContainerStateTerminated {
+  int32 exit_code = 1;
+  int32 signal = 2;
+  string reason = 3;
+  string message = 4;
+  google.protobuf.Timestamp started_at = 5;
+  google.protobuf.Timestamp finished_at = 6;
+  string container_id = 7;
+}
+
+message NodeCondition {
+  string type = 1;    // e.g. "Ready"
+  string status = 2;  // "True", "False", "Unknown"
+  string reason = 3;
+  string message = 4;
+}
+
+message AllocatableResources {
+  string cpu = 1;
+  string memory = 2;
+  string pods = 3;
+  string ephemeral_storage = 4;
+  map<string, string> others = 5;
 }
