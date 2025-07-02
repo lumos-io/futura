@@ -58,6 +58,7 @@ type resourceWatcher struct {
 	osQuotaClient     quotaclientset.Interface
 	informerFactories []sharedInformer
 	metadataStore     *metadata.Store
+	events            chan *metadata.KubernetesResourceEvent
 
 	initialTimeout      time.Duration
 	initialSyncDone     *atomic.Bool
@@ -69,10 +70,35 @@ type resourceWatcher struct {
 func newResourceWatcher(cfg *config.Configuration, metadataStore *metadata.Store) *resourceWatcher {
 	return &resourceWatcher{
 		metadataStore:       metadataStore,
+		events:              make(chan *metadata.KubernetesResourceEvent),
 		initialSyncDone:     &atomic.Bool{},
 		initialSyncTimedOut: &atomic.Bool{},
 		initialTimeout:      defaultInitialSyncTimeout,
 		config:              cfg,
+	}
+}
+
+func (rw *resourceWatcher) emitEvent(obj any, eventType metadata.EventType) {
+	metas := rw.objMetadata(obj)
+	for _, m := range metas {
+		event := &metadata.KubernetesResourceEvent{
+			Type:      eventType,
+			Resource:  m.EntityType,
+			UID:       string(m.ResourceID),
+			Name:      m.Metadata["k8s.name"],
+			Namespace: m.Metadata["k8s.namespace.name"],
+			Metadata: map[string]string{
+				"container.name":  m.Metadata["k8s.container.name"],
+				"container.image": m.Metadata["k8s.container.image.name"],
+			},
+			Timestamp: time.Now(),
+		}
+		select {
+		case rw.events <- event:
+			
+		default:
+			log.Logger.Warn().Msg("Dropping ResourceEvent due to full channel")
+		}
 	}
 }
 
@@ -82,7 +108,7 @@ func (rw *resourceWatcher) initialize() error {
 		Context:  rw.config.Kubernetes.KubeContextName,
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to create Kubernetes client: %w", err)
+		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 	rw.client = client
 
@@ -92,7 +118,7 @@ func (rw *resourceWatcher) initialize() error {
 			Context:  rw.config.Kubernetes.KubeContextName,
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to create OpenShift quota API client: %w", err)
+			return fmt.Errorf("failed to create OpenShift quota API client: %w", err)
 		}
 	}
 
@@ -273,24 +299,27 @@ func (rw *resourceWatcher) setupInformer(gvk schema.GroupVersionKind, informer c
 }
 
 func (rw *resourceWatcher) onAdd(obj any) {
+	log.Logger.Info().Msg("onAdd pre-wait")
 	rw.waitForInitialInformerSync()
+	log.Logger.Info().Msg("onAdd post-wait")
 
-	// Append the data to an object
-	rw.syncMetadataUpdate(map[metadata.ResourceID]*metadata.KubernetesMetadata{}, rw.objMetadata(obj))
+	rw.emitEvent(obj, metadata.EventTypeUpdate)
 }
 
 func (rw *resourceWatcher) onUpdate(oldObj, newObj any) {
+	log.Logger.Info().Msg("onUpdate pre-wait")
 	rw.waitForInitialInformerSync()
+	log.Logger.Info().Msg("onUpdate post-wait")
 
-	// Append the data to an object
-	rw.syncMetadataUpdate(rw.objMetadata(oldObj), rw.objMetadata(newObj))
+	rw.emitEvent(newObj, metadata.EventTypeUpdate)
 }
 
 func (rw *resourceWatcher) onDelete(oldObj any) {
+	log.Logger.Info().Msg("onDelete pre-wait")
 	rw.waitForInitialInformerSync()
+	log.Logger.Info().Msg("onDelete post-wait")
 
-	// Append the data to an object
-	rw.syncMetadataUpdate(rw.objMetadata(oldObj), map[metadata.ResourceID]*metadata.KubernetesMetadata{})
+	rw.emitEvent(oldObj, metadata.EventTypeDelete)
 }
 
 // objMetadata returns the metadata for the given object.
@@ -334,15 +363,4 @@ func (rw *resourceWatcher) waitForInitialInformerSync() {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-}
-
-func (rw *resourceWatcher) syncMetadataUpdate(oldMetadata, newMetadata map[metadata.ResourceID]*metadata.KubernetesMetadata) {
-	// TODO: how do I send these information? to a new object/service?
-	// timestamp := time.Now()
-
-	// metadataUpdate := metadata.GetMetadataUpdate(oldMetadata, newMetadata)
-
-	// Represent metadata update as entity events.
-	// entityEvents := metadata.GetEntityEvents(oldMetadata, newMetadata, timestamp, rw.config.Kubernetes.MetadataCollectionInterval)
-
 }

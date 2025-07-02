@@ -30,27 +30,23 @@ import (
 
 // DataCollector emits metrics with CollectMetricData based on the Kubernetes API objects in the metadata store.
 type DataCollector struct {
-	metadataStore            *metadata.Store
-	nodeConditionsToReport   []string
-	allocatableTypesToReport []string
+	metadataStore *metadata.Store
 }
 
 // NewDataCollector returns a DataCollector.
-func NewDataCollector(ms *metadata.Store, nodeConditionsToReport, allocatableTypesToReport []string) *DataCollector {
+func NewDataCollector(ms *metadata.Store) *DataCollector {
 	return &DataCollector{
-		metadataStore:            ms,
-		nodeConditionsToReport:   nodeConditionsToReport,
-		allocatableTypesToReport: allocatableTypesToReport,
+		metadataStore: ms,
 	}
 }
 
 func (dc *DataCollector) CollectMetricData(ts time.Time) []*pbcluster.KubernetesObjectMetadata {
-	result := []*pbcluster.KubernetesObjectMetadata{}
+	result := make([]*pbcluster.KubernetesObjectMetadata, 100)
 	dc.metadataStore.ForEach(gvk.Pod, func(o any) {
 		result = append(result, pod.RecordMetrics(o.(*corev1.Pod), ts))
 	})
 	dc.metadataStore.ForEach(gvk.Node, func(o any) {
-		result = append(result, node.RecordMetrics(o.(*corev1.Node), dc.nodeConditionsToReport, dc.allocatableTypesToReport, ts))
+		result = append(result, node.RecordMetrics(o.(*corev1.Node), ts))
 	})
 	dc.metadataStore.ForEach(gvk.Namespace, func(o any) {
 		result = append(result, namespace.RecordMetrics(o.(*corev1.Namespace), ts))

@@ -10,7 +10,6 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 	"github.com/rs/zerolog/log"
-	"k8s.io/client-go/kubernetes"
 )
 
 type KubernetesClusterCollector struct {
@@ -22,9 +21,17 @@ type KubernetesClusterCollector struct {
 	cancel context.CancelFunc
 }
 
-func New(config *config.Configuration, client kubernetes.Interface) (*KubernetesClusterCollector, error) {
+func New(config *config.Configuration) (*KubernetesClusterCollector, error) {
+	client, err := k8s.MakeClient(k8s.APIConfig{
+		AuthType: k8s.AuthType(config.Kubernetes.AuthType),
+		Context:  config.Kubernetes.KubeContextName,
+	})
+	if err != nil {
+		return nil, err
+	}
 	ms := metadata.NewStore()
 	return &KubernetesClusterCollector{
+		dataCollector:    collection.NewDataCollector(ms),
 		resourceWatcher:  newResourceWatcher(config, ms),
 		k8sLeaderElector: k8s.NewK8sLeaderElection(config, client, config.Kubernetes.LeaseName),
 		config:           config,
@@ -35,6 +42,15 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 	if err := kr.resourceWatcher.initialize(); err != nil {
 		return err
 	}
+
+	eventMap := make(map[string]*metadata.KubernetesResourceEvent, 1000)
+
+	go func() {
+		for e := range kr.Events() {
+			eventMap[e.UID] = e
+			log.Debug().Interface("resource_event", e).Msg("Received ResourceEvent")
+		}
+	}()
 
 	go func() {
 		log.Logger.Info().Msg("Starting shared informers and wait for initial cache sync.")
@@ -68,6 +84,16 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 			case <-ticker.C:
 				// TODO: Read the data here
 				data := kr.dataCollector.CollectMetricData(time.Now())
+				for _, m := range data {
+					// Decorate with event type if available
+					if event, ok := eventMap[m.Uid]; ok {
+						m.Type = string(event.Type)
+						m.Name = event.Name
+						m.Namespace = event.Namespace
+						m.Extra = event.Metadata
+					}
+					log.Logger.Info().Interface("metric", m).Msg("Collected metric with metadata")
+				}
 				log.Logger.Info().Msgf("%v", data)
 
 				// TODO: Send the data here
@@ -80,12 +106,23 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 	return nil
 }
 
+func (kr *KubernetesClusterCollector) Events() <-chan *metadata.KubernetesResourceEvent {
+	return kr.resourceWatcher.events
+}
+
 func (kr *KubernetesClusterCollector) Start(ctx context.Context) error {
-	ctx, kr.cancel = context.WithCancel(ctx)
+	_, kr.cancel = context.WithCancel(ctx)
 
 	log.Logger.Info().Msg("Starting k8sClusterReceiver with leader election")
+
+	if err := kr.k8sLeaderElector.Start(ctx); err != nil {
+		log.Logger.Error().Err(err).Msg("Failed to start k8sClusterReceiver...")
+		return err
+	}
+
 	kr.k8sLeaderElector.SetCallBackFuncs(
 		func(ctx context.Context) {
+			log.Logger.Info().Msg("Starting resource watcher...")
 			if err := kr.startReceiver(ctx); err != nil {
 				log.Logger.Error().Err(err).Msg("Failed to start receiver")
 			}

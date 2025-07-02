@@ -81,6 +81,12 @@ message KubernetesObjectMetadata {
 
   // Cluster quota
   ClusterResourceQuotaMetadata cluster_quota = 44;
+
+  // for daemonset
+  int64 daemonset_current_number_scheduled = 45;
+  int64 daemonset_desired_number_scheduled = 46;
+  int64 daemonset_number_misscheduled = 47;
+  int64 daemonset_number_ready = 48;
 }
 
 // Represents a container and its resource specs.

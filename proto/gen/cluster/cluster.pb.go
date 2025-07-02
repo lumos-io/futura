@@ -128,9 +128,14 @@ type KubernetesObjectMetadata struct {
 	PodReason string `protobuf:"bytes,41,opt,name=pod_reason,json=podReason,proto3" json:"pod_reason,omitempty"`
 	QosClass  string `protobuf:"bytes,42,opt,name=qos_class,json=qosClass,proto3" json:"qos_class,omitempty"`
 	// Cluster quota
-	ClusterQuota  *ClusterResourceQuotaMetadata `protobuf:"bytes,44,opt,name=cluster_quota,json=clusterQuota,proto3" json:"cluster_quota,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ClusterQuota *ClusterResourceQuotaMetadata `protobuf:"bytes,44,opt,name=cluster_quota,json=clusterQuota,proto3" json:"cluster_quota,omitempty"`
+	// for daemonset
+	DaemonsetCurrentNumberScheduled int64 `protobuf:"varint,45,opt,name=daemonset_current_number_scheduled,json=daemonsetCurrentNumberScheduled,proto3" json:"daemonset_current_number_scheduled,omitempty"`
+	DaemonsetDesiredNumberScheduled int64 `protobuf:"varint,46,opt,name=daemonset_desired_number_scheduled,json=daemonsetDesiredNumberScheduled,proto3" json:"daemonset_desired_number_scheduled,omitempty"`
+	DaemonsetNumberMisscheduled     int64 `protobuf:"varint,47,opt,name=daemonset_number_misscheduled,json=daemonsetNumberMisscheduled,proto3" json:"daemonset_number_misscheduled,omitempty"`
+	DaemonsetNumberReady            int64 `protobuf:"varint,48,opt,name=daemonset_number_ready,json=daemonsetNumberReady,proto3" json:"daemonset_number_ready,omitempty"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *KubernetesObjectMetadata) Reset() {
@@ -469,6 +474,34 @@ func (x *KubernetesObjectMetadata) GetClusterQuota() *ClusterResourceQuotaMetada
 		return x.ClusterQuota
 	}
 	return nil
+}
+
+func (x *KubernetesObjectMetadata) GetDaemonsetCurrentNumberScheduled() int64 {
+	if x != nil {
+		return x.DaemonsetCurrentNumberScheduled
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetDaemonsetDesiredNumberScheduled() int64 {
+	if x != nil {
+		return x.DaemonsetDesiredNumberScheduled
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetDaemonsetNumberMisscheduled() int64 {
+	if x != nil {
+		return x.DaemonsetNumberMisscheduled
+	}
+	return 0
+}
+
+func (x *KubernetesObjectMetadata) GetDaemonsetNumberReady() int64 {
+	if x != nil {
+		return x.DaemonsetNumberReady
+	}
+	return 0
 }
 
 // Represents a container and its resource specs.
@@ -1384,7 +1417,7 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"\x8a\x01\n" +
 	"\x1dKubernetesObjectMetadataBatch\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12;\n" +
-	"\aobjects\x18\x02 \x03(\v2!.cluster.KubernetesObjectMetadataR\aobjects\"\xa7\x10\n" +
+	"\aobjects\x18\x02 \x03(\v2!.cluster.KubernetesObjectMetadataR\aobjects\"\xbb\x12\n" +
 	"\x18KubernetesObjectMetadata\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
@@ -1440,7 +1473,11 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
 	"pod_reason\x18) \x01(\tR\tpodReason\x12\x1b\n" +
 	"\tqos_class\x18* \x01(\tR\bqosClass\x12J\n" +
-	"\rcluster_quota\x18, \x01(\v2%.cluster.ClusterResourceQuotaMetadataR\fclusterQuota\x1a9\n" +
+	"\rcluster_quota\x18, \x01(\v2%.cluster.ClusterResourceQuotaMetadataR\fclusterQuota\x12K\n" +
+	"\"daemonset_current_number_scheduled\x18- \x01(\x03R\x1fdaemonsetCurrentNumberScheduled\x12K\n" +
+	"\"daemonset_desired_number_scheduled\x18. \x01(\x03R\x1fdaemonsetDesiredNumberScheduled\x12B\n" +
+	"\x1ddaemonset_number_misscheduled\x18/ \x01(\x03R\x1bdaemonsetNumberMisscheduled\x124\n" +
+	"\x16daemonset_number_ready\x180 \x01(\x03R\x14daemonsetNumberReady\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +

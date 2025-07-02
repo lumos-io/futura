@@ -45,7 +45,7 @@ func Transform(node *corev1.Node) *corev1.Node {
 	return newNode
 }
 
-func RecordMetrics(node *corev1.Node, nodeConditionTypesToReport, allocatableTypesToReport []string, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+func RecordMetrics(node *corev1.Node, ts time.Time) *pbcluster.KubernetesObjectMetadata {
 	obj := &pbcluster.KubernetesObjectMetadata{
 		Timestamp:   timestamppb.New(ts),
 		Uid:         string(node.UID),
