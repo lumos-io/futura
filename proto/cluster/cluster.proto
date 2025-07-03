@@ -8,13 +8,13 @@ import "google/protobuf/timestamp.proto";
 import "common/metadata.proto";
 
 // Main batch message
-message KubernetesObjectMetadataBatch {
+message KubernetesClusterObjectBatch {
   common.Metadata metadata = 1;
-  repeated KubernetesObjectMetadata objects = 2;
+  repeated KubernetesClusterObject objects = 2;
 }
 
 // Represents a generic Kubernetes object with rich metadata.
-message KubernetesObjectMetadata {
+message KubernetesClusterObject {
   google.protobuf.Timestamp timestamp = 1;
   string type = 2; // snapshot | update | delete
 

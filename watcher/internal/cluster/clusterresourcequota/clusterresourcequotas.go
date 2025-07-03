@@ -12,8 +12,8 @@ import (
 	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
 )
 
-func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{
+func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) *pbcluster.KubernetesClusterObject {
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp: timestamppb.New(ts),
 		Name:      crq.Name,
 		Uid:       string(crq.UID),

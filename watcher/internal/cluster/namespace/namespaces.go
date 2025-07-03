@@ -16,8 +16,8 @@ const (
 	k8sNamespacePhase        = "k8s.namespace.phase"
 )
 
-func RecordMetrics(ns *corev1.Namespace, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{
+func RecordMetrics(ns *corev1.Namespace, ts time.Time) *pbcluster.KubernetesClusterObject {
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp:    timestamppb.New(ts),
 		Uid:          string(ns.UID),
 		Name:         ns.Name,

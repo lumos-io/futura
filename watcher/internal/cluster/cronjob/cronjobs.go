@@ -16,13 +16,13 @@ const (
 	cronJobKeyConcurrencyPolicy = "concurrency_policy"
 )
 
-func RecordMetrics(cj *batchv1.CronJob, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{
+func RecordMetrics(cj *batchv1.CronJob, ts time.Time) *pbcluster.KubernetesClusterObject {
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp: timestamppb.New(ts),
 		Kind:      cj.Kind,
 		Namespace: cj.Namespace,
 		Uid:       string(cj.UID),
-		Name:      cj.Name,		
+		Name:      cj.Name,
 	}
 
 	// TODO: how do I store the active cronjobs??

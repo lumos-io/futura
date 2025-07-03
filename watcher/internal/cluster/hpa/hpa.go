@@ -10,8 +10,8 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 )
 
-func RecordMetrics(hpa *autoscalingv2.HorizontalPodAutoscaler, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{
+func RecordMetrics(hpa *autoscalingv2.HorizontalPodAutoscaler, ts time.Time) *pbcluster.KubernetesClusterObject {
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp:         timestamppb.New(ts),
 		ReadyReplicas:     int64(hpa.Status.CurrentReplicas),
 		Replicas:          int64(hpa.Status.DesiredReplicas),

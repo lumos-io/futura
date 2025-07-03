@@ -40,8 +40,8 @@ func NewDataCollector(ms *metadata.Store) *DataCollector {
 	}
 }
 
-func (dc *DataCollector) CollectMetricData(ts time.Time) []*pbcluster.KubernetesObjectMetadata {
-	result := make([]*pbcluster.KubernetesObjectMetadata, 100)
+func (dc *DataCollector) CollectMetricData(ts time.Time) []*pbcluster.KubernetesClusterObject {
+	result := []*pbcluster.KubernetesClusterObject{}
 	dc.metadataStore.ForEach(gvk.Pod, func(o any) {
 		result = append(result, pod.RecordMetrics(o.(*corev1.Pod), ts))
 	})

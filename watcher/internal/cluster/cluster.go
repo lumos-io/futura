@@ -21,6 +21,12 @@ type KubernetesClusterCollector struct {
 	cancel context.CancelFunc
 }
 
+var eventMap map[string]*metadata.KubernetesResourceEvent
+
+func init() {
+	eventMap = make(map[string]*metadata.KubernetesResourceEvent, 100_000)
+}
+
 func New(config *config.Configuration) (*KubernetesClusterCollector, error) {
 	client, err := k8s.MakeClient(k8s.APIConfig{
 		AuthType: k8s.AuthType(config.Kubernetes.AuthType),
@@ -42,8 +48,6 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 	if err := kr.resourceWatcher.initialize(); err != nil {
 		return err
 	}
-
-	eventMap := make(map[string]*metadata.KubernetesResourceEvent, 1000)
 
 	go func() {
 		for e := range kr.Events() {
@@ -82,20 +86,18 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 		for {
 			select {
 			case <-ticker.C:
-				// TODO: Read the data here
 				data := kr.dataCollector.CollectMetricData(time.Now())
 				for _, m := range data {
-					// Decorate with event type if available
-					if event, ok := eventMap[m.Uid]; ok {
-						m.Type = string(event.Type)
-						m.Name = event.Name
-						m.Namespace = event.Namespace
-						m.Extra = event.Metadata
+					if m != nil {
+						// Decorate with event type if available
+						if event, ok := eventMap[m.Uid]; ok {
+							m.Type = string(event.Type)
+							m.Name = event.Name
+							m.Namespace = event.Namespace
+							m.Extra = event.Metadata
+						}
 					}
-					log.Logger.Info().Interface("metric", m).Msg("Collected metric with metadata")
 				}
-				log.Logger.Info().Msgf("%v", data)
-
 				// TODO: Send the data here
 				// ...
 			case <-ctx.Done():
@@ -111,12 +113,12 @@ func (kr *KubernetesClusterCollector) Events() <-chan *metadata.KubernetesResour
 }
 
 func (kr *KubernetesClusterCollector) Start(ctx context.Context) error {
-	_, kr.cancel = context.WithCancel(ctx)
+	ctx, kr.cancel = context.WithCancel(ctx)
 
-	log.Logger.Info().Msg("Starting k8sClusterReceiver with leader election")
+	log.Logger.Info().Msg("Starting kubernetesClusterReceiver with leader election...")
 
 	if err := kr.k8sLeaderElector.Start(ctx); err != nil {
-		log.Logger.Error().Err(err).Msg("Failed to start k8sClusterReceiver...")
+		log.Logger.Error().Err(err).Msg("Failed to start kubernetesClusterReceiver...")
 		return err
 	}
 
@@ -124,7 +126,7 @@ func (kr *KubernetesClusterCollector) Start(ctx context.Context) error {
 		func(ctx context.Context) {
 			log.Logger.Info().Msg("Starting resource watcher...")
 			if err := kr.startReceiver(ctx); err != nil {
-				log.Logger.Error().Err(err).Msg("Failed to start receiver")
+				log.Logger.Error().Err(err).Msg("Failed to start receiver...")
 			}
 		}, func() {
 			kr.stopReceiver()
@@ -134,7 +136,7 @@ func (kr *KubernetesClusterCollector) Start(ctx context.Context) error {
 }
 
 func (kr *KubernetesClusterCollector) stopReceiver() {
-	log.Logger.Info().Msg("Stopping the receiver")
+	log.Logger.Info().Msg("Stopping the receiver...")
 	if kr.cancel != nil {
 		kr.cancel()
 	}

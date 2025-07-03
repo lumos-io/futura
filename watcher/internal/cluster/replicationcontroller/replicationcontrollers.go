@@ -10,8 +10,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func RecordMetrics(rc *corev1.ReplicationController, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{
+func RecordMetrics(rc *corev1.ReplicationController, ts time.Time) *pbcluster.KubernetesClusterObject {
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp: timestamppb.New(ts),
 		Namespace: rc.Namespace,
 		Name:      rc.Name,
