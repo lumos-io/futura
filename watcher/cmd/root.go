@@ -38,9 +38,19 @@ events to the backend`,
 
 		zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		if watcherCfg.Debug {
-			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		if watcherCfg.Log != nil {
+			switch watcherCfg.Log.Level {
+			case "debug":
+				zerolog.SetGlobalLevel(zerolog.DebugLevel)
+			case "warn":
+				zerolog.SetGlobalLevel(zerolog.WarnLevel)
+			case "error":
+				zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+			default:
+				zerolog.SetGlobalLevel(zerolog.InfoLevel)
+			}
 		}
 
 		debug.SetGCPercent(80)

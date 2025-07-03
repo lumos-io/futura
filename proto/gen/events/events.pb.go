@@ -25,8 +25,9 @@ const (
 // Main batch message
 type KubernetesEventBatch struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metadata      *common.Metadata       `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Events        []*KubernetesEvent     `protobuf:"bytes,2,rep,name=events,proto3" json:"events,omitempty"`
+	Apikey        *common.APIKey         `protobuf:"bytes,1,opt,name=apikey,proto3" json:"apikey,omitempty"`
+	Metadata      *common.Metadata       `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Events        []*KubernetesEvent     `protobuf:"bytes,3,rep,name=events,proto3" json:"events,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -59,6 +60,13 @@ func (x *KubernetesEventBatch) ProtoReflect() protoreflect.Message {
 // Deprecated: Use KubernetesEventBatch.ProtoReflect.Descriptor instead.
 func (*KubernetesEventBatch) Descriptor() ([]byte, []int) {
 	return file_events_events_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *KubernetesEventBatch) GetApikey() *common.APIKey {
+	if x != nil {
+		return x.Apikey
+	}
+	return nil
 }
 
 func (x *KubernetesEventBatch) GetMetadata() *common.Metadata {
@@ -260,10 +268,11 @@ var File_events_events_proto protoreflect.FileDescriptor
 
 const file_events_events_proto_rawDesc = "" +
 	"\n" +
-	"\x13events/events.proto\x12\x06events\x1a\x15common/metadata.proto\"u\n" +
-	"\x14KubernetesEventBatch\x12,\n" +
-	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12/\n" +
-	"\x06events\x18\x02 \x03(\v2\x17.events.KubernetesEventR\x06events\"\xcb\x05\n" +
+	"\x13events/events.proto\x12\x06events\x1a\x15common/metadata.proto\"\x9d\x01\n" +
+	"\x14KubernetesEventBatch\x12&\n" +
+	"\x06apikey\x18\x01 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
+	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x12/\n" +
+	"\x06events\x18\x03 \x03(\v2\x17.events.KubernetesEventR\x06events\"\xcb\x05\n" +
 	"\x0fKubernetesEvent\x12\x1f\n" +
 	"\vobject_kind\x18\x01 \x01(\tR\n" +
 	"objectKind\x12\x1f\n" +
@@ -306,16 +315,18 @@ var file_events_events_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_events_events_proto_goTypes = []any{
 	(*KubernetesEventBatch)(nil), // 0: events.KubernetesEventBatch
 	(*KubernetesEvent)(nil),      // 1: events.KubernetesEvent
-	(*common.Metadata)(nil),      // 2: common.Metadata
+	(*common.APIKey)(nil),        // 2: common.APIKey
+	(*common.Metadata)(nil),      // 3: common.Metadata
 }
 var file_events_events_proto_depIdxs = []int32{
-	2, // 0: events.KubernetesEventBatch.metadata:type_name -> common.Metadata
-	1, // 1: events.KubernetesEventBatch.events:type_name -> events.KubernetesEvent
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2, // 0: events.KubernetesEventBatch.apikey:type_name -> common.APIKey
+	3, // 1: events.KubernetesEventBatch.metadata:type_name -> common.Metadata
+	1, // 2: events.KubernetesEventBatch.events:type_name -> events.KubernetesEvent
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_events_events_proto_init() }

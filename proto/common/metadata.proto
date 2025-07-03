@@ -10,3 +10,7 @@ message Metadata {
   string cluster_id = 3;
   string cloud_provider = 5;  
 }
+
+message APIKey {
+  string key = 1;
+}

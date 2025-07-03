@@ -1,14 +1,7 @@
 # Configuration file running Watcher locally
-
-title = "Configuration for Watcher"
-
-debug = true
-nodeName = "localhost"
-tag = "v0.0.1"
-
 [collect]
-host = "localhost"
-port = "50051"
+endpoint = "localhost:50051"
+apiKey = "df9166bbacd761c74aecc50bb7a902342dd61a1de84551e253f7133154947d88"
 
 [kubernetes]
 authType = "kubeConfig" # required, valid values are `none`, `serviceAccount`, `kubeConfig`
@@ -22,3 +15,6 @@ leaseNamespace = "default" # required
 leaseDuration = "" # in seconds, default is 15
 renewDeadline = "" # in seconds, default is 10
 retryPeriod = "" # in seconds, default is 2
+
+[log]
+level = "debug" # valid values: debug, info, warn, error

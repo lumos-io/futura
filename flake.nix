@@ -47,6 +47,7 @@
 
             ./scripts/docker-login.sh
             ./scripts/setup-tools.sh
+            ./scripts/setup-kv.sh
 
             echo "🚀 Development environment ready!"
           '';

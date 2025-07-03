@@ -31,8 +31,7 @@ var collectCmd = &cobra.Command{
 		signalCh := make(chan os.Signal, 1)
 		signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
-		address := fmt.Sprintf("%s:%s", pipelineCfg.Collect.Host, pipelineCfg.Collect.Port)
-		lis, err := net.Listen("tcp", address)
+		lis, err := net.Listen("tcp", pipelineCfg.Collect.Endpoint)
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 			os.Exit(1)

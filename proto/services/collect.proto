@@ -2,7 +2,6 @@ syntax = "proto3";
 
 import "events/events.proto";
 import "cluster/cluster.proto";
-import "workload/workload.proto";
 
 package collect;
 

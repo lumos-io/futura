@@ -14,7 +14,7 @@ type jetstreamClient struct {
 	js nats.JetStreamContext
 }
 
-func NewJetstreamClient(ctx context.Context, config *config.Configuration) (Stream, error) {
+func NewNATSJetstreamClient(ctx context.Context, config *config.Configuration) (Stream, error) {
 	nc, err := nats.Connect(strings.Join(config.Nats.Servers, ","))
 	if err != nil {
 		return nil, fmt.Errorf("connect error: %w", err)

@@ -6,6 +6,8 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -64,6 +66,23 @@ func setupConfiguration(cmd *cobra.Command, args []string) error {
 	pipelineCfg = config.Fetch()
 	if err := pipelineCfg.Validate(); err != nil {
 		panic(err.Error())
+	}
+
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	if pipelineCfg.Log != nil {
+		switch pipelineCfg.Log.Level {
+		case "debug":
+			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		case "warn":
+			zerolog.SetGlobalLevel(zerolog.WarnLevel)
+		case "error":
+			zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+		default:
+			zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		}
 	}
 	return nil
 }

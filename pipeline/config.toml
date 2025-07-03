@@ -1,12 +1,10 @@
 # Configuration file running Pipeline locally
-
-title = "Configuration for Pipeline"
-
-debug = true
-
 [nats]
 servers = ["nats://localhost:4222"]
+apkBucket = "api_keys"
 
 [collect]
-host = "localhost"
-port = "50051"
+endpoint = "localhost:50051"
+
+[log]
+level = "debug"

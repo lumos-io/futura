@@ -9,8 +9,9 @@ import "common/metadata.proto";
 
 // Main batch message
 message KubernetesClusterObjectBatch {
-  common.Metadata metadata = 1;
-  repeated KubernetesClusterObject objects = 2;
+  common.APIKey apikey = 1;
+  common.Metadata metadata = 2;
+  repeated KubernetesClusterObject objects = 3;
 }
 
 // Represents a generic Kubernetes object with rich metadata.

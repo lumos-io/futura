@@ -12,16 +12,14 @@ import (
 
 // Config struct contains watcher configuration
 type Configuration struct {
-	Debug      bool        `toml:"debug"`
-	NodeName   string      `toml:"nodeName"`
-	Tag        string      `toml:"tag"`
 	Collect    *Collect    `toml:"collect"`
 	Kubernetes *Kubernetes `toml:"kubernetes"`
+	Log        *Log        `toml:"log"`
 }
 
 type Collect struct {
-	Host string `toml:"host"`
-	Port string `toml:"port"`
+	Endpoint string `toml:"endpoint"`
+	APIKey   string `toml:"apiKey"`
 }
 
 type Kubernetes struct {
@@ -45,14 +43,15 @@ type Kubernetes struct {
 	RetryPeriod                time.Duration `toml:"retryPeriod"`
 }
 
+type Log struct {
+	Level string `toml:"level"`
+}
+
 func Fetch() *Configuration {
 	return &Configuration{
-		Debug:    viper.GetBool("debug"),
-		NodeName: getStringOrDefault("nodeName", "localhost"),
-		Tag:      getStringOrDefault("tag", "v0.0.1"),
 		Collect: &Collect{
-			Host: getStringOrDefault("collect.host", ""),
-			Port: getStringOrDefault("collect.port", "50051"),
+			Endpoint: getStringOrDefault("collect.endpoint", "localhost:50051"),
+			APIKey:   viper.GetString("collect.apiKey"),
 		},
 		Kubernetes: &Kubernetes{
 			AuthType:                   viper.GetString("kubernetes.authType"),
@@ -67,10 +66,22 @@ func Fetch() *Configuration {
 			RenewDuration:              convertDurationStringToTime(getStringOrDefault("kubernetes.renewDeadline", "10")),
 			RetryPeriod:                convertDurationStringToTime(getStringOrDefault("kubernetes.retryPeriod", "2")),
 		},
+		Log: &Log{
+			Level: getStringOrDefault("log.level", "info"),
+		},
 	}
 }
 
 func (c *Configuration) Validate() error {
+	if c.Collect == nil {
+		return errors.New("[collect] entry is missing from the configuration")
+	}
+	if c.Kubernetes == nil {
+		return errors.New("[kubernetes] entry is missing from the configuration")
+	}
+	if c.Collect.APIKey == "" {
+		return errors.New("apiKey field must be set with a valid key")
+	}
 	if c.Kubernetes.AuthType == "" && (c.Kubernetes.AuthType != "none" || c.Kubernetes.AuthType == "serviceAccount" || c.Kubernetes.AuthType == "kubeConfig") {
 		return errors.New("authType must be set with either `none`, `serviceAccount` or `kubeConfig`")
 	}
@@ -79,6 +90,11 @@ func (c *Configuration) Validate() error {
 	}
 	if c.Kubernetes.LeaseName == "" || c.Kubernetes.LeaseNamespace == "" {
 		return errors.New("lease name and namespace must be set")
+	}
+	if c.Log != nil {
+		if c.Log.Level != "debug" && c.Log.Level != "info" && c.Log.Level != "warn" && c.Log.Level != "error" {
+			return errors.New("invalid log level value")
+		}
 	}
 	return nil
 }

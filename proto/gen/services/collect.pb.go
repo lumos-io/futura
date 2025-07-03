@@ -9,7 +9,6 @@ package collect
 import (
 	cluster "github.com/opisvigilant/futura/proto/gen/cluster"
 	events "github.com/opisvigilant/futura/proto/gen/events"
-	_ "github.com/opisvigilant/futura/proto/gen/workload"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -80,7 +79,7 @@ var File_services_collect_proto protoreflect.FileDescriptor
 
 const file_services_collect_proto_rawDesc = "" +
 	"\n" +
-	"\x16services/collect.proto\x12\acollect\x1a\x13events/events.proto\x1a\x15cluster/cluster.proto\x1a\x17workload/workload.proto\">\n" +
+	"\x16services/collect.proto\x12\acollect\x1a\x13events/events.proto\x1a\x15cluster/cluster.proto\">\n" +
 	"\n" +
 	"CollectAck\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +

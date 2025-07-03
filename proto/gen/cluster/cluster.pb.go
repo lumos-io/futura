@@ -26,8 +26,9 @@ const (
 // Main batch message
 type KubernetesClusterObjectBatch struct {
 	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Metadata      *common.Metadata           `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Objects       []*KubernetesClusterObject `protobuf:"bytes,2,rep,name=objects,proto3" json:"objects,omitempty"`
+	Apikey        *common.APIKey             `protobuf:"bytes,1,opt,name=apikey,proto3" json:"apikey,omitempty"`
+	Metadata      *common.Metadata           `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Objects       []*KubernetesClusterObject `protobuf:"bytes,3,rep,name=objects,proto3" json:"objects,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -60,6 +61,13 @@ func (x *KubernetesClusterObjectBatch) ProtoReflect() protoreflect.Message {
 // Deprecated: Use KubernetesClusterObjectBatch.ProtoReflect.Descriptor instead.
 func (*KubernetesClusterObjectBatch) Descriptor() ([]byte, []int) {
 	return file_cluster_cluster_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *KubernetesClusterObjectBatch) GetApikey() *common.APIKey {
+	if x != nil {
+		return x.Apikey
+	}
+	return nil
 }
 
 func (x *KubernetesClusterObjectBatch) GetMetadata() *common.Metadata {
@@ -1414,10 +1422,11 @@ var File_cluster_cluster_proto protoreflect.FileDescriptor
 
 const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
-	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"\x88\x01\n" +
-	"\x1cKubernetesClusterObjectBatch\x12,\n" +
-	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12:\n" +
-	"\aobjects\x18\x02 \x03(\v2 .cluster.KubernetesClusterObjectR\aobjects\"\xb6\x12\n" +
+	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"\xb0\x01\n" +
+	"\x1cKubernetesClusterObjectBatch\x12&\n" +
+	"\x06apikey\x18\x01 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
+	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x12:\n" +
+	"\aobjects\x18\x03 \x03(\v2 .cluster.KubernetesClusterObjectR\aobjects\"\xb6\x12\n" +
 	"\x17KubernetesClusterObject\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
@@ -1599,44 +1608,46 @@ var file_cluster_cluster_proto_goTypes = []any{
 	nil,                                  // 17: cluster.KubernetesClusterObject.AffinityEntry
 	nil,                                  // 18: cluster.KubernetesClusterObject.ExtraEntry
 	nil,                                  // 19: cluster.AllocatableResources.OthersEntry
-	(*common.Metadata)(nil),              // 20: common.Metadata
-	(*timestamppb.Timestamp)(nil),        // 21: google.protobuf.Timestamp
+	(*common.APIKey)(nil),                // 20: common.APIKey
+	(*common.Metadata)(nil),              // 21: common.Metadata
+	(*timestamppb.Timestamp)(nil),        // 22: google.protobuf.Timestamp
 }
 var file_cluster_cluster_proto_depIdxs = []int32{
-	20, // 0: cluster.KubernetesClusterObjectBatch.metadata:type_name -> common.Metadata
-	1,  // 1: cluster.KubernetesClusterObjectBatch.objects:type_name -> cluster.KubernetesClusterObject
-	21, // 2: cluster.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
-	15, // 3: cluster.KubernetesClusterObject.labels:type_name -> cluster.KubernetesClusterObject.LabelsEntry
-	16, // 4: cluster.KubernetesClusterObject.annotations:type_name -> cluster.KubernetesClusterObject.AnnotationsEntry
-	2,  // 5: cluster.KubernetesClusterObject.containers:type_name -> cluster.ContainerSpec
-	5,  // 6: cluster.KubernetesClusterObject.volumes:type_name -> cluster.VolumeSpec
-	17, // 7: cluster.KubernetesClusterObject.affinity:type_name -> cluster.KubernetesClusterObject.AffinityEntry
-	18, // 8: cluster.KubernetesClusterObject.extra:type_name -> cluster.KubernetesClusterObject.ExtraEntry
-	10, // 9: cluster.KubernetesClusterObject.conditions:type_name -> cluster.NodeCondition
-	11, // 10: cluster.KubernetesClusterObject.allocatable:type_name -> cluster.AllocatableResources
-	12, // 11: cluster.KubernetesClusterObject.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
-	3,  // 12: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
-	6,  // 13: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
-	6,  // 14: cluster.ContainerSpec.last_termination_state:type_name -> cluster.ContainerState
-	4,  // 15: cluster.ContainerResources.limits:type_name -> cluster.ResourceQuantities
-	4,  // 16: cluster.ContainerResources.requests:type_name -> cluster.ResourceQuantities
-	7,  // 17: cluster.ContainerState.waiting:type_name -> cluster.ContainerStateWaiting
-	8,  // 18: cluster.ContainerState.running:type_name -> cluster.ContainerStateRunning
-	9,  // 19: cluster.ContainerState.terminated:type_name -> cluster.ContainerStateTerminated
-	21, // 20: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
-	21, // 21: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
-	21, // 22: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
-	19, // 23: cluster.AllocatableResources.others:type_name -> cluster.AllocatableResources.OthersEntry
-	14, // 24: cluster.ClusterResourceQuotaMetadata.total_limits:type_name -> cluster.QuotaResource
-	14, // 25: cluster.ClusterResourceQuotaMetadata.total_usage:type_name -> cluster.QuotaResource
-	13, // 26: cluster.ClusterResourceQuotaMetadata.quotas:type_name -> cluster.NamespaceQuota
-	14, // 27: cluster.NamespaceQuota.limits:type_name -> cluster.QuotaResource
-	14, // 28: cluster.NamespaceQuota.usage:type_name -> cluster.QuotaResource
-	29, // [29:29] is the sub-list for method output_type
-	29, // [29:29] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	20, // 0: cluster.KubernetesClusterObjectBatch.apikey:type_name -> common.APIKey
+	21, // 1: cluster.KubernetesClusterObjectBatch.metadata:type_name -> common.Metadata
+	1,  // 2: cluster.KubernetesClusterObjectBatch.objects:type_name -> cluster.KubernetesClusterObject
+	22, // 3: cluster.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
+	15, // 4: cluster.KubernetesClusterObject.labels:type_name -> cluster.KubernetesClusterObject.LabelsEntry
+	16, // 5: cluster.KubernetesClusterObject.annotations:type_name -> cluster.KubernetesClusterObject.AnnotationsEntry
+	2,  // 6: cluster.KubernetesClusterObject.containers:type_name -> cluster.ContainerSpec
+	5,  // 7: cluster.KubernetesClusterObject.volumes:type_name -> cluster.VolumeSpec
+	17, // 8: cluster.KubernetesClusterObject.affinity:type_name -> cluster.KubernetesClusterObject.AffinityEntry
+	18, // 9: cluster.KubernetesClusterObject.extra:type_name -> cluster.KubernetesClusterObject.ExtraEntry
+	10, // 10: cluster.KubernetesClusterObject.conditions:type_name -> cluster.NodeCondition
+	11, // 11: cluster.KubernetesClusterObject.allocatable:type_name -> cluster.AllocatableResources
+	12, // 12: cluster.KubernetesClusterObject.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
+	3,  // 13: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
+	6,  // 14: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
+	6,  // 15: cluster.ContainerSpec.last_termination_state:type_name -> cluster.ContainerState
+	4,  // 16: cluster.ContainerResources.limits:type_name -> cluster.ResourceQuantities
+	4,  // 17: cluster.ContainerResources.requests:type_name -> cluster.ResourceQuantities
+	7,  // 18: cluster.ContainerState.waiting:type_name -> cluster.ContainerStateWaiting
+	8,  // 19: cluster.ContainerState.running:type_name -> cluster.ContainerStateRunning
+	9,  // 20: cluster.ContainerState.terminated:type_name -> cluster.ContainerStateTerminated
+	22, // 21: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
+	22, // 22: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
+	22, // 23: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
+	19, // 24: cluster.AllocatableResources.others:type_name -> cluster.AllocatableResources.OthersEntry
+	14, // 25: cluster.ClusterResourceQuotaMetadata.total_limits:type_name -> cluster.QuotaResource
+	14, // 26: cluster.ClusterResourceQuotaMetadata.total_usage:type_name -> cluster.QuotaResource
+	13, // 27: cluster.ClusterResourceQuotaMetadata.quotas:type_name -> cluster.NamespaceQuota
+	14, // 28: cluster.NamespaceQuota.limits:type_name -> cluster.QuotaResource
+	14, // 29: cluster.NamespaceQuota.usage:type_name -> cluster.QuotaResource
+	30, // [30:30] is the sub-list for method output_type
+	30, // [30:30] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_cluster_cluster_proto_init() }

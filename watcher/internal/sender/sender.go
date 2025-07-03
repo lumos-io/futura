@@ -26,6 +26,7 @@ type Sender struct {
 	ctx       context.Context
 	pbc       pbsvc.CollectServiceClient
 	batchSize int
+	apiKey    string
 
 	KubernetesEventChan         chan *pbev.KubernetesEvent
 	KubernetesClusterObjectChan chan *pbcl.KubernetesClusterObject
@@ -33,8 +34,8 @@ type Sender struct {
 
 // Init prepares Webhook configuration
 func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
-	address := fmt.Sprintf("%s:%s", config.Collect.Host, config.Collect.Port)
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// TODO: deal with TLS in gRPC and if in development environment switch to Insecure
+	conn, err := grpc.NewClient(config.Collect.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to gRPC server: %v", err)
 	}
@@ -45,6 +46,7 @@ func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
 	s := &Sender{
 		ctx:                         ctx,
 		batchSize:                   1000,
+		apiKey:                      config.Collect.APIKey,
 		pbc:                         client,
 		KubernetesEventChan:         make(chan *pbev.KubernetesEvent, 5*resourceChanSize),
 		KubernetesClusterObjectChan: make(chan *pbcl.KubernetesClusterObject, 5*resourceChanSize),
@@ -93,6 +95,9 @@ func (s *Sender) sendEventsInBatch(ch chan *pbev.KubernetesEvent, interval time.
 			}
 
 			payload := &pbev.KubernetesEventBatch{
+				Apikey: &pbcm.APIKey{
+					Key: s.apiKey,
+				},
 				Metadata: &pbcm.Metadata{
 					IdempotencyKey: uuid.NewString(),
 					WatcherVersion: utils.WatcherVersion,
@@ -145,6 +150,9 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbcl.KubernetesClusterObject
 			}
 
 			payload := &pbcl.KubernetesClusterObjectBatch{
+				Apikey: &pbcm.APIKey{
+					Key: s.apiKey,
+				},
 				Metadata: &pbcm.Metadata{
 					IdempotencyKey: uuid.NewString(),
 					WatcherVersion: utils.WatcherVersion,
