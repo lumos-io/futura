@@ -29,8 +29,8 @@ func init() {
 
 func New(config *config.Configuration) (*KubernetesClusterCollector, error) {
 	client, err := k8s.MakeClient(k8s.APIConfig{
-		AuthType: k8s.AuthType(config.Kubernetes.AuthType),
-		Context:  config.Kubernetes.KubeContextName,
+		AuthType: k8s.AuthType(config.Kubernetes.Auth.AuthType),
+		Context:  config.Kubernetes.Auth.KubeContextName,
 	})
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 		log.Logger.Info().Msg("Completed syncing shared informer caches.")
 		kr.resourceWatcher.initialSyncDone.Store(true)
 
-		ticker := time.NewTicker(kr.config.Kubernetes.CollectionInterval)
+		ticker := time.NewTicker(kr.config.Kubernetes.ObjectCollectionInterval)
 		defer ticker.Stop()
 
 		for {

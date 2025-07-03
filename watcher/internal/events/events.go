@@ -38,8 +38,8 @@ func (kec *KubernetesEventsCollector) Start(ctx context.Context) error {
 	kec.ctx, kec.cancel = context.WithCancel(ctx)
 
 	k8sClient, err := kubernetes.MakeClient(kubernetes.APIConfig{
-		AuthType: kubernetes.AuthType(kec.config.Kubernetes.AuthType),
-		Context:  kec.config.Kubernetes.KubeContextName,
+		AuthType: kubernetes.AuthType(kec.config.Kubernetes.Auth.AuthType),
+		Context:  kec.config.Kubernetes.Auth.KubeContextName,
 	})
 	if err != nil {
 		return err

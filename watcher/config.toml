@@ -4,17 +4,24 @@ endpoint = "localhost:50051"
 apiKey = "df9166bbacd761c74aecc50bb7a902342dd61a1de84551e253f7133154947d88"
 
 [kubernetes]
-authType = "kubeConfig" # required, valid values are `none`, `serviceAccount`, `kubeConfig`
-kubeContextName = "kind-dev-cluster"
 namespaces = []
 distribution = "kubernetes" # either openshift or kubernetes
-collectionInterval = "" # in seconds, default is 10
+objectsCollectionInterval = "" # in seconds, default is 10
+statsCollectionInterval = "" # in seconds, default is 20
 metadataCollectionInterval = "" # in minutes, default is 5
 leaseName = "futura" # required
 leaseNamespace = "default" # required
 leaseDuration = "" # in seconds, default is 15
 renewDeadline = "" # in seconds, default is 10
 retryPeriod = "" # in seconds, default is 2
+
+[kubernetes.auth]
+authType = "kubeConfig" # required, valid values are `none`, `serviceAccount`, `kubeConfig`
+kubeContextName = "kind-dev-cluster"
+insecureSkipVerify = true
+kubeletCaFile = ""
+kubeletCertFile = ""
+kubeletKeyFile = ""
 
 [log]
 level = "debug" # valid values: debug, info, warn, error

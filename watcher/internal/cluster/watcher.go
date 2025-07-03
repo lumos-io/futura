@@ -104,8 +104,8 @@ func (rw *resourceWatcher) emitEvent(obj any, eventType metadata.EventType) {
 
 func (rw *resourceWatcher) initialize() error {
 	client, err := k8s.MakeClient(k8s.APIConfig{
-		AuthType: k8s.AuthType(rw.config.Kubernetes.AuthType),
-		Context:  rw.config.Kubernetes.KubeContextName,
+		AuthType: k8s.AuthType(rw.config.Kubernetes.Auth.AuthType),
+		Context:  rw.config.Kubernetes.Auth.KubeContextName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create Kubernetes client: %w", err)
@@ -114,8 +114,8 @@ func (rw *resourceWatcher) initialize() error {
 
 	if rw.config.Kubernetes.Distribution == distributionOpenShift {
 		rw.osQuotaClient, err = k8s.MakeOpenShiftQuotaClient(k8s.APIConfig{
-			AuthType: k8s.AuthType(rw.config.Kubernetes.AuthType),
-			Context:  rw.config.Kubernetes.KubeContextName,
+			AuthType: k8s.AuthType(rw.config.Kubernetes.Auth.AuthType),
+			Context:  rw.config.Kubernetes.Auth.KubeContextName,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create OpenShift quota API client: %w", err)

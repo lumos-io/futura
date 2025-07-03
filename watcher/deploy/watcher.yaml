@@ -161,6 +161,12 @@ rules:
       - update
       - patch
       - delete
+  - apiGroups: [""]
+    resources: ["nodes/stats"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["nodes/proxy"]
+    verbs: ["get"]
 ---
 # Source: watcher/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1

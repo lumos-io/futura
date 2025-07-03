@@ -23,11 +23,11 @@ type Collect struct {
 }
 
 type Kubernetes struct {
-	AuthType        string   `toml:"authType"`
-	KubeContextName string   `toml:"kubeContextName"`
-	Namespaces      []string `toml:"namespaces"`
+	Auth       *Auth    `toml:"auth"`
+	Namespaces []string `toml:"namespaces"`
 	// Collection interval for metrics.
-	CollectionInterval time.Duration `toml:"collectionInterval"`
+	ObjectCollectionInterval time.Duration `toml:"objectCollectionInterval"`
+	StatsCollectionInterval  time.Duration `toml:"statsCollectionInterval"`
 	// Whether OpenShift support should be enabled or not.
 	Distribution string `toml:"distribution"`
 	// Collection interval for metadata.
@@ -43,6 +43,15 @@ type Kubernetes struct {
 	RetryPeriod                time.Duration `toml:"retryPeriod"`
 }
 
+type Auth struct {
+	AuthType           string `toml:"authType"`
+	KubeContextName    string `toml:"kubeContextName"`
+	InsecureSkipVerify bool   `toml:"insecureSkipVerify"`
+	KubeletCAFile      string `toml:"kubeletCaFile"`
+	KubeletCertFile    string `toml:"kubeletCertFile"`
+	KubeletKeyFile     string `toml:"kubeletKeyFile"`
+}
+
 type Log struct {
 	Level string `toml:"level"`
 }
@@ -54,11 +63,18 @@ func Fetch() *Configuration {
 			APIKey:   viper.GetString("collect.apiKey"),
 		},
 		Kubernetes: &Kubernetes{
-			AuthType:                   viper.GetString("kubernetes.authType"),
-			KubeContextName:            viper.GetString("kubernetes.kubeContextName"),
+			Auth: &Auth{
+				AuthType:           viper.GetString("kubernetes.authType"),
+				KubeContextName:    viper.GetString("kubernetes.kubeContextName"),
+				InsecureSkipVerify: viper.GetBool("kubernetes.insecureSkipVerify"),
+				KubeletCAFile:      getStringOrDefault("kubernetes.auth.kubeletCaFile", ""),
+				KubeletCertFile:    getStringOrDefault("kubernetes.auth.kubeletCertFile", ""),
+				KubeletKeyFile:     getStringOrDefault("kubernetes.auth.kubeletKeyFile", ""),
+			},
 			Namespaces:                 viper.GetStringSlice("kubernetes.namespaces"),
 			Distribution:               getStringOrDefault("kubernetes.distribution", "kubernetes"),
-			CollectionInterval:         convertDurationStringToTime(getStringOrDefault("kubernetes.collectionInterval", "10")),
+			ObjectCollectionInterval:   convertDurationStringToTime(getStringOrDefault("kubernetes.objectCollectionInterval", "10")),
+			StatsCollectionInterval:    convertDurationStringToTime(getStringOrDefault("kubernetes.statsCollectionInterval", "20")),
 			MetadataCollectionInterval: convertDurationStringToTime(getStringOrDefault("kubernetes.metadataCollectionInterval", "30")),
 			LeaseName:                  viper.GetString("kubernetes.leaseName"),
 			LeaseNamespace:             viper.GetString("kubernetes.leaseNamespace"),
@@ -79,13 +95,16 @@ func (c *Configuration) Validate() error {
 	if c.Kubernetes == nil {
 		return errors.New("[kubernetes] entry is missing from the configuration")
 	}
+	if c.Kubernetes.Auth == nil {
+		return errors.New("[kubernetes.auth] entry is missing from the configuration")
+	}
 	if c.Collect.APIKey == "" {
 		return errors.New("apiKey field must be set with a valid key")
 	}
-	if c.Kubernetes.AuthType == "" && (c.Kubernetes.AuthType != "none" || c.Kubernetes.AuthType == "serviceAccount" || c.Kubernetes.AuthType == "kubeConfig") {
+	if c.Kubernetes.Auth.AuthType == "" && (c.Kubernetes.Auth.AuthType != "none" || c.Kubernetes.Auth.AuthType == "serviceAccount" || c.Kubernetes.Auth.AuthType == "kubeConfig") {
 		return errors.New("authType must be set with either `none`, `serviceAccount` or `kubeConfig`")
 	}
-	if c.Kubernetes.AuthType == "kubeConfig" && c.Kubernetes.KubeContextName == "" {
+	if c.Kubernetes.Auth.AuthType == "kubeConfig" && c.Kubernetes.Auth.KubeContextName == "" {
 		return errors.New("kubeContextName must be set authType is set to `kubeConfig`")
 	}
 	if c.Kubernetes.LeaseName == "" || c.Kubernetes.LeaseNamespace == "" {
