@@ -14,6 +14,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/utils"
 	"github.com/rs/zerolog/log"
 
+	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
 	pbcm "github.com/opisvigilant/futura/proto/gen/common"
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
@@ -26,7 +27,8 @@ type Sender struct {
 	pbc       pbsvc.CollectServiceClient
 	batchSize int
 
-	KubernetesEventChan chan *pbev.KubernetesEvent
+	KubernetesEventChan         chan *pbev.KubernetesEvent
+	KubernetesClusterObjectChan chan *pbcl.KubernetesClusterObject
 }
 
 // Init prepares Webhook configuration
@@ -41,10 +43,11 @@ func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
 
 	resourceChanSize := 200
 	s := &Sender{
-		ctx:                 ctx,
-		batchSize:           1000,
-		pbc:                 client,
-		KubernetesEventChan: make(chan *pbev.KubernetesEvent, 5*resourceChanSize),
+		ctx:                         ctx,
+		batchSize:                   1000,
+		pbc:                         client,
+		KubernetesEventChan:         make(chan *pbev.KubernetesEvent, 5*resourceChanSize),
+		KubernetesClusterObjectChan: make(chan *pbcl.KubernetesClusterObject, 5*resourceChanSize),
 	}
 
 	// events are resynced every 60 seconds on kubernetes informers
@@ -55,6 +58,7 @@ func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
 	// seems safe enough, if not, we can increase the buffer size
 	eventsInterval := 5 * time.Second
 	go s.sendEventsInBatch(s.KubernetesEventChan, eventsInterval)
+	go s.sendObjectsClusterInBatch(s.KubernetesClusterObjectChan, eventsInterval)
 
 	return s, nil
 }
@@ -72,45 +76,93 @@ func (s *Sender) sendEventsInBatch(ch chan *pbev.KubernetesEvent, interval time.
 			randomDuration := time.Duration(rand.Intn(50)) * time.Millisecond
 			time.Sleep(randomDuration)
 
-			s.send(ch)
+			batch := make([]*pbev.KubernetesEvent, 0, s.batchSize)
+			loop := true
+
+			for i := 0; (i < s.batchSize) && loop; i++ {
+				select {
+				case ev := <-ch:
+					batch = append(batch, ev)
+				case <-time.After(100 * time.Millisecond):
+					loop = false
+				}
+			}
+
+			if len(batch) == 0 {
+				return
+			}
+
+			payload := &pbev.KubernetesEventBatch{
+				Metadata: &pbcm.Metadata{
+					IdempotencyKey: uuid.NewString(),
+					WatcherVersion: utils.WatcherVersion,
+					// FIXME: later to be fixed or enriched
+					ClusterId: "",
+					// FIXME: later to be fixed or enriched
+					CloudProvider: "",
+				},
+				Events: batch,
+			}
+
+			// Send the batch to the server
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			if _, err := s.pbc.SendEvents(ctx, payload); err != nil {
+				log.Logger.Error().Msgf("SendEvent failed: %v", err)
+			}
 		}
 	}
 }
 
-func (s *Sender) send(ch <-chan *pbev.KubernetesEvent) {
-	batch := make([]*pbev.KubernetesEvent, 0, s.batchSize)
-	loop := true
+func (s *Sender) sendObjectsClusterInBatch(ch chan *pbcl.KubernetesClusterObject, interval time.Duration) {
+	t := time.NewTicker(interval)
+	defer t.Stop()
 
-	for i := 0; (i < s.batchSize) && loop; i++ {
+	for {
 		select {
-		case ev := <-ch:
-			batch = append(batch, ev)
-		case <-time.After(100 * time.Millisecond):
-			loop = false
+		case <-s.ctx.Done():
+			log.Logger.Info().Msg("stopping sending cluster objects to backend")
+			return
+		case <-t.C:
+			randomDuration := time.Duration(rand.Intn(50)) * time.Millisecond
+			time.Sleep(randomDuration)
+
+			batch := make([]*pbcl.KubernetesClusterObject, 0, s.batchSize)
+			loop := true
+
+			for i := 0; (i < s.batchSize) && loop; i++ {
+				select {
+				case ev := <-ch:
+					batch = append(batch, ev)
+				case <-time.After(100 * time.Millisecond):
+					loop = false
+				}
+			}
+
+			if len(batch) == 0 {
+				return
+			}
+
+			payload := &pbcl.KubernetesClusterObjectBatch{
+				Metadata: &pbcm.Metadata{
+					IdempotencyKey: uuid.NewString(),
+					WatcherVersion: utils.WatcherVersion,
+					// FIXME: later to be fixed or enriched
+					ClusterId: "",
+					// FIXME: later to be fixed or enriched
+					CloudProvider: "",
+				},
+				Objects: batch,
+			}
+
+			// Send the batch to the server
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			if _, err := s.pbc.SendClusterObjects(ctx, payload); err != nil {
+				log.Logger.Error().Msgf("SendEvent failed: %v", err)
+			}
 		}
-	}
-
-	if len(batch) == 0 {
-		return
-	}
-
-	payload := &pbev.KubernetesEventBatch{
-		Metadata: &pbcm.Metadata{
-			IdempotencyKey: uuid.NewString(),
-			WatcherVersion: utils.WatcherVersion,
-			// FIXME: later to be fixed or enriched
-			ClusterId: "",
-			// FIXME: later to be fixed or enriched
-			CloudProvider: "",
-		},
-		Events: batch,
-	}
-
-	// Send the batch to the server
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if _, err := s.pbc.SendEvent(ctx, payload); err != nil {
-		log.Logger.Error().Msgf("SendEvent failed: %v", err)
 	}
 }

@@ -24,28 +24,28 @@ const (
 )
 
 // Main batch message
-type KubernetesObjectMetadataBatch struct {
-	state         protoimpl.MessageState      `protogen:"open.v1"`
-	Metadata      *common.Metadata            `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Objects       []*KubernetesObjectMetadata `protobuf:"bytes,2,rep,name=objects,proto3" json:"objects,omitempty"`
+type KubernetesClusterObjectBatch struct {
+	state         protoimpl.MessageState     `protogen:"open.v1"`
+	Metadata      *common.Metadata           `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Objects       []*KubernetesClusterObject `protobuf:"bytes,2,rep,name=objects,proto3" json:"objects,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *KubernetesObjectMetadataBatch) Reset() {
-	*x = KubernetesObjectMetadataBatch{}
+func (x *KubernetesClusterObjectBatch) Reset() {
+	*x = KubernetesClusterObjectBatch{}
 	mi := &file_cluster_cluster_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *KubernetesObjectMetadataBatch) String() string {
+func (x *KubernetesClusterObjectBatch) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*KubernetesObjectMetadataBatch) ProtoMessage() {}
+func (*KubernetesClusterObjectBatch) ProtoMessage() {}
 
-func (x *KubernetesObjectMetadataBatch) ProtoReflect() protoreflect.Message {
+func (x *KubernetesClusterObjectBatch) ProtoReflect() protoreflect.Message {
 	mi := &file_cluster_cluster_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -57,19 +57,19 @@ func (x *KubernetesObjectMetadataBatch) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use KubernetesObjectMetadataBatch.ProtoReflect.Descriptor instead.
-func (*KubernetesObjectMetadataBatch) Descriptor() ([]byte, []int) {
+// Deprecated: Use KubernetesClusterObjectBatch.ProtoReflect.Descriptor instead.
+func (*KubernetesClusterObjectBatch) Descriptor() ([]byte, []int) {
 	return file_cluster_cluster_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *KubernetesObjectMetadataBatch) GetMetadata() *common.Metadata {
+func (x *KubernetesClusterObjectBatch) GetMetadata() *common.Metadata {
 	if x != nil {
 		return x.Metadata
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadataBatch) GetObjects() []*KubernetesObjectMetadata {
+func (x *KubernetesClusterObjectBatch) GetObjects() []*KubernetesClusterObject {
 	if x != nil {
 		return x.Objects
 	}
@@ -77,7 +77,7 @@ func (x *KubernetesObjectMetadataBatch) GetObjects() []*KubernetesObjectMetadata
 }
 
 // Represents a generic Kubernetes object with rich metadata.
-type KubernetesObjectMetadata struct {
+type KubernetesClusterObject struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Timestamp         *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	Type              string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"` // snapshot | update | delete
@@ -138,20 +138,20 @@ type KubernetesObjectMetadata struct {
 	sizeCache                       protoimpl.SizeCache
 }
 
-func (x *KubernetesObjectMetadata) Reset() {
-	*x = KubernetesObjectMetadata{}
+func (x *KubernetesClusterObject) Reset() {
+	*x = KubernetesClusterObject{}
 	mi := &file_cluster_cluster_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *KubernetesObjectMetadata) String() string {
+func (x *KubernetesClusterObject) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*KubernetesObjectMetadata) ProtoMessage() {}
+func (*KubernetesClusterObject) ProtoMessage() {}
 
-func (x *KubernetesObjectMetadata) ProtoReflect() protoreflect.Message {
+func (x *KubernetesClusterObject) ProtoReflect() protoreflect.Message {
 	mi := &file_cluster_cluster_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -163,341 +163,341 @@ func (x *KubernetesObjectMetadata) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use KubernetesObjectMetadata.ProtoReflect.Descriptor instead.
-func (*KubernetesObjectMetadata) Descriptor() ([]byte, []int) {
+// Deprecated: Use KubernetesClusterObject.ProtoReflect.Descriptor instead.
+func (*KubernetesClusterObject) Descriptor() ([]byte, []int) {
 	return file_cluster_cluster_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *KubernetesObjectMetadata) GetTimestamp() *timestamppb.Timestamp {
+func (x *KubernetesClusterObject) GetTimestamp() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Timestamp
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetType() string {
+func (x *KubernetesClusterObject) GetType() string {
 	if x != nil {
 		return x.Type
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetKind() string {
+func (x *KubernetesClusterObject) GetKind() string {
 	if x != nil {
 		return x.Kind
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetNamespace() string {
+func (x *KubernetesClusterObject) GetNamespace() string {
 	if x != nil {
 		return x.Namespace
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetName() string {
+func (x *KubernetesClusterObject) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetUid() string {
+func (x *KubernetesClusterObject) GetUid() string {
 	if x != nil {
 		return x.Uid
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetLabels() map[string]string {
+func (x *KubernetesClusterObject) GetLabels() map[string]string {
 	if x != nil {
 		return x.Labels
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetAnnotations() map[string]string {
+func (x *KubernetesClusterObject) GetAnnotations() map[string]string {
 	if x != nil {
 		return x.Annotations
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetNodeName() string {
+func (x *KubernetesClusterObject) GetNodeName() string {
 	if x != nil {
 		return x.NodeName
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetStatus() string {
+func (x *KubernetesClusterObject) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetPhase() string {
+func (x *KubernetesClusterObject) GetPhase() string {
 	if x != nil {
 		return x.Phase
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetRestartCount() int64 {
+func (x *KubernetesClusterObject) GetRestartCount() int64 {
 	if x != nil {
 		return x.RestartCount
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetOwnerKind() string {
+func (x *KubernetesClusterObject) GetOwnerKind() string {
 	if x != nil {
 		return x.OwnerKind
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetOwnerName() string {
+func (x *KubernetesClusterObject) GetOwnerName() string {
 	if x != nil {
 		return x.OwnerName
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetReplicas() int64 {
+func (x *KubernetesClusterObject) GetReplicas() int64 {
 	if x != nil {
 		return x.Replicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetReadyReplicas() int64 {
+func (x *KubernetesClusterObject) GetReadyReplicas() int64 {
 	if x != nil {
 		return x.ReadyReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetAvailableReplicas() int64 {
+func (x *KubernetesClusterObject) GetAvailableReplicas() int64 {
 	if x != nil {
 		return x.AvailableReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetUpdatedReplicas() int64 {
+func (x *KubernetesClusterObject) GetUpdatedReplicas() int64 {
 	if x != nil {
 		return x.UpdatedReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetCurrentReplicas() int64 {
+func (x *KubernetesClusterObject) GetCurrentReplicas() int64 {
 	if x != nil {
 		return x.CurrentReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetContainers() []*ContainerSpec {
+func (x *KubernetesClusterObject) GetContainers() []*ContainerSpec {
 	if x != nil {
 		return x.Containers
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetVolumes() []*VolumeSpec {
+func (x *KubernetesClusterObject) GetVolumes() []*VolumeSpec {
 	if x != nil {
 		return x.Volumes
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetTolerations() []string {
+func (x *KubernetesClusterObject) GetTolerations() []string {
 	if x != nil {
 		return x.Tolerations
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetAffinity() map[string]string {
+func (x *KubernetesClusterObject) GetAffinity() map[string]string {
 	if x != nil {
 		return x.Affinity
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetExtra() map[string]string {
+func (x *KubernetesClusterObject) GetExtra() map[string]string {
 	if x != nil {
 		return x.Extra
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetApiVersion() string {
+func (x *KubernetesClusterObject) GetApiVersion() string {
 	if x != nil {
 		return x.ApiVersion
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetHpaMaxReplicas() int64 {
+func (x *KubernetesClusterObject) GetHpaMaxReplicas() int64 {
 	if x != nil {
 		return x.HpaMaxReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetHpaMinReplicas() int64 {
+func (x *KubernetesClusterObject) GetHpaMinReplicas() int64 {
 	if x != nil {
 		return x.HpaMinReplicas
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetHpaScaleTargetRef() string {
+func (x *KubernetesClusterObject) GetHpaScaleTargetRef() string {
 	if x != nil {
 		return x.HpaScaleTargetRef
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetJobActive() int64 {
+func (x *KubernetesClusterObject) GetJobActive() int64 {
 	if x != nil {
 		return x.JobActive
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetJobFailed() int64 {
+func (x *KubernetesClusterObject) GetJobFailed() int64 {
 	if x != nil {
 		return x.JobFailed
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetJobSucceeded() int64 {
+func (x *KubernetesClusterObject) GetJobSucceeded() int64 {
 	if x != nil {
 		return x.JobSucceeded
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetJobParallelism() int64 {
+func (x *KubernetesClusterObject) GetJobParallelism() int64 {
 	if x != nil {
 		return x.JobParallelism
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetJobCompletions() int64 {
+func (x *KubernetesClusterObject) GetJobCompletions() int64 {
 	if x != nil {
 		return x.JobCompletions
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetNsPhaseValue() int64 {
+func (x *KubernetesClusterObject) GetNsPhaseValue() int64 {
 	if x != nil {
 		return x.NsPhaseValue
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetKubeletVersion() string {
+func (x *KubernetesClusterObject) GetKubeletVersion() string {
 	if x != nil {
 		return x.KubeletVersion
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetOsType() string {
+func (x *KubernetesClusterObject) GetOsType() string {
 	if x != nil {
 		return x.OsType
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetOsImage() string {
+func (x *KubernetesClusterObject) GetOsImage() string {
 	if x != nil {
 		return x.OsImage
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetContainerRuntime() string {
+func (x *KubernetesClusterObject) GetContainerRuntime() string {
 	if x != nil {
 		return x.ContainerRuntime
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetContainerRuntimeVersion() string {
+func (x *KubernetesClusterObject) GetContainerRuntimeVersion() string {
 	if x != nil {
 		return x.ContainerRuntimeVersion
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetConditions() []*NodeCondition {
+func (x *KubernetesClusterObject) GetConditions() []*NodeCondition {
 	if x != nil {
 		return x.Conditions
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetAllocatable() *AllocatableResources {
+func (x *KubernetesClusterObject) GetAllocatable() *AllocatableResources {
 	if x != nil {
 		return x.Allocatable
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetPodReason() string {
+func (x *KubernetesClusterObject) GetPodReason() string {
 	if x != nil {
 		return x.PodReason
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetQosClass() string {
+func (x *KubernetesClusterObject) GetQosClass() string {
 	if x != nil {
 		return x.QosClass
 	}
 	return ""
 }
 
-func (x *KubernetesObjectMetadata) GetClusterQuota() *ClusterResourceQuotaMetadata {
+func (x *KubernetesClusterObject) GetClusterQuota() *ClusterResourceQuotaMetadata {
 	if x != nil {
 		return x.ClusterQuota
 	}
 	return nil
 }
 
-func (x *KubernetesObjectMetadata) GetDaemonsetCurrentNumberScheduled() int64 {
+func (x *KubernetesClusterObject) GetDaemonsetCurrentNumberScheduled() int64 {
 	if x != nil {
 		return x.DaemonsetCurrentNumberScheduled
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetDaemonsetDesiredNumberScheduled() int64 {
+func (x *KubernetesClusterObject) GetDaemonsetDesiredNumberScheduled() int64 {
 	if x != nil {
 		return x.DaemonsetDesiredNumberScheduled
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetDaemonsetNumberMisscheduled() int64 {
+func (x *KubernetesClusterObject) GetDaemonsetNumberMisscheduled() int64 {
 	if x != nil {
 		return x.DaemonsetNumberMisscheduled
 	}
 	return 0
 }
 
-func (x *KubernetesObjectMetadata) GetDaemonsetNumberReady() int64 {
+func (x *KubernetesClusterObject) GetDaemonsetNumberReady() int64 {
 	if x != nil {
 		return x.DaemonsetNumberReady
 	}
@@ -1414,19 +1414,19 @@ var File_cluster_cluster_proto protoreflect.FileDescriptor
 
 const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
-	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"\x8a\x01\n" +
-	"\x1dKubernetesObjectMetadataBatch\x12,\n" +
-	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12;\n" +
-	"\aobjects\x18\x02 \x03(\v2!.cluster.KubernetesObjectMetadataR\aobjects\"\xbb\x12\n" +
-	"\x18KubernetesObjectMetadata\x128\n" +
+	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"\x88\x01\n" +
+	"\x1cKubernetesClusterObjectBatch\x12,\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12:\n" +
+	"\aobjects\x18\x02 \x03(\v2 .cluster.KubernetesClusterObjectR\aobjects\"\xb6\x12\n" +
+	"\x17KubernetesClusterObject\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
 	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x1c\n" +
 	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12\x12\n" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12\x10\n" +
-	"\x03uid\x18\x06 \x01(\tR\x03uid\x12E\n" +
-	"\x06labels\x18\a \x03(\v2-.cluster.KubernetesObjectMetadata.LabelsEntryR\x06labels\x12T\n" +
-	"\vannotations\x18\b \x03(\v22.cluster.KubernetesObjectMetadata.AnnotationsEntryR\vannotations\x12\x1b\n" +
+	"\x03uid\x18\x06 \x01(\tR\x03uid\x12D\n" +
+	"\x06labels\x18\a \x03(\v2,.cluster.KubernetesClusterObject.LabelsEntryR\x06labels\x12S\n" +
+	"\vannotations\x18\b \x03(\v21.cluster.KubernetesClusterObject.AnnotationsEntryR\vannotations\x12\x1b\n" +
 	"\tnode_name\x18\t \x01(\tR\bnodeName\x12\x16\n" +
 	"\x06status\x18\n" +
 	" \x01(\tR\x06status\x12\x14\n" +
@@ -1445,9 +1445,9 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"containers\x18\x13 \x03(\v2\x16.cluster.ContainerSpecR\n" +
 	"containers\x12-\n" +
 	"\avolumes\x18\x14 \x03(\v2\x13.cluster.VolumeSpecR\avolumes\x12 \n" +
-	"\vtolerations\x18\x15 \x03(\tR\vtolerations\x12K\n" +
-	"\baffinity\x18\x16 \x03(\v2/.cluster.KubernetesObjectMetadata.AffinityEntryR\baffinity\x12B\n" +
-	"\x05extra\x18\x17 \x03(\v2,.cluster.KubernetesObjectMetadata.ExtraEntryR\x05extra\x12\x1f\n" +
+	"\vtolerations\x18\x15 \x03(\tR\vtolerations\x12J\n" +
+	"\baffinity\x18\x16 \x03(\v2..cluster.KubernetesClusterObject.AffinityEntryR\baffinity\x12A\n" +
+	"\x05extra\x18\x17 \x03(\v2+.cluster.KubernetesClusterObject.ExtraEntryR\x05extra\x12\x1f\n" +
 	"\vapi_version\x18\x18 \x01(\tR\n" +
 	"apiVersion\x12(\n" +
 	"\x10hpa_max_replicas\x18\x19 \x01(\x03R\x0ehpaMaxReplicas\x12(\n" +
@@ -1579,42 +1579,42 @@ func file_cluster_cluster_proto_rawDescGZIP() []byte {
 
 var file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_cluster_cluster_proto_goTypes = []any{
-	(*KubernetesObjectMetadataBatch)(nil), // 0: cluster.KubernetesObjectMetadataBatch
-	(*KubernetesObjectMetadata)(nil),      // 1: cluster.KubernetesObjectMetadata
-	(*ContainerSpec)(nil),                 // 2: cluster.ContainerSpec
-	(*ContainerResources)(nil),            // 3: cluster.ContainerResources
-	(*ResourceQuantities)(nil),            // 4: cluster.ResourceQuantities
-	(*VolumeSpec)(nil),                    // 5: cluster.VolumeSpec
-	(*ContainerState)(nil),                // 6: cluster.ContainerState
-	(*ContainerStateWaiting)(nil),         // 7: cluster.ContainerStateWaiting
-	(*ContainerStateRunning)(nil),         // 8: cluster.ContainerStateRunning
-	(*ContainerStateTerminated)(nil),      // 9: cluster.ContainerStateTerminated
-	(*NodeCondition)(nil),                 // 10: cluster.NodeCondition
-	(*AllocatableResources)(nil),          // 11: cluster.AllocatableResources
-	(*ClusterResourceQuotaMetadata)(nil),  // 12: cluster.ClusterResourceQuotaMetadata
-	(*NamespaceQuota)(nil),                // 13: cluster.NamespaceQuota
-	(*QuotaResource)(nil),                 // 14: cluster.QuotaResource
-	nil,                                   // 15: cluster.KubernetesObjectMetadata.LabelsEntry
-	nil,                                   // 16: cluster.KubernetesObjectMetadata.AnnotationsEntry
-	nil,                                   // 17: cluster.KubernetesObjectMetadata.AffinityEntry
-	nil,                                   // 18: cluster.KubernetesObjectMetadata.ExtraEntry
-	nil,                                   // 19: cluster.AllocatableResources.OthersEntry
-	(*common.Metadata)(nil),               // 20: common.Metadata
-	(*timestamppb.Timestamp)(nil),         // 21: google.protobuf.Timestamp
+	(*KubernetesClusterObjectBatch)(nil), // 0: cluster.KubernetesClusterObjectBatch
+	(*KubernetesClusterObject)(nil),      // 1: cluster.KubernetesClusterObject
+	(*ContainerSpec)(nil),                // 2: cluster.ContainerSpec
+	(*ContainerResources)(nil),           // 3: cluster.ContainerResources
+	(*ResourceQuantities)(nil),           // 4: cluster.ResourceQuantities
+	(*VolumeSpec)(nil),                   // 5: cluster.VolumeSpec
+	(*ContainerState)(nil),               // 6: cluster.ContainerState
+	(*ContainerStateWaiting)(nil),        // 7: cluster.ContainerStateWaiting
+	(*ContainerStateRunning)(nil),        // 8: cluster.ContainerStateRunning
+	(*ContainerStateTerminated)(nil),     // 9: cluster.ContainerStateTerminated
+	(*NodeCondition)(nil),                // 10: cluster.NodeCondition
+	(*AllocatableResources)(nil),         // 11: cluster.AllocatableResources
+	(*ClusterResourceQuotaMetadata)(nil), // 12: cluster.ClusterResourceQuotaMetadata
+	(*NamespaceQuota)(nil),               // 13: cluster.NamespaceQuota
+	(*QuotaResource)(nil),                // 14: cluster.QuotaResource
+	nil,                                  // 15: cluster.KubernetesClusterObject.LabelsEntry
+	nil,                                  // 16: cluster.KubernetesClusterObject.AnnotationsEntry
+	nil,                                  // 17: cluster.KubernetesClusterObject.AffinityEntry
+	nil,                                  // 18: cluster.KubernetesClusterObject.ExtraEntry
+	nil,                                  // 19: cluster.AllocatableResources.OthersEntry
+	(*common.Metadata)(nil),              // 20: common.Metadata
+	(*timestamppb.Timestamp)(nil),        // 21: google.protobuf.Timestamp
 }
 var file_cluster_cluster_proto_depIdxs = []int32{
-	20, // 0: cluster.KubernetesObjectMetadataBatch.metadata:type_name -> common.Metadata
-	1,  // 1: cluster.KubernetesObjectMetadataBatch.objects:type_name -> cluster.KubernetesObjectMetadata
-	21, // 2: cluster.KubernetesObjectMetadata.timestamp:type_name -> google.protobuf.Timestamp
-	15, // 3: cluster.KubernetesObjectMetadata.labels:type_name -> cluster.KubernetesObjectMetadata.LabelsEntry
-	16, // 4: cluster.KubernetesObjectMetadata.annotations:type_name -> cluster.KubernetesObjectMetadata.AnnotationsEntry
-	2,  // 5: cluster.KubernetesObjectMetadata.containers:type_name -> cluster.ContainerSpec
-	5,  // 6: cluster.KubernetesObjectMetadata.volumes:type_name -> cluster.VolumeSpec
-	17, // 7: cluster.KubernetesObjectMetadata.affinity:type_name -> cluster.KubernetesObjectMetadata.AffinityEntry
-	18, // 8: cluster.KubernetesObjectMetadata.extra:type_name -> cluster.KubernetesObjectMetadata.ExtraEntry
-	10, // 9: cluster.KubernetesObjectMetadata.conditions:type_name -> cluster.NodeCondition
-	11, // 10: cluster.KubernetesObjectMetadata.allocatable:type_name -> cluster.AllocatableResources
-	12, // 11: cluster.KubernetesObjectMetadata.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
+	20, // 0: cluster.KubernetesClusterObjectBatch.metadata:type_name -> common.Metadata
+	1,  // 1: cluster.KubernetesClusterObjectBatch.objects:type_name -> cluster.KubernetesClusterObject
+	21, // 2: cluster.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
+	15, // 3: cluster.KubernetesClusterObject.labels:type_name -> cluster.KubernetesClusterObject.LabelsEntry
+	16, // 4: cluster.KubernetesClusterObject.annotations:type_name -> cluster.KubernetesClusterObject.AnnotationsEntry
+	2,  // 5: cluster.KubernetesClusterObject.containers:type_name -> cluster.ContainerSpec
+	5,  // 6: cluster.KubernetesClusterObject.volumes:type_name -> cluster.VolumeSpec
+	17, // 7: cluster.KubernetesClusterObject.affinity:type_name -> cluster.KubernetesClusterObject.AffinityEntry
+	18, // 8: cluster.KubernetesClusterObject.extra:type_name -> cluster.KubernetesClusterObject.ExtraEntry
+	10, // 9: cluster.KubernetesClusterObject.conditions:type_name -> cluster.NodeCondition
+	11, // 10: cluster.KubernetesClusterObject.allocatable:type_name -> cluster.AllocatableResources
+	12, // 11: cluster.KubernetesClusterObject.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
 	3,  // 12: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
 	6,  // 13: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
 	6,  // 14: cluster.ContainerSpec.last_termination_state:type_name -> cluster.ContainerState

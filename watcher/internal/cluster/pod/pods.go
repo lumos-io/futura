@@ -72,8 +72,8 @@ func Transform(pod *corev1.Pod) *corev1.Pod {
 	return newPod
 }
 
-func RecordMetrics(pod *corev1.Pod, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{
+func RecordMetrics(pod *corev1.Pod, ts time.Time) *pbcluster.KubernetesClusterObject {
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp:  timestamppb.New(ts),
 		Status:     string(pod.Status.Phase),
 		PodReason:  string(pod.Status.Reason),
@@ -89,40 +89,6 @@ func RecordMetrics(pod *corev1.Pod, ts time.Time) *pbcluster.KubernetesObjectMet
 		obj.Containers = append(obj.Containers, container.RecordSpecMetrics(c, pod, ts))
 	}
 	return obj
-}
-
-func reasonToInt(reason string) int32 {
-	switch reason {
-	case "Evicted":
-		return 1
-	case "NodeAffinity":
-		return 2
-	case "NodeLost":
-		return 3
-	case "Shutdown":
-		return 4
-	case "UnexpectedAdmissionError":
-		return 5
-	default:
-		return 6
-	}
-}
-
-func phaseToInt(phase corev1.PodPhase) int32 {
-	switch phase {
-	case corev1.PodPending:
-		return 1
-	case corev1.PodRunning:
-		return 2
-	case corev1.PodSucceeded:
-		return 3
-	case corev1.PodFailed:
-		return 4
-	case corev1.PodUnknown:
-		return 5
-	default:
-		return 5
-	}
 }
 
 // GetMetadata returns all metadata associated with the pod.

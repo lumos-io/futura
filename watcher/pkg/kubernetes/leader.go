@@ -59,10 +59,9 @@ func (lee *K8sLeaderElection) stoppedLeading() {
 }
 
 // Start begins the extension's processing.
-func (lee *K8sLeaderElection) Start(_ context.Context) error {
+func (lee *K8sLeaderElection) Start(ctx context.Context) error {
 	log.Logger.Info().Msgf("Starting k8s leader elector with UUID `%s`", lee.leaseHolderID)
-
-	ctx := context.Background()
+	
 	ctx, lee.cancel = context.WithCancel(ctx)
 	// Create the K8s leader elector
 	leaderElector, err := newK8sLeaderElector(lee.config, lee.client, lee.startedLeading, lee.stoppedLeading, lee.leaseHolderID)

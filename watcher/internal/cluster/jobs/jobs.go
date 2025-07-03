@@ -11,8 +11,8 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 )
 
-func RecordMetrics(j *batchv1.Job, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{
+func RecordMetrics(j *batchv1.Job, ts time.Time) *pbcluster.KubernetesClusterObject {
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp:    timestamppb.New(ts),
 		Namespace:    j.Namespace,
 		Name:         j.Name,

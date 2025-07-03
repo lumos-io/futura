@@ -32,12 +32,12 @@ func Transform(statefulset *appsv1.StatefulSet) *appsv1.StatefulSet {
 	}
 }
 
-func RecordMetrics(ss *appsv1.StatefulSet, ts time.Time) *pbcluster.KubernetesObjectMetadata {
+func RecordMetrics(ss *appsv1.StatefulSet, ts time.Time) *pbcluster.KubernetesClusterObject {
 	if ss.Spec.Replicas == nil {
 		return nil
 	}
 
-	obj := &pbcluster.KubernetesObjectMetadata{
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp:       timestamppb.New(ts),
 		Replicas:        int64(*ss.Spec.Replicas),
 		ReadyReplicas:   int64(ss.Status.ReadyReplicas),

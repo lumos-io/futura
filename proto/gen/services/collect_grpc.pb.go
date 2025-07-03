@@ -8,8 +8,8 @@ package collect
 
 import (
 	context "context"
+	cluster "github.com/opisvigilant/futura/proto/gen/cluster"
 	events "github.com/opisvigilant/futura/proto/gen/events"
-	workload "github.com/opisvigilant/futura/proto/gen/workload"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -21,16 +21,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CollectService_SendEvent_FullMethodName  = "/collect.CollectService/SendEvent"
-	CollectService_SendMetric_FullMethodName = "/collect.CollectService/SendMetric"
+	CollectService_SendEvents_FullMethodName         = "/collect.CollectService/SendEvents"
+	CollectService_SendClusterObjects_FullMethodName = "/collect.CollectService/SendClusterObjects"
 )
 
 // CollectServiceClient is the client API for CollectService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CollectServiceClient interface {
-	SendEvent(ctx context.Context, in *events.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error)
-	SendMetric(ctx context.Context, in *workload.ContainerMetricBatch, opts ...grpc.CallOption) (*CollectAck, error)
+	SendEvents(ctx context.Context, in *events.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error)
+	SendClusterObjects(ctx context.Context, in *cluster.KubernetesClusterObjectBatch, opts ...grpc.CallOption) (*CollectAck, error)
 }
 
 type collectServiceClient struct {
@@ -41,20 +41,20 @@ func NewCollectServiceClient(cc grpc.ClientConnInterface) CollectServiceClient {
 	return &collectServiceClient{cc}
 }
 
-func (c *collectServiceClient) SendEvent(ctx context.Context, in *events.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error) {
+func (c *collectServiceClient) SendEvents(ctx context.Context, in *events.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CollectAck)
-	err := c.cc.Invoke(ctx, CollectService_SendEvent_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, CollectService_SendEvents_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *collectServiceClient) SendMetric(ctx context.Context, in *workload.ContainerMetricBatch, opts ...grpc.CallOption) (*CollectAck, error) {
+func (c *collectServiceClient) SendClusterObjects(ctx context.Context, in *cluster.KubernetesClusterObjectBatch, opts ...grpc.CallOption) (*CollectAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CollectAck)
-	err := c.cc.Invoke(ctx, CollectService_SendMetric_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, CollectService_SendClusterObjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +65,8 @@ func (c *collectServiceClient) SendMetric(ctx context.Context, in *workload.Cont
 // All implementations must embed UnimplementedCollectServiceServer
 // for forward compatibility.
 type CollectServiceServer interface {
-	SendEvent(context.Context, *events.KubernetesEventBatch) (*CollectAck, error)
-	SendMetric(context.Context, *workload.ContainerMetricBatch) (*CollectAck, error)
+	SendEvents(context.Context, *events.KubernetesEventBatch) (*CollectAck, error)
+	SendClusterObjects(context.Context, *cluster.KubernetesClusterObjectBatch) (*CollectAck, error)
 	mustEmbedUnimplementedCollectServiceServer()
 }
 
@@ -77,11 +77,11 @@ type CollectServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCollectServiceServer struct{}
 
-func (UnimplementedCollectServiceServer) SendEvent(context.Context, *events.KubernetesEventBatch) (*CollectAck, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendEvent not implemented")
+func (UnimplementedCollectServiceServer) SendEvents(context.Context, *events.KubernetesEventBatch) (*CollectAck, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendEvents not implemented")
 }
-func (UnimplementedCollectServiceServer) SendMetric(context.Context, *workload.ContainerMetricBatch) (*CollectAck, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendMetric not implemented")
+func (UnimplementedCollectServiceServer) SendClusterObjects(context.Context, *cluster.KubernetesClusterObjectBatch) (*CollectAck, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendClusterObjects not implemented")
 }
 func (UnimplementedCollectServiceServer) mustEmbedUnimplementedCollectServiceServer() {}
 func (UnimplementedCollectServiceServer) testEmbeddedByValue()                        {}
@@ -104,38 +104,38 @@ func RegisterCollectServiceServer(s grpc.ServiceRegistrar, srv CollectServiceSer
 	s.RegisterService(&CollectService_ServiceDesc, srv)
 }
 
-func _CollectService_SendEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CollectService_SendEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(events.KubernetesEventBatch)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CollectServiceServer).SendEvent(ctx, in)
+		return srv.(CollectServiceServer).SendEvents(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CollectService_SendEvent_FullMethodName,
+		FullMethod: CollectService_SendEvents_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CollectServiceServer).SendEvent(ctx, req.(*events.KubernetesEventBatch))
+		return srv.(CollectServiceServer).SendEvents(ctx, req.(*events.KubernetesEventBatch))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CollectService_SendMetric_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(workload.ContainerMetricBatch)
+func _CollectService_SendClusterObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(cluster.KubernetesClusterObjectBatch)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CollectServiceServer).SendMetric(ctx, in)
+		return srv.(CollectServiceServer).SendClusterObjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CollectService_SendMetric_FullMethodName,
+		FullMethod: CollectService_SendClusterObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CollectServiceServer).SendMetric(ctx, req.(*workload.ContainerMetricBatch))
+		return srv.(CollectServiceServer).SendClusterObjects(ctx, req.(*cluster.KubernetesClusterObjectBatch))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -148,12 +148,12 @@ var CollectService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CollectServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SendEvent",
-			Handler:    _CollectService_SendEvent_Handler,
+			MethodName: "SendEvents",
+			Handler:    _CollectService_SendEvents_Handler,
 		},
 		{
-			MethodName: "SendMetric",
-			Handler:    _CollectService_SendMetric_Handler,
+			MethodName: "SendClusterObjects",
+			Handler:    _CollectService_SendClusterObjects_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -24,8 +24,8 @@ func Transform(ds *appsv1.DaemonSet) *appsv1.DaemonSet {
 	}
 }
 
-func RecordMetrics(ds *appsv1.DaemonSet, ts time.Time) *pbcluster.KubernetesObjectMetadata {
-	obj := &pbcluster.KubernetesObjectMetadata{
+func RecordMetrics(ds *appsv1.DaemonSet, ts time.Time) *pbcluster.KubernetesClusterObject {
+	obj := &pbcluster.KubernetesClusterObject{
 		Timestamp:                       timestamppb.New(ts),
 		Namespace:                       ds.Namespace,
 		Name:                            ds.Name,

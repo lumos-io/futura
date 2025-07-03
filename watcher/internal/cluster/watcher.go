@@ -70,7 +70,7 @@ type resourceWatcher struct {
 func newResourceWatcher(cfg *config.Configuration, metadataStore *metadata.Store) *resourceWatcher {
 	return &resourceWatcher{
 		metadataStore:       metadataStore,
-		events:              make(chan *metadata.KubernetesResourceEvent),
+		events:              make(chan *metadata.KubernetesResourceEvent, 100_000),
 		initialSyncDone:     &atomic.Bool{},
 		initialSyncTimedOut: &atomic.Bool{},
 		initialTimeout:      defaultInitialSyncTimeout,
@@ -95,9 +95,9 @@ func (rw *resourceWatcher) emitEvent(obj any, eventType metadata.EventType) {
 		}
 		select {
 		case rw.events <- event:
-			
+
 		default:
-			log.Logger.Warn().Msg("Dropping ResourceEvent due to full channel")
+			log.Logger.Warn().Msg("Dropping KubernetesResourceEvent due to full channel")
 		}
 	}
 }
@@ -299,26 +299,17 @@ func (rw *resourceWatcher) setupInformer(gvk schema.GroupVersionKind, informer c
 }
 
 func (rw *resourceWatcher) onAdd(obj any) {
-	log.Logger.Info().Msg("onAdd pre-wait")
 	rw.waitForInitialInformerSync()
-	log.Logger.Info().Msg("onAdd post-wait")
-
 	rw.emitEvent(obj, metadata.EventTypeUpdate)
 }
 
 func (rw *resourceWatcher) onUpdate(oldObj, newObj any) {
-	log.Logger.Info().Msg("onUpdate pre-wait")
 	rw.waitForInitialInformerSync()
-	log.Logger.Info().Msg("onUpdate post-wait")
-
 	rw.emitEvent(newObj, metadata.EventTypeUpdate)
 }
 
 func (rw *resourceWatcher) onDelete(oldObj any) {
-	log.Logger.Info().Msg("onDelete pre-wait")
 	rw.waitForInitialInformerSync()
-	log.Logger.Info().Msg("onDelete post-wait")
-
 	rw.emitEvent(oldObj, metadata.EventTypeDelete)
 }
 
