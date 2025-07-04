@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
+
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 

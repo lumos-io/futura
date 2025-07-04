@@ -20,6 +20,7 @@ type MetadataLabel string
 const MetadataLabelVolumeType MetadataLabel = labelVolumeType
 
 var (
+	Type                                   = "kubeletstats"
 	MetadataLabelContainerID MetadataLabel = MetadataLabel(conventions.ContainerIDKey)
 	supportedLabels                        = map[MetadataLabel]bool{
 		MetadataLabelContainerID: true,

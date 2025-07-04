@@ -6,6 +6,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/cluster"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/events"
+	"github.com/opisvigilant/futura/watcher/internal/stats"
 
 	"github.com/rs/zerolog/log"
 )
@@ -13,7 +14,7 @@ import (
 type Collector struct {
 	kubernetesEventsCollector  *events.KubernetesEventsCollector
 	kubernetesClusterCollector *cluster.KubernetesClusterCollector
-	// kubernetes kubelet
+	kuberentesStatsCollector   *stats.KuberentesStatsCollector
 }
 
 func New(config *config.Configuration) (*Collector, error) {
@@ -24,6 +25,7 @@ func New(config *config.Configuration) (*Collector, error) {
 	return &Collector{
 		kubernetesEventsCollector:  events.New(config),
 		kubernetesClusterCollector: kcc,
+		kuberentesStatsCollector:   stats.New(config),
 	}, nil
 }
 
@@ -38,6 +40,11 @@ func (c *Collector) Start(ctx context.Context) error {
 		return err
 	}
 
+	if err := c.kuberentesStatsCollector.Start(ctx); err != nil {
+		log.Logger.Fatal().Err(err).Msg("failed to start the kubernetes stats collector...")
+		return err
+	}
+
 	return nil
 }
 
@@ -46,6 +53,9 @@ func (c *Collector) Shutdown(ctx context.Context) error {
 		return err
 	}
 	if err := c.kubernetesClusterCollector.Shutdown(ctx); err != nil {
+		return err
+	}
+	if err := c.kuberentesStatsCollector.Shutdown(ctx); err != nil {
 		return err
 	}
 	return nil

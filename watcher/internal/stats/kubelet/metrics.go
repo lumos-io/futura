@@ -3,15 +3,14 @@ package kubelet
 import (
 	"time"
 
+	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
-	"go.uber.org/zap"
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
-func MetricsData(logger *zap.Logger, summary *stats.Summary, metadata Metadata, metricGroupsToCollect map[MetricGroup]bool, allNetworkInterfaces map[MetricGroup]bool, mbs *metadata.MetricsBuilders) []pmetric.Metrics {
+func MetricsData(summary *stats.Summary, metadata Metadata, metricGroupsToCollect map[MetricGroup]bool, allNetworkInterfaces map[MetricGroup]bool, mbs *metadata.MetricsBuilders) []*pbst.Metric {
 	acc := &metricDataAccumulator{
 		metadata:              metadata,
-		logger:                logger,
 		metricGroupsToCollect: metricGroupsToCollect,
 		allNetworkInterfaces:  allNetworkInterfaces,
 		time:                  time.Now(),
@@ -30,5 +29,5 @@ func MetricsData(logger *zap.Logger, summary *stats.Summary, metadata Metadata, 
 			acc.volumeStats(podStats, volumeStats)
 		}
 	}
-	return acc.metricssss
+	return acc.metrics
 }

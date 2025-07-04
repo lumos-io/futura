@@ -3,11 +3,12 @@ package kubelet
 import (
 	"fmt"
 
+	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
-func getContainerResource(rb *metadata.ResourceBuilder, sPod stats.PodStats, sContainer stats.ContainerStats, k8sMetadata Metadata) (pcommon.Resource, error) {
+func getContainerResource(rb *metadata.ResourceBuilder, sPod stats.PodStats, sContainer stats.ContainerStats, k8sMetadata Metadata) (*pbst.Resource, error) {
 	rb.SetK8sPodUID(sPod.PodRef.UID)
 	rb.SetK8sPodName(sPod.PodRef.Name)
 	rb.SetK8sNamespaceName(sPod.PodRef.Namespace)
@@ -21,7 +22,7 @@ func getContainerResource(rb *metadata.ResourceBuilder, sPod stats.PodStats, sCo
 	return rb.Emit(), nil
 }
 
-func getVolumeResourceOptions(rb *metadata.ResourceBuilder, sPod stats.PodStats, vs stats.VolumeStats, k8sMetadata Metadata) (pcommon.Resource, error) {
+func getVolumeResourceOptions(rb *metadata.ResourceBuilder, sPod stats.PodStats, vs stats.VolumeStats, k8sMetadata Metadata) (*pbst.Resource, error) {
 	rb.SetK8sPodUID(sPod.PodRef.UID)
 	rb.SetK8sPodName(sPod.PodRef.Name)
 	rb.SetK8sNamespaceName(sPod.PodRef.Namespace)

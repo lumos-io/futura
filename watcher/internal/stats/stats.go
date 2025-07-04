@@ -8,6 +8,8 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/sender"
 	"github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 	"github.com/rs/zerolog/log"
+
+	k8s "k8s.io/client-go/kubernetes"
 )
 
 type KuberentesStatsCollector struct {
@@ -36,20 +38,50 @@ func (ksc *KuberentesStatsCollector) Start(ctx context.Context) error {
 		return err
 	}
 
-	s, err := sender.New(ctx, ksc.config)
+	if err := ksc.startScrape(k8sClient, ksc.config.Kubernetes.StatsCollectionInterval); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// scrapeKubeletStats scrapes kubelet /stats/summary periodically until the context is cancelled.
+func (ksc *KuberentesStatsCollector) startScrape(client k8s.Interface, interval time.Duration) error {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	_, err := sender.New(ksc.ctx, ksc.config)
 	if err != nil {
 		return err
 	}
 
-	log.Logger.Info().Msg("starting to watch namespaces for the events.")
-	// if len(kec.config.Kubernetes.Namespaces) == 0 {
-	// 	kec.startWatch(corev1.NamespaceAll, k8sClient, s)
-	// } else {
-	// 	for _, ns := range kec.config.Kubernetes.Namespaces {
-	// 		kec.startWatch(ns, k8sClient, s)
-	// 	}
-	// }
-	return nil
+	ks, err := NewKubeletScraper(ksc.config, client)
+	if err != nil {
+		return err
+	}
+
+	if err := ks.Init(); err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-ksc.ctx.Done():
+			log.Logger.Info().Msg("Shutting down kubelet scraper...")
+			return ks.Shutdown()
+		case <-ticker.C:
+			log.Logger.Info().Msg("Scraping kubelet stats...")
+
+			// TODO: scrape all the data
+			if err := ks.DoScrape(); err != nil {
+				return err
+			}
+
+			// TODO: send the scraped data
+			// ...
+		}
+	}
+
 }
 
 func (ksc *KuberentesStatsCollector) Shutdown(context.Context) error {
