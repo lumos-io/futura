@@ -6,29 +6,31 @@ import (
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
+	"github.com/opisvigilant/futura/watcher/utils"
 )
 
-func addMemoryMetrics(mb *metadata.NodeMetricsBuilder, memoryMetrics metadata.MemoryMetrics, s *stats.MemoryStats, currentTime time.Time, r resources, nodeMemoryLimit float64) {
+func addMemoryMetrics(mb *metadata.MetricsBuilder, s *stats.MemoryStats, currentTime time.Time, r resources, nodeMemoryLimit float64) {
 	if s == nil {
 		return
 	}
 
-	recordIntDataPoint(mb, memoryMetrics.Available, s.AvailableBytes, currentTime)
-	recordIntDataPoint(mb, memoryMetrics.Usage, s.UsageBytes, currentTime)
-	recordIntDataPoint(mb, memoryMetrics.Rss, s.RSSBytes, currentTime)
-	recordIntDataPoint(mb, memoryMetrics.WorkingSet, s.WorkingSetBytes, currentTime)
-	recordIntDataPoint(mb, memoryMetrics.PageFaults, s.PageFaults, currentTime)
-	recordIntDataPoint(mb, memoryMetrics.MajorPageFaults, s.MajorPageFaults, currentTime)
+	mb.MemoryMetrics.SetCurrentTime(currentTime)
+	mb.MemoryMetrics.SetAvailable(utils.PointerToUint64(s.AvailableBytes))
+	mb.MemoryMetrics.SetUsage(utils.PointerToUint64(s.UsageBytes))
+	mb.MemoryMetrics.SetRss(utils.PointerToUint64(s.RSSBytes))
+	mb.MemoryMetrics.SetWorkingSet(utils.PointerToUint64(s.WorkingSetBytes))
+	mb.MemoryMetrics.SetPageFaults(utils.PointerToUint64(s.PageFaults))
+	mb.MemoryMetrics.SetMajorPageFaults(utils.PointerToUint64(s.MajorPageFaults))
 
 	if s.UsageBytes != nil {
 		if r.memoryLimit > 0 {
-			memoryMetrics.LimitUtilization(mb, currentTime, float64(*s.UsageBytes)/float64(r.memoryLimit))
+			mb.MemoryMetrics.SetLimitUtilization(float64(*s.UsageBytes) / float64(r.memoryLimit))
 		}
 		if r.memoryRequest > 0 {
-			memoryMetrics.RequestUtilization(mb, currentTime, float64(*s.UsageBytes)/float64(r.memoryRequest))
+			mb.MemoryMetrics.SetRequestUtilization(float64(*s.UsageBytes) / float64(r.memoryRequest))
 		}
 		if nodeMemoryLimit > 0 {
-			memoryMetrics.NodeUtilization(mb, currentTime, float64(*s.UsageBytes)/nodeMemoryLimit)
+			mb.MemoryMetrics.SetNodeUtilization(float64(*s.UsageBytes) / nodeMemoryLimit)
 		}
 	}
 }

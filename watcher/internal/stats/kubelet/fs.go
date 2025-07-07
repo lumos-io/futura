@@ -6,14 +6,16 @@ import (
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
+	"github.com/opisvigilant/futura/watcher/utils"
 )
 
-func addFilesystemMetrics(mb *metadata.NodeMetricsBuilder, filesystemMetrics metadata.FilesystemMetrics, s *stats.FsStats, currentTime time.Time) {
+func addFilesystemMetrics(mb *metadata.MetricsBuilder, s *stats.FsStats, currentTime time.Time) {
 	if s == nil {
 		return
 	}
 
-	recordIntDataPoint(mb, filesystemMetrics.Available, s.AvailableBytes, currentTime)
-	recordIntDataPoint(mb, filesystemMetrics.Capacity, s.CapacityBytes, currentTime)
-	recordIntDataPoint(mb, filesystemMetrics.Usage, s.UsedBytes, currentTime)
+	mb.FilesystemMetrics.SetCurrentTime(currentTime)
+	mb.FilesystemMetrics.SetAvailable(utils.PointerToUint64(s.AvailableBytes))
+	mb.FilesystemMetrics.SetCapacity(utils.PointerToUint64(s.CapacityBytes))
+	mb.FilesystemMetrics.SetUsage(utils.PointerToUint64(s.UsedBytes))
 }

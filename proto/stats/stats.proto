@@ -5,6 +5,7 @@ package stats;
 option go_package = "github.com/opisvigilant/futura/proto/gen/stats;stats";
 
 import "common/metadata.proto";
+import "google/protobuf/timestamp.proto";
 
 // Main batch message
 message KubernetesEventBatch {
@@ -25,6 +26,7 @@ message KubernetesResourceMetric {
     VolumeMetrics volume = 7;
     UptimeMetrics uptime = 8;
   }
+  google.protobuf.Timestamp timestamp = 9;
 }
 
 // Resource represents the metadata of the entity reporting the metrics.
@@ -38,58 +40,65 @@ message Resource {
 
 // Metric represents a single metric datapoint.
 message MetricMetadata {
-  string name = 1;
-  int64 timestamp = 2;
-  string description = 3;
-  map<string, string> labels = 4;
+  string name = 1;  
+  string description = 2;
+  map<string, string> labels = 3;
 }
 
 // Common CPU metrics
 message CPUMetrics {
-  int64 time = 1;
+  double time = 1;
   double usage = 2;
   double utilization = 3;
   double node_utilization = 4;
   double limit_utilization = 5;
   double request_utilization = 6;
+  google.protobuf.Timestamp timestamp = 7;
 }
 
 // Common Memory Metrics
 message MemoryMetrics {
-  int64 available = 1;
-  int64 usage = 2;
+  uint64 available = 1;
+  uint64 usage = 2;  
   double node_utilization = 3;
   double limit_utilization = 4;
   double request_utilization = 5;
-  int64 rss = 6;
-  int64 working_set = 7;
-  int64 page_faults = 8;
-  int64 major_page_faults = 9;
+  uint64 rss = 6;
+  uint64 working_set = 7;
+  uint64 page_faults = 8;
+  uint64 major_page_faults = 9;
+  google.protobuf.Timestamp timestamp = 10;  
 }
 
 // Filesystem Metrics
 message FilesystemMetrics {
-  int64 available = 1;
-  int64 capacity = 2;
-  int64 usage = 3;
+  uint64 available = 1;
+  uint64 capacity = 2;
+  uint64 usage = 3;
+  google.protobuf.Timestamp timestamp = 4;
 }
 
 // Network Metrics
 message NetworkMetrics {
-  int64 io = 1;
-  int64 errors = 2;
+  uint64 io_rx = 1;
+  uint64 io_tx = 2;
+  uint64 errors_rx = 3;
+  uint64 errors_tx = 4;
+  google.protobuf.Timestamp timestamp = 5;
 }
 
 // Volume Metrics
 message VolumeMetrics {
-  int64 available = 1;
-  int64 capacity = 2;
-  int64 inodes = 3;
-  int64 inodes_free = 4;
-  int64 inodes_used = 5;
+  uint64 available = 1;
+  uint64 capacity = 2;
+  uint64 inodes = 3;
+  uint64 inodes_free = 4;
+  uint64 inodes_used = 5;
+  google.protobuf.Timestamp timestamp = 6;
 }
 
 // Uptime Metrics
 message UptimeMetrics {
   int64 uptime = 1;
+  google.protobuf.Timestamp timestamp = 2;
 }

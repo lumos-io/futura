@@ -10,6 +10,7 @@ import (
 	common "github.com/opisvigilant/futura/proto/gen/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -97,6 +98,7 @@ type KubernetesResourceMetric struct {
 	//	*KubernetesResourceMetric_Volume
 	//	*KubernetesResourceMetric_Uptime
 	MetricValue   isKubernetesResourceMetric_MetricValue `protobuf_oneof:"metric_value"`
+	Timestamp     *timestamppb.Timestamp                 `protobuf:"bytes,9,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -202,6 +204,13 @@ func (x *KubernetesResourceMetric) GetUptime() *UptimeMetrics {
 		if x, ok := x.MetricValue.(*KubernetesResourceMetric_Uptime); ok {
 			return x.Uptime
 		}
+	}
+	return nil
+}
+
+func (x *KubernetesResourceMetric) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
 	}
 	return nil
 }
@@ -327,9 +336,8 @@ func (x *Resource) GetAttributes() map[string]string {
 type MetricMetadata struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Timestamp     int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Labels        map[string]string      `protobuf:"bytes,4,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,3,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -371,13 +379,6 @@ func (x *MetricMetadata) GetName() string {
 	return ""
 }
 
-func (x *MetricMetadata) GetTimestamp() int64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
 func (x *MetricMetadata) GetDescription() string {
 	if x != nil {
 		return x.Description
@@ -395,12 +396,13 @@ func (x *MetricMetadata) GetLabels() map[string]string {
 // Common CPU metrics
 type CPUMetrics struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	Time               int64                  `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	Time               float64                `protobuf:"fixed64,1,opt,name=time,proto3" json:"time,omitempty"`
 	Usage              float64                `protobuf:"fixed64,2,opt,name=usage,proto3" json:"usage,omitempty"`
 	Utilization        float64                `protobuf:"fixed64,3,opt,name=utilization,proto3" json:"utilization,omitempty"`
 	NodeUtilization    float64                `protobuf:"fixed64,4,opt,name=node_utilization,json=nodeUtilization,proto3" json:"node_utilization,omitempty"`
 	LimitUtilization   float64                `protobuf:"fixed64,5,opt,name=limit_utilization,json=limitUtilization,proto3" json:"limit_utilization,omitempty"`
 	RequestUtilization float64                `protobuf:"fixed64,6,opt,name=request_utilization,json=requestUtilization,proto3" json:"request_utilization,omitempty"`
+	Timestamp          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -435,7 +437,7 @@ func (*CPUMetrics) Descriptor() ([]byte, []int) {
 	return file_stats_stats_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *CPUMetrics) GetTime() int64 {
+func (x *CPUMetrics) GetTime() float64 {
 	if x != nil {
 		return x.Time
 	}
@@ -477,18 +479,26 @@ func (x *CPUMetrics) GetRequestUtilization() float64 {
 	return 0
 }
 
+func (x *CPUMetrics) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
 // Common Memory Metrics
 type MemoryMetrics struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	Available          int64                  `protobuf:"varint,1,opt,name=available,proto3" json:"available,omitempty"`
-	Usage              int64                  `protobuf:"varint,2,opt,name=usage,proto3" json:"usage,omitempty"`
+	Available          uint64                 `protobuf:"varint,1,opt,name=available,proto3" json:"available,omitempty"`
+	Usage              uint64                 `protobuf:"varint,2,opt,name=usage,proto3" json:"usage,omitempty"`
 	NodeUtilization    float64                `protobuf:"fixed64,3,opt,name=node_utilization,json=nodeUtilization,proto3" json:"node_utilization,omitempty"`
 	LimitUtilization   float64                `protobuf:"fixed64,4,opt,name=limit_utilization,json=limitUtilization,proto3" json:"limit_utilization,omitempty"`
 	RequestUtilization float64                `protobuf:"fixed64,5,opt,name=request_utilization,json=requestUtilization,proto3" json:"request_utilization,omitempty"`
-	Rss                int64                  `protobuf:"varint,6,opt,name=rss,proto3" json:"rss,omitempty"`
-	WorkingSet         int64                  `protobuf:"varint,7,opt,name=working_set,json=workingSet,proto3" json:"working_set,omitempty"`
-	PageFaults         int64                  `protobuf:"varint,8,opt,name=page_faults,json=pageFaults,proto3" json:"page_faults,omitempty"`
-	MajorPageFaults    int64                  `protobuf:"varint,9,opt,name=major_page_faults,json=majorPageFaults,proto3" json:"major_page_faults,omitempty"`
+	Rss                uint64                 `protobuf:"varint,6,opt,name=rss,proto3" json:"rss,omitempty"`
+	WorkingSet         uint64                 `protobuf:"varint,7,opt,name=working_set,json=workingSet,proto3" json:"working_set,omitempty"`
+	PageFaults         uint64                 `protobuf:"varint,8,opt,name=page_faults,json=pageFaults,proto3" json:"page_faults,omitempty"`
+	MajorPageFaults    uint64                 `protobuf:"varint,9,opt,name=major_page_faults,json=majorPageFaults,proto3" json:"major_page_faults,omitempty"`
+	Timestamp          *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -523,14 +533,14 @@ func (*MemoryMetrics) Descriptor() ([]byte, []int) {
 	return file_stats_stats_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *MemoryMetrics) GetAvailable() int64 {
+func (x *MemoryMetrics) GetAvailable() uint64 {
 	if x != nil {
 		return x.Available
 	}
 	return 0
 }
 
-func (x *MemoryMetrics) GetUsage() int64 {
+func (x *MemoryMetrics) GetUsage() uint64 {
 	if x != nil {
 		return x.Usage
 	}
@@ -558,40 +568,48 @@ func (x *MemoryMetrics) GetRequestUtilization() float64 {
 	return 0
 }
 
-func (x *MemoryMetrics) GetRss() int64 {
+func (x *MemoryMetrics) GetRss() uint64 {
 	if x != nil {
 		return x.Rss
 	}
 	return 0
 }
 
-func (x *MemoryMetrics) GetWorkingSet() int64 {
+func (x *MemoryMetrics) GetWorkingSet() uint64 {
 	if x != nil {
 		return x.WorkingSet
 	}
 	return 0
 }
 
-func (x *MemoryMetrics) GetPageFaults() int64 {
+func (x *MemoryMetrics) GetPageFaults() uint64 {
 	if x != nil {
 		return x.PageFaults
 	}
 	return 0
 }
 
-func (x *MemoryMetrics) GetMajorPageFaults() int64 {
+func (x *MemoryMetrics) GetMajorPageFaults() uint64 {
 	if x != nil {
 		return x.MajorPageFaults
 	}
 	return 0
 }
 
+func (x *MemoryMetrics) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
 // Filesystem Metrics
 type FilesystemMetrics struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Available     int64                  `protobuf:"varint,1,opt,name=available,proto3" json:"available,omitempty"`
-	Capacity      int64                  `protobuf:"varint,2,opt,name=capacity,proto3" json:"capacity,omitempty"`
-	Usage         int64                  `protobuf:"varint,3,opt,name=usage,proto3" json:"usage,omitempty"`
+	Available     uint64                 `protobuf:"varint,1,opt,name=available,proto3" json:"available,omitempty"`
+	Capacity      uint64                 `protobuf:"varint,2,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	Usage         uint64                 `protobuf:"varint,3,opt,name=usage,proto3" json:"usage,omitempty"`
+	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -626,32 +644,42 @@ func (*FilesystemMetrics) Descriptor() ([]byte, []int) {
 	return file_stats_stats_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *FilesystemMetrics) GetAvailable() int64 {
+func (x *FilesystemMetrics) GetAvailable() uint64 {
 	if x != nil {
 		return x.Available
 	}
 	return 0
 }
 
-func (x *FilesystemMetrics) GetCapacity() int64 {
+func (x *FilesystemMetrics) GetCapacity() uint64 {
 	if x != nil {
 		return x.Capacity
 	}
 	return 0
 }
 
-func (x *FilesystemMetrics) GetUsage() int64 {
+func (x *FilesystemMetrics) GetUsage() uint64 {
 	if x != nil {
 		return x.Usage
 	}
 	return 0
 }
 
+func (x *FilesystemMetrics) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
 // Network Metrics
 type NetworkMetrics struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Io            int64                  `protobuf:"varint,1,opt,name=io,proto3" json:"io,omitempty"`
-	Errors        int64                  `protobuf:"varint,2,opt,name=errors,proto3" json:"errors,omitempty"`
+	IoRx          uint64                 `protobuf:"varint,1,opt,name=io_rx,json=ioRx,proto3" json:"io_rx,omitempty"`
+	IoTx          uint64                 `protobuf:"varint,2,opt,name=io_tx,json=ioTx,proto3" json:"io_tx,omitempty"`
+	ErrorsRx      uint64                 `protobuf:"varint,3,opt,name=errors_rx,json=errorsRx,proto3" json:"errors_rx,omitempty"`
+	ErrorsTx      uint64                 `protobuf:"varint,4,opt,name=errors_tx,json=errorsTx,proto3" json:"errors_tx,omitempty"`
+	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -686,28 +714,50 @@ func (*NetworkMetrics) Descriptor() ([]byte, []int) {
 	return file_stats_stats_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *NetworkMetrics) GetIo() int64 {
+func (x *NetworkMetrics) GetIoRx() uint64 {
 	if x != nil {
-		return x.Io
+		return x.IoRx
 	}
 	return 0
 }
 
-func (x *NetworkMetrics) GetErrors() int64 {
+func (x *NetworkMetrics) GetIoTx() uint64 {
 	if x != nil {
-		return x.Errors
+		return x.IoTx
 	}
 	return 0
+}
+
+func (x *NetworkMetrics) GetErrorsRx() uint64 {
+	if x != nil {
+		return x.ErrorsRx
+	}
+	return 0
+}
+
+func (x *NetworkMetrics) GetErrorsTx() uint64 {
+	if x != nil {
+		return x.ErrorsTx
+	}
+	return 0
+}
+
+func (x *NetworkMetrics) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
 }
 
 // Volume Metrics
 type VolumeMetrics struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Available     int64                  `protobuf:"varint,1,opt,name=available,proto3" json:"available,omitempty"`
-	Capacity      int64                  `protobuf:"varint,2,opt,name=capacity,proto3" json:"capacity,omitempty"`
-	Inodes        int64                  `protobuf:"varint,3,opt,name=inodes,proto3" json:"inodes,omitempty"`
-	InodesFree    int64                  `protobuf:"varint,4,opt,name=inodes_free,json=inodesFree,proto3" json:"inodes_free,omitempty"`
-	InodesUsed    int64                  `protobuf:"varint,5,opt,name=inodes_used,json=inodesUsed,proto3" json:"inodes_used,omitempty"`
+	Available     uint64                 `protobuf:"varint,1,opt,name=available,proto3" json:"available,omitempty"`
+	Capacity      uint64                 `protobuf:"varint,2,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	Inodes        uint64                 `protobuf:"varint,3,opt,name=inodes,proto3" json:"inodes,omitempty"`
+	InodesFree    uint64                 `protobuf:"varint,4,opt,name=inodes_free,json=inodesFree,proto3" json:"inodes_free,omitempty"`
+	InodesUsed    uint64                 `protobuf:"varint,5,opt,name=inodes_used,json=inodesUsed,proto3" json:"inodes_used,omitempty"`
+	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -742,45 +792,53 @@ func (*VolumeMetrics) Descriptor() ([]byte, []int) {
 	return file_stats_stats_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *VolumeMetrics) GetAvailable() int64 {
+func (x *VolumeMetrics) GetAvailable() uint64 {
 	if x != nil {
 		return x.Available
 	}
 	return 0
 }
 
-func (x *VolumeMetrics) GetCapacity() int64 {
+func (x *VolumeMetrics) GetCapacity() uint64 {
 	if x != nil {
 		return x.Capacity
 	}
 	return 0
 }
 
-func (x *VolumeMetrics) GetInodes() int64 {
+func (x *VolumeMetrics) GetInodes() uint64 {
 	if x != nil {
 		return x.Inodes
 	}
 	return 0
 }
 
-func (x *VolumeMetrics) GetInodesFree() int64 {
+func (x *VolumeMetrics) GetInodesFree() uint64 {
 	if x != nil {
 		return x.InodesFree
 	}
 	return 0
 }
 
-func (x *VolumeMetrics) GetInodesUsed() int64 {
+func (x *VolumeMetrics) GetInodesUsed() uint64 {
 	if x != nil {
 		return x.InodesUsed
 	}
 	return 0
 }
 
+func (x *VolumeMetrics) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
 // Uptime Metrics
 type UptimeMetrics struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uptime        int64                  `protobuf:"varint,1,opt,name=uptime,proto3" json:"uptime,omitempty"`
+	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -822,15 +880,22 @@ func (x *UptimeMetrics) GetUptime() int64 {
 	return 0
 }
 
+func (x *UptimeMetrics) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
 var File_stats_stats_proto protoreflect.FileDescriptor
 
 const file_stats_stats_proto_rawDesc = "" +
 	"\n" +
-	"\x11stats/stats.proto\x12\x05stats\x1a\x15common/metadata.proto\"\xab\x01\n" +
+	"\x11stats/stats.proto\x12\x05stats\x1a\x15common/metadata.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x01\n" +
 	"\x14KubernetesEventBatch\x12&\n" +
 	"\x06apikey\x18\x01 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
 	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x12=\n" +
-	"\tresources\x18\x03 \x03(\v2\x1f.stats.KubernetesResourceMetricR\tresources\"\xbd\x03\n" +
+	"\tresources\x18\x03 \x03(\v2\x1f.stats.KubernetesResourceMetricR\tresources\"\xf7\x03\n" +
 	"\x18KubernetesResourceMetric\x12+\n" +
 	"\bresource\x18\x01 \x01(\v2\x0f.stats.ResourceR\bresource\x12>\n" +
 	"\x0fmetric_metadata\x18\x02 \x01(\v2\x15.stats.MetricMetadataR\x0emetricMetadata\x12%\n" +
@@ -841,7 +906,8 @@ const file_stats_stats_proto_rawDesc = "" +
 	"filesystem\x121\n" +
 	"\anetwork\x18\x06 \x01(\v2\x15.stats.NetworkMetricsH\x00R\anetwork\x12.\n" +
 	"\x06volume\x18\a \x01(\v2\x14.stats.VolumeMetricsH\x00R\x06volume\x12.\n" +
-	"\x06uptime\x18\b \x01(\v2\x14.stats.UptimeMetricsH\x00R\x06uptimeB\x0e\n" +
+	"\x06uptime\x18\b \x01(\v2\x14.stats.UptimeMetricsH\x00R\x06uptime\x128\n" +
+	"\ttimestamp\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\ttimestampB\x0e\n" +
 	"\fmetric_value\"\xe2\x01\n" +
 	"\bResource\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x12\n" +
@@ -853,52 +919,60 @@ const file_stats_stats_proto_rawDesc = "" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xda\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbc\x01\n" +
 	"\x0eMetricMetadata\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x129\n" +
-	"\x06labels\x18\x04 \x03(\v2!.stats.MetricMetadata.LabelsEntryR\x06labels\x1a9\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x129\n" +
+	"\x06labels\x18\x03 \x03(\v2!.stats.MetricMetadata.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe1\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9b\x02\n" +
 	"\n" +
 	"CPUMetrics\x12\x12\n" +
-	"\x04time\x18\x01 \x01(\x03R\x04time\x12\x14\n" +
+	"\x04time\x18\x01 \x01(\x01R\x04time\x12\x14\n" +
 	"\x05usage\x18\x02 \x01(\x01R\x05usage\x12 \n" +
 	"\vutilization\x18\x03 \x01(\x01R\vutilization\x12)\n" +
 	"\x10node_utilization\x18\x04 \x01(\x01R\x0fnodeUtilization\x12+\n" +
 	"\x11limit_utilization\x18\x05 \x01(\x01R\x10limitUtilization\x12/\n" +
-	"\x13request_utilization\x18\x06 \x01(\x01R\x12requestUtilization\"\xcc\x02\n" +
+	"\x13request_utilization\x18\x06 \x01(\x01R\x12requestUtilization\x128\n" +
+	"\ttimestamp\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\x86\x03\n" +
 	"\rMemoryMetrics\x12\x1c\n" +
-	"\tavailable\x18\x01 \x01(\x03R\tavailable\x12\x14\n" +
-	"\x05usage\x18\x02 \x01(\x03R\x05usage\x12)\n" +
+	"\tavailable\x18\x01 \x01(\x04R\tavailable\x12\x14\n" +
+	"\x05usage\x18\x02 \x01(\x04R\x05usage\x12)\n" +
 	"\x10node_utilization\x18\x03 \x01(\x01R\x0fnodeUtilization\x12+\n" +
 	"\x11limit_utilization\x18\x04 \x01(\x01R\x10limitUtilization\x12/\n" +
 	"\x13request_utilization\x18\x05 \x01(\x01R\x12requestUtilization\x12\x10\n" +
-	"\x03rss\x18\x06 \x01(\x03R\x03rss\x12\x1f\n" +
-	"\vworking_set\x18\a \x01(\x03R\n" +
+	"\x03rss\x18\x06 \x01(\x04R\x03rss\x12\x1f\n" +
+	"\vworking_set\x18\a \x01(\x04R\n" +
 	"workingSet\x12\x1f\n" +
-	"\vpage_faults\x18\b \x01(\x03R\n" +
+	"\vpage_faults\x18\b \x01(\x04R\n" +
 	"pageFaults\x12*\n" +
-	"\x11major_page_faults\x18\t \x01(\x03R\x0fmajorPageFaults\"c\n" +
+	"\x11major_page_faults\x18\t \x01(\x04R\x0fmajorPageFaults\x128\n" +
+	"\ttimestamp\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\x9d\x01\n" +
 	"\x11FilesystemMetrics\x12\x1c\n" +
-	"\tavailable\x18\x01 \x01(\x03R\tavailable\x12\x1a\n" +
-	"\bcapacity\x18\x02 \x01(\x03R\bcapacity\x12\x14\n" +
-	"\x05usage\x18\x03 \x01(\x03R\x05usage\"8\n" +
-	"\x0eNetworkMetrics\x12\x0e\n" +
-	"\x02io\x18\x01 \x01(\x03R\x02io\x12\x16\n" +
-	"\x06errors\x18\x02 \x01(\x03R\x06errors\"\xa3\x01\n" +
+	"\tavailable\x18\x01 \x01(\x04R\tavailable\x12\x1a\n" +
+	"\bcapacity\x18\x02 \x01(\x04R\bcapacity\x12\x14\n" +
+	"\x05usage\x18\x03 \x01(\x04R\x05usage\x128\n" +
+	"\ttimestamp\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\xae\x01\n" +
+	"\x0eNetworkMetrics\x12\x13\n" +
+	"\x05io_rx\x18\x01 \x01(\x04R\x04ioRx\x12\x13\n" +
+	"\x05io_tx\x18\x02 \x01(\x04R\x04ioTx\x12\x1b\n" +
+	"\terrors_rx\x18\x03 \x01(\x04R\berrorsRx\x12\x1b\n" +
+	"\terrors_tx\x18\x04 \x01(\x04R\berrorsTx\x128\n" +
+	"\ttimestamp\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\xdd\x01\n" +
 	"\rVolumeMetrics\x12\x1c\n" +
-	"\tavailable\x18\x01 \x01(\x03R\tavailable\x12\x1a\n" +
-	"\bcapacity\x18\x02 \x01(\x03R\bcapacity\x12\x16\n" +
-	"\x06inodes\x18\x03 \x01(\x03R\x06inodes\x12\x1f\n" +
-	"\vinodes_free\x18\x04 \x01(\x03R\n" +
+	"\tavailable\x18\x01 \x01(\x04R\tavailable\x12\x1a\n" +
+	"\bcapacity\x18\x02 \x01(\x04R\bcapacity\x12\x16\n" +
+	"\x06inodes\x18\x03 \x01(\x04R\x06inodes\x12\x1f\n" +
+	"\vinodes_free\x18\x04 \x01(\x04R\n" +
 	"inodesFree\x12\x1f\n" +
-	"\vinodes_used\x18\x05 \x01(\x03R\n" +
-	"inodesUsed\"'\n" +
+	"\vinodes_used\x18\x05 \x01(\x04R\n" +
+	"inodesUsed\x128\n" +
+	"\ttimestamp\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"a\n" +
 	"\rUptimeMetrics\x12\x16\n" +
-	"\x06uptime\x18\x01 \x01(\x03R\x06uptimeB6Z4github.com/opisvigilant/futura/proto/gen/stats;statsb\x06proto3"
+	"\x06uptime\x18\x01 \x01(\x03R\x06uptime\x128\n" +
+	"\ttimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestampB6Z4github.com/opisvigilant/futura/proto/gen/stats;statsb\x06proto3"
 
 var (
 	file_stats_stats_proto_rawDescOnce sync.Once
@@ -928,6 +1002,7 @@ var file_stats_stats_proto_goTypes = []any{
 	nil,                              // 11: stats.MetricMetadata.LabelsEntry
 	(*common.APIKey)(nil),            // 12: common.APIKey
 	(*common.Metadata)(nil),          // 13: common.Metadata
+	(*timestamppb.Timestamp)(nil),    // 14: google.protobuf.Timestamp
 }
 var file_stats_stats_proto_depIdxs = []int32{
 	12, // 0: stats.KubernetesEventBatch.apikey:type_name -> common.APIKey
@@ -941,13 +1016,20 @@ var file_stats_stats_proto_depIdxs = []int32{
 	7,  // 8: stats.KubernetesResourceMetric.network:type_name -> stats.NetworkMetrics
 	8,  // 9: stats.KubernetesResourceMetric.volume:type_name -> stats.VolumeMetrics
 	9,  // 10: stats.KubernetesResourceMetric.uptime:type_name -> stats.UptimeMetrics
-	10, // 11: stats.Resource.attributes:type_name -> stats.Resource.AttributesEntry
-	11, // 12: stats.MetricMetadata.labels:type_name -> stats.MetricMetadata.LabelsEntry
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	14, // 11: stats.KubernetesResourceMetric.timestamp:type_name -> google.protobuf.Timestamp
+	10, // 12: stats.Resource.attributes:type_name -> stats.Resource.AttributesEntry
+	11, // 13: stats.MetricMetadata.labels:type_name -> stats.MetricMetadata.LabelsEntry
+	14, // 14: stats.CPUMetrics.timestamp:type_name -> google.protobuf.Timestamp
+	14, // 15: stats.MemoryMetrics.timestamp:type_name -> google.protobuf.Timestamp
+	14, // 16: stats.FilesystemMetrics.timestamp:type_name -> google.protobuf.Timestamp
+	14, // 17: stats.NetworkMetrics.timestamp:type_name -> google.protobuf.Timestamp
+	14, // 18: stats.VolumeMetrics.timestamp:type_name -> google.protobuf.Timestamp
+	14, // 19: stats.UptimeMetrics.timestamp:type_name -> google.protobuf.Timestamp
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_stats_stats_proto_init() }

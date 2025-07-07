@@ -34,3 +34,10 @@ func CloneStringMap(m map[string]string) map[string]string {
 	}
 	return m2
 }
+
+func PointerToUint64(val *uint64) uint64 {
+	if val == nil {
+		return 0
+	}
+	return *val
+}

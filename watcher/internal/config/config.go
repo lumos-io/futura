@@ -72,9 +72,9 @@ func Fetch() *Configuration {
 		},
 		Kubernetes: &Kubernetes{
 			Auth: &Auth{
-				AuthType:           viper.GetString("kubernetes.authType"),
-				KubeContextName:    viper.GetString("kubernetes.kubeContextName"),
-				InsecureSkipVerify: viper.GetBool("kubernetes.insecureSkipVerify"),
+				AuthType:           viper.GetString("kubernetes.auth.authType"),
+				KubeContextName:    viper.GetString("kubernetes.auth.kubeContextName"),
+				InsecureSkipVerify: viper.GetBool("kubernetes.auth.insecureSkipVerify"),
 				KubeletCAFile:      getStringOrDefault("kubernetes.auth.kubeletCaFile", ""),
 				KubeletCertFile:    getStringOrDefault("kubernetes.auth.kubeletCertFile", ""),
 				KubeletKeyFile:     getStringOrDefault("kubernetes.auth.kubeletKeyFile", ""),
@@ -109,7 +109,7 @@ func (c *Configuration) Validate() error {
 	if c.Collect.APIKey == "" {
 		return errors.New("apiKey field must be set with a valid key")
 	}
-	if c.Kubernetes.Auth.AuthType == "" && (c.Kubernetes.Auth.AuthType != "none" || c.Kubernetes.Auth.AuthType == "serviceAccount" || c.Kubernetes.Auth.AuthType == "kubeConfig") {
+	if c.Kubernetes.Auth.AuthType == "" || (c.Kubernetes.Auth.AuthType != "none" && c.Kubernetes.Auth.AuthType != "serviceAccount" && c.Kubernetes.Auth.AuthType != "kubeConfig") {
 		return errors.New("authType must be set with either `none`, `serviceAccount` or `kubeConfig`")
 	}
 	if c.Kubernetes.Auth.AuthType == "kubeConfig" && c.Kubernetes.Auth.KubeContextName == "" {

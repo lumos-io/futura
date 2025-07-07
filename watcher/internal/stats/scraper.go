@@ -46,7 +46,7 @@ func NewKubeletScraper(config *config.Configuration, k8sClient k8s.Interface) (*
 
 	// FIXME: this is only on the read-only port
 	// I need to handle the HTTPS and CA/CertFile situation
-	endpoint := fmt.Sprintf("http://%s:10255", nodeName)
+	endpoint := fmt.Sprintf("https://%s:10250", nodeName)
 	clientProvider, err := kubernetes.NewClientProvider(endpoint, config)
 	if err != nil {
 		return nil, err
@@ -58,9 +58,10 @@ func NewKubeletScraper(config *config.Configuration, k8sClient k8s.Interface) (*
 	rest := kubelet.NewRestClient(client)
 
 	return &KubeletScraper{
-		restClient:       rest,
-		statsProvider:    kubelet.NewStatsProvider(rest),
-		metadataProvider: kubelet.NewMetadataProvider(rest),
+		restClient:         rest,
+		statsProvider:      kubelet.NewStatsProvider(rest),
+		metadataProvider:   kubelet.NewMetadataProvider(rest),
+		cachedVolumeSource: make(map[string]v1.PersistentVolumeSource),
 		metricGroupsToCollect: map[kubelet.MetricGroup]bool{
 			kubelet.ContainerMetricGroup: true,
 			kubelet.PodMetricGroup:       true,
@@ -74,7 +75,7 @@ func NewKubeletScraper(config *config.Configuration, k8sClient k8s.Interface) (*
 		k8sClient: k8sClient,
 		stopCh:    make(chan struct{}),
 		nodeInfo:  &kubelet.NodeInfo{},
-		mbs:       metadata.NewMetricsBuilder(),
+		mbs:       metadata.NewMetricsBuilder(config),
 	}, nil
 }
 
@@ -96,24 +97,24 @@ func (ks *KubeletScraper) DoScrape() error {
 		nodeInfo = ks.node()
 	}
 
-	metaD := kubelet.NewMetadata(podsMetadata, nodeInfo)
+	metaD := kubelet.NewMetadata(podsMetadata, nodeInfo, ks.detailedPVCLabelsSetter())
 	accumulator := kubelet.MetricsData(summary, metaD, ks.metricGroupsToCollect, ks.allNetworkInterfaces, ks.mbs)
 
 	ms := accumulator.Emit()
-	log.Logger.Info().Interface("ms", ms)
+	log.Logger.Info().Interface("ms", ms).Msg("kubelet stats collected...")
 
 	return nil
 }
 
-func (r *KubeletScraper) detailedPVCLabelsSetter() func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error {
+func (ks *KubeletScraper) detailedPVCLabelsSetter() func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error {
 	return func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error {
-		if r.k8sClient == nil {
+		if ks.k8sClient == nil {
 			return nil
 		}
 
-		if _, ok := r.cachedVolumeSource[volCacheID]; !ok {
+		if _, ok := ks.cachedVolumeSource[volCacheID]; !ok {
 			ctx := context.Background()
-			pvc, err := r.k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, volumeClaim, metav1.GetOptions{})
+			pvc, err := ks.k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, volumeClaim, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -121,14 +122,14 @@ func (r *KubeletScraper) detailedPVCLabelsSetter() func(rb *metadata.ResourceBui
 			if volName == "" {
 				return fmt.Errorf("PersistentVolumeClaim %s does not have a volume name", pvc.Name)
 			}
-			pv, err := r.k8sClient.CoreV1().PersistentVolumes().Get(ctx, volName, metav1.GetOptions{})
+			pv, err := ks.k8sClient.CoreV1().PersistentVolumes().Get(ctx, volName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
 			// Cache collected source.
-			r.cachedVolumeSource[volCacheID] = pv.Spec.PersistentVolumeSource
+			ks.cachedVolumeSource[volCacheID] = pv.Spec.PersistentVolumeSource
 		}
-		kubelet.SetPersistentVolumeLabels(rb, r.cachedVolumeSource[volCacheID])
+		kubelet.SetPersistentVolumeLabels(rb, ks.cachedVolumeSource[volCacheID])
 		return nil
 	}
 }

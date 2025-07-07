@@ -1,10 +1,15 @@
 package metadata
 
 import (
+	"time"
+
 	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	"github.com/opisvigilant/futura/watcher/internal/config"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MetricsBuilder struct {
+	Resource          *ResourceBuilder
 	CPUMetrics        *CPUMetricsBuilder
 	MemoryMetrics     *MemoryMetricsBuilder
 	FilesystemMetrics *FilesystemMetricsBuilder
@@ -13,8 +18,9 @@ type MetricsBuilder struct {
 	UptimeMetrics     *UptimeMetricsBuilder
 }
 
-func NewMetricsBuilder() *MetricsBuilder {
+func NewMetricsBuilder(config *config.Configuration) *MetricsBuilder {
 	return &MetricsBuilder{
+		Resource:          NewResourceBuilder(config),
 		CPUMetrics:        NewCPUMetricsBuilder(),
 		MemoryMetrics:     NewMemoryMetricsBuilder(),
 		FilesystemMetrics: NewFilesystemMetricsBuilder(),
@@ -22,14 +28,6 @@ func NewMetricsBuilder() *MetricsBuilder {
 		VolumeMetrics:     NewVolumeMetricsBuilder(),
 		UptimeMetrics:     NewUptimeMetricsBuilder(),
 	}
-}
-
-func (mb *MetricsBuilder) RecordCPUMetricsMetric() {
-
-}
-
-func (mb *MetricsBuilder) RecordUptime() {
-
 }
 
 func (mb *MetricsBuilder) Emit() []*pbst.KubernetesResourceMetric {
@@ -87,11 +85,15 @@ func NewCPUMetricsBuilder() *CPUMetricsBuilder {
 	}
 }
 
-func (b *CPUMetricsBuilder) SetTime(v int64) {
+func (b *CPUMetricsBuilder) SetTime(v float64) {
 	b.metric.Time = v
 }
 
-func (b *CPUMetricsBuilder) GetTime() int64 {
+func (b *CPUMetricsBuilder) SetCurrentTime(v time.Time) {
+	b.metric.Timestamp = timestamppb.New(v)
+}
+
+func (b *CPUMetricsBuilder) GetTime() float64 {
 	return b.metric.Time
 }
 
@@ -137,6 +139,7 @@ func (b *CPUMetricsBuilder) GetRequestUtilization() float64 {
 
 func (b *CPUMetricsBuilder) BuildMetric() *pbst.KubernetesResourceMetric {
 	return &pbst.KubernetesResourceMetric{
+		Timestamp:      timestamppb.Now(),
 		Resource:       b.resource,
 		MetricMetadata: b.metadata,
 		MetricValue: &pbst.KubernetesResourceMetric_Cpu{
@@ -159,19 +162,23 @@ func NewMemoryMetricsBuilder() *MemoryMetricsBuilder {
 	}
 }
 
-func (b *MemoryMetricsBuilder) SetAvailable(v int64) {
+func (b *MemoryMetricsBuilder) SetAvailable(v uint64) {
 	b.metric.Available = v
 }
 
-func (b *MemoryMetricsBuilder) GetAvailable() int64 {
+func (b *MemoryMetricsBuilder) GetAvailable() uint64 {
 	return b.metric.Available
 }
 
-func (b *MemoryMetricsBuilder) SetUsage(v int64) {
+func (b *MemoryMetricsBuilder) SetUsage(v uint64) {
 	b.metric.Usage = v
 }
 
-func (b *MemoryMetricsBuilder) GetUsage() int64 {
+func (b *MemoryMetricsBuilder) SetCurrentTime(v time.Time) {
+	b.metric.Timestamp = timestamppb.New(v)
+}
+
+func (b *MemoryMetricsBuilder) GetUsage() uint64 {
 	return b.metric.Usage
 }
 
@@ -199,35 +206,35 @@ func (b *MemoryMetricsBuilder) GetRequestUtilization() float64 {
 	return b.metric.RequestUtilization
 }
 
-func (b *MemoryMetricsBuilder) SetRss(v int64) {
+func (b *MemoryMetricsBuilder) SetRss(v uint64) {
 	b.metric.Rss = v
 }
 
-func (b *MemoryMetricsBuilder) GetRss() int64 {
+func (b *MemoryMetricsBuilder) GetRss() uint64 {
 	return b.metric.Rss
 }
 
-func (b *MemoryMetricsBuilder) SetWorkingSet(v int64) {
+func (b *MemoryMetricsBuilder) SetWorkingSet(v uint64) {
 	b.metric.WorkingSet = v
 }
 
-func (b *MemoryMetricsBuilder) GetWorkingSet() int64 {
+func (b *MemoryMetricsBuilder) GetWorkingSet() uint64 {
 	return b.metric.WorkingSet
 }
 
-func (b *MemoryMetricsBuilder) SetPageFaults(v int64) {
+func (b *MemoryMetricsBuilder) SetPageFaults(v uint64) {
 	b.metric.PageFaults = v
 }
 
-func (b *MemoryMetricsBuilder) GetPageFaults() int64 {
+func (b *MemoryMetricsBuilder) GetPageFaults() uint64 {
 	return b.metric.PageFaults
 }
 
-func (b *MemoryMetricsBuilder) SetMajorPageFaults(v int64) {
+func (b *MemoryMetricsBuilder) SetMajorPageFaults(v uint64) {
 	b.metric.MajorPageFaults = v
 }
 
-func (b *MemoryMetricsBuilder) GetMajorPageFaults() int64 {
+func (b *MemoryMetricsBuilder) GetMajorPageFaults() uint64 {
 	return b.metric.MajorPageFaults
 }
 
@@ -255,27 +262,31 @@ func NewFilesystemMetricsBuilder() *FilesystemMetricsBuilder {
 	}
 }
 
-func (b *FilesystemMetricsBuilder) SetAvailable(v int64) {
+func (b *FilesystemMetricsBuilder) SetAvailable(v uint64) {
 	b.metric.Available = v
 }
 
-func (b *FilesystemMetricsBuilder) GetAvailable() int64 {
+func (b *FilesystemMetricsBuilder) GetAvailable() uint64 {
 	return b.metric.Available
 }
 
-func (b *FilesystemMetricsBuilder) SetCapacity(v int64) {
+func (b *FilesystemMetricsBuilder) SetCapacity(v uint64) {
 	b.metric.Capacity = v
 }
 
-func (b *FilesystemMetricsBuilder) GetCapacity() int64 {
+func (b *FilesystemMetricsBuilder) SetCurrentTime(v time.Time) {
+	b.metric.Timestamp = timestamppb.New(v)
+}
+
+func (b *FilesystemMetricsBuilder) GetCapacity() uint64 {
 	return b.metric.Capacity
 }
 
-func (b *FilesystemMetricsBuilder) SetUsage(v int64) {
+func (b *FilesystemMetricsBuilder) SetUsage(v uint64) {
 	b.metric.Usage = v
 }
 
-func (b *FilesystemMetricsBuilder) GetUsage() int64 {
+func (b *FilesystemMetricsBuilder) GetUsage() uint64 {
 	return b.metric.Usage
 }
 
@@ -303,20 +314,40 @@ func NewNetworkMetricsBuilder() *NetworkMetricsBuilder {
 	}
 }
 
-func (b *NetworkMetricsBuilder) SetIo(v int64) {
-	b.metric.Io = v
+func (b *NetworkMetricsBuilder) SetIoRX(v uint64) {
+	b.metric.IoRx = v
 }
 
-func (b *NetworkMetricsBuilder) GetIo() int64 {
-	return b.metric.Io
+func (b *NetworkMetricsBuilder) GetIoRX() uint64 {
+	return b.metric.IoRx
 }
 
-func (b *NetworkMetricsBuilder) SetErrors(v int64) {
-	b.metric.Errors = v
+func (b *NetworkMetricsBuilder) SetErrorsRx(v uint64) {
+	b.metric.ErrorsRx = v
 }
 
-func (b *NetworkMetricsBuilder) GetErrors() int64 {
-	return b.metric.Errors
+func (b *NetworkMetricsBuilder) GetErrorsRx() uint64 {
+	return b.metric.ErrorsRx
+}
+
+func (b *NetworkMetricsBuilder) SetIoTx(v uint64) {
+	b.metric.IoTx = v
+}
+
+func (b *NetworkMetricsBuilder) GetIoTx() uint64 {
+	return b.metric.IoTx
+}
+
+func (b *NetworkMetricsBuilder) SetErrorsTx(v uint64) {
+	b.metric.ErrorsTx = v
+}
+
+func (b *NetworkMetricsBuilder) GetErrorsTx() uint64 {
+	return b.metric.ErrorsTx
+}
+
+func (b *NetworkMetricsBuilder) SetCurrentTime(v time.Time) {
+	b.metric.Timestamp = timestamppb.New(v)
 }
 
 func (b *NetworkMetricsBuilder) BuildMetric() *pbst.KubernetesResourceMetric {
@@ -343,43 +374,47 @@ func NewVolumeMetricsBuilder() *VolumeMetricsBuilder {
 	}
 }
 
-func (b *VolumeMetricsBuilder) SetAvailable(v int64) {
+func (b *VolumeMetricsBuilder) SetAvailable(v uint64) {
 	b.metric.Available = v
 }
 
-func (b *VolumeMetricsBuilder) GetAvailable() int64 {
+func (b *VolumeMetricsBuilder) GetAvailable() uint64 {
 	return b.metric.Available
 }
 
-func (b *VolumeMetricsBuilder) SetCapacity(v int64) {
+func (b *VolumeMetricsBuilder) SetCapacity(v uint64) {
 	b.metric.Capacity = v
 }
 
-func (b *VolumeMetricsBuilder) GetCapacity() int64 {
+func (b *VolumeMetricsBuilder) SetCurrentTime(v time.Time) {
+	b.metric.Timestamp = timestamppb.New(v)
+}
+
+func (b *VolumeMetricsBuilder) GetCapacity() uint64 {
 	return b.metric.Capacity
 }
 
-func (b *VolumeMetricsBuilder) SetInodes(v int64) {
+func (b *VolumeMetricsBuilder) SetInodes(v uint64) {
 	b.metric.Inodes = v
 }
 
-func (b *VolumeMetricsBuilder) GetInodes() int64 {
+func (b *VolumeMetricsBuilder) GetInodes() uint64 {
 	return b.metric.Inodes
 }
 
-func (b *VolumeMetricsBuilder) SetInodesFree(v int64) {
+func (b *VolumeMetricsBuilder) SetInodesFree(v uint64) {
 	b.metric.InodesFree = v
 }
 
-func (b *VolumeMetricsBuilder) GetInodesFree() int64 {
+func (b *VolumeMetricsBuilder) GetInodesFree() uint64 {
 	return b.metric.InodesFree
 }
 
-func (b *VolumeMetricsBuilder) SetInodesUsed(v int64) {
+func (b *VolumeMetricsBuilder) SetInodesUsed(v uint64) {
 	b.metric.InodesUsed = v
 }
 
-func (b *VolumeMetricsBuilder) GetInodesUsed() int64 {
+func (b *VolumeMetricsBuilder) GetInodesUsed() uint64 {
 	return b.metric.InodesUsed
 }
 
@@ -409,6 +444,10 @@ func NewUptimeMetricsBuilder() *UptimeMetricsBuilder {
 
 func (b *UptimeMetricsBuilder) SetUptime(v int64) {
 	b.metric.Uptime = v
+}
+
+func (b *UptimeMetricsBuilder) SetCurrentTime(v time.Time) {
+	b.metric.Timestamp = timestamppb.New(v)
 }
 
 func (b *UptimeMetricsBuilder) GetUptime() int64 {

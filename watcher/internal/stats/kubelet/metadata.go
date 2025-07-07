@@ -12,7 +12,6 @@ import (
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
-	"github.com/rs/zerolog/log"
 )
 
 type MetadataLabel string
@@ -47,11 +46,11 @@ func ValidateMetadataLabelsConfig(labels []MetadataLabel) error {
 
 type Metadata struct {
 	// Labels       map[MetadataLabel]bool
-	PodsMetadata *v1.PodList
-	// DetailedPVCResourceSetter func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error
-	podResources       map[string]resources
-	containerResources map[string]resources
-	nodeInfo           NodeInfo
+	PodsMetadata              *v1.PodList
+	DetailedPVCResourceSetter func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error
+	podResources              map[string]resources
+	containerResources        map[string]resources
+	nodeInfo                  NodeInfo
 }
 
 type resources struct {
@@ -82,14 +81,14 @@ func getContainerResources(r *v1.ResourceRequirements) resources {
 	}
 }
 
-func NewMetadata(podsMetadata *v1.PodList, nodeInfo NodeInfo) Metadata {
+func NewMetadata(podsMetadata *v1.PodList, nodeInfo NodeInfo, detailedPVCResourceSetter func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error) Metadata {
 	m := Metadata{
 		// Labels:       getLabelsMap(labels),
-		PodsMetadata: podsMetadata,
-		// DetailedPVCResourceSetter: detailedPVCResourceSetter,
-		podResources:       make(map[string]resources),
-		containerResources: make(map[string]resources),
-		nodeInfo:           nodeInfo,
+		PodsMetadata:              podsMetadata,
+		DetailedPVCResourceSetter: detailedPVCResourceSetter,
+		podResources:              make(map[string]resources),
+		containerResources:        make(map[string]resources),
+		nodeInfo:                  nodeInfo,
 	}
 
 	if podsMetadata != nil {
@@ -176,11 +175,10 @@ func (m *Metadata) setExtraResources(rb *metadata.ResourceBuilder, podRef stats.
 		if volume.PersistentVolumeClaim != nil {
 			// FIXME: what do I do with this???
 			volCacheID := fmt.Sprintf("%s/%s", podRef.UID, extraMetadataFrom)
-			log.Logger.Info().Interface("volCacheID", volCacheID)
-			// err := m.DetailedPVCResourceSetter(rb, volCacheID, volume.PersistentVolumeClaim.ClaimName, podRef.Namespace)
-			// if err != nil {
-			// 	return fmt.Errorf("failed to set labels from volume claim: %w", err)
-			// }
+			err := m.DetailedPVCResourceSetter(rb, volCacheID, volume.PersistentVolumeClaim.ClaimName, podRef.Namespace)
+			if err != nil {
+				return fmt.Errorf("failed to set labels from volume claim: %w", err)
+			}
 		}
 	}
 	return nil

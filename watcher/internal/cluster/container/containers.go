@@ -73,6 +73,7 @@ func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbclu
 	var imageStr string
 	for _, cs := range pod.Status.ContainerStatuses {
 		if cs.Name == c.Name {
+			imageStr = cs.Image
 			containerSpec.Name = c.Name
 			containerSpec.ContainerId = utils.StripContainerID(cs.ContainerID)
 			containerSpec.Image = cs.Image
@@ -89,6 +90,7 @@ func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbclu
 		}
 	}
 
+	log.Logger.Debug().Msgf("imageStr value is `%s`", imageStr)
 	image, err := utils.ParseImageName(imageStr)
 	if err != nil {
 		log.Logger.Error().Err(err).Msgf("error parsing the container image `%s`", imageStr)

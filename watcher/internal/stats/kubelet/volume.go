@@ -8,14 +8,16 @@ import (
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
+	"github.com/opisvigilant/futura/watcher/utils"
 )
 
-func addVolumeMetrics(mb *metadata.MetricsBuilder, volumeMetrics metadata.VolumeMetrics, s stats.VolumeStats, currentTime time.Time) {
-	recordIntDataPoint(mb, volumeMetrics.Available, s.AvailableBytes, currentTime)
-	recordIntDataPoint(mb, volumeMetrics.Capacity, s.CapacityBytes, currentTime)
-	recordIntDataPoint(mb, volumeMetrics.Inodes, s.Inodes, currentTime)
-	recordIntDataPoint(mb, volumeMetrics.InodesFree, s.InodesFree, currentTime)
-	recordIntDataPoint(mb, volumeMetrics.InodesUsed, s.InodesUsed, currentTime)
+func addVolumeMetrics(mb *metadata.MetricsBuilder, s stats.VolumeStats, currentTime time.Time) {
+	mb.VolumeMetrics.SetCurrentTime(currentTime)
+	mb.VolumeMetrics.SetAvailable(utils.PointerToUint64(s.AvailableBytes))
+	mb.VolumeMetrics.SetCapacity(utils.PointerToUint64(s.CapacityBytes))
+	mb.VolumeMetrics.SetInodes(utils.PointerToUint64(s.Inodes))
+	mb.VolumeMetrics.SetInodesFree(utils.PointerToUint64(s.InodesFree))
+	mb.VolumeMetrics.SetInodesUsed(utils.PointerToUint64(s.InodesUsed))
 }
 
 func setResourcesFromVolume(rb *metadata.ResourceBuilder, volume v1.Volume) {

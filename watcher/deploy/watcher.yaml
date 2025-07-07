@@ -50,29 +50,35 @@ metadata:
 data:
   config.toml: |
     # Configuration file running Watcher locally
-
-    title = "Configuration for Watcher Kubernetes"
-
-    debug = true
-    nodeName = "locahost"
-    tag = "v0.0.1"
-
     [collect]
-    host = "pipeline.default.svc.cluster.local"
-    port = "50051"
+    endpoint = "localhost:50051"
+    apiKey = "df9166bbacd761c74aecc50bb7a902342dd61a1de84551e253f7133154947d88"
 
     [kubernetes]
-    authType = "serviceAccount" # required, valid values are `none`, `serviceAccount`, `kubeConfig`
-    kubeContextName = ""
     namespaces = []
     distribution = "kubernetes" # either openshift or kubernetes
-    collectionInterval = "" # in seconds, default is 10
+    objectsCollectionInterval = "" # in seconds, default is 10
+    statsCollectionInterval = "" # in seconds, default is 20
     metadataCollectionInterval = "" # in minutes, default is 5
     leaseName = "futura" # required
     leaseNamespace = "default" # required
     leaseDuration = "" # in seconds, default is 15
     renewDeadline = "" # in seconds, default is 10
     retryPeriod = "" # in seconds, default is 2
+
+    [kubernetes.auth]
+    authType = "serviceAccount" # required, valid values are `none`, `serviceAccount`, `kubeConfig`
+    kubeContextName = ""
+    insecureSkipVerify = true
+    kubeletCaFile = ""
+    kubeletCertFile = ""
+    kubeletKeyFile = ""
+
+    [cloud]
+    provider = "aws" # possible values: aws, azure, gcp, alibaba
+
+    [log]
+    level = "debug" # valid values: debug, info, warn, error
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -163,10 +169,10 @@ rules:
       - delete
   - apiGroups: [""]
     resources: ["nodes/stats"]
-    verbs: ["get"]
+    verbs: ["get", "list"]
   - apiGroups: [""]
     resources: ["nodes/proxy"]
-    verbs: ["get"]
+    verbs: ["get", "list"]
 ---
 # Source: watcher/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1

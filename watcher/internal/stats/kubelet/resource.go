@@ -3,12 +3,11 @@ package kubelet
 import (
 	"fmt"
 
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
-func getContainerResource(rb *metadata.ResourceBuilder, sPod stats.PodStats, sContainer stats.ContainerStats, k8sMetadata Metadata) (*pbst.Resource, error) {
+func getContainerResource(rb *metadata.ResourceBuilder, sPod stats.PodStats, sContainer stats.ContainerStats, k8sMetadata Metadata) error {
 	rb.SetK8sPodUID(sPod.PodRef.UID)
 	rb.SetK8sPodName(sPod.PodRef.Name)
 	rb.SetK8sNamespaceName(sPod.PodRef.Namespace)
@@ -16,13 +15,13 @@ func getContainerResource(rb *metadata.ResourceBuilder, sPod stats.PodStats, sCo
 
 	err := k8sMetadata.setExtraResources(rb, sPod.PodRef, MetadataLabelContainerID, sContainer.Name)
 	if err != nil {
-		return rb.Emit(), fmt.Errorf("failed to set extra labels from metadata: %w", err)
+		return fmt.Errorf("failed to set extra labels from metadata: %w", err)
 	}
 
-	return rb.Emit(), nil
+	return nil
 }
 
-func getVolumeResourceOptions(rb *metadata.ResourceBuilder, sPod stats.PodStats, vs stats.VolumeStats, k8sMetadata Metadata) (*pbst.Resource, error) {
+func getVolumeResourceOptions(rb *metadata.ResourceBuilder, sPod stats.PodStats, vs stats.VolumeStats, k8sMetadata Metadata) error {
 	rb.SetK8sPodUID(sPod.PodRef.UID)
 	rb.SetK8sPodName(sPod.PodRef.Name)
 	rb.SetK8sNamespaceName(sPod.PodRef.Namespace)
@@ -30,8 +29,8 @@ func getVolumeResourceOptions(rb *metadata.ResourceBuilder, sPod stats.PodStats,
 
 	err := k8sMetadata.setExtraResources(rb, sPod.PodRef, MetadataLabelVolumeType, vs.Name)
 	if err != nil {
-		return rb.Emit(), fmt.Errorf("failed to set extra labels from metadata: %w", err)
+		return fmt.Errorf("failed to set extra labels from metadata: %w", err)
 	}
 
-	return rb.Emit(), nil
+	return nil
 }
