@@ -41,3 +41,10 @@ func PointerToUint64(val *uint64) uint64 {
 	}
 	return *val
 }
+
+func PointerToInt64(val *int64) int64 {
+	if val == nil {
+		return 0
+	}
+	return *val
+}

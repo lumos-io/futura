@@ -8,97 +8,178 @@ import "common/metadata.proto";
 import "google/protobuf/timestamp.proto";
 
 // Main batch message
-message KubernetesEventBatch {
+message KubernetesResourceMetric {
   common.APIKey apikey = 1;
   common.Metadata metadata = 2;
-  repeated KubernetesResourceMetric resources = 3;
+  KubernetesSummary summary = 3;
 }
 
-// ResourceMetric ties metrics to a resource.
-message KubernetesResourceMetric {
-  Resource resource = 1;
-  MetricMetadata metric_metadata = 2;
-  oneof metric_value {
-    CPUMetrics cpu = 3;    
-    MemoryMetrics memory = 4;
-    FilesystemMetrics filesystem = 5;
-    NetworkMetrics network = 6;
-    VolumeMetrics volume = 7;
-    UptimeMetrics uptime = 8;
-  }
-  google.protobuf.Timestamp timestamp = 9;
+message KubernetesSummary {
+  NodeStats node = 1;
+  repeated PodStats pods = 2;
 }
 
-// Resource represents the metadata of the entity reporting the metrics.
-message Resource {
-  string kind = 1;              // Node, Pod, Container, etc.
-  string name = 2;              // Name of the resource
-  string namespace = 3;         // Namespace (if applicable)
-  string uid = 4;               // Unique ID
-  map<string, string> attributes = 5; // Extra tags/labels
+message NodeStats {
+  string nodeName = 1;
+  repeated ContainerStats systemContainers = 2;
+  google.protobuf.Timestamp startTime = 3;
+  CPUStats cpu = 4;
+  MemoryStats memory = 5;
+  IOStats io = 6;
+  NetworkStats network = 7;
+  FsStats fs = 8;
+  RuntimeStats runtime = 9;
+  RlimitStats rlimit = 10;
+  SwapStats swap = 11;
 }
 
-// Metric represents a single metric datapoint.
-message MetricMetadata {
-  string name = 1;  
-  string description = 2;
-  map<string, string> labels = 3;
+message RlimitStats {
+  google.protobuf.Timestamp time = 1;
+  int64 maxpid = 2;
+  int64 numOfRunningProcesses = 3;
 }
 
-// Common CPU metrics
-message CPUMetrics {
-  double time = 1;
-  double usage = 2;
-  double utilization = 3;
-  double node_utilization = 4;
-  double limit_utilization = 5;
-  double request_utilization = 6;
-  google.protobuf.Timestamp timestamp = 7;
+message RuntimeStats {
+  FsStats imageFs = 1;
+  FsStats containerFs = 2;
 }
 
-// Common Memory Metrics
-message MemoryMetrics {
-  uint64 available = 1;
-  uint64 usage = 2;  
-  double node_utilization = 3;
-  double limit_utilization = 4;
-  double request_utilization = 5;
-  uint64 rss = 6;
-  uint64 working_set = 7;
-  uint64 page_faults = 8;
-  uint64 major_page_faults = 9;
-  google.protobuf.Timestamp timestamp = 10;  
+message PodStats {
+  PodReference podRef = 1;
+  google.protobuf.Timestamp startTime = 2;
+  repeated ContainerStats containers = 3;
+  CPUStats cpu = 4;
+  MemoryStats memory = 5;
+  IOStats io = 6;
+  NetworkStats network = 7;
+  repeated VolumeStats volume = 8;
+  FsStats ephemeralStorage = 9;
+  ProcessStats processStats = 10;
+  SwapStats swap = 11;
 }
 
-// Filesystem Metrics
-message FilesystemMetrics {
-  uint64 available = 1;
-  uint64 capacity = 2;
-  uint64 usage = 3;
-  google.protobuf.Timestamp timestamp = 4;
+message ProcessStats {
+  uint64 processCount = 1;
 }
 
-// Network Metrics
-message NetworkMetrics {
-  uint64 io_rx = 1;
-  uint64 io_tx = 2;
-  uint64 errors_rx = 3;
-  uint64 errors_tx = 4;
-  google.protobuf.Timestamp timestamp = 5;
+message ContainerStats {
+  string name = 1;
+  google.protobuf.Timestamp startTime = 2;
+  CPUStats cpu = 3;
+  MemoryStats memory = 4;
+  IOStats io = 5;
+  repeated AcceleratorStats accelerators = 6;
+  FsStats rootfs = 7;
+  FsStats logs = 8;
+  repeated UserDefinedMetric userDefinedMetrics = 9;
+  SwapStats swap = 10;
 }
 
-// Volume Metrics
-message VolumeMetrics {
-  uint64 available = 1;
-  uint64 capacity = 2;
-  uint64 inodes = 3;
-  uint64 inodes_free = 4;
-  uint64 inodes_used = 5;
-  google.protobuf.Timestamp timestamp = 6;
+message PodReference {
+  string name = 1;
+  string namespace = 2;
+  string uid = 3;
 }
 
-// Uptime Metrics
-message UptimeMetrics {
-  int64 uptime = 1;
-  google.protobuf.Timestamp timestamp = 2;
+message InterfaceStats {
+  string name = 1;
+  uint64 rxBytes = 2;
+  uint64 rxErrors = 3;
+  uint64 txBytes = 4;
+  uint64 txErrors = 5;
+}
+
+message NetworkStats {
+  google.protobuf.Timestamp time = 1;
+  InterfaceStats interfaceStats = 2;
+  repeated InterfaceStats interfaces = 3;
+}
+
+message CPUStats {
+  google.protobuf.Timestamp time = 1;
+  uint64 usageNanoCores = 2;
+  uint64 usageCoreNanoSeconds = 3;
+  PSIStats psi = 4;
+}
+
+message MemoryStats {
+  google.protobuf.Timestamp time = 1;
+  uint64 availableBytes = 2;
+  uint64 usageBytes = 3;
+  uint64 workingSetBytes = 4;
+  uint64 rssBytes = 5;
+  uint64 pageFaults = 6;
+  uint64 majorPageFaults = 7;
+  PSIStats psi = 8;
+}
+
+message IOStats {
+  google.protobuf.Timestamp time = 1;
+  PSIStats psi = 2;
+}
+
+message PSIStats {
+  PSIData full = 1;
+  PSIData some = 2;
+}
+
+message PSIData {
+  uint64 total = 1;
+  double avg10 = 2;
+  double avg60 = 3;
+  double avg300 = 4;
+}
+
+message SwapStats {
+  google.protobuf.Timestamp time = 1;
+  uint64 swapAvailableBytes = 2;
+  uint64 swapUsageBytes = 3;
+}
+
+message AcceleratorStats {
+  string make = 1;
+  string model = 2;
+  string id = 3;
+  uint64 memoryTotal = 4;
+  uint64 memoryUsed = 5;
+  uint64 dutyCycle = 6;
+}
+
+message VolumeStats {
+  FsStats fsStats = 1;
+  string name = 2;
+  PVCReference pvcRef = 3;
+  VolumeHealthStats volumeHealthStats = 4;
+}
+
+message VolumeHealthStats {
+  bool abnormal = 1;
+}
+
+message PVCReference {
+  string name = 1;
+  string namespace = 2;
+}
+
+message FsStats {
+  google.protobuf.Timestamp time = 1;
+  uint64 availableBytes = 2;
+  uint64 capacityBytes = 3;
+  uint64 usedBytes = 4;
+  uint64 inodesFree = 5;
+  uint64 inodes = 6;
+  uint64 inodesUsed = 7;
+}
+
+message UserDefinedMetricDescriptor {
+  string name = 1;
+  string type = 2;
+  string units = 3;
+  map<string, string> labels = 4;
+}
+
+message UserDefinedMetric {
+  UserDefinedMetricDescriptor descriptor = 1;
+  google.protobuf.Timestamp time = 2;
+  double value = 3;
 }

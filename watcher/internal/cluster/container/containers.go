@@ -90,7 +90,6 @@ func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbclu
 		}
 	}
 
-	log.Logger.Debug().Msgf("imageStr value is `%s`", imageStr)
 	image, err := utils.ParseImageName(imageStr)
 	if err != nil {
 		log.Logger.Error().Err(err).Msgf("error parsing the container image `%s`", imageStr)

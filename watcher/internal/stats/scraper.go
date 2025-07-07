@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -9,30 +8,24 @@ import (
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/stats/kubelet"
-	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
 	"github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 	"github.com/rs/zerolog/log"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
 type KubeletScraper struct {
-	restClient            kubelet.RestClient
-	statsProvider         *kubelet.StatsProvider
-	metadataProvider      *kubelet.MetadataProvider
-	metricGroupsToCollect map[kubelet.MetricGroup]bool
-	allNetworkInterfaces  map[kubelet.MetricGroup]bool
-	mbs                   *metadata.MetricsBuilder
+	restClient       kubelet.RestClient
+	statsProvider    *kubelet.StatsProvider
+	metadataProvider *kubelet.MetadataProvider
 
-	k8sClient          k8s.Interface
-	cachedVolumeSource map[string]v1.PersistentVolumeSource
-	nodeInformer       cache.SharedInformer
-	stopCh             chan struct{}
-	m                  sync.RWMutex
+	k8sClient    k8s.Interface
+	nodeInformer cache.SharedInformer
+	stopCh       chan struct{}
+	m            sync.RWMutex
 
 	// A struct that keeps Node's information
 	nodeInfo *kubelet.NodeInfo
@@ -58,24 +51,12 @@ func NewKubeletScraper(config *config.Configuration, k8sClient k8s.Interface) (*
 	rest := kubelet.NewRestClient(client)
 
 	return &KubeletScraper{
-		restClient:         rest,
-		statsProvider:      kubelet.NewStatsProvider(rest),
-		metadataProvider:   kubelet.NewMetadataProvider(rest),
-		cachedVolumeSource: make(map[string]v1.PersistentVolumeSource),
-		metricGroupsToCollect: map[kubelet.MetricGroup]bool{
-			kubelet.ContainerMetricGroup: true,
-			kubelet.PodMetricGroup:       true,
-			kubelet.NodeMetricGroup:      true,
-			kubelet.VolumeMetricGroup:    true,
-		},
-		allNetworkInterfaces: map[kubelet.MetricGroup]bool{
-			kubelet.NodeMetricGroup: true,
-			kubelet.PodMetricGroup:  true,
-		},
-		k8sClient: k8sClient,
-		stopCh:    make(chan struct{}),
-		nodeInfo:  &kubelet.NodeInfo{},
-		mbs:       metadata.NewMetricsBuilder(config),
+		restClient:       rest,
+		statsProvider:    kubelet.NewStatsProvider(rest),
+		metadataProvider: kubelet.NewMetadataProvider(rest),
+		k8sClient:        k8sClient,
+		stopCh:           make(chan struct{}),
+		nodeInfo:         &kubelet.NodeInfo{},
 	}, nil
 }
 
@@ -97,41 +78,12 @@ func (ks *KubeletScraper) DoScrape() error {
 		nodeInfo = ks.node()
 	}
 
-	metaD := kubelet.NewMetadata(podsMetadata, nodeInfo, ks.detailedPVCLabelsSetter())
-	accumulator := kubelet.MetricsData(summary, metaD, ks.metricGroupsToCollect, ks.allNetworkInterfaces, ks.mbs)
+	metaD := kubelet.NewMetadata(podsMetadata, nodeInfo)
+	accumulator := kubelet.MetricsData(summary, metaD)
 
-	ms := accumulator.Emit()
-	log.Logger.Info().Interface("ms", ms).Msg("kubelet stats collected...")
+	log.Logger.Info().Interface("accumulator", accumulator).Msg("kubelet stats collected...")
 
 	return nil
-}
-
-func (ks *KubeletScraper) detailedPVCLabelsSetter() func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error {
-	return func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error {
-		if ks.k8sClient == nil {
-			return nil
-		}
-
-		if _, ok := ks.cachedVolumeSource[volCacheID]; !ok {
-			ctx := context.Background()
-			pvc, err := ks.k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, volumeClaim, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			volName := pvc.Spec.VolumeName
-			if volName == "" {
-				return fmt.Errorf("PersistentVolumeClaim %s does not have a volume name", pvc.Name)
-			}
-			pv, err := ks.k8sClient.CoreV1().PersistentVolumes().Get(ctx, volName, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			// Cache collected source.
-			ks.cachedVolumeSource[volCacheID] = pv.Spec.PersistentVolumeSource
-		}
-		kubelet.SetPersistentVolumeLabels(rb, ks.cachedVolumeSource[volCacheID])
-		return nil
-	}
 }
 
 func (ks *KubeletScraper) Init() error {
