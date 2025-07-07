@@ -15,7 +15,8 @@ deploy:
 	KO_DOCKER_REPO=docker.io/davideberdin ko apply -f ./deploy/watcher.yaml
 
 .PHONY: run
-run:	
+run:
+	# go generate ./...	
 	go run main.go || true
 
 .PHONY: docker-build

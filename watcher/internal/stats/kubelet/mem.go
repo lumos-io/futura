@@ -8,7 +8,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
 )
 
-func addMemoryMetrics(mb *metadata.MetricsBuilder, memoryMetrics metadata.MemoryMetrics, s *stats.MemoryStats, currentTime time.Time, r resources, nodeMemoryLimit float64) {
+func addMemoryMetrics(mb *metadata.NodeMetricsBuilder, memoryMetrics metadata.MemoryMetrics, s *stats.MemoryStats, currentTime time.Time, r resources, nodeMemoryLimit float64) {
 	if s == nil {
 		return
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
 )
 
-func addFilesystemMetrics(mb *metadata.MetricsBuilder, filesystemMetrics metadata.FilesystemMetrics, s *stats.FsStats, currentTime time.Time) {
+func addFilesystemMetrics(mb *metadata.NodeMetricsBuilder, filesystemMetrics metadata.FilesystemMetrics, s *stats.FsStats, currentTime time.Time) {
 	if s == nil {
 		return
 	}

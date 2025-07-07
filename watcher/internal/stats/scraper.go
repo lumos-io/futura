@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -8,24 +9,31 @@ import (
 
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/stats/kubelet"
+	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
 	"github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 	"github.com/rs/zerolog/log"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
 type KubeletScraper struct {
-	restClient       kubelet.RestClient
-	statsProvider    *kubelet.StatsProvider
-	metadataProvider *kubelet.MetadataProvider
+	restClient            kubelet.RestClient
+	statsProvider         *kubelet.StatsProvider
+	metadataProvider      *kubelet.MetadataProvider
+	metricGroupsToCollect map[kubelet.MetricGroup]bool
+	allNetworkInterfaces  map[kubelet.MetricGroup]bool
+	mbs                   *metadata.MetricsBuilder
 
-	k8sClient    k8s.Interface
-	nodeInformer cache.SharedInformer
-	stopCh       chan struct{}
-	m            sync.RWMutex
+	k8sClient          k8s.Interface
+	cachedVolumeSource map[string]v1.PersistentVolumeSource
+	nodeInformer       cache.SharedInformer
+	stopCh             chan struct{}
+	m                  sync.RWMutex
+
 	// A struct that keeps Node's information
 	nodeInfo *kubelet.NodeInfo
 }
@@ -53,43 +61,76 @@ func NewKubeletScraper(config *config.Configuration, k8sClient k8s.Interface) (*
 		restClient:       rest,
 		statsProvider:    kubelet.NewStatsProvider(rest),
 		metadataProvider: kubelet.NewMetadataProvider(rest),
-		k8sClient:        k8sClient,
-		stopCh:           make(chan struct{}),
-		nodeInfo:         &kubelet.NodeInfo{},
+		metricGroupsToCollect: map[kubelet.MetricGroup]bool{
+			kubelet.ContainerMetricGroup: true,
+			kubelet.PodMetricGroup:       true,
+			kubelet.NodeMetricGroup:      true,
+			kubelet.VolumeMetricGroup:    true,
+		},
+		allNetworkInterfaces: map[kubelet.MetricGroup]bool{
+			kubelet.NodeMetricGroup: true,
+			kubelet.PodMetricGroup:  true,
+		},
+		k8sClient: k8sClient,
+		stopCh:    make(chan struct{}),
+		nodeInfo:  &kubelet.NodeInfo{},
+		mbs:       metadata.NewMetricsBuilder(),
 	}, nil
 }
 
 func (ks *KubeletScraper) DoScrape() error {
-	summary, err := r.statsProvider.StatsSummary()
+	summary, err := ks.statsProvider.StatsSummary()
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("call to /stats/summary endpoint failed")
-		return pmetric.Metrics{}, err
+		return err
 	}
 
-	var podsMetadata *v1.PodList
-	// fetch metadata only when extra metadata labels are needed
-	if len(r.extraMetadataLabels) > 0 || r.needsResources {
-		podsMetadata, err = r.metadataProvider.Pods()
-		if err != nil {
-			log.Logger.Error().Err(err).Msg("call to /pods endpoint failed")
-			return pmetric.Metrics{}, err
-		}
+	podsMetadata, err := ks.metadataProvider.Pods()
+	if err != nil {
+		log.Logger.Error().Err(err).Msg("call to /pods endpoint failed")
+		return err
 	}
 
 	var nodeInfo kubelet.NodeInfo
-	if r.nodeInformer != nil {
-		nodeInfo = r.node()
+	if ks.nodeInformer != nil {
+		nodeInfo = ks.node()
 	}
 
-	metaD := kubelet.NewMetadata(r.extraMetadataLabels, podsMetadata, nodeInfo, r.detailedPVCLabelsSetter())
+	metaD := kubelet.NewMetadata(podsMetadata, nodeInfo)
+	accumulator := kubelet.MetricsData(summary, metaD, ks.metricGroupsToCollect, ks.allNetworkInterfaces, ks.mbs)
 
-	mds := kubelet.MetricsData(r.logger, summary, metaD, r.metricGroupsToCollect, r.allNetworkInterfaces, r.mbs)
-	md := pmetric.NewMetrics()
-	for i := range mds {
-		mds[i].ResourceMetrics().MoveAndAppendTo(md.ResourceMetrics())
-	}
+	ms := accumulator.Emit()
+	log.Logger.Info().Interface("ms", ms)
 
 	return nil
+}
+
+func (r *KubeletScraper) detailedPVCLabelsSetter() func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error {
+	return func(rb *metadata.ResourceBuilder, volCacheID, volumeClaim, namespace string) error {
+		if r.k8sClient == nil {
+			return nil
+		}
+
+		if _, ok := r.cachedVolumeSource[volCacheID]; !ok {
+			ctx := context.Background()
+			pvc, err := r.k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, volumeClaim, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			volName := pvc.Spec.VolumeName
+			if volName == "" {
+				return fmt.Errorf("PersistentVolumeClaim %s does not have a volume name", pvc.Name)
+			}
+			pv, err := r.k8sClient.CoreV1().PersistentVolumes().Get(ctx, volName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			// Cache collected source.
+			r.cachedVolumeSource[volCacheID] = pv.Spec.PersistentVolumeSource
+		}
+		kubelet.SetPersistentVolumeLabels(rb, r.cachedVolumeSource[volCacheID])
+		return nil
+	}
 }
 
 func (ks *KubeletScraper) Init() error {
@@ -108,7 +149,7 @@ func (ks *KubeletScraper) Init() error {
 }
 
 func (ks *KubeletScraper) Shutdown() error {
-	log.Logger.Debug().Msg("executing close")
+	log.Logger.Debug().Msg("KubeStatsCollector executing close...")
 	if ks.stopCh != nil {
 		close(ks.stopCh)
 	}

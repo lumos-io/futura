@@ -12,7 +12,7 @@ type getNetworkDataFunc func(s *stats.NetworkStats) (rx *uint64, tx *uint64)
 
 type getInterfaceDataFunc func(s *stats.InterfaceStats) (rx *uint64, tx *uint64)
 
-func addNetworkMetrics(mb *metadata.MetricsBuilder, networkMetrics metadata.NetworkMetrics, s *stats.NetworkStats, currentTime time.Time, allInterfaces bool) {
+func addNetworkMetrics(mb *metadata.NodeMetricsBuilder, networkMetrics metadata.NetworkMetrics, s *stats.NetworkStats, currentTime time.Time, allInterfaces bool) {
 	if s == nil {
 		return
 	}

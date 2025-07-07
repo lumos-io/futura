@@ -38,13 +38,10 @@ func setResourcesFromVolume(rb *metadata.ResourceBuilder, volume v1.Volume) {
 		awsElasticBlockStoreDims(rb, *volume.AWSElasticBlockStore)
 	case volume.GCEPersistentDisk != nil:
 		gcePersistentDiskDims(rb, *volume.GCEPersistentDisk)
-	case volume.Glusterfs != nil:
-		glusterfsDims(rb, *volume.Glusterfs)
 	}
 }
 
 func SetPersistentVolumeLabels(rb *metadata.ResourceBuilder, pv v1.PersistentVolumeSource) {
-	// TODO: Support more types
 	switch {
 	case pv.Local != nil:
 		rb.SetK8sVolumeType(labelValueLocalVolume)
@@ -52,16 +49,6 @@ func SetPersistentVolumeLabels(rb *metadata.ResourceBuilder, pv v1.PersistentVol
 		awsElasticBlockStoreDims(rb, *pv.AWSElasticBlockStore)
 	case pv.GCEPersistentDisk != nil:
 		gcePersistentDiskDims(rb, *pv.GCEPersistentDisk)
-	case pv.Glusterfs != nil:
-		// pv.Glusterfs is a GlusterfsPersistentVolumeSource instead of GlusterfsVolumeSource,
-		// convert to GlusterfsVolumeSource so a single method can handle both structs. This
-		// can be broken out into separate methods if one is interested in different sets
-		// of labels from the two structs in the future.
-		glusterfsDims(rb, v1.GlusterfsVolumeSource{
-			EndpointsName: pv.Glusterfs.EndpointsName,
-			Path:          pv.Glusterfs.Path,
-			ReadOnly:      pv.Glusterfs.ReadOnly,
-		})
 	}
 }
 
@@ -79,11 +66,4 @@ func gcePersistentDiskDims(rb *metadata.ResourceBuilder, vs v1.GCEPersistentDisk
 	rb.SetGcePdName(vs.PDName)
 	rb.SetFsType(vs.FSType)
 	rb.SetPartition(strconv.Itoa(int(vs.Partition)))
-}
-
-func glusterfsDims(rb *metadata.ResourceBuilder, vs v1.GlusterfsVolumeSource) {
-	rb.SetK8sVolumeType(labelValueGlusterFSVolume)
-	// GlusterFS specific labels.
-	rb.SetGlusterfsEndpointsName(vs.EndpointsName)
-	rb.SetGlusterfsPath(vs.Path)
 }

@@ -14,12 +14,17 @@ import (
 type Configuration struct {
 	Collect    *Collect    `toml:"collect"`
 	Kubernetes *Kubernetes `toml:"kubernetes"`
+	Cloud      *Cloud      `toml:"cloud"`
 	Log        *Log        `toml:"log"`
 }
 
 type Collect struct {
 	Endpoint string `toml:"endpoint"`
 	APIKey   string `toml:"apiKey"`
+}
+
+type Cloud struct {
+	Provider string `toml:"provider"`
 }
 
 type Kubernetes struct {
@@ -61,6 +66,9 @@ func Fetch() *Configuration {
 		Collect: &Collect{
 			Endpoint: getStringOrDefault("collect.endpoint", "localhost:50051"),
 			APIKey:   viper.GetString("collect.apiKey"),
+		},
+		Cloud: &Cloud{
+			Provider: viper.GetString("cloud.provider"),
 		},
 		Kubernetes: &Kubernetes{
 			Auth: &Auth{
@@ -109,6 +117,9 @@ func (c *Configuration) Validate() error {
 	}
 	if c.Kubernetes.LeaseName == "" || c.Kubernetes.LeaseNamespace == "" {
 		return errors.New("lease name and namespace must be set")
+	}
+	if c.Cloud == nil || (c.Cloud.Provider != "aws" && c.Cloud.Provider != "azure" && c.Cloud.Provider != "gcp" && c.Cloud.Provider != "alibaba") {
+		return errors.New("cloud provider missing or invalid value. Valid value is `aws`, `azure`, `gcp` or `alibaba`")
 	}
 	if c.Log != nil {
 		if c.Log.Level != "debug" && c.Log.Level != "info" && c.Log.Level != "warn" && c.Log.Level != "error" {

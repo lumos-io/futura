@@ -23,5 +23,8 @@ kubeletCaFile = ""
 kubeletCertFile = ""
 kubeletKeyFile = ""
 
+[cloud]
+provider = "aws" # possible values: aws, azure, gcp, alibaba
+
 [log]
 level = "debug" # valid values: debug, info, warn, error

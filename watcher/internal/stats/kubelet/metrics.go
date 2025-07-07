@@ -3,12 +3,12 @@ package kubelet
 import (
 	"time"
 
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 	"github.com/opisvigilant/futura/watcher/internal/stats/metadata"
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
-func MetricsData(summary *stats.Summary, metadata Metadata, metricGroupsToCollect map[MetricGroup]bool, allNetworkInterfaces map[MetricGroup]bool, mbs *metadata.MetricsBuilders) []*pbst.Metric {
+func MetricsData(summary *stats.Summary, metadata Metadata, metricGroupsToCollect map[MetricGroup]bool,
+	allNetworkInterfaces map[MetricGroup]bool, mbs *metadata.MetricsBuilder) *metadata.MetricsBuilder {
 	acc := &metricDataAccumulator{
 		metadata:              metadata,
 		metricGroupsToCollect: metricGroupsToCollect,
@@ -29,5 +29,5 @@ func MetricsData(summary *stats.Summary, metadata Metadata, metricGroupsToCollec
 			acc.volumeStats(podStats, volumeStats)
 		}
 	}
-	return acc.metrics
+	return acc.mbs
 }
