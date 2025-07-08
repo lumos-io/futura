@@ -1,5 +1,11 @@
 package metadata
 
+import (
+	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
 // AttributeDirection specifies the value direction attribute.
 type AttributeDirection int
 
@@ -44,4 +50,8 @@ func (at AggregationTemporality) String() string {
 		return "Cumulative"
 	}
 	return ""
+}
+
+func toProtoTime(t time.Time) *timestamppb.Timestamp {
+	return timestamppb.New(t)
 }
