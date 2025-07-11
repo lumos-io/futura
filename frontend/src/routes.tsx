@@ -33,19 +33,11 @@ const allRoutes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: (
-          <PrivateRoute
-            element={<ClustersOverview title="Cluster Overview" />}
-          />
-        ),
+        element: <PrivateRoute element={<ClustersOverview />} />,
       },
       {
         path: "clusters/overview",
-        element: (
-          <PrivateRoute
-            element={<ClustersOverview title="Cluster Overview" />}
-          />
-        ),
+        element: <PrivateRoute element={<ClustersOverview />} />,
       },
       {
         path: "clusters/workloads-health",
