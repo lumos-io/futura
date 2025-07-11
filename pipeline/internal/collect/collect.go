@@ -11,6 +11,7 @@ import (
 	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
+	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 	"github.com/rs/zerolog/log"
 )
 
@@ -62,7 +63,20 @@ func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.Kubern
 		// 	return nil, err
 		// }
 	}
-	return &pbsvc.CollectAck{Status: "ok", Message: "metric received"}, nil
+	return &pbsvc.CollectAck{Status: "ok", Message: "cluster objects received"}, nil
+}
+
+func (s *CollectServer) SendKubeletStats(ctx context.Context, req *pbst.KubernetesKubeletStats) (*pbsvc.CollectAck, error) {
+	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
+		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
+	}
+
+	log.Logger.Debug().Msg(req.KubeletMetrics.String())
+	// if err := s.streamClient.Publish("raw.k8s.kubelet", []byte(req.KubeletMetrics.String())); err != nil {
+	// 	return nil, err
+	// }
+
+	return &pbsvc.CollectAck{Status: "ok", Message: "kubelet stats received"}, nil
 }
 
 func (s *CollectServer) validateAPIKey(ctx context.Context, apiKey string) error {

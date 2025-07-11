@@ -50,7 +50,7 @@ func (ksc *KuberentesStatsCollector) startScrape(client k8s.Interface, interval 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	_, err := sender.New(ksc.ctx, ksc.config)
+	sender, err := sender.New(ksc.ctx, ksc.config)
 	if err != nil {
 		return err
 	}
@@ -72,16 +72,13 @@ func (ksc *KuberentesStatsCollector) startScrape(client k8s.Interface, interval 
 		case <-ticker.C:
 			log.Logger.Info().Msg("Scraping kubelet stats...")
 
-			// TODO: scrape all the data
-			if err := ks.DoScrape(); err != nil {
+			data, err := ks.DoScrape()
+			if err != nil {
 				return err
 			}
-
-			// TODO: send the scraped data
-			// ...
+			sender.KubernetesKubeletMetrics <- data
 		}
 	}
-
 }
 
 func (ksc *KuberentesStatsCollector) Shutdown(context.Context) error {

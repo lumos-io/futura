@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 	"github.com/opisvigilant/futura/watcher/internal/config"
 	"github.com/opisvigilant/futura/watcher/internal/stats/kubelet"
 	"github.com/opisvigilant/futura/watcher/pkg/kubernetes"
@@ -60,17 +61,17 @@ func NewKubeletScraper(config *config.Configuration, k8sClient k8s.Interface) (*
 	}, nil
 }
 
-func (ks *KubeletScraper) DoScrape() error {
+func (ks *KubeletScraper) DoScrape() (*pbst.KubernetesKubeletMetrics, error) {
 	summary, err := ks.statsProvider.StatsSummary()
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("call to /stats/summary endpoint failed")
-		return err
+		return nil, err
 	}
 
 	podsMetadata, err := ks.metadataProvider.Pods()
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("call to /pods endpoint failed")
-		return err
+		return nil, err
 	}
 
 	var nodeInfo kubelet.NodeInfo
@@ -81,9 +82,7 @@ func (ks *KubeletScraper) DoScrape() error {
 	metaD := kubelet.NewMetadata(podsMetadata, nodeInfo)
 	accumulator := kubelet.MetricsData(summary, metaD)
 
-	log.Logger.Info().Interface("accumulator", accumulator).Msg("kubelet stats collected...")
-
-	return nil
+	return accumulator.Emit(), nil
 }
 
 func (ks *KubeletScraper) Init() error {

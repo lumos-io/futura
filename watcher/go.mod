@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/openshift/api v0.0.0-20250620092249-a8cbc218cd2c
 	github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277
+	github.com/opisvigilant/futura/proto v0.0.0-20250711091313-7e8cc766d8a6
 	github.com/spf13/cobra v1.9.1
 	go.opentelemetry.io/otel v1.35.0
 	google.golang.org/grpc v1.73.0
