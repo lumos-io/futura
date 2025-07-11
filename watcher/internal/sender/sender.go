@@ -18,6 +18,7 @@ import (
 	pbcm "github.com/opisvigilant/futura/proto/gen/common"
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
+	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 )
 
 // Sender handler implements handler.Handler interface,
@@ -156,10 +157,6 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbcl.KubernetesClusterObject
 				Metadata: &pbcm.Metadata{
 					IdempotencyKey: uuid.NewString(),
 					WatcherVersion: utils.WatcherVersion,
-					// FIXME: later to be fixed or enriched
-					ClusterId: "",
-					// FIXME: later to be fixed or enriched
-					CloudProvider: "",
 				},
 				Objects: batch,
 			}
@@ -173,4 +170,23 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbcl.KubernetesClusterObject
 			}
 		}
 	}
+}
+
+func (s *Sender) sendKubeletStats(data *pbst.KubernetesKubeletMetrics) error {
+	payload := &pbst.KubernetesKubeletStats{
+		Apikey: &pbcm.APIKey{
+			Key: s.apiKey,
+		},
+		Metadata: &pbcm.Metadata{
+			IdempotencyKey: uuid.NewString(),
+			WatcherVersion: utils.WatcherVersion,
+		},
+		KubeletMetrics: data,
+	}
+
+	// Send the batch to the server
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	return s.pbc.SendKubeletStats(ctx, payload)
 }

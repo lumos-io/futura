@@ -10,6 +10,7 @@ import (
 	context "context"
 	cluster "github.com/opisvigilant/futura/proto/gen/cluster"
 	events "github.com/opisvigilant/futura/proto/gen/events"
+	stats "github.com/opisvigilant/futura/proto/gen/stats"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -23,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	CollectService_SendEvents_FullMethodName         = "/collect.CollectService/SendEvents"
 	CollectService_SendClusterObjects_FullMethodName = "/collect.CollectService/SendClusterObjects"
+	CollectService_SendKubeletMetrics_FullMethodName = "/collect.CollectService/SendKubeletMetrics"
 )
 
 // CollectServiceClient is the client API for CollectService service.
@@ -31,6 +33,7 @@ const (
 type CollectServiceClient interface {
 	SendEvents(ctx context.Context, in *events.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error)
 	SendClusterObjects(ctx context.Context, in *cluster.KubernetesClusterObjectBatch, opts ...grpc.CallOption) (*CollectAck, error)
+	SendKubeletMetrics(ctx context.Context, in *stats.KubernetesKubeletStats, opts ...grpc.CallOption) (*CollectAck, error)
 }
 
 type collectServiceClient struct {
@@ -61,12 +64,23 @@ func (c *collectServiceClient) SendClusterObjects(ctx context.Context, in *clust
 	return out, nil
 }
 
+func (c *collectServiceClient) SendKubeletMetrics(ctx context.Context, in *stats.KubernetesKubeletStats, opts ...grpc.CallOption) (*CollectAck, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CollectAck)
+	err := c.cc.Invoke(ctx, CollectService_SendKubeletMetrics_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CollectServiceServer is the server API for CollectService service.
 // All implementations must embed UnimplementedCollectServiceServer
 // for forward compatibility.
 type CollectServiceServer interface {
 	SendEvents(context.Context, *events.KubernetesEventBatch) (*CollectAck, error)
 	SendClusterObjects(context.Context, *cluster.KubernetesClusterObjectBatch) (*CollectAck, error)
+	SendKubeletMetrics(context.Context, *stats.KubernetesKubeletStats) (*CollectAck, error)
 	mustEmbedUnimplementedCollectServiceServer()
 }
 
@@ -82,6 +96,9 @@ func (UnimplementedCollectServiceServer) SendEvents(context.Context, *events.Kub
 }
 func (UnimplementedCollectServiceServer) SendClusterObjects(context.Context, *cluster.KubernetesClusterObjectBatch) (*CollectAck, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendClusterObjects not implemented")
+}
+func (UnimplementedCollectServiceServer) SendKubeletMetrics(context.Context, *stats.KubernetesKubeletStats) (*CollectAck, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendKubeletMetrics not implemented")
 }
 func (UnimplementedCollectServiceServer) mustEmbedUnimplementedCollectServiceServer() {}
 func (UnimplementedCollectServiceServer) testEmbeddedByValue()                        {}
@@ -140,6 +157,24 @@ func _CollectService_SendClusterObjects_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CollectService_SendKubeletMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(stats.KubernetesKubeletStats)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CollectServiceServer).SendKubeletMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CollectService_SendKubeletMetrics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CollectServiceServer).SendKubeletMetrics(ctx, req.(*stats.KubernetesKubeletStats))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CollectService_ServiceDesc is the grpc.ServiceDesc for CollectService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -154,6 +189,10 @@ var CollectService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendClusterObjects",
 			Handler:    _CollectService_SendClusterObjects_Handler,
+		},
+		{
+			MethodName: "SendKubeletMetrics",
+			Handler:    _CollectService_SendKubeletMetrics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

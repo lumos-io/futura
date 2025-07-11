@@ -9,6 +9,7 @@ package collect
 import (
 	cluster "github.com/opisvigilant/futura/proto/gen/cluster"
 	events "github.com/opisvigilant/futura/proto/gen/events"
+	stats "github.com/opisvigilant/futura/proto/gen/stats"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -79,15 +80,16 @@ var File_services_collect_proto protoreflect.FileDescriptor
 
 const file_services_collect_proto_rawDesc = "" +
 	"\n" +
-	"\x16services/collect.proto\x12\acollect\x1a\x13events/events.proto\x1a\x15cluster/cluster.proto\">\n" +
+	"\x16services/collect.proto\x12\acollect\x1a\x13events/events.proto\x1a\x15cluster/cluster.proto\x1a\x11stats/stats.proto\">\n" +
 	"\n" +
 	"CollectAck\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xa3\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xed\x01\n" +
 	"\x0eCollectService\x12?\n" +
 	"\n" +
 	"SendEvents\x12\x1c.events.KubernetesEventBatch\x1a\x13.collect.CollectAck\x12P\n" +
-	"\x12SendClusterObjects\x12%.cluster.KubernetesClusterObjectBatch\x1a\x13.collect.CollectAckB:Z8github.com/opisvigilant/futura/proto/gen/collect;collectb\x06proto3"
+	"\x12SendClusterObjects\x12%.cluster.KubernetesClusterObjectBatch\x1a\x13.collect.CollectAck\x12H\n" +
+	"\x12SendKubeletMetrics\x12\x1d.stats.KubernetesKubeletStats\x1a\x13.collect.CollectAckB:Z8github.com/opisvigilant/futura/proto/gen/collect;collectb\x06proto3"
 
 var (
 	file_services_collect_proto_rawDescOnce sync.Once
@@ -106,14 +108,17 @@ var file_services_collect_proto_goTypes = []any{
 	(*CollectAck)(nil),                           // 0: collect.CollectAck
 	(*events.KubernetesEventBatch)(nil),          // 1: events.KubernetesEventBatch
 	(*cluster.KubernetesClusterObjectBatch)(nil), // 2: cluster.KubernetesClusterObjectBatch
+	(*stats.KubernetesKubeletStats)(nil),         // 3: stats.KubernetesKubeletStats
 }
 var file_services_collect_proto_depIdxs = []int32{
 	1, // 0: collect.CollectService.SendEvents:input_type -> events.KubernetesEventBatch
 	2, // 1: collect.CollectService.SendClusterObjects:input_type -> cluster.KubernetesClusterObjectBatch
-	0, // 2: collect.CollectService.SendEvents:output_type -> collect.CollectAck
-	0, // 3: collect.CollectService.SendClusterObjects:output_type -> collect.CollectAck
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	3, // 2: collect.CollectService.SendKubeletMetrics:input_type -> stats.KubernetesKubeletStats
+	0, // 3: collect.CollectService.SendEvents:output_type -> collect.CollectAck
+	0, // 4: collect.CollectService.SendClusterObjects:output_type -> collect.CollectAck
+	0, // 5: collect.CollectService.SendKubeletMetrics:output_type -> collect.CollectAck
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

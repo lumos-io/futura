@@ -7,14 +7,13 @@
 package stats
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	common "github.com/opisvigilant/futura/proto/gen/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -25,29 +24,29 @@ const (
 )
 
 // Main batch message
-type KubernetesResourceMetric struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Apikey        *common.APIKey         `protobuf:"bytes,1,opt,name=apikey,proto3" json:"apikey,omitempty"`
-	Metadata      *common.Metadata       `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Summary       *KubernetesSummary     `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type KubernetesKubeletStats struct {
+	state          protoimpl.MessageState    `protogen:"open.v1"`
+	Apikey         *common.APIKey            `protobuf:"bytes,1,opt,name=apikey,proto3" json:"apikey,omitempty"`
+	Metadata       *common.Metadata          `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	KubeletMetrics *KubernetesKubeletMetrics `protobuf:"bytes,3,opt,name=kubeletMetrics,proto3" json:"kubeletMetrics,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
-func (x *KubernetesResourceMetric) Reset() {
-	*x = KubernetesResourceMetric{}
+func (x *KubernetesKubeletStats) Reset() {
+	*x = KubernetesKubeletStats{}
 	mi := &file_stats_stats_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *KubernetesResourceMetric) String() string {
+func (x *KubernetesKubeletStats) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*KubernetesResourceMetric) ProtoMessage() {}
+func (*KubernetesKubeletStats) ProtoMessage() {}
 
-func (x *KubernetesResourceMetric) ProtoReflect() protoreflect.Message {
+func (x *KubernetesKubeletStats) ProtoReflect() protoreflect.Message {
 	mi := &file_stats_stats_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -59,33 +58,33 @@ func (x *KubernetesResourceMetric) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use KubernetesResourceMetric.ProtoReflect.Descriptor instead.
-func (*KubernetesResourceMetric) Descriptor() ([]byte, []int) {
+// Deprecated: Use KubernetesKubeletStats.ProtoReflect.Descriptor instead.
+func (*KubernetesKubeletStats) Descriptor() ([]byte, []int) {
 	return file_stats_stats_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *KubernetesResourceMetric) GetApikey() *common.APIKey {
+func (x *KubernetesKubeletStats) GetApikey() *common.APIKey {
 	if x != nil {
 		return x.Apikey
 	}
 	return nil
 }
 
-func (x *KubernetesResourceMetric) GetMetadata() *common.Metadata {
+func (x *KubernetesKubeletStats) GetMetadata() *common.Metadata {
 	if x != nil {
 		return x.Metadata
 	}
 	return nil
 }
 
-func (x *KubernetesResourceMetric) GetSummary() *KubernetesSummary {
+func (x *KubernetesKubeletStats) GetKubeletMetrics() *KubernetesKubeletMetrics {
 	if x != nil {
-		return x.Summary
+		return x.KubeletMetrics
 	}
 	return nil
 }
 
-type KubernetesSummary struct {
+type KubernetesKubeletMetrics struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Node          *NodeStats             `protobuf:"bytes,1,opt,name=node,proto3" json:"node,omitempty"`
 	Pods          []*PodStats            `protobuf:"bytes,2,rep,name=pods,proto3" json:"pods,omitempty"`
@@ -93,20 +92,20 @@ type KubernetesSummary struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *KubernetesSummary) Reset() {
-	*x = KubernetesSummary{}
+func (x *KubernetesKubeletMetrics) Reset() {
+	*x = KubernetesKubeletMetrics{}
 	mi := &file_stats_stats_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *KubernetesSummary) String() string {
+func (x *KubernetesKubeletMetrics) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*KubernetesSummary) ProtoMessage() {}
+func (*KubernetesKubeletMetrics) ProtoMessage() {}
 
-func (x *KubernetesSummary) ProtoReflect() protoreflect.Message {
+func (x *KubernetesKubeletMetrics) ProtoReflect() protoreflect.Message {
 	mi := &file_stats_stats_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -118,19 +117,19 @@ func (x *KubernetesSummary) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use KubernetesSummary.ProtoReflect.Descriptor instead.
-func (*KubernetesSummary) Descriptor() ([]byte, []int) {
+// Deprecated: Use KubernetesKubeletMetrics.ProtoReflect.Descriptor instead.
+func (*KubernetesKubeletMetrics) Descriptor() ([]byte, []int) {
 	return file_stats_stats_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *KubernetesSummary) GetNode() *NodeStats {
+func (x *KubernetesKubeletMetrics) GetNode() *NodeStats {
 	if x != nil {
 		return x.Node
 	}
 	return nil
 }
 
-func (x *KubernetesSummary) GetPods() []*PodStats {
+func (x *KubernetesKubeletMetrics) GetPods() []*PodStats {
 	if x != nil {
 		return x.Pods
 	}
@@ -1725,12 +1724,12 @@ var File_stats_stats_proto protoreflect.FileDescriptor
 
 const file_stats_stats_proto_rawDesc = "" +
 	"\n" +
-	"\x11stats/stats.proto\x12\x05stats\x1a\x15common/metadata.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa4\x01\n" +
-	"\x18KubernetesResourceMetric\x12&\n" +
+	"\x11stats/stats.proto\x12\x05stats\x1a\x15common/metadata.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb7\x01\n" +
+	"\x16KubernetesKubeletStats\x12&\n" +
 	"\x06apikey\x18\x01 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x122\n" +
-	"\asummary\x18\x03 \x01(\v2\x18.stats.KubernetesSummaryR\asummary\"^\n" +
-	"\x11KubernetesSummary\x12$\n" +
+	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x12G\n" +
+	"\x0ekubeletMetrics\x18\x03 \x01(\v2\x1f.stats.KubernetesKubeletMetricsR\x0ekubeletMetrics\"e\n" +
+	"\x18KubernetesKubeletMetrics\x12$\n" +
 	"\x04node\x18\x01 \x01(\v2\x10.stats.NodeStatsR\x04node\x12#\n" +
 	"\x04pods\x18\x02 \x03(\v2\x0f.stats.PodStatsR\x04pods\"\xe3\x03\n" +
 	"\tNodeStats\x12\x1a\n" +
@@ -1891,8 +1890,8 @@ func file_stats_stats_proto_rawDescGZIP() []byte {
 
 var file_stats_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_stats_stats_proto_goTypes = []any{
-	(*KubernetesResourceMetric)(nil),    // 0: stats.KubernetesResourceMetric
-	(*KubernetesSummary)(nil),           // 1: stats.KubernetesSummary
+	(*KubernetesKubeletStats)(nil),      // 0: stats.KubernetesKubeletStats
+	(*KubernetesKubeletMetrics)(nil),    // 1: stats.KubernetesKubeletMetrics
 	(*NodeStats)(nil),                   // 2: stats.NodeStats
 	(*RlimitStats)(nil),                 // 3: stats.RlimitStats
 	(*RuntimeStats)(nil),                // 4: stats.RuntimeStats
@@ -1921,11 +1920,11 @@ var file_stats_stats_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),       // 27: google.protobuf.Timestamp
 }
 var file_stats_stats_proto_depIdxs = []int32{
-	25, // 0: stats.KubernetesResourceMetric.apikey:type_name -> common.APIKey
-	26, // 1: stats.KubernetesResourceMetric.metadata:type_name -> common.Metadata
-	1,  // 2: stats.KubernetesResourceMetric.summary:type_name -> stats.KubernetesSummary
-	2,  // 3: stats.KubernetesSummary.node:type_name -> stats.NodeStats
-	5,  // 4: stats.KubernetesSummary.pods:type_name -> stats.PodStats
+	25, // 0: stats.KubernetesKubeletStats.apikey:type_name -> common.APIKey
+	26, // 1: stats.KubernetesKubeletStats.metadata:type_name -> common.Metadata
+	1,  // 2: stats.KubernetesKubeletStats.kubeletMetrics:type_name -> stats.KubernetesKubeletMetrics
+	2,  // 3: stats.KubernetesKubeletMetrics.node:type_name -> stats.NodeStats
+	5,  // 4: stats.KubernetesKubeletMetrics.pods:type_name -> stats.PodStats
 	7,  // 5: stats.NodeStats.systemContainers:type_name -> stats.ContainerStats
 	27, // 6: stats.NodeStats.startTime:type_name -> google.protobuf.Timestamp
 	11, // 7: stats.NodeStats.cpu:type_name -> stats.CPUStats

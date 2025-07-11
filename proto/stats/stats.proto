@@ -8,13 +8,13 @@ import "common/metadata.proto";
 import "google/protobuf/timestamp.proto";
 
 // Main batch message
-message KubernetesResourceMetric {
+message KubernetesKubeletStats {
   common.APIKey apikey = 1;
   common.Metadata metadata = 2;
-  KubernetesSummary summary = 3;
+  KubernetesKubeletMetrics kubeletMetrics = 3;
 }
 
-message KubernetesSummary {
+message KubernetesKubeletMetrics {
   NodeStats node = 1;
   repeated PodStats pods = 2;
 }
