@@ -256,8 +256,8 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	tokenStr := cookie.Value
-	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
+	refreshTokenStr := cookie.Value
+	token, err := jwt.Parse(refreshTokenStr, func(t *jwt.Token) (any, error) {
 		return utils.GetJWTSecret(), nil
 	})
 	if err != nil || !token.Valid {
@@ -289,8 +289,35 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
+	newRefreshToken, err := utils.GenerateRefreshToken(user)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token", nil)
+		return
+	}
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    newAccessToken,
+		Expires:  time.Now().Add(15 * time.Minute),
+		HttpOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "production",
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    newRefreshToken,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		HttpOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "production",
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/auth/refresh", // limit cookie to refresh endpoint
+	})
+
 	c.JSON(http.StatusOK, gin.H{
-		"access_token": newAccessToken,
+		"access_token":  newAccessToken,
+		"refresh_token": newRefreshToken,
 	})
 }
 

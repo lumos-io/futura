@@ -5,6 +5,7 @@ type User = {
   name: string;
   email: string;
   avatar: string;
+  organizationId: number;
 };
 
 type AuthContextType = {
@@ -35,7 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (res.status === 401) {
         try {
+          // refresh token
           await refresh();
+
           res = await fetch("/auth/me", {
             credentials: "include",
             signal: controller.signal,
@@ -63,10 +66,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const refresh = async () => {
-    // if (!user) {
-    //   // localStorage.removeItem("isAuthenticated");
-    //   return;
-    // }
     const res = await fetch("/auth/refresh", {
       method: "POST",
       credentials: "include",

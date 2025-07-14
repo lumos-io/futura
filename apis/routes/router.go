@@ -39,7 +39,7 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 		auth.GET("/github/callback", controllers.GithubCallback)
 		auth.GET("/me", middleware.AuthMiddleware(), controllers.MeHandler)
 		auth.POST("/logout", middleware.AuthMiddleware(), controllers.Logout)
-		auth.POST("/refresh", middleware.AuthMiddleware(), controllers.RefreshToken)
+		auth.POST("/refresh", controllers.RefreshToken)
 	}
 
 	// Protected routes
@@ -50,11 +50,11 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 		{
 			org.GET("/", controllers.GetOrganizations)
 			org.POST("/", controllers.CreateOrganization)
-			org.GET("/:id", controllers.GetOrganization)
-			org.PUT("/:id", controllers.UpdateOrganization)
-			org.DELETE("/:id", controllers.DeleteOrganization)
+			org.GET("/:org_id", controllers.GetOrganization)
+			org.PUT("/:org_id", controllers.UpdateOrganization)
+			org.DELETE("/:org_id", controllers.DeleteOrganization)
 
-			orgUsers := org.Group("/:id/users")
+			orgUsers := org.Group("/:org_id/users")
 			{
 				orgUsers.GET("/", controllers.GetUsers)
 				orgUsers.POST("/", controllers.CreateUser)
@@ -62,7 +62,7 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 				orgUsers.DELETE("/:user_id", controllers.DeleteUser)
 			}
 
-			orgClusters := org.Group("/:id/clusters")
+			orgClusters := org.Group("/:org_id/clusters")
 			{
 				orgClusters.GET("/", controllers.GetClusters)
 				orgClusters.POST("/", controllers.CreateCluster)

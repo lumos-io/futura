@@ -91,7 +91,9 @@ const CloudProviders: React.FC = () => {
           open={dialogOpen}
           onOpenChange={(open) => {
             setDialogOpen(open);
-            if (!open) setEditMode(false);
+            if (!open) {
+              setEditMode(false);
+            }
           }}
           newProvider={newProvider}
           setNewProvider={setNewProvider}
