@@ -21,6 +21,7 @@ import KubernetesNamespaces from "./app/kubernetes/namespaces";
 import KubernetesNetwork from "./app/kubernetes/network";
 import KubernetesStorage from "./app/kubernetes/storage";
 import KubernetesWorkloads from "./app/kubernetes/workloads";
+import CloudProviders from "./app/connect/cloud-providers";
 
 const allRoutes: RouteObject[] = [
   {
@@ -34,6 +35,10 @@ const allRoutes: RouteObject[] = [
       {
         index: true,
         element: <PrivateRoute element={<ClustersOverview />} />,
+      },
+      {
+        path: "connect/cloud-providers",
+        element: <PrivateRoute element={<CloudProviders />} />,
       },
       {
         path: "clusters/overview",

@@ -61,6 +61,14 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 				orgUsers.PUT("/:user_id", controllers.UpdateUser)
 				orgUsers.DELETE("/:user_id", controllers.DeleteUser)
 			}
+
+			orgClusters := org.Group("/:id/clusters")
+			{
+				orgClusters.GET("/", controllers.GetClusters)
+				orgClusters.POST("/", controllers.CreateCluster)
+				orgClusters.PUT("/:cluster_id", controllers.UpdateCluster)
+				orgClusters.DELETE("/:cluster_id", controllers.DeleteCluster)
+			}
 		}
 	}
 

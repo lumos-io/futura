@@ -9,6 +9,7 @@ import {
   Store,
   ServerIcon,
   SquareTerminal,
+  Blocks,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -32,6 +33,18 @@ const data = {
     },
   ],
   navMain: [
+    {
+      title: "Connect",
+      url: "#",
+      icon: Blocks,
+      isActive: false,
+      items: [
+        {
+          title: "Cloud Providers",
+          url: "/dashboard/connect/cloud-providers",
+        },
+      ],
+    },
     {
       title: "Clusters",
       url: "#",

@@ -42,6 +42,8 @@ func AutoMigrate() error {
 	err := db.AutoMigrate(
 		&Organization{},
 		&User{},
+		&CloudProvider{},
+		&Cluster{},
 	)
 
 	if err != nil {
