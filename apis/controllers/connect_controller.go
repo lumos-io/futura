@@ -1,54 +1,27 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/opisvigilant/futura/apis/internal/config"
-	awsprovider "github.com/opisvigilant/futura/apis/internal/providers/aws"
-	azureprovider "github.com/opisvigilant/futura/apis/internal/providers/azure"
-	digitaloceanprovider "github.com/opisvigilant/futura/apis/internal/providers/digitalocean"
-	gcpprovider "github.com/opisvigilant/futura/apis/internal/providers/gcp"
+	"github.com/opisvigilant/futura/apis/internal/providers"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
-	"github.com/rs/zerolog/log"
-)
-
-const (
-	AccessCredentialsSecretID string = "AccessCredentials"
 )
 
 type ConnectController struct {
-	awsProvider          *awsprovider.AWSProvider
-	gcpProvider          *gcpprovider.GCPProvider
-	azureProvider        *azureprovider.AzureProvider
-	digitaloceanProvider *digitaloceanprovider.DigitalOceanProvider
+	cloudProviderAuth *providers.CloudProviderAuth
 }
 
 func NewConnectController(config *config.Configuration) (*ConnectController, error) {
-	ap, err := awsprovider.New(config)
-	if err != nil {
-		return nil, err
-	}
-	gp, err := gcpprovider.New(config)
-	if err != nil {
-		return nil, err
-	}
-	azp, err := azureprovider.New(config)
-	if err != nil {
-		return nil, err
-	}
-	dop, err := digitaloceanprovider.New(config)
+	p, err := providers.New(config)
 	if err != nil {
 		return nil, err
 	}
 	return &ConnectController{
-		awsProvider:          ap,
-		gcpProvider:          gp,
-		azureProvider:        azp,
-		digitaloceanProvider: dop,
+		cloudProviderAuth: p,
 	}, nil
 }
 
@@ -57,10 +30,9 @@ func (cc *ConnectController) GetConnects(c *gin.Context) {
 	if err != nil {
 		return
 	}
-
-	var connects []models.User
+	var connects []models.CloudProvider
 	if err := models.GetDB().Where("organization_id = ?", orgID).Find(&connects).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to fetch users")
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to fetch connects")
 		return
 	}
 	utils.RespondOK(c, connects)
@@ -73,37 +45,27 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 	}
 
 	var input struct {
-		Provider        string `json:"provider" binding:"required"`
-		AccountID       string `json:"accountId" binding:"required"`
-		AccessKey       string `json:"accessKey" binding:"required"`
-		SecretAccessKey string `json:"secretAccessKey" binding:"required"`
-		Region          string `json:"region" binding:"required"`
+		Provider    string            `json:"provider" binding:"required"`
+		SecretID    string            `json:"secretId" binding:"required"`
+		Credentials map[string]string `json:"credentials" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
-	// Create a secret on the correct provider based on the input
-	switch models.CloudProviderName(input.Provider) {
-	case models.AWS:
-		if err := cc.awsProvider.SetCredentials(fmt.Sprintf("%d", orgID), AccessCredentialsSecretID, &awsprovider.AWSCredentials{
-			AccessKey:       input.AccessKey,
-			SecretAccessKey: input.SecretAccessKey,
-			Region:          input.Region,
-		}); err != nil {
-			log.Logger.Error().Err(err).Msg("Failed to create store secret for the aws provider")
-			utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to create store secret")
-			return
-		}
+	// create secret in provider
+	if err := cc.cloudProviderAuth.SetCredentials(orgID, input.Provider, input.SecretID, input.Credentials); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to create secret storage")
+		return
 	}
 
 	// Create an entry in the DB for the UI
 	cp := models.CloudProvider{
 		Name:             models.CloudProviderName(input.Provider),
 		Account:          input.Provider,
-		SecretID:         AccessCredentialsSecretID,
-		OrganizationID:   *orgID,
+		SecretID:         input.SecretID,
+		OrganizationID:   orgID,
 		ActivationStatus: models.PendingStatus,
 	}
 	if err := models.GetDB().Create(&cp).Error; err != nil {
@@ -132,16 +94,20 @@ func (cc *ConnectController) UpdateConnect(c *gin.Context) {
 	}
 
 	var input struct {
-		Account  string `json:"account" binding:"required"`
-		RoleName string `json:"roleName" binding:"required"`
+		Provider    string            `json:"provider" binding:"required"`
+		SecretID    string            `json:"secretId" binding:"required"`
+		Credentials map[string]string `json:"credentials" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
-	// update here
-	// ...
+	// update secret in the provider
+	if err := cc.cloudProviderAuth.UpdateCredentials(orgID, input.Provider, input.SecretID, input.Credentials); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to update secret storage")
+		return
+	}
 
 	if err := models.GetDB().Save(&cp).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to update connection")
@@ -176,5 +142,7 @@ func (cc *ConnectController) DeleteConnect(c *gin.Context) {
 }
 
 func (cc *ConnectController) TestConnection(c *gin.Context) {
+	// TODO: how do I test the connection?
+	// probably by creating a client and see if it works or something
 	utils.RespondOK(c, gin.H{"result": "ok"})
 }

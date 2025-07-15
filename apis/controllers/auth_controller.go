@@ -115,7 +115,7 @@ func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Conf
 			}
 
 			// Set user's default org ID (optional, if you keep this pointer)
-			user.OrganizationID = &personalOrg.ID
+			user.OrganizationID = personalOrg.ID
 
 			// Save user
 			if err := tx.Create(&user).Error; err != nil {

@@ -1,20 +1,19 @@
 package azureprovider
 
 import (
-	"github.com/opisvigilant/futura/apis/internal/config"
-	"github.com/opisvigilant/futura/apis/internal/secrets"
+	"errors"
 )
 
 type AzureProvider struct {
-	secretStore secrets.SecretStore
 }
 
-func New(config *config.Configuration) (*AzureProvider, error) {
-	ss, err := secrets.NewInMemorySecretStore()
-	if err != nil {
-		return nil, err
-	}
-	return &AzureProvider{
-		secretStore: ss,
-	}, nil
+func New() (*AzureProvider, error) {
+	return &AzureProvider{}, nil
+}
+
+func (a *AzureProvider) Test(creds map[string]string) error {
+	return errors.New("not implemented")
+}
+
+type AzureCredentials struct {
 }

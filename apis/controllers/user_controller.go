@@ -118,13 +118,11 @@ func DeleteUser(c *gin.Context) {
 }
 
 // helper to extract org ID
-func parseOrgID(c *gin.Context) (*uint, error) {
+func parseOrgID(c *gin.Context) (uint, error) {
 	orgID, err := strconv.Atoi(c.Param("org_id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Invalid organization_id")
-		return nil, err
+		return 0, err
 	}
-	res := new(uint)
-	*res = uint(orgID)
-	return res, nil
+	return uint(orgID), nil
 }

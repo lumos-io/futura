@@ -8,10 +8,10 @@ import (
 )
 
 type SecretStore interface {
-	GetCredentials(organizationID string, secretID string) (map[string]string, error)
-	SetCredentials(organizationID, secretID string, creds map[string]string) error
-	UpdateCredentials(organizationID, secretID string, creds map[string]string) error
-	DeleteCredentials(organizationID, secretID string) error
+	GetCredentials(organizationID uint, provider string, secretID string) (map[string]string, error)
+	SetCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error
+	UpdateCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error
+	DeleteCredentials(organizationID uint, provider string, secretID string) error
 }
 
 type InMemorySecretStore struct {
@@ -19,7 +19,8 @@ type InMemorySecretStore struct {
 }
 
 type secret struct {
-	OrganizationID string            `json:"organizationId"`
+	OrganizationID uint              `json:"organizationId"`
+	Provider       string            `json:"provider"`
 	SecretID       string            `json:"secretId"`
 	Credentials    map[string]string `json:"credentials"`
 }
@@ -47,29 +48,30 @@ func NewInMemorySecretStore() (*InMemorySecretStore, error) {
 	}, nil
 }
 
-func (m *InMemorySecretStore) GetCredentials(organizationID string, secretID string) (map[string]string, error) {
+func (m *InMemorySecretStore) GetCredentials(organizationID uint, provider string, secretID string) (map[string]string, error) {
 	for _, s := range m.secrets {
-		if s.OrganizationID == organizationID && s.SecretID == secretID {
+		if s.OrganizationID == organizationID && s.Provider == provider && s.SecretID == secretID {
 			return s.Credentials, nil
 		}
 	}
 	return nil, errors.New("failed to fetch credentials for the organizationId and provider pair")
 }
 
-func (m *InMemorySecretStore) SetCredentials(organizationID, secretID string, creds map[string]string) error {
+func (m *InMemorySecretStore) SetCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error {
 	m.secrets = append(m.secrets, &secret{
 		OrganizationID: organizationID,
+		Provider:       provider,
 		SecretID:       secretID,
 		Credentials:    creds,
 	})
 	return saveSecrets(m.secrets)
 }
 
-func (m *InMemorySecretStore) UpdateCredentials(organizationID, secretID string, creds map[string]string) error {
+func (m *InMemorySecretStore) UpdateCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error {
 	return errors.New("not implemented")
 }
 
-func (m *InMemorySecretStore) DeleteCredentials(organizationID, secretID string) error {
+func (m *InMemorySecretStore) DeleteCredentials(organizationID uint, provider string, secretID string) error {
 	return errors.New("not implemented")
 }
 

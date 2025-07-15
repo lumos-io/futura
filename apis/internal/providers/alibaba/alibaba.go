@@ -1,20 +1,19 @@
 package alibabaprovider
 
 import (
-	"github.com/opisvigilant/futura/apis/internal/config"
-	"github.com/opisvigilant/futura/apis/internal/secrets"
+	"errors"
 )
 
 type AlibabaProvider struct {
-	secretStore secrets.SecretStore
 }
 
-func New(config *config.Configuration) (*AlibabaProvider, error) {
-	ss, err := secrets.NewInMemorySecretStore()
-	if err != nil {
-		return nil, err
-	}
-	return &AlibabaProvider{
-		secretStore: ss,
-	}, nil
+func New() (*AlibabaProvider, error) {
+	return &AlibabaProvider{}, nil
+}
+
+func (a *AlibabaProvider) Test(creds map[string]string) error {
+	return errors.New("not implemented")
+}
+
+type AlibabaCredentials struct {
 }

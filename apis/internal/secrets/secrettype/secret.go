@@ -1,14 +1,5 @@
 package secrettype
 
-// Cloud constants
-const (
-	Alibaba      = "alibaba"
-	Amazon       = "amazon"
-	Azure        = "azure"
-	Google       = "google"
-	DigitalOcean = "digitalocean"
-)
-
 // Amazon keys
 const (
 	AwsRegion          = "AWS_REGION"
@@ -37,4 +28,8 @@ const (
 	TokenUri      = "token_uri"
 	AuthX509Url   = "auth_provider_x509_cert_url"
 	ClientX509Url = "client_x509_cert_url"
+)
+
+const (
+	AccessCredentialsSecretID string = "AccessCredentials"
 )

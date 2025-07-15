@@ -1,20 +1,19 @@
 package digitaloceanprovider
 
 import (
-	"github.com/opisvigilant/futura/apis/internal/config"
-	"github.com/opisvigilant/futura/apis/internal/secrets"
+	"errors"
 )
 
 type DigitalOceanProvider struct {
-	secretStore secrets.SecretStore
 }
 
-func New(config *config.Configuration) (*DigitalOceanProvider, error) {
-	ss, err := secrets.NewInMemorySecretStore()
-	if err != nil {
-		return nil, err
-	}
-	return &DigitalOceanProvider{
-		secretStore: ss,
-	}, nil
+func New() (*DigitalOceanProvider, error) {
+	return &DigitalOceanProvider{}, nil
+}
+
+func (a *DigitalOceanProvider) Test(creds map[string]string) error {
+	return errors.New("not implemented")
+}
+
+type DigitalOceanCredentials struct {
 }

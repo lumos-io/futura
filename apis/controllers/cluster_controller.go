@@ -44,7 +44,7 @@ func CreateCluster(c *gin.Context) {
 		Description:     input.Description,
 		Region:          input.Region,
 		CloudProviderID: 1,
-		OrganizationID:  *orgID,
+		OrganizationID:  orgID,
 	}
 	if err := models.GetDB().Create(&cluster).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to create cluster")
