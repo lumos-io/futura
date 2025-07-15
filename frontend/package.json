@@ -28,6 +28,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "command": "^1.1.1",
+    "eslint-plugin-erasable-syntax-only": "^0.3.1",
     "jotai": "^2.12.5",
     "lucide-react": "^0.515.0",
     "popover": "^2.4.1",

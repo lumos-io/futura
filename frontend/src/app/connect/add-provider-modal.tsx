@@ -15,10 +15,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, CheckCircle, AlertTriangle } from "lucide-react";
-import { AddProviderModalProps } from "@/models/cloud-provider";
+import { CloudProvider } from "@/models/cloud-provider";
+import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/auth_provider";
+
+interface AddProviderModalProps {
+  open: boolean;
+  mode: "create" | "edit";
+  onOpenChange: (open: boolean) => void;
+  newProvider: CloudProvider;
+  setNewProvider: (provider: CloudProvider) => void;
+  onSave: () => void;
+}
 
 const providerOptions = ["ALIBABA", "AWS", "GCP", "DIGITALOCEAN", "AZURE"];
+
+const providerFormFields: Record<
+  string,
+  { key: string; label: string; placeholder?: string }[]
+> = {
+  AWS: [
+    { key: "account", label: "Account ID", placeholder: "123456789012" },
+    { key: "accessKey", label: "Access Key", placeholder: "" },
+    { key: "secretAccessKey", label: "Secret Access ID", placeholder: "" },
+    { key: "region", label: "Region", placeholder: "eu-east-1" },
+  ],
+  GCP: [
+    { key: "projectId", label: "Project ID", placeholder: "my-gcp-project" },
+    { key: "credentialsJson", label: "Credentials JSON", placeholder: "{...}" },
+  ],
+  AZURE: [
+    { key: "tenantId", label: "Tenant ID", placeholder: "" },
+    { key: "clientId", label: "Client ID", placeholder: "" },
+    { key: "clientSecret", label: "Client Secret", placeholder: "" },
+  ],
+  DIGITALOCEAN: [
+    { key: "accessToken", label: "Access Token", placeholder: "" },
+  ],
+  ALIBABA: [
+    { key: "accessKeyId", label: "Access Key ID", placeholder: "" },
+    { key: "accessSecret", label: "Access Secret", placeholder: "" },
+  ],
+};
 
 const AddProviderModal: React.FC<AddProviderModalProps> = ({
   open,
@@ -28,6 +66,10 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
   setNewProvider,
   onSave,
 }) => {
+  const { user } = useAuth();
+
+  const fields = providerFormFields[newProvider.name] ?? [];
+
   const [testing, setTesting] = useState(false);
   const [testSuccess, setTestSuccess] = useState<boolean | null>(null);
 
@@ -36,33 +78,35 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
     setTestSuccess(null);
 
     try {
-      const res = await fetch("/api/test-cloud-connection", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newProvider),
-      });
+      const res = await fetch(
+        `/api/organizations/${user?.organizationId}/connects/test-connection`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newProvider),
+        }
+      );
 
       const result = await res.json();
       setTestSuccess(res.ok && result?.success);
     } catch (err) {
-      console.error(err);
       setTestSuccess(false);
     } finally {
       setTesting(false);
     }
   };
 
-  const isValid =
-    newProvider.name && newProvider.account && newProvider.roleName;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Cloud Provider</DialogTitle>
+          <DialogTitle>
+            {mode === "edit" ? "Edit Cloud Provider" : "Add Cloud Provider"}
+          </DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Provider</Label>
@@ -85,33 +129,33 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>Account</Label>
-            <Input
-              placeholder="Account ID / Number"
-              value={newProvider.account}
-              onChange={(e) =>
-                setNewProvider({ ...newProvider, account: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Role Name</Label>
-            <Input
-              placeholder="Role Name"
-              value={newProvider.roleName}
-              onChange={(e) =>
-                setNewProvider({ ...newProvider, roleName: e.target.value })
-              }
-            />
-          </div>
+          {fields.length > 0 ? (
+            fields.map((field) => (
+              <div key={field.key} className="space-y-2">
+                <Label>{field.label}</Label>
+                <Input
+                  placeholder={field.placeholder || ""}
+                  value={String(newProvider[field.key] ?? "")}
+                  onChange={(e) =>
+                    setNewProvider({
+                      ...newProvider,
+                      [field.key]: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No specific fields defined for this provider.
+            </p>
+          )}
 
           <div className="flex items-center gap-3">
             <Button
               type="button"
               variant="outline"
-              disabled={!isValid || testing}
+              disabled={testing}
               onClick={handleTestConnection}
             >
               {testing ? (
@@ -129,14 +173,18 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
                 <CheckCircle className="w-4 h-4" /> Connection successful
               </div>
             )}
-            {testSuccess === false && (
+            {testSuccess === false && testSuccess !== null && (
               <div className="flex items-center text-red-600 text-sm gap-1">
                 <AlertTriangle className="w-4 h-4" /> Failed to connect
               </div>
             )}
           </div>
 
-          <Button onClick={onSave} disabled={!testSuccess} className="w-full">
+          <Button
+            onClick={onSave}
+            disabled={testSuccess ? true : false}
+            className="w-full"
+          >
             {mode === "edit" ? "Update Provider" : "Save Provider"}
           </Button>
         </div>

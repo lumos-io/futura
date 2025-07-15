@@ -12,6 +12,7 @@ func New() (*AWSProvider, error) {
 }
 
 type AWSCredentials struct {
+	AccountID       string
 	AccessKey       string
 	SecretAccessKey string
 	Region          string

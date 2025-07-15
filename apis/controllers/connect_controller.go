@@ -142,7 +142,19 @@ func (cc *ConnectController) DeleteConnect(c *gin.Context) {
 }
 
 func (cc *ConnectController) TestConnection(c *gin.Context) {
-	// TODO: how do I test the connection?
-	// probably by creating a client and see if it works or something
+	var input struct {
+		Provider    string            `json:"provider" binding:"required"`
+		SecretID    string            `json:"secretId" binding:"required"`
+		Credentials map[string]string `json:"credentials" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
+		return
+	}
+
+	// FIXME: ignore the error for now until I'm on an actual cloud provider
+	// and we have all the sessions/clients/etc that I can test
+	_ = cc.cloudProviderAuth.TestConnection(input.Provider, input.Credentials)
+
 	utils.RespondOK(c, gin.H{"result": "ok"})
 }

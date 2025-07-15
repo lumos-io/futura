@@ -13,19 +13,20 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { CloudProvider } from "@/models/cloud-provider";
+import { CloudProvider, ActivationStatus } from "@/models/cloud-provider";
+import { useAuth } from "@/hooks/auth_provider";
 
 const CloudProviders: React.FC = () => {
+  const { user } = useAuth();
+
   const [connectedProviders, setConnectedProviders] = useState<CloudProvider[]>(
     []
   );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState<false | CloudProvider>(false);
   const [newProvider, setNewProvider] = useState<CloudProvider>({
-    id: -1,
     name: "",
-    account: "",
-    roleName: "",
+    status: ActivationStatus.PendingStatus,
   });
 
   const [deleteTarget, setDeleteTarget] = useState<CloudProvider | null>(null);
@@ -33,36 +34,45 @@ const CloudProviders: React.FC = () => {
   const handleSave = async () => {
     if (editMode) {
       // Edit mode
-      await fetch(`/api/cloud-providers/${editMode.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProvider),
-      });
+      await fetch(
+        `/api/organizations/${user?.organizationId}/connects/${editMode.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newProvider),
+        }
+      );
 
       setConnectedProviders((prev) =>
         prev.map((p) => (p.id === editMode.id ? { ...p, ...newProvider } : p))
       );
     } else {
       // Create mode
-      const res = await fetch("/api/cloud-providers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProvider),
-      });
+      const res = await fetch(
+        `/api/organizations/${user?.organizationId}/connects`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newProvider),
+        }
+      );
       const created = await res.json();
       setConnectedProviders((prev) => [...prev, created]);
     }
 
     setDialogOpen(false);
-    setNewProvider({ id: -1, name: "", account: "", roleName: "" });
+    setNewProvider({ name: "", status: ActivationStatus.PendingStatus });
     setEditMode(false);
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await fetch(`/api/cloud-providers/${deleteTarget.id}`, {
-      method: "DELETE",
-    });
+    await fetch(
+      `/api/organizations/${user?.organizationId}/connects/${deleteTarget.id}`,
+      {
+        method: "DELETE",
+      }
+    );
     setConnectedProviders((prev) =>
       prev.filter((p) => p.id !== deleteTarget.id)
     );
@@ -76,7 +86,7 @@ const CloudProviders: React.FC = () => {
   };
 
   const openAdd = () => {
-    setNewProvider({ id: -1, name: "", account: "", roleName: "" });
+    setNewProvider({ name: "", status: ActivationStatus.PendingStatus });
     setEditMode(false);
     setDialogOpen(true);
   };
@@ -110,12 +120,12 @@ const CloudProviders: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {connectedProviders.map((provider) => (
-            <Card key={provider.id}>
+            <Card>
               <CardHeader className="flex justify-between items-start">
                 <div>
                   <CardTitle>{provider.name}</CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    {provider.account}
+                    {provider.name}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -159,7 +169,7 @@ const CloudProviders: React.FC = () => {
               </CardHeader>
               <CardContent className="text-sm text-gray-700 space-y-1">
                 <p>
-                  <strong>Role Name:</strong> {provider.roleName}
+                  <strong>Status:</strong> {provider.status}
                 </p>
               </CardContent>
             </Card>

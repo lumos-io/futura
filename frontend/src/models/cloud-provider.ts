@@ -1,8 +1,18 @@
+const ActivationStatus = {
+    ActiveStatus: "ACTIVE",
+    InProgressStatus: "IN_PROGRESS",
+    PendingStatus: "PENDING",
+    SuspendedStatus: "SUSPENDED",
+    FailedStatus: "FAILED",
+} as const;
+
+type ActivationStatus = typeof ActivationStatus[keyof typeof ActivationStatus];
+
 interface CloudProvider {
     id?: number;
     name: string;
-    account: string;
-    roleName: string;
+    status: ActivationStatus;
+    [key: string]: unknown; // dynamic fields
 }
 
 interface AddProviderModalProps {
@@ -14,4 +24,4 @@ interface AddProviderModalProps {
     onSave: () => void;
 }
 
-export { CloudProvider, AddProviderModalProps }
+export { ActivationStatus, CloudProvider, AddProviderModalProps }

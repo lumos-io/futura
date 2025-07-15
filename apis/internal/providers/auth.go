@@ -22,6 +22,7 @@ type CloudProviderAuth struct {
 }
 
 func New(config *config.Configuration) (*CloudProviderAuth, error) {
+	// TODO: change this to an actual Secret Manager
 	ss, err := secrets.NewInMemorySecretStore()
 	if err != nil {
 		return nil, err
@@ -67,5 +68,7 @@ func (cp *CloudProviderAuth) TestConnection(provider string, creds map[string]st
 	if err != nil {
 		return err
 	}
+	// TODO: how do I test the connection?
+	// probably by creating a client and see if it works or something
 	return ap.Test(creds)
 }
