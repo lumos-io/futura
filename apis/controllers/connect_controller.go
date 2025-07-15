@@ -1,21 +1,55 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/opisvigilant/futura/apis/internal/config"
+	awsprovider "github.com/opisvigilant/futura/apis/internal/providers/aws"
+	azureprovider "github.com/opisvigilant/futura/apis/internal/providers/azure"
+	digitaloceanprovider "github.com/opisvigilant/futura/apis/internal/providers/digitalocean"
+	gcpprovider "github.com/opisvigilant/futura/apis/internal/providers/gcp"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
+	"github.com/rs/zerolog/log"
+)
+
+const (
+	AccessCredentialsSecretID string = "AccessCredentials"
 )
 
 type ConnectController struct {
+	awsProvider          *awsprovider.AWSProvider
+	gcpProvider          *gcpprovider.GCPProvider
+	azureProvider        *azureprovider.AzureProvider
+	digitaloceanProvider *digitaloceanprovider.DigitalOceanProvider
 }
 
 func NewConnectController(config *config.Configuration) (*ConnectController, error) {
-
-	return &ConnectController{}, nil
+	ap, err := awsprovider.New(config)
+	if err != nil {
+		return nil, err
+	}
+	gp, err := gcpprovider.New(config)
+	if err != nil {
+		return nil, err
+	}
+	azp, err := azureprovider.New(config)
+	if err != nil {
+		return nil, err
+	}
+	dop, err := digitaloceanprovider.New(config)
+	if err != nil {
+		return nil, err
+	}
+	return &ConnectController{
+		awsProvider:          ap,
+		gcpProvider:          gp,
+		azureProvider:        azp,
+		digitaloceanProvider: dop,
+	}, nil
 }
 
 func (cc *ConnectController) GetConnects(c *gin.Context) {
@@ -39,23 +73,39 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 	}
 
 	var input struct {
-		Name     string `json:"name" binding:"required"`
-		Account  string `json:"account" binding:"required"`
-		RoleName string `json:"roleName" binding:"required"`
+		Provider        string `json:"provider" binding:"required"`
+		AccountID       string `json:"accountId" binding:"required"`
+		AccessKey       string `json:"accessKey" binding:"required"`
+		SecretAccessKey string `json:"secretAccessKey" binding:"required"`
+		Region          string `json:"region" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
+	// Create a secret on the correct provider based on the input
+	switch models.CloudProviderName(input.Provider) {
+	case models.AWS:
+		if err := cc.awsProvider.SetCredentials(fmt.Sprintf("%d", orgID), AccessCredentialsSecretID, &awsprovider.AWSCredentials{
+			AccessKey:       input.AccessKey,
+			SecretAccessKey: input.SecretAccessKey,
+			Region:          input.Region,
+		}); err != nil {
+			log.Logger.Error().Err(err).Msg("Failed to create store secret for the aws provider")
+			utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to create store secret")
+			return
+		}
+	}
+
+	// Create an entry in the DB for the UI
 	cp := models.CloudProvider{
-		Name:             models.CloudProviderName(input.Name),
-		Account:          input.Account,
-		RoleName:         input.RoleName,
+		Name:             models.CloudProviderName(input.Provider),
+		Account:          input.Provider,
+		SecretID:         AccessCredentialsSecretID,
 		OrganizationID:   *orgID,
 		ActivationStatus: models.PendingStatus,
 	}
-
 	if err := models.GetDB().Create(&cp).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to create connection")
 		return
@@ -90,12 +140,8 @@ func (cc *ConnectController) UpdateConnect(c *gin.Context) {
 		return
 	}
 
-	if input.Account != "" {
-		cp.Account = input.Account
-	}
-	if input.RoleName != "" {
-		cp.RoleName = input.RoleName
-	}
+	// update here
+	// ...
 
 	if err := models.GetDB().Save(&cp).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to update connection")

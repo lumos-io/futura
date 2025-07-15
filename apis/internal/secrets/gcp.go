@@ -1,6 +1,10 @@
 package secrets
 
-import "github.com/opisvigilant/futura/apis/internal/config"
+import (
+	"errors"
+
+	"github.com/opisvigilant/futura/apis/internal/config"
+)
 
 type GCPSecretStore struct {
 }
@@ -10,9 +14,9 @@ func NewGCPSecretStore(config *config.Configuration) *GCPSecretStore {
 }
 
 func (m *GCPSecretStore) StoreCustomerCredentials(organizationID string, provider string, creds map[string]string) error {
-	return nil
+	return errors.New("[GCPSecretStore] StoreCustomerCredentials not implemented")
 }
 
 func (m *GCPSecretStore) GetCustomerCredentials(organizationID string, provider string) (map[string]string, error) {
-	return nil, nil
+	return nil, errors.New("[GCPSecretStore] StoreCustomerCredentials not implemented")
 }

@@ -6,7 +6,7 @@ type CloudProvider struct {
 	gorm.Model
 	Name             CloudProviderName `json:"name"`
 	Account          string            `gorm:"uniqueIndex" json:"account"`
-	RoleName         string            `json:"roleName"`
+	SecretID         string            `json:"secretId"`
 	ActivationStatus ActivationStatus  `gorm:"default:PENDING" json:"activationStatus"`
 	OrganizationID   uint              `gorm:"index;not null"`
 	Organization     Organization
