@@ -3,27 +3,21 @@ package models
 import (
 	"fmt"
 	"log"
-	"os"
 
+	"github.com/opisvigilant/futura/apis/internal/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
 
-func connectDatabase() error {
+func connectDatabase(apisCfg *config.Configuration) error {
 	var err error
-
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	sslmode := os.Getenv("DB_SSLMODE")
 
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		host, port, user, password, dbname, sslmode,
+		apisCfg.Database.Host, apisCfg.Database.Port, apisCfg.Database.User,
+		apisCfg.Database.Password, apisCfg.Database.Name, apisCfg.Database.SSLMode,
 	)
 
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -34,8 +28,8 @@ func connectDatabase() error {
 	return nil
 }
 
-func AutoMigrate() error {
-	if err := connectDatabase(); err != nil {
+func AutoMigrate(apisCfg *config.Configuration) error {
+	if err := connectDatabase(apisCfg); err != nil {
 		return err
 	}
 

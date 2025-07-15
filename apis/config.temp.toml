@@ -1,0 +1,28 @@
+environment = "development"
+
+[database]
+host = "localhost"
+port = "5432"
+user = "postgres"
+password = "postgres"
+name = "futura"
+sslmode = "disable"
+
+[oauth]
+[oauth.google]
+client_id = "your-client-id"
+client_secret = "your-client-secret"
+callback_url = "http://localhost:8080/auth/google/callback"
+
+[oauth.github]
+client_id = ""
+client_secret = ""
+callback_url = "http://localhost:8080/auth/github/callback"
+
+[secrets]
+jwt_secret = ""
+cookie_store_secret = ""
+csfr_secret = ""
+
+[frontend]
+url = "http://localhost:8080/"

@@ -17,7 +17,7 @@ func GetClusters(c *gin.Context) {
 
 	var clusters []models.Cluster
 	if err := models.GetDB().Where("organization_id = ?", orgID).Find(&clusters).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to fetch clusters", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to fetch clusters")
 		return
 	}
 	utils.RespondOK(c, clusters)
@@ -35,7 +35,7 @@ func CreateCluster(c *gin.Context) {
 		Region      string `json:"region" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error(), nil)
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
@@ -47,7 +47,7 @@ func CreateCluster(c *gin.Context) {
 		OrganizationID:  *orgID,
 	}
 	if err := models.GetDB().Create(&cluster).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to create cluster", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to create cluster")
 		return
 	}
 	utils.RespondCreated(c, cluster)
@@ -61,13 +61,13 @@ func UpdateCluster(c *gin.Context) {
 
 	clusterID, err := strconv.Atoi(c.Param("cluster_id"))
 	if err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id", nil)
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id")
 		return
 	}
 
 	var cluster models.Cluster
 	if err := models.GetDB().Where("id = ? AND organization_id = ?", clusterID, orgID).First(&cluster).Error; err != nil {
-		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "Cluster not found in this organization", nil)
+		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "Cluster not found in this organization")
 		return
 	}
 
@@ -75,14 +75,14 @@ func UpdateCluster(c *gin.Context) {
 		Description string `json:"description" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error(), nil)
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
 	cluster.Description = input.Description
 
 	if err := models.GetDB().Save(&cluster).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to update cluster", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to update cluster")
 		return
 	}
 	utils.RespondOK(c, cluster)
@@ -96,18 +96,18 @@ func DeleteCluster(c *gin.Context) {
 
 	clusterID, err := strconv.Atoi(c.Param("cluster_id"))
 	if err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id", nil)
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id")
 		return
 	}
 
 	var cluster models.Cluster
 	if err := models.GetDB().Where("id = ? AND organization_id = ?", clusterID, orgID).First(&cluster).Error; err != nil {
-		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Cluster not found in this organization", nil)
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Cluster not found in this organization")
 		return
 	}
 
 	if err := models.GetDB().Delete(&cluster).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to delete cluster", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to delete cluster")
 		return
 	}
 	utils.RespondOK(c, nil)

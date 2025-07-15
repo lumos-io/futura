@@ -11,27 +11,31 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/fsnotify/fsnotify"
+	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/routes"
+	"github.com/spf13/viper"
 )
 
 //go:embed public/*
 var embeddedFiles embed.FS
 
+var apisCfg *config.Configuration
+
 func main() {
-	// Load env
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("failed to load .env file: %v", err)
+	// Load configuration
+	if err := setupConfiguration(); err != nil {
+		log.Fatalf("failed to load config.toml file: %v", err)
 	}
 
 	// Automigrate
-	if err := models.AutoMigrate(); err != nil {
+	if err := models.AutoMigrate(apisCfg); err != nil {
 		log.Fatalf("failed to automigrate: %v", err)
 	}
 
 	// Setup router
-	router, err := routes.SetupRouter(embeddedFiles)
+	router, err := routes.SetupRouter(embeddedFiles, apisCfg)
 	if err != nil {
 		log.Fatalf("failed to define routes: %v", err)
 	}
@@ -64,4 +68,33 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
+
+func setupConfiguration() error {
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("/opt/apis")
+	if err := viper.ReadInConfig(); err != nil {
+		if e, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+			fmt.Println("config.toml not found")
+		} else {
+			// Config file was found but another error was produced
+			fmt.Println(e.Error())
+		}
+	}
+
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("Config file changed:", e.Name)
+	})
+
+	viper.WatchConfig()
+
+	// fetch and validate configuration file
+	apisCfg = config.Fetch()
+	if err := apisCfg.Validate(); err != nil {
+		panic(err.Error())
+	}
+	return nil
 }

@@ -2,7 +2,6 @@ package utils
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,22 +13,12 @@ type PaginationMeta struct {
 	TotalItems int `json:"totalItems"`
 }
 
-type DebugInfo struct {
-	Stack string `json:"stack,omitempty"`
-	SQL   string `json:"sql,omitempty"`
-}
-
 type ApiResponse struct {
 	Status     string          `json:"status"`               // "success" or "error"
 	Message    string          `json:"message,omitempty"`    // Optional
 	Data       any             `json:"data,omitempty"`       // Optional
 	Pagination *PaginationMeta `json:"pagination,omitempty"` // Optional
 	ErrorCode  string          `json:"errorCode,omitempty"`  // For internal error mapping
-	Debug      *DebugInfo      `json:"debug,omitempty"`      // Only in dev
-}
-
-func isDev() bool {
-	return os.Getenv("APP_ENV") == "development"
 }
 
 func RespondOK(c *gin.Context, data any) {
@@ -57,14 +46,11 @@ func RespondWithPagination(c *gin.Context, data any, pagination PaginationMeta) 
 	c.JSON(http.StatusOK, resp)
 }
 
-func RespondError(c *gin.Context, code int, errCode, message string, debug *DebugInfo) {
+func RespondError(c *gin.Context, code int, errCode, message string) {
 	resp := ApiResponse{
 		Status:    "error",
 		Message:   message,
 		ErrorCode: errCode,
-	}
-	if isDev() && debug != nil {
-		resp.Debug = debug
 	}
 	c.JSON(code, resp)
 }

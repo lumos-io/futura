@@ -17,7 +17,7 @@ func GetUsers(c *gin.Context) {
 
 	var users []models.User
 	if err := models.GetDB().Where("organization_id = ?", orgID).Find(&users).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to fetch users", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to fetch users")
 		return
 	}
 	utils.RespondOK(c, users)
@@ -34,7 +34,7 @@ func CreateUser(c *gin.Context) {
 		Email string `json:"email" binding:"required,email"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error(), nil)
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
@@ -45,7 +45,7 @@ func CreateUser(c *gin.Context) {
 	}
 
 	if err := models.GetDB().Create(&user).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to create user", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to create user")
 		return
 	}
 	utils.RespondCreated(c, user)
@@ -59,13 +59,13 @@ func UpdateUser(c *gin.Context) {
 
 	userID, err := strconv.Atoi(c.Param("user_id"))
 	if err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid user_id", nil)
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid user_id")
 		return
 	}
 
 	var user models.User
 	if err := models.GetDB().Where("id = ? AND organization_id = ?", userID, orgID).First(&user).Error; err != nil {
-		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "User not found in this organization", nil)
+		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "User not found in this organization")
 		return
 	}
 
@@ -74,7 +74,7 @@ func UpdateUser(c *gin.Context) {
 		Email string `json:"email" binding:"omitempty,email"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error(), nil)
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
@@ -86,7 +86,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	if err := models.GetDB().Save(&user).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to update user", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to update user")
 		return
 	}
 	utils.RespondOK(c, user)
@@ -100,18 +100,18 @@ func DeleteUser(c *gin.Context) {
 
 	userID, err := strconv.Atoi(c.Param("user_id"))
 	if err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid user_id", nil)
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid user_id")
 		return
 	}
 
 	var user models.User
 	if err := models.GetDB().Where("id = ? AND organization_id = ?", userID, orgID).First(&user).Error; err != nil {
-		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "User not found in this organization", nil)
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "User not found in this organization")
 		return
 	}
 
 	if err := models.GetDB().Delete(&user).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to delete user", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to delete user")
 		return
 	}
 	utils.RespondOK(c, nil)
@@ -121,7 +121,7 @@ func DeleteUser(c *gin.Context) {
 func parseOrgID(c *gin.Context) (*uint, error) {
 	orgID, err := strconv.Atoi(c.Param("org_id"))
 	if err != nil {
-		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Invalid organization_id", nil)
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Invalid organization_id")
 		return nil, err
 	}
 	res := new(uint)

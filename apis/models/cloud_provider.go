@@ -8,6 +8,8 @@ type CloudProvider struct {
 	Account          string            `gorm:"uniqueIndex" json:"account"`
 	RoleName         string            `json:"roleName"`
 	ActivationStatus ActivationStatus  `gorm:"default:PENDING" json:"activationStatus"`
+	OrganizationID   uint              `gorm:"index;not null"`
+	Organization     Organization
 }
 
 type CloudProviderName string

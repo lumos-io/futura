@@ -10,10 +10,11 @@ import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/opisvigilant/futura/apis/controllers"
+	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/middleware"
 )
 
-func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
+func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Engine, error) {
 	router := gin.Default()
 
 	// observability
@@ -31,15 +32,16 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 	router.Use(static.Serve("/", static.LocalFile(distDir, false)))
 
 	// Auth routes
+	a := controllers.NewAuthController(config)
 	auth := router.Group("/auth")
 	{
-		auth.GET("/google/login", controllers.GoogleLogin)
-		auth.GET("/google/callback", controllers.GoogleCallback)
-		auth.GET("/github/login", controllers.GithubLogin)
-		auth.GET("/github/callback", controllers.GithubCallback)
-		auth.GET("/me", middleware.AuthMiddleware(), controllers.MeHandler)
-		auth.POST("/logout", middleware.AuthMiddleware(), controllers.Logout)
-		auth.POST("/refresh", controllers.RefreshToken)
+		auth.GET("/google/login", a.GoogleLogin)
+		auth.GET("/google/callback", a.GoogleCallback)
+		auth.GET("/github/login", a.GithubLogin)
+		auth.GET("/github/callback", a.GithubCallback)
+		auth.GET("/me", middleware.AuthMiddleware(), a.MeHandler)
+		auth.POST("/logout", middleware.AuthMiddleware(), a.Logout)
+		auth.POST("/refresh", a.RefreshToken)
 	}
 
 	// Protected routes
@@ -60,6 +62,14 @@ func SetupRouter(embeddedFiles embed.FS) (*gin.Engine, error) {
 				orgUsers.POST("/", controllers.CreateUser)
 				orgUsers.PUT("/:user_id", controllers.UpdateUser)
 				orgUsers.DELETE("/:user_id", controllers.DeleteUser)
+			}
+
+			orgConnects := org.Group("/:org_id/connects")
+			{
+				orgConnects.GET("/", controllers.GetConnects)
+				orgConnects.POST("/", controllers.CreateConnect)
+				orgConnects.PUT("/:connect_id", controllers.UpdateConnect)
+				orgConnects.DELETE("/:connect_id", controllers.DeleteConnect)
 			}
 
 			orgClusters := org.Group("/:org_id/clusters")

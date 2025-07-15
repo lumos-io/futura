@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
 	"golang.org/x/oauth2"
@@ -19,64 +20,70 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
+type AuthController struct {
 	googleOAuthConfig *oauth2.Config
 	githubOAuthConfig *oauth2.Config
+	oauthStateString  string
+	environment       string
+}
 
-	// FIXME: properly handle the CSFR token
-	oauthStateString = "random-state-string" // You should generate a proper CSRF token per session
-)
-
-func GoogleLogin(c *gin.Context) {
-	googleOAuthConfig = &oauth2.Config{
-		RedirectURL:  os.Getenv("GOOGLE_CALLBACK_URL"),
-		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		Scopes:       []string{"email", "profile"},
-		Endpoint:     google.Endpoint,
+func NewAuthController(config *config.Configuration) *AuthController {
+	return &AuthController{
+		googleOAuthConfig: &oauth2.Config{
+			ClientID:     config.OAuth.Google.ClientID,
+			ClientSecret: config.OAuth.Google.ClientSecret,
+			RedirectURL:  config.OAuth.Google.CallbackURL,
+			Scopes:       []string{"email", "profile"},
+			Endpoint:     google.Endpoint,
+		},
+		githubOAuthConfig: &oauth2.Config{
+			ClientID:     config.OAuth.GitHub.ClientID,
+			ClientSecret: config.OAuth.GitHub.ClientSecret,
+			RedirectURL:  config.OAuth.GitHub.CallbackURL,
+			Scopes:       []string{"user:email"},
+			Endpoint:     github.Endpoint,
+		},
+		oauthStateString: config.Secrets.CSFRSecret,
+		environment:      config.Environment,
 	}
-	url := googleOAuthConfig.AuthCodeURL(oauthStateString)
+}
+
+func (a *AuthController) GoogleLogin(c *gin.Context) {
+	url := a.googleOAuthConfig.AuthCodeURL(a.oauthStateString)
 	c.Redirect(http.StatusFound, url)
 }
 
-func GoogleCallback(c *gin.Context) {
-	handleOAuthCallback(c, googleOAuthConfig, "google")
+func (a *AuthController) GoogleCallback(c *gin.Context) {
+	a.handleOAuthCallback(c, a.googleOAuthConfig, "google")
 }
 
-func GithubLogin(c *gin.Context) {
-	githubOAuthConfig = &oauth2.Config{
-		RedirectURL:  os.Getenv("GITHUB_CALLBACK_URL"),
-		ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
-		ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
-		Scopes:       []string{"user:email"},
-		Endpoint:     github.Endpoint,
-	}
-	url := githubOAuthConfig.AuthCodeURL(oauthStateString)
+func (a *AuthController) GithubLogin(c *gin.Context) {
+	url := a.githubOAuthConfig.AuthCodeURL(a.oauthStateString)
 	c.Redirect(http.StatusFound, url)
 }
 
-func GithubCallback(c *gin.Context) {
-	handleOAuthCallback(c, githubOAuthConfig, "github")
+func (a *AuthController) GithubCallback(c *gin.Context) {
+	a.handleOAuthCallback(c, a.githubOAuthConfig, "github")
 }
 
-func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string) {
+func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string) {
 	state := c.Query("state")
-	if state != oauthStateString {
-		utils.RespondError(c, http.StatusUnauthorized, "INVALID_STATE", "Invalid OAuth state", nil)
+	if state != a.oauthStateString {
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_STATE", "Invalid OAuth state")
 		return
 	}
 
 	code := c.Query("code")
 	token, err := config.Exchange(context.Background(), code)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "INVALID_CODE", "Failed to exchange token", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "INVALID_CODE", "Failed to exchange token")
 		return
 	}
 
 	client := config.Client(context.Background(), token)
 	userInfo, err := fetchUserInfo(client, provider)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to fetch user info", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to fetch user info")
 		return
 	}
 
@@ -103,7 +110,7 @@ func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string)
 			tx := db.Begin()
 			if err := tx.Create(&personalOrg).Error; err != nil {
 				tx.Rollback()
-				utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_CREATION", "Failed to create personal organization", nil)
+				utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_CREATION", "Failed to create personal organization")
 				return
 			}
 
@@ -113,33 +120,33 @@ func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string)
 			// Save user
 			if err := tx.Create(&user).Error; err != nil {
 				tx.Rollback()
-				utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_CREATION", "Failed to create user", nil)
+				utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_CREATION", "Failed to create user")
 				return
 			}
 
 			// Add user to organization members via many2many join
 			if err := tx.Model(&personalOrg).Association("Members").Append(&user); err != nil {
 				tx.Rollback()
-				utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_MEMBERSHIP", "Failed to assign user to personal organization", nil)
+				utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_MEMBERSHIP", "Failed to assign user to personal organization")
 				return
 			}
 
 			tx.Commit()
 		} else {
-			utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_QUERY", "Failed to query user", nil)
+			utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_QUERY", "Failed to query user")
 			return
 		}
 	}
 
 	accessToken, err := utils.GenerateAccessToken(user)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate access token", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate access token")
 		return
 	}
 
 	refreshToken, err := utils.GenerateRefreshToken(user)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token")
 		return
 	}
 
@@ -148,7 +155,7 @@ func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string)
 		Value:    accessToken,
 		Expires:  time.Now().Add(15 * time.Minute),
 		HttpOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   a.environment == "production",
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -158,7 +165,7 @@ func handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string)
 		Value:    refreshToken,
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HttpOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   a.environment == "production",
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/auth/refresh", // limit cookie to refresh endpoint
 	})
@@ -240,19 +247,19 @@ func fetchUserInfo(client *http.Client, provider string) (OAuthUserInfo, error) 
 	return userInfo, nil
 }
 
-func MeHandler(c *gin.Context) {
+func (a *AuthController) MeHandler(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
-		utils.RespondError(c, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized", nil)
+		utils.RespondError(c, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 		return
 	}
 	utils.RespondOK(c, user)
 }
 
-func RefreshToken(c *gin.Context) {
+func (a *AuthController) RefreshToken(c *gin.Context) {
 	cookie, err := c.Request.Cookie("refresh_token")
 	if err != nil {
-		utils.RespondError(c, http.StatusUnauthorized, "NO_REFRESH_TOKEN", "Missing refresh token", nil)
+		utils.RespondError(c, http.StatusUnauthorized, "NO_REFRESH_TOKEN", "Missing refresh token")
 		return
 	}
 
@@ -261,37 +268,37 @@ func RefreshToken(c *gin.Context) {
 		return utils.GetJWTSecret(), nil
 	})
 	if err != nil || !token.Valid {
-		utils.RespondError(c, http.StatusUnauthorized, "INVALID_TOKEN", "Invalid refresh token", nil)
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_TOKEN", "Invalid refresh token")
 		return
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || claims["type"] != "refresh" {
-		utils.RespondError(c, http.StatusUnauthorized, "INVALID_CLAIMS", "Invalid refresh claims", nil)
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_CLAIMS", "Invalid refresh claims")
 		return
 	}
 
 	userID, ok := claims["user_id"].(float64)
 	if !ok {
-		utils.RespondError(c, http.StatusUnauthorized, "INVALID_USER", "Invalid user in token", nil)
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_USER", "Invalid user in token")
 		return
 	}
 
 	var user models.User
 	if err := models.GetDB().First(&user, uint(userID)).Error; err != nil {
-		utils.RespondError(c, http.StatusUnauthorized, "USER_NOT_FOUND", "User not found", nil)
+		utils.RespondError(c, http.StatusUnauthorized, "USER_NOT_FOUND", "User not found")
 		return
 	}
 
 	newAccessToken, err := utils.GenerateAccessToken(user)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "TOKEN_ERROR", "Failed to generate new access token", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "TOKEN_ERROR", "Failed to generate new access token")
 		return
 	}
 
 	newRefreshToken, err := utils.GenerateRefreshToken(user)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token", nil)
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token")
 		return
 	}
 
@@ -300,7 +307,7 @@ func RefreshToken(c *gin.Context) {
 		Value:    newAccessToken,
 		Expires:  time.Now().Add(15 * time.Minute),
 		HttpOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   a.environment == "production",
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -310,24 +317,21 @@ func RefreshToken(c *gin.Context) {
 		Value:    newRefreshToken,
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HttpOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   a.environment == "production",
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/auth/refresh", // limit cookie to refresh endpoint
 	})
 
-	c.JSON(http.StatusOK, gin.H{
-		"access_token":  newAccessToken,
-		"refresh_token": newRefreshToken,
-	})
+	c.JSON(http.StatusOK, gin.H{"refresh": "ok"})
 }
 
-func Logout(c *gin.Context) {
+func (a *AuthController) Logout(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "access_token",
 		Value:    "",
 		Expires:  time.Now().Add(-1),
 		HttpOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   a.environment == "production",
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -337,7 +341,7 @@ func Logout(c *gin.Context) {
 		Value:    "",
 		Expires:  time.Now().Add(-1),
 		HttpOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   a.environment == "production",
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/auth/refresh", // limit cookie to refresh endpoint
 	})
