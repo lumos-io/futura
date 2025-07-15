@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +24,7 @@ type AuthController struct {
 	githubOAuthConfig *oauth2.Config
 	oauthStateString  string
 	environment       string
+	frontendURL       string
 }
 
 func NewAuthController(config *config.Configuration) *AuthController {
@@ -45,6 +45,7 @@ func NewAuthController(config *config.Configuration) *AuthController {
 		},
 		oauthStateString: config.Secrets.CSFRSecret,
 		environment:      config.Environment,
+		frontendURL:      config.Frontend.URL,
 	}
 }
 
@@ -170,7 +171,7 @@ func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Conf
 		Path:     "/auth/refresh", // limit cookie to refresh endpoint
 	})
 
-	c.Redirect(http.StatusTemporaryRedirect, os.Getenv("FRONTEND_URL"))
+	c.Redirect(http.StatusTemporaryRedirect, a.frontendURL)
 }
 
 // Simplified user info response struct

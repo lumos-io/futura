@@ -92,6 +92,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
       const result = await res.json();
       setTestSuccess(res.ok && result?.success);
     } catch (err) {
+      console.error(err);
       setTestSuccess(false);
     } finally {
       setTesting(false);
@@ -112,7 +113,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
             <Label>Provider</Label>
             <Select
               value={newProvider.name}
-              onValueChange={(value) =>
+              onValueChange={(value: any) =>
                 setNewProvider({ ...newProvider, name: value })
               }
             >

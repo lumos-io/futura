@@ -31,6 +31,8 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 	// viteStaticFS := os.DirFS(distDir)
 	router.Use(static.Serve("/", static.LocalFile(distDir, false)))
 
+	// router.GET("/healthz", controllers.Healthz)
+
 	// Auth routes
 	a := controllers.NewAuthController(config)
 	auth := router.Group("/auth")

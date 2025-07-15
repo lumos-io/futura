@@ -7,6 +7,9 @@ BUCKET_NAME="api_keys"
 KEY_NAME="df9166bbacd761c74aecc50bb7a902342dd61a1de84551e253f7133154947d88"
 KEY_VALUE='{"customer_id":"1", "status":"active", "cluster_id":"1", "cloud_provider_id":"1"}'
 
+# Give it a second to come up
+sleep 10
+
 # Port-forward NATS port (runs in background)
 kubectl port-forward svc/nats "$LOCAL_PORT:$NATS_SERVICE_PORT" > /tmp/nats-portforward.log 2>&1 &
 PF_PID=$!

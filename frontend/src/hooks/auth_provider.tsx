@@ -26,12 +26,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
-    const controller = new AbortController();
-
     try {
       let res = await fetch("/auth/me", {
         credentials: "include",
-        signal: controller.signal,
       });
 
       if (res.status === 401) {
@@ -41,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           res = await fetch("/auth/me", {
             credentials: "include",
-            signal: controller.signal,
           });
         } catch {
           localStorage.removeItem("isAuthenticated");
@@ -61,8 +57,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setLoading(false);
     }
-
-    return () => controller.abort();
   };
 
   const refresh = async () => {
@@ -92,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const login = (provider: string) => {
+    console.log("login function called");
     // This just redirects to the backend OAuth handler
     window.location.href = `/auth/${provider}/login`;
   };
