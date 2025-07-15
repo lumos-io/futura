@@ -5,11 +5,20 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
 )
 
-func GetConnects(c *gin.Context) {
+type ConnectController struct {
+}
+
+func NewConnectController(config *config.Configuration) (*ConnectController, error) {
+
+	return &ConnectController{}, nil
+}
+
+func (cc *ConnectController) GetConnects(c *gin.Context) {
 	orgID, err := parseOrgID(c)
 	if err != nil {
 		return
@@ -23,7 +32,7 @@ func GetConnects(c *gin.Context) {
 	utils.RespondOK(c, connects)
 }
 
-func CreateConnect(c *gin.Context) {
+func (cc *ConnectController) CreateConnect(c *gin.Context) {
 	orgID, err := parseOrgID(c)
 	if err != nil {
 		return
@@ -54,7 +63,7 @@ func CreateConnect(c *gin.Context) {
 	utils.RespondCreated(c, cp)
 }
 
-func UpdateConnect(c *gin.Context) {
+func (cc *ConnectController) UpdateConnect(c *gin.Context) {
 	orgID, err := parseOrgID(c)
 	if err != nil {
 		return
@@ -95,7 +104,7 @@ func UpdateConnect(c *gin.Context) {
 	utils.RespondOK(c, cp)
 }
 
-func DeleteConnect(c *gin.Context) {
+func (cc *ConnectController) DeleteConnect(c *gin.Context) {
 	orgID, err := parseOrgID(c)
 	if err != nil {
 		return
@@ -120,7 +129,6 @@ func DeleteConnect(c *gin.Context) {
 	utils.RespondOK(c, nil)
 }
 
-func TestConnection(c *gin.Context) {
-
+func (cc *ConnectController) TestConnection(c *gin.Context) {
 	utils.RespondOK(c, gin.H{"result": "ok"})
 }

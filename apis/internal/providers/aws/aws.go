@@ -1,13 +1,21 @@
-package aws
+package awsprovider
+
+import (
+	"github.com/opisvigilant/futura/apis/internal/config"
+	"github.com/opisvigilant/futura/apis/internal/secrets"
+)
 
 type AWSProvider struct {
-	account  string
-	rolename string
+	secretStore secrets.SecretStore
 }
 
-func New(account, role string) (*AWSProvider, error) {
+func New(config *config.Configuration) (*AWSProvider, error) {
+	ss, err := secrets.NewInMemorySecretStore()
+	if err != nil {
+		return nil, err
+	}
 	return &AWSProvider{
-		account:  account,
-		rolename: role,
+		secretStore: ss,
 	}, nil
 }
+

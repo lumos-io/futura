@@ -64,12 +64,17 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 				orgUsers.DELETE("/:user_id", controllers.DeleteUser)
 			}
 
+			cc, err := controllers.NewConnectController(config)
+			if err != nil {
+				return nil, err
+			}
 			orgConnects := org.Group("/:org_id/connects")
 			{
-				orgConnects.GET("/", controllers.GetConnects)
-				orgConnects.POST("/", controllers.CreateConnect)
-				orgConnects.PUT("/:connect_id", controllers.UpdateConnect)
-				orgConnects.DELETE("/:connect_id", controllers.DeleteConnect)
+				orgConnects.GET("/", cc.GetConnects)
+				orgConnects.POST("/", cc.CreateConnect)
+				orgConnects.PUT("/:connect_id", cc.UpdateConnect)
+				orgConnects.DELETE("/:connect_id", cc.DeleteConnect)
+				orgConnects.POST("/test-connection", cc.TestConnection)
 			}
 
 			orgClusters := org.Group("/:org_id/clusters")
