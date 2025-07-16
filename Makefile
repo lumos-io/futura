@@ -1,11 +1,16 @@
 PROTO_DIR=proto
 OUT_DIR=proto/gen
 
+PROTO_BACKEND_DIR=proto/backend
+OUT_BACKEND_DIR=proto/gen/backend
+
 PROTOC_GEN_GO=$(shell which protoc-gen-go)
 PROTOC_GEN_GO_GRPC=$(shell which protoc-gen-go-grpc)
 PROTOC_GEN_TS_PROTO=$(shell which protoc-gen-ts_proto)
 
 PROTO_FILES := $(shell find $(PROTO_DIR) -name '*.proto')
+PROTO_BACKEND_FILES := $(shell find $(PROTO_BACKEND_DIR) -name '*.proto')
+
 GO_WORK_FILE=./go.work
 
 PHONY: dev-env
@@ -39,12 +44,13 @@ proto-go:
 .PHONY: proto-ts
 proto-ts:
 	@echo "Generating TypeScript protos..."
-	mkdir -p $(OUT_DIR)
+	@find $(PROTO_BACKEND_DIR) -name "*.proto"
+	mkdir -p $(OUT_BACKEND_DIR)
 	protoc --plugin=protoc-gen-ts=$(PROTOC_GEN_TS_PROTO) \
-		--ts_out=$(OUT_DIR) \
-		--ts_opt=esModuleInterop=true,forceLong=string,useExactTypes=false \
-		--proto_path=$(PROTO_DIR) \
-		$(PROTO_FILES)
+		--ts_out=$(OUT_BACKEND_DIR) \
+		--ts_opt=esModuleInterop=true,forceLong=string,useExactTypes=false,paths=source_relative \
+		--proto_path=$(PROTO_BACKEND_DIR) \
+		$(PROTO_BACKEND_FILES)
 
 .PHONY: proto-clean
 proto-clean:
