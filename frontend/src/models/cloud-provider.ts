@@ -10,7 +10,8 @@ type ActivationStatus = typeof ActivationStatus[keyof typeof ActivationStatus];
 
 interface CloudProvider {
     id?: number;
-    name: string;
+    provider: string;
+    
     status: ActivationStatus;
     [key: string]: unknown; // dynamic fields
 }

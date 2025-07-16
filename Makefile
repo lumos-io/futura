@@ -1,7 +1,10 @@
 PROTO_DIR=proto
 OUT_DIR=proto/gen
+
 PROTOC_GEN_GO=$(shell which protoc-gen-go)
 PROTOC_GEN_GO_GRPC=$(shell which protoc-gen-go-grpc)
+PROTOC_GEN_TS_PROTO=$(shell which protoc-gen-ts_proto)
+
 PROTO_FILES := $(shell find $(PROTO_DIR) -name '*.proto')
 GO_WORK_FILE=./go.work
 
@@ -14,12 +17,16 @@ endif
 	@echo "add all projects to go.work"
 	go work use -r .
 	go work sync
+	@echo "install TS dependencies for protos"
+	cd proto && bun install
 
 ##@ Proto 
-
 .PHONY: proto-files
-proto-files: proto-clean
-	@echo "Generating shared protos..."
+proto-files: proto-clean proto-go proto-ts
+
+.PHONY: proto-go
+proto-go:
+	@echo "Generating Go protos..."
 	@find $(PROTO_DIR) -name "*.proto"
 	mkdir -p $(OUT_DIR)
 	protoc --proto_path=$(PROTO_DIR) \
@@ -29,6 +36,15 @@ proto-files: proto-clean
 		--go_opt=paths=source_relative \
 		$(PROTO_FILES)
 
+.PHONY: proto-ts
+proto-ts:
+	@echo "Generating TypeScript protos..."
+	mkdir -p $(OUT_DIR)
+	protoc --plugin=protoc-gen-ts=$(PROTOC_GEN_TS_PROTO) \
+		--ts_out=$(OUT_DIR) \
+		--ts_opt=esModuleInterop=true,forceLong=string,useExactTypes=false \
+		--proto_path=$(PROTO_DIR) \
+		$(PROTO_FILES)
 
 .PHONY: proto-clean
 proto-clean:

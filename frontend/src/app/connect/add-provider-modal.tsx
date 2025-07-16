@@ -77,26 +77,19 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
     setTesting(true);
     setTestSuccess(null);
 
-    try {
-      const res = await fetch(
-        `/api/organizations/${user?.organizationId}/connects/test-connection`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newProvider),
-        }
-      );
+    const res = await fetch(
+      `/api/organizations/${user?.organizationId}/connects/test-connection`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newProvider),
+      }
+    );
 
-      const result = await res.json();
-      setTestSuccess(res.ok && result?.success);
-    } catch (err) {
-      console.error(err);
-      setTestSuccess(false);
-    } finally {
-      setTesting(false);
-    }
+    const result = await res.json();
+    setTestSuccess(res.ok && result?.success);
   };
 
   return (
@@ -113,7 +106,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
             <Label>Provider</Label>
             <Select
               value={newProvider.name}
-              onValueChange={(value: any) =>
+              onValueChange={(value: string) =>
                 setNewProvider({ ...newProvider, name: value })
               }
             >

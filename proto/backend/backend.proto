@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package backend;
+
+option go_package = "github.com/opisvigilant/futura/proto/gen/backend;backend";
+
+// import "google/protobuf/timestamp.proto";
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string message = 1;
+}
