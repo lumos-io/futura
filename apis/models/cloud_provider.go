@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 
 	"gorm.io/gorm"
@@ -11,7 +12,8 @@ import (
 type CloudProvider struct {
 	gorm.Model
 	Provider       CloudProviderName `json:"name"`
-	SecretID       pb.SecretIdName   `json:"secretId"`
+	SecretName     pb.SecretName     `json:"secretName"`
+	SecretID       uuid.UUID         `json:"secretId"`
 	Status         ActivationStatus  `gorm:"default:PENDING" json:"activationStatus"`
 	OrganizationID uint              `gorm:"index;not null"`
 	Organization   Organization

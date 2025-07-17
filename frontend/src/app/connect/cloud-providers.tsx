@@ -19,29 +19,31 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { CloudProvider } from "@/models/cloud-provider";
+import {
+  CloudProviderConnection,
+  EmptyCloudProvider,
+} from "@/models/cloud-provider";
 import { useAuth } from "@/hooks/auth_provider";
 import {
   CreateProviderConnectionRequest,
-  ActivationStatus,
-  SecretIdName,
+  SecretName,
   cloudProviderFromJSON,
   activationStatusFromJSON,
-  CloudProvider as ProtoCloudProvider,
-} from "../../../../proto/gen/backend/backend";
+  CloudProvider,
+} from "@proto/backend/backend";
 import { Badge } from "@/components/ui/badge";
 
 const CloudIcon = ({ provider }: { provider: string }) => {
   switch (provider) {
-    case "AWS":
+    case CloudProvider.AWS:
       return <Cloud className="w-5 h-5 text-yellow-500" />;
-    case "GCP":
+    case CloudProvider.GCP:
       return <CloudSun className="w-5 h-5 text-blue-500" />;
-    case "AZURE":
+    case CloudProvider.AZURE:
       return <Zap className="w-5 h-5 text-blue-700" />;
-    case "DIGITALOCEAN":
+    case CloudProvider.DIGITALOCEAN:
       return <Cloud className="w-5 h-5 text-indigo-500" />;
-    case "ALIBABA":
+    case CloudProvider.ALIBABA:
       return <CloudRain className="w-5 h-5 text-orange-500" />;
     default:
       return null;
@@ -51,39 +53,20 @@ const CloudIcon = ({ provider }: { provider: string }) => {
 const CloudProviders: React.FC = () => {
   const { user } = useAuth();
 
-  const [connectedProviders, setConnectedProviders] = useState<CloudProvider[]>(
-    []
-  );
+  const [connectedProviders, setConnectedProviders] = useState<
+    CloudProviderConnection[]
+  >([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newProvider, setNewProvider] = useState<CloudProvider>({
-    createdAt: "",
-    id: "-1",
-    provider: ProtoCloudProvider.UNRECOGNIZED,
-    status: ActivationStatus.UNRECOGNIZED,
-  });
-  const [deleteTarget, setDeleteTarget] = useState<CloudProvider | null>(null);
+  const [newProvider, setNewProvider] =
+    useState<CloudProviderConnection>(EmptyCloudProvider);
+  const [deleteTarget, setDeleteTarget] =
+    useState<CloudProviderConnection | null>(null);
 
-  const extractCredentials = (
-    provider: CloudProvider
-  ): { [key: string]: string } => {
-    const { ...rest } = provider;
-
-    const credentials: { [key: string]: string } = {};
-
-    for (const [key, value] of Object.entries(rest)) {
-      if (typeof value === "string") {
-        credentials[key] = value;
-      }
-    }
-
-    return credentials;
-  };
-
-  const handleSave = async () => {
+  const handleSave = async (credentials: { [key: string]: string }) => {
     const input = CreateProviderConnectionRequest.fromJSON({
-      provider: newProvider?.name,
-      secretId: SecretIdName.ACCESS_CREDENTIALS,
-      credentials: extractCredentials(newProvider),
+      provider: newProvider.provider,
+      secretName: SecretName.ACCESS_CREDENTIALS,
+      credentials: credentials,
     });
 
     const res = await fetch(
@@ -99,12 +82,7 @@ const CloudProviders: React.FC = () => {
     setConnectedProviders((prev) => [...prev, created.data]);
 
     setDialogOpen(false);
-    setNewProvider({
-      createdAt: "",
-      id: "-1",
-      provider: ProtoCloudProvider.UNRECOGNIZED,
-      status: ActivationStatus.UNRECOGNIZED,
-    });
+    setNewProvider(EmptyCloudProvider);
   };
 
   const handleDelete = async () => {
@@ -133,12 +111,7 @@ const CloudProviders: React.FC = () => {
   }, [user?.organizationId]);
 
   const openAdd = () => {
-    setNewProvider({
-      createdAt: "",
-      id: "-1",
-      provider: ProtoCloudProvider.UNRECOGNIZED,
-      status: ActivationStatus.UNRECOGNIZED,
-    });
+    setNewProvider(EmptyCloudProvider);
     setDialogOpen(true);
   };
 
@@ -153,8 +126,9 @@ const CloudProviders: React.FC = () => {
           onOpenChange={setDialogOpen}
           newProvider={newProvider}
           setNewProvider={setNewProvider}
-          onSave={handleSave}
-          mode="create" // Always create now
+          onSave={(credentials) => {
+            handleSave(credentials);
+          }}
         />
         <Button onClick={openAdd}>Add Provider</Button>
       </div>
@@ -179,6 +153,10 @@ const CloudProviders: React.FC = () => {
                   <CardDescription className="text-xs text-muted-foreground">
                     Connected account for{" "}
                     {cloudProviderFromJSON(provider.provider)}
+                    <span className="text-muted-foreground">
+                      <b>Secret Id</b>
+                      {provider.secretId}
+                    </span>
                   </CardDescription>
                 </div>
 

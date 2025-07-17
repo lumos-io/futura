@@ -22,7 +22,7 @@ enum ActivationStatus {
 	FAILED = 5;
 }
 
-enum SecretIdName {
+enum SecretName {
   UNDEFINED_SECRET = 0;  // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
 	ACCESS_CREDENTIALS = 1;
 }
@@ -32,19 +32,15 @@ message ProviderConnection {
   CloudProvider provider = 2;
   ActivationStatus status = 3;
   string created_at = 4;
+  string secret_id = 5;
 }
 
 message GetAllProviderConnectionResponse {
   repeated ProviderConnection connections = 1;
 }
 
-
 message CreateProviderConnectionRequest {
   CloudProvider provider = 1;
-  SecretIdName secret_id = 2;
+  SecretName secret_name = 2;
   map<string,string> credentials = 3;		
-}
-
-message CreateProviderConnectionResponse {
-  ProviderConnection connection = 1;  
 }

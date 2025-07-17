@@ -1,14 +1,29 @@
-import { ProviderConnection } from "../../../proto/gen/backend/backend";
+// Update the import path to the correct module location or ensure the module exists
+import {
+    ActivationStatus,
+    ProviderConnection,
+    CloudProvider as ProtoCloudProvider,
+} from "@proto/backend/backend";
 
-type CloudProvider = ProviderConnection & Record<string, string | number | undefined>;
+type CloudProviderConnection = ProviderConnection & Record<string, string | number | undefined>;
 
 interface AddProviderModalProps {
     open: boolean;
     mode: "create" | "edit";
     onOpenChange: (open: boolean) => void;
-    newProvider: CloudProvider;
-    setNewProvider: (provider: CloudProvider) => void;
+    newProvider: CloudProviderConnection;
+    setNewProvider: (provider: CloudProviderConnection) => void;
     onSave: () => void;
 }
 
-export { CloudProvider, AddProviderModalProps }
+function EmptyCloudProvider(): CloudProviderConnection {
+    return {
+        createdAt: "",
+        id: "-1",
+        secretId: "",
+        provider: ProtoCloudProvider.UNRECOGNIZED,
+        status: ActivationStatus.UNRECOGNIZED,
+    }
+}
+
+export { CloudProviderConnection, EmptyCloudProvider, AddProviderModalProps }

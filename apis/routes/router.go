@@ -74,7 +74,6 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 			{
 				orgConnects.GET("/", cc.GetConnects)
 				orgConnects.POST("/", cc.CreateConnect)
-				orgConnects.PUT("/:connect_id", cc.UpdateConnect)
 				orgConnects.DELETE("/:connect_id", cc.DeleteConnect)
 				orgConnects.POST("/test-connection", cc.TestConnection)
 			}

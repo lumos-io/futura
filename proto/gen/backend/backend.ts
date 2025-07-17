@@ -165,47 +165,47 @@ export function activationStatusToNumber(object: ActivationStatus): number {
   }
 }
 
-export enum SecretIdName {
+export enum SecretName {
   /** UNDEFINED_SECRET - needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789 */
   UNDEFINED_SECRET = "UNDEFINED_SECRET",
   ACCESS_CREDENTIALS = "ACCESS_CREDENTIALS",
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
-export function secretIdNameFromJSON(object: any): SecretIdName {
+export function secretNameFromJSON(object: any): SecretName {
   switch (object) {
     case 0:
     case "UNDEFINED_SECRET":
-      return SecretIdName.UNDEFINED_SECRET;
+      return SecretName.UNDEFINED_SECRET;
     case 1:
     case "ACCESS_CREDENTIALS":
-      return SecretIdName.ACCESS_CREDENTIALS;
+      return SecretName.ACCESS_CREDENTIALS;
     case -1:
     case "UNRECOGNIZED":
     default:
-      return SecretIdName.UNRECOGNIZED;
+      return SecretName.UNRECOGNIZED;
   }
 }
 
-export function secretIdNameToJSON(object: SecretIdName): string {
+export function secretNameToJSON(object: SecretName): string {
   switch (object) {
-    case SecretIdName.UNDEFINED_SECRET:
+    case SecretName.UNDEFINED_SECRET:
       return "UNDEFINED_SECRET";
-    case SecretIdName.ACCESS_CREDENTIALS:
+    case SecretName.ACCESS_CREDENTIALS:
       return "ACCESS_CREDENTIALS";
-    case SecretIdName.UNRECOGNIZED:
+    case SecretName.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
   }
 }
 
-export function secretIdNameToNumber(object: SecretIdName): number {
+export function secretNameToNumber(object: SecretName): number {
   switch (object) {
-    case SecretIdName.UNDEFINED_SECRET:
+    case SecretName.UNDEFINED_SECRET:
       return 0;
-    case SecretIdName.ACCESS_CREDENTIALS:
+    case SecretName.ACCESS_CREDENTIALS:
       return 1;
-    case SecretIdName.UNRECOGNIZED:
+    case SecretName.UNRECOGNIZED:
     default:
       return -1;
   }
@@ -216,6 +216,7 @@ export interface ProviderConnection {
   provider: CloudProvider;
   status: ActivationStatus;
   createdAt: string;
+  secretId: string;
 }
 
 export interface GetAllProviderConnectionResponse {
@@ -224,7 +225,7 @@ export interface GetAllProviderConnectionResponse {
 
 export interface CreateProviderConnectionRequest {
   provider: CloudProvider;
-  secretId: SecretIdName;
+  secretName: SecretName;
   credentials: { [key: string]: string };
 }
 
@@ -243,6 +244,7 @@ function createBaseProviderConnection(): ProviderConnection {
     provider: CloudProvider.UNDEFINED_PROVIDER,
     status: ActivationStatus.UNDEFINED_STATUS,
     createdAt: "",
+    secretId: "",
   };
 }
 
@@ -259,6 +261,9 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     }
     if (message.createdAt !== "") {
       writer.uint32(34).string(message.createdAt);
+    }
+    if (message.secretId !== "") {
+      writer.uint32(42).string(message.secretId);
     }
     return writer;
   },
@@ -302,6 +307,14 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
           message.createdAt = reader.string();
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.secretId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -317,6 +330,7 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
       provider: isSet(object.provider) ? cloudProviderFromJSON(object.provider) : CloudProvider.UNDEFINED_PROVIDER,
       status: isSet(object.status) ? activationStatusFromJSON(object.status) : ActivationStatus.UNDEFINED_STATUS,
       createdAt: isSet(object.createdAt) ? globalThis.String(object.createdAt) : "",
+      secretId: isSet(object.secretId) ? globalThis.String(object.secretId) : "",
     };
   },
 
@@ -334,6 +348,9 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     if (message.createdAt !== "") {
       obj.createdAt = message.createdAt;
     }
+    if (message.secretId !== "") {
+      obj.secretId = message.secretId;
+    }
     return obj;
   },
 
@@ -346,6 +363,7 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     message.provider = object.provider ?? CloudProvider.UNDEFINED_PROVIDER;
     message.status = object.status ?? ActivationStatus.UNDEFINED_STATUS;
     message.createdAt = object.createdAt ?? "";
+    message.secretId = object.secretId ?? "";
     return message;
   },
 };
@@ -413,7 +431,7 @@ export const GetAllProviderConnectionResponse: MessageFns<GetAllProviderConnecti
 };
 
 function createBaseCreateProviderConnectionRequest(): CreateProviderConnectionRequest {
-  return { provider: CloudProvider.UNDEFINED_PROVIDER, secretId: SecretIdName.UNDEFINED_SECRET, credentials: {} };
+  return { provider: CloudProvider.UNDEFINED_PROVIDER, secretName: SecretName.UNDEFINED_SECRET, credentials: {} };
 }
 
 export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectionRequest> = {
@@ -421,8 +439,8 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
     if (message.provider !== CloudProvider.UNDEFINED_PROVIDER) {
       writer.uint32(8).int32(cloudProviderToNumber(message.provider));
     }
-    if (message.secretId !== SecretIdName.UNDEFINED_SECRET) {
-      writer.uint32(16).int32(secretIdNameToNumber(message.secretId));
+    if (message.secretName !== SecretName.UNDEFINED_SECRET) {
+      writer.uint32(16).int32(secretNameToNumber(message.secretName));
     }
     Object.entries(message.credentials).forEach(([key, value]) => {
       CreateProviderConnectionRequest_CredentialsEntry.encode({ key: key as any, value }, writer.uint32(26).fork())
@@ -451,7 +469,7 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
             break;
           }
 
-          message.secretId = secretIdNameFromJSON(reader.int32());
+          message.secretName = secretNameFromJSON(reader.int32());
           continue;
         }
         case 3: {
@@ -477,7 +495,7 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
   fromJSON(object: any): CreateProviderConnectionRequest {
     return {
       provider: isSet(object.provider) ? cloudProviderFromJSON(object.provider) : CloudProvider.UNDEFINED_PROVIDER,
-      secretId: isSet(object.secretId) ? secretIdNameFromJSON(object.secretId) : SecretIdName.UNDEFINED_SECRET,
+      secretName: isSet(object.secretName) ? secretNameFromJSON(object.secretName) : SecretName.UNDEFINED_SECRET,
       credentials: isObject(object.credentials)
         ? Object.entries(object.credentials).reduce<{ [key: string]: string }>((acc, [key, value]) => {
           acc[key] = String(value);
@@ -492,8 +510,8 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
     if (message.provider !== CloudProvider.UNDEFINED_PROVIDER) {
       obj.provider = cloudProviderToJSON(message.provider);
     }
-    if (message.secretId !== SecretIdName.UNDEFINED_SECRET) {
-      obj.secretId = secretIdNameToJSON(message.secretId);
+    if (message.secretName !== SecretName.UNDEFINED_SECRET) {
+      obj.secretName = secretNameToJSON(message.secretName);
     }
     if (message.credentials) {
       const entries = Object.entries(message.credentials);
@@ -513,7 +531,7 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
   fromPartial(object: DeepPartial<CreateProviderConnectionRequest>): CreateProviderConnectionRequest {
     const message = createBaseCreateProviderConnectionRequest();
     message.provider = object.provider ?? CloudProvider.UNDEFINED_PROVIDER;
-    message.secretId = object.secretId ?? SecretIdName.UNDEFINED_SECRET;
+    message.secretName = object.secretName ?? SecretName.UNDEFINED_SECRET;
     message.credentials = Object.entries(object.credentials ?? {}).reduce<{ [key: string]: string }>(
       (acc, [key, value]) => {
         if (value !== undefined) {

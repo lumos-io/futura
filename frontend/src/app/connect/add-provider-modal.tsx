@@ -15,17 +15,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CloudProvider } from "@/models/cloud-provider";
+import { CloudProviderConnection } from "@/models/cloud-provider";
+import {
+  cloudProviderFromJSON,
+  cloudProviderToJSON,
+  CloudProvider,
+} from "@proto/backend/backend";
 import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/auth_provider";
 
 interface AddProviderModalProps {
   open: boolean;
-  mode: "create" | "edit";
   onOpenChange: (open: boolean) => void;
-  newProvider: CloudProvider;
-  setNewProvider: (provider: CloudProvider) => void;
-  onSave: () => void;
+  newProvider: CloudProviderConnection;
+  setNewProvider: (provider: CloudProviderConnection) => void;
+  onSave: (credentials: { [key: string]: string }) => void;
 }
 
 const providerOptions = ["ALIBABA", "AWS", "GCP", "DIGITALOCEAN", "AZURE"];
@@ -60,7 +64,6 @@ const providerFormFields: Record<
 
 const AddProviderModal: React.FC<AddProviderModalProps> = ({
   open,
-  mode,
   onOpenChange,
   newProvider,
   setNewProvider,
@@ -70,11 +73,12 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
 
   const fields =
     providerFormFields[
-      typeof newProvider.name === "string" ? newProvider.name : ""
+      typeof newProvider.provider === "string" ? newProvider.provider : ""
     ] ?? [];
 
   const [testing, setTesting] = useState(false);
   const [testSuccess, setTestSuccess] = useState<boolean | null>(null);
+  const [credentials, setCredentials] = useState<{ [key: string]: string }>({});
 
   const handleTestConnection = async () => {
     setTesting(true);
@@ -99,9 +103,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {mode === "edit" ? "Edit Cloud Provider" : "Add Cloud Provider"}
-          </DialogTitle>
+          <DialogTitle>Add Cloud Provider</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -109,11 +111,17 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
             <Label>Provider</Label>
             <Select
               value={
-                typeof newProvider.name === "string" ? newProvider.name : ""
+                newProvider.provider === CloudProvider.UNRECOGNIZED
+                  ? ""
+                  : cloudProviderToJSON(newProvider.provider)
               }
-              onValueChange={(value: string) =>
-                setNewProvider({ ...newProvider, name: value })
-              }
+              onValueChange={(value: string) => {
+                setNewProvider({
+                  ...newProvider,
+                  provider: cloudProviderFromJSON(value),
+                });
+                setCredentials({}); // reset credentials on provider change
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select provider" />
@@ -134,10 +142,10 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
                 <Label>{field.label}</Label>
                 <Input
                   placeholder={field.placeholder || ""}
-                  value={String(newProvider[field.key] ?? "")}
+                  value={credentials[field.key] ?? ""}
                   onChange={(e) =>
-                    setNewProvider({
-                      ...newProvider,
+                    setCredentials({
+                      ...credentials,
                       [field.key]: e.target.value,
                     })
                   }
@@ -180,11 +188,11 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
           </div>
 
           <Button
-            onClick={onSave}
+            onClick={() => onSave(credentials)}
             disabled={testSuccess ? true : false}
             className="w-full"
           >
-            {mode === "edit" ? "Update Provider" : "Save Provider"}
+            Save Provider
           </Button>
         </div>
       </DialogContent>

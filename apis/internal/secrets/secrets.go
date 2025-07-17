@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
 
 type SecretStore interface {
-	GetCredentials(organizationID uint, provider string, secretID pb.SecretIdName) (map[string]string, error)
-	SetCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error
-	UpdateCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error
-	DeleteCredentials(organizationID uint, provider string, secretID pb.SecretIdName) error
+	GetCredentials(id uuid.UUID) (map[string]string, error)
+	SetCredentials(organizationID uint, provider string, secretName pb.SecretName, creds map[string]string) (uuid.UUID, error)
+	DeleteCredentials(id uuid.UUID) error
 }
 
 type InMemorySecretStore struct {
@@ -21,9 +21,10 @@ type InMemorySecretStore struct {
 }
 
 type secret struct {
+	ID             uuid.UUID         `json:"id"`
 	OrganizationID uint              `json:"organizationId"`
 	Provider       string            `json:"provider"`
-	SecretID       pb.SecretIdName   `json:"secretId"`
+	SecretName     pb.SecretName     `json:"secretName"`
 	Credentials    map[string]string `json:"credentials"`
 }
 
@@ -50,31 +51,41 @@ func NewInMemorySecretStore() (*InMemorySecretStore, error) {
 	}, nil
 }
 
-func (m *InMemorySecretStore) GetCredentials(organizationID uint, provider string, secretID pb.SecretIdName) (map[string]string, error) {
+func (m *InMemorySecretStore) GetCredentials(id uuid.UUID) (map[string]string, error) {
 	for _, s := range m.secrets {
-		if s.OrganizationID == organizationID && s.Provider == provider && s.SecretID == secretID {
+		if s.ID == id {
 			return s.Credentials, nil
 		}
 	}
 	return nil, errors.New("failed to fetch credentials for the organizationId and provider pair")
 }
 
-func (m *InMemorySecretStore) SetCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error {
+func (m *InMemorySecretStore) SetCredentials(organizationID uint, provider string, secretName pb.SecretName, creds map[string]string) (uuid.UUID, error) {
+	id := uuid.New()
 	m.secrets = append(m.secrets, &secret{
+		ID:             id,
 		OrganizationID: organizationID,
 		Provider:       provider,
-		SecretID:       secretID,
+		SecretName:     secretName,
 		Credentials:    creds,
 	})
+	if err := saveSecrets(m.secrets); err != nil {
+		// id will be ignored in this case
+		return id, err
+	}
+	return id, nil
+}
+
+func (m *InMemorySecretStore) DeleteCredentials(id uuid.UUID) error {
+	newSecrets := []*secret{}
+	for _, s := range m.secrets {
+		if s.ID == id {
+			continue
+		}
+		newSecrets = append(newSecrets, s)
+	}
+	m.secrets = newSecrets
 	return saveSecrets(m.secrets)
-}
-
-func (m *InMemorySecretStore) UpdateCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error {
-	return errors.New("not implemented")
-}
-
-func (m *InMemorySecretStore) DeleteCredentials(organizationID uint, provider string, secretID pb.SecretIdName) error {
-	return errors.New("not implemented")
 }
 
 // createFileIfNotExists ensures the file exists, and if not, creates it with an empty array

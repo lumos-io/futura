@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"io"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/opisvigilant/futura/apis/internal/providers"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
@@ -54,6 +56,7 @@ func (cc *ConnectController) GetConnects(c *gin.Context) {
 			Id:        int64(conn.ID),
 			Provider:  p,
 			Status:    s,
+			SecretId:  conn.SecretID.String(),
 			CreatedAt: conn.CreatedAt.String(),
 		}
 	}
@@ -67,14 +70,21 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		return
 	}
 
-	input := pb.CreateProviderConnectionRequest{}
-	if err := c.ShouldBindJSON(&input); err != nil {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
+		return
+	}
+
+	var input pb.CreateProviderConnectionRequest
+	if err := protojson.Unmarshal(body, &input); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
 	// create secret in provider
-	if err := cc.cloudProviderAuth.SetCredentials(orgID, input.Provider.String(), input.SecretId, input.Credentials); err != nil {
+	secretID, err := cc.cloudProviderAuth.SetCredentials(orgID, input.Provider.String(), input.SecretName, input.Credentials)
+	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to create secret storage")
 		return
 	}
@@ -87,7 +97,8 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 	}
 	cp := models.CloudProvider{
 		Provider:       prov,
-		SecretID:       input.SecretId,
+		SecretID:       secretID,
+		SecretName:     input.SecretName,
 		OrganizationID: orgID,
 		Status:         models.ActiveStatus, // I assume the "Test Connection" was done before this operation is performed
 	}
@@ -110,49 +121,9 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		Id:        int64(cp.ID),
 		Provider:  p,
 		Status:    s,
+		SecretId:  secretID.String(),
 		CreatedAt: cp.CreatedAt.String(),
 	})
-}
-
-func (cc *ConnectController) UpdateConnect(c *gin.Context) {
-	orgID, err := parseOrgID(c)
-	if err != nil {
-		return
-	}
-
-	connectID, err := strconv.Atoi(c.Param("connect_id"))
-	if err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid connect_id")
-		return
-	}
-
-	var cp models.CloudProvider
-	if err := models.GetDB().Where("id = ? AND organization_id = ?", connectID, orgID).First(&cp).Error; err != nil {
-		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "Connection not found in this organization")
-		return
-	}
-
-	var input struct {
-		Provider    string            `json:"provider" binding:"required"`
-		SecretID    pb.SecretIdName   `json:"secretId" binding:"required"`
-		Credentials map[string]string `json:"credentials" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
-		return
-	}
-
-	// update secret in the provider
-	if err := cc.cloudProviderAuth.UpdateCredentials(orgID, input.Provider, input.SecretID, input.Credentials); err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to update secret storage")
-		return
-	}
-
-	if err := models.GetDB().Save(&cp).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to update connection")
-		return
-	}
-	utils.RespondOK(c, cp)
 }
 
 func (cc *ConnectController) DeleteConnect(c *gin.Context) {
@@ -173,17 +144,25 @@ func (cc *ConnectController) DeleteConnect(c *gin.Context) {
 		return
 	}
 
+	// delete from DB
 	if err := models.GetDB().Delete(&cp).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to delete connection")
 		return
 	}
-	utils.RespondOK(c, nil)
+
+	// delete from secrets
+	if err := cc.cloudProviderAuth.DeleteCredentials(cp.SecretID); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to delete secret storage")
+		return
+	}
+
+	utils.RespondOK(c, gin.H{"result": "delete"})
 }
 
 func (cc *ConnectController) TestConnection(c *gin.Context) {
 	var input struct {
 		Provider    string            `json:"provider" binding:"required"`
-		SecretID    string            `json:"secretId" binding:"required"`
+		SecretName  string            `json:"secretName" binding:"required"`
 		Credentials map[string]string `json:"credentials" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
