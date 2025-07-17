@@ -48,7 +48,7 @@ proto-ts:
 	mkdir -p $(OUT_BACKEND_DIR)
 	protoc --plugin=protoc-gen-ts=$(PROTOC_GEN_TS_PROTO) \
 		--ts_out=$(OUT_BACKEND_DIR) \
-		--ts_opt=esModuleInterop=true,forceLong=string,useExactTypes=false,paths=source_relative \
+		--ts_opt=esModuleInterop=true,forceLong=string,useExactTypes=false,stringEnums=true,paths=source_relative \
 		--proto_path=$(PROTO_BACKEND_DIR) \
 		$(PROTO_BACKEND_FILES)
 

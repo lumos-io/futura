@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
 
 type SecretStore interface {
-	GetCredentials(organizationID uint, provider string, secretID string) (map[string]string, error)
-	SetCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error
-	UpdateCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error
-	DeleteCredentials(organizationID uint, provider string, secretID string) error
+	GetCredentials(organizationID uint, provider string, secretID pb.SecretIdName) (map[string]string, error)
+	SetCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error
+	UpdateCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error
+	DeleteCredentials(organizationID uint, provider string, secretID pb.SecretIdName) error
 }
 
 type InMemorySecretStore struct {
@@ -21,7 +23,7 @@ type InMemorySecretStore struct {
 type secret struct {
 	OrganizationID uint              `json:"organizationId"`
 	Provider       string            `json:"provider"`
-	SecretID       string            `json:"secretId"`
+	SecretID       pb.SecretIdName   `json:"secretId"`
 	Credentials    map[string]string `json:"credentials"`
 }
 
@@ -48,7 +50,7 @@ func NewInMemorySecretStore() (*InMemorySecretStore, error) {
 	}, nil
 }
 
-func (m *InMemorySecretStore) GetCredentials(organizationID uint, provider string, secretID string) (map[string]string, error) {
+func (m *InMemorySecretStore) GetCredentials(organizationID uint, provider string, secretID pb.SecretIdName) (map[string]string, error) {
 	for _, s := range m.secrets {
 		if s.OrganizationID == organizationID && s.Provider == provider && s.SecretID == secretID {
 			return s.Credentials, nil
@@ -57,7 +59,7 @@ func (m *InMemorySecretStore) GetCredentials(organizationID uint, provider strin
 	return nil, errors.New("failed to fetch credentials for the organizationId and provider pair")
 }
 
-func (m *InMemorySecretStore) SetCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error {
+func (m *InMemorySecretStore) SetCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error {
 	m.secrets = append(m.secrets, &secret{
 		OrganizationID: organizationID,
 		Provider:       provider,
@@ -67,11 +69,11 @@ func (m *InMemorySecretStore) SetCredentials(organizationID uint, provider strin
 	return saveSecrets(m.secrets)
 }
 
-func (m *InMemorySecretStore) UpdateCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error {
+func (m *InMemorySecretStore) UpdateCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error {
 	return errors.New("not implemented")
 }
 
-func (m *InMemorySecretStore) DeleteCredentials(organizationID uint, provider string, secretID string) error {
+func (m *InMemorySecretStore) DeleteCredentials(organizationID uint, provider string, secretID pb.SecretIdName) error {
 	return errors.New("not implemented")
 }
 

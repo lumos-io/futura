@@ -68,7 +68,10 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
 }) => {
   const { user } = useAuth();
 
-  const fields = providerFormFields[newProvider.name] ?? [];
+  const fields =
+    providerFormFields[
+      typeof newProvider.name === "string" ? newProvider.name : ""
+    ] ?? [];
 
   const [testing, setTesting] = useState(false);
   const [testSuccess, setTestSuccess] = useState<boolean | null>(null);
@@ -88,7 +91,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
       }
     );
 
-    const result = await res.json();
+    const result = await res.json();    
     setTestSuccess(res.ok && result?.success);
   };
 
@@ -105,7 +108,9 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
           <div className="space-y-2">
             <Label>Provider</Label>
             <Select
-              value={newProvider.name}
+              value={
+                typeof newProvider.name === "string" ? newProvider.name : ""
+              }
               onValueChange={(value: string) =>
                 setNewProvider({ ...newProvider, name: value })
               }

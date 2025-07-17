@@ -9,6 +9,8 @@ import (
 	"github.com/opisvigilant/futura/apis/internal/providers"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
+
+	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
 
 type ConnectController struct {
@@ -35,7 +37,28 @@ func (cc *ConnectController) GetConnects(c *gin.Context) {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to fetch connects")
 		return
 	}
-	utils.RespondOK(c, connects)
+
+	result := make([]pb.ProviderConnection, len(connects))
+	for i, conn := range connects {
+		s, err := models.ConvertToProtoFromActivationStatus(conn.Status)
+		if err != nil {
+			utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert ActivationStatus to Proto")
+			return
+		}
+		p, err := models.ConvertToProtoFromCloudProvider(conn.Provider)
+		if err != nil {
+			utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert CloudProvider to Proto")
+			return
+		}
+		result[i] = pb.ProviderConnection{
+			Id:        int64(conn.ID),
+			Provider:  p,
+			Status:    s,
+			CreatedAt: conn.CreatedAt.String(),
+		}
+	}
+
+	utils.RespondOK(c, result)
 }
 
 func (cc *ConnectController) CreateConnect(c *gin.Context) {
@@ -44,35 +67,51 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		return
 	}
 
-	var input struct {
-		Provider    string            `json:"provider" binding:"required"`
-		SecretID    string            `json:"secretId" binding:"required"`
-		Credentials map[string]string `json:"credentials" binding:"required"`
-	}
+	input := pb.CreateProviderConnectionRequest{}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
 	// create secret in provider
-	if err := cc.cloudProviderAuth.SetCredentials(orgID, input.Provider, input.SecretID, input.Credentials); err != nil {
+	if err := cc.cloudProviderAuth.SetCredentials(orgID, input.Provider.String(), input.SecretId, input.Credentials); err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to create secret storage")
 		return
 	}
 
 	// Create an entry in the DB for the UI
+	prov, err := models.ConvertToCloudProviderFromProto(input.Provider)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert pb.CloudProvider proto to CloudProviderName")
+		return
+	}
 	cp := models.CloudProvider{
-		Name:             models.CloudProviderName(input.Provider),
-		Account:          input.Provider,
-		SecretID:         input.SecretID,
-		OrganizationID:   orgID,
-		ActivationStatus: models.PendingStatus,
+		Provider:       prov,
+		SecretID:       input.SecretId,
+		OrganizationID: orgID,
+		Status:         models.ActiveStatus, // I assume the "Test Connection" was done before this operation is performed
 	}
 	if err := models.GetDB().Create(&cp).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to create connection")
 		return
 	}
-	utils.RespondCreated(c, cp)
+
+	s, err := models.ConvertToProtoFromActivationStatus(cp.Status)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert ActiveStatus to Proto")
+		return
+	}
+	p, err := models.ConvertToProtoFromCloudProvider(cp.Provider)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert CloudProvider to Proto")
+		return
+	}
+	utils.RespondCreated(c, pb.ProviderConnection{
+		Id:        int64(cp.ID),
+		Provider:  p,
+		Status:    s,
+		CreatedAt: cp.CreatedAt.String(),
+	})
 }
 
 func (cc *ConnectController) UpdateConnect(c *gin.Context) {
@@ -95,7 +134,7 @@ func (cc *ConnectController) UpdateConnect(c *gin.Context) {
 
 	var input struct {
 		Provider    string            `json:"provider" binding:"required"`
-		SecretID    string            `json:"secretId" binding:"required"`
+		SecretID    pb.SecretIdName   `json:"secretId" binding:"required"`
 		Credentials map[string]string `json:"credentials" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {

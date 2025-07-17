@@ -13,7 +13,7 @@ else
   echo "✅ vite is already installed"
 fi
 
-if ! command -v ts-proto &> /dev/null; then 
+if ! command -v protoc-gen-ts_proto &> /dev/null; then 
 echo "⚙️ Installing ts-proto via bun..."
   bun install -g ts-proto
 else

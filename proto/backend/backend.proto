@@ -4,22 +4,47 @@ package backend;
 
 option go_package = "github.com/opisvigilant/futura/proto/gen/backend;backend";
 
-// import "google/protobuf/timestamp.proto";
-
 enum CloudProvider {
-  AWS = 0;
-  AZURE = 1;
-  ALIBABA = 2;
-  DIGITALOCEAN = 3;
-  GCP = 4;
+  UNDEFINED_PROVIDER = 0; // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+  AWS = 1;
+  AZURE = 2;
+  ALIBABA = 3;
+  DIGITALOCEAN = 4;
+  GCP = 5;
 }
+
+enum ActivationStatus {
+  UNDEFINED_STATUS = 0;  // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+  ACTIVE = 1;
+	IN_PROGRESS = 2;
+	PENDING = 3;
+	SUSPENDED = 4;
+	FAILED = 5;
+}
+
+enum SecretIdName {
+  UNDEFINED_SECRET = 0;  // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	ACCESS_CREDENTIALS = 1;
+}
+
+message ProviderConnection {
+  int64 id = 1;
+  CloudProvider provider = 2;
+  ActivationStatus status = 3;
+  string created_at = 4;
+}
+
+message GetAllProviderConnectionResponse {
+  repeated ProviderConnection connections = 1;
+}
+
 
 message CreateProviderConnectionRequest {
   CloudProvider provider = 1;
-  string secret_id = 2;
+  SecretIdName secret_id = 2;
   map<string,string> credentials = 3;		
 }
 
-message HelloResponse {
-  string message = 1;
+message CreateProviderConnectionResponse {
+  ProviderConnection connection = 1;  
 }

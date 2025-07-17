@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, Pencil } from "lucide-react";
@@ -13,8 +13,16 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { CloudProvider, ActivationStatus } from "@/models/cloud-provider";
+import { CloudProvider } from "@/models/cloud-provider";
 import { useAuth } from "@/hooks/auth_provider";
+import {
+  CreateProviderConnectionRequest,
+  ActivationStatus,
+  SecretIdName,
+  cloudProviderFromJSON,
+  activationStatusFromJSON,
+  CloudProvider as ProtoCloudProvider,
+} from "../../../../proto/gen/backend/backend";
 
 const CloudProviders: React.FC = () => {
   const { user } = useAuth();
@@ -25,48 +33,94 @@ const CloudProviders: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState<false | CloudProvider>(false);
   const [newProvider, setNewProvider] = useState<CloudProvider>({
-    name: "",
-    status: ActivationStatus.PendingStatus,
+    createdAt: "",
+    id: "-1",
+    provider: ProtoCloudProvider.UNRECOGNIZED,
+    status: ActivationStatus.UNRECOGNIZED,
   });
-
   const [deleteTarget, setDeleteTarget] = useState<CloudProvider | null>(null);
+
+  const extractCredentials = (
+    provider: CloudProvider
+  ): { [key: string]: string } => {
+    const { ...rest } = provider;
+
+    const credentials: { [key: string]: string } = {};
+
+    for (const [key, value] of Object.entries(rest)) {
+      if (typeof value === "string") {
+        credentials[key] = value;
+      }
+    }
+
+    return credentials;
+  };
 
   const handleSave = async () => {
     if (editMode) {
       // Edit mode
+      const input = CreateProviderConnectionRequest.fromJSON({
+        provider: newProvider?.name,
+        secretId: SecretIdName.ACCESS_CREDENTIALS,
+        credentials: extractCredentials(newProvider),
+      });
+
       await fetch(
         `/api/organizations/${user?.organizationId}/connects/${editMode.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newProvider),
+          body: JSON.stringify(input),
         }
       );
+
+      console.log("edit newProvider: " + JSON.stringify(newProvider));
 
       setConnectedProviders((prev) =>
         prev.map((p) => (p.id === editMode.id ? { ...p, ...newProvider } : p))
       );
     } else {
       // Create mode
+      const input = CreateProviderConnectionRequest.fromJSON({
+        provider: newProvider?.name,
+        secretId: SecretIdName.ACCESS_CREDENTIALS,
+        credentials: extractCredentials(newProvider),
+      });
+
       const res = await fetch(
         `/api/organizations/${user?.organizationId}/connects`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newProvider),
+          body: JSON.stringify(input),
         }
       );
+
+      console.log("create newProvider: " + JSON.stringify(newProvider));
+
       const created = await res.json();
-      setConnectedProviders((prev) => [...prev, created]);
+      console.log("created: " + JSON.stringify(created.data));
+
+      setConnectedProviders((prev) => {
+        return [...prev, created.data];
+      });
     }
 
     setDialogOpen(false);
-    setNewProvider({ name: "", status: ActivationStatus.PendingStatus });
+    setNewProvider({
+      createdAt: "",
+      id: "-1",
+      provider: ProtoCloudProvider.UNRECOGNIZED,
+      status: ActivationStatus.UNRECOGNIZED,
+    });
     setEditMode(false);
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget) {
+      return;
+    }
+
     await fetch(
       `/api/organizations/${user?.organizationId}/connects/${deleteTarget.id}`,
       {
@@ -79,6 +133,20 @@ const CloudProviders: React.FC = () => {
     setDeleteTarget(null);
   };
 
+  // Fetch connected providers from API
+  useEffect(() => {
+    const handleGetAll = async () => {
+      const orgId = user?.organizationId;
+      const res = await fetch(`/api/organizations/${orgId}/connects`);
+
+      const data = await res.json();
+      console.log(data.data);
+
+      setConnectedProviders(data.data);
+    };
+    handleGetAll();
+  }, [user?.organizationId]);
+
   const openEdit = (provider: CloudProvider) => {
     setNewProvider(provider);
     setEditMode(provider);
@@ -86,7 +154,12 @@ const CloudProviders: React.FC = () => {
   };
 
   const openAdd = () => {
-    setNewProvider({ name: "", status: ActivationStatus.PendingStatus });
+    setNewProvider({
+      createdAt: "",
+      id: "-1",
+      provider: ProtoCloudProvider.UNRECOGNIZED,
+      status: ActivationStatus.UNRECOGNIZED,
+    });
     setEditMode(false);
     setDialogOpen(true);
   };
@@ -123,9 +196,11 @@ const CloudProviders: React.FC = () => {
             <Card>
               <CardHeader className="flex justify-between items-start">
                 <div>
-                  <CardTitle>{provider.name}</CardTitle>
+                  <CardTitle>
+                    {cloudProviderFromJSON(provider.provider)}
+                  </CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    {provider.name}
+                    {cloudProviderFromJSON(provider.provider)}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -169,7 +244,8 @@ const CloudProviders: React.FC = () => {
               </CardHeader>
               <CardContent className="text-sm text-gray-700 space-y-1">
                 <p>
-                  <strong>Status:</strong> {provider.status}
+                  <strong>Status:</strong>{" "}
+                  {activationStatusFromJSON(provider.status)}
                 </p>
               </CardContent>
             </Card>

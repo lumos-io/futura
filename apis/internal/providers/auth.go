@@ -11,6 +11,8 @@ import (
 	gcpprovider "github.com/opisvigilant/futura/apis/internal/providers/gcp"
 	"github.com/opisvigilant/futura/apis/internal/secrets"
 	"github.com/opisvigilant/futura/apis/models"
+
+	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
 
 type ProviderAuth interface {
@@ -32,19 +34,19 @@ func New(config *config.Configuration) (*CloudProviderAuth, error) {
 	}, nil
 }
 
-func (cp *CloudProviderAuth) GetCredentials(organizationID uint, provider string, secretID string) (map[string]string, error) {
+func (cp *CloudProviderAuth) GetCredentials(organizationID uint, provider string, secretID pb.SecretIdName) (map[string]string, error) {
 	return cp.secretStore.GetCredentials(organizationID, provider, secretID)
 }
 
-func (cp *CloudProviderAuth) SetCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error {
+func (cp *CloudProviderAuth) SetCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error {
 	return cp.secretStore.SetCredentials(organizationID, provider, secretID, creds)
 }
 
-func (cp *CloudProviderAuth) UpdateCredentials(organizationID uint, provider string, secretID string, creds map[string]string) error {
+func (cp *CloudProviderAuth) UpdateCredentials(organizationID uint, provider string, secretID pb.SecretIdName, creds map[string]string) error {
 	return cp.secretStore.UpdateCredentials(organizationID, provider, secretID, creds)
 }
 
-func (cp *CloudProviderAuth) DeleteCredentials(organizationID uint, provider string, secretID string) error {
+func (cp *CloudProviderAuth) DeleteCredentials(organizationID uint, provider string, secretID pb.SecretIdName) error {
 	return cp.secretStore.DeleteCredentials(organizationID, provider, secretID)
 }
 

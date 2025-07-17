@@ -9,39 +9,297 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export const protobufPackage = "backend";
 
-export interface HelloRequest {
-  name: string;
+export enum CloudProvider {
+  /** UNDEFINED_PROVIDER - needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789 */
+  UNDEFINED_PROVIDER = "UNDEFINED_PROVIDER",
+  AWS = "AWS",
+  AZURE = "AZURE",
+  ALIBABA = "ALIBABA",
+  DIGITALOCEAN = "DIGITALOCEAN",
+  GCP = "GCP",
+  UNRECOGNIZED = "UNRECOGNIZED",
 }
 
-export interface HelloResponse {
-  message: string;
+export function cloudProviderFromJSON(object: any): CloudProvider {
+  switch (object) {
+    case 0:
+    case "UNDEFINED_PROVIDER":
+      return CloudProvider.UNDEFINED_PROVIDER;
+    case 1:
+    case "AWS":
+      return CloudProvider.AWS;
+    case 2:
+    case "AZURE":
+      return CloudProvider.AZURE;
+    case 3:
+    case "ALIBABA":
+      return CloudProvider.ALIBABA;
+    case 4:
+    case "DIGITALOCEAN":
+      return CloudProvider.DIGITALOCEAN;
+    case 5:
+    case "GCP":
+      return CloudProvider.GCP;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return CloudProvider.UNRECOGNIZED;
+  }
 }
 
-function createBaseHelloRequest(): HelloRequest {
-  return { name: "" };
+export function cloudProviderToJSON(object: CloudProvider): string {
+  switch (object) {
+    case CloudProvider.UNDEFINED_PROVIDER:
+      return "UNDEFINED_PROVIDER";
+    case CloudProvider.AWS:
+      return "AWS";
+    case CloudProvider.AZURE:
+      return "AZURE";
+    case CloudProvider.ALIBABA:
+      return "ALIBABA";
+    case CloudProvider.DIGITALOCEAN:
+      return "DIGITALOCEAN";
+    case CloudProvider.GCP:
+      return "GCP";
+    case CloudProvider.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
 }
 
-export const HelloRequest: MessageFns<HelloRequest> = {
-  encode(message: HelloRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.name !== "") {
-      writer.uint32(10).string(message.name);
+export function cloudProviderToNumber(object: CloudProvider): number {
+  switch (object) {
+    case CloudProvider.UNDEFINED_PROVIDER:
+      return 0;
+    case CloudProvider.AWS:
+      return 1;
+    case CloudProvider.AZURE:
+      return 2;
+    case CloudProvider.ALIBABA:
+      return 3;
+    case CloudProvider.DIGITALOCEAN:
+      return 4;
+    case CloudProvider.GCP:
+      return 5;
+    case CloudProvider.UNRECOGNIZED:
+    default:
+      return -1;
+  }
+}
+
+export enum ActivationStatus {
+  /** UNDEFINED_STATUS - needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789 */
+  UNDEFINED_STATUS = "UNDEFINED_STATUS",
+  ACTIVE = "ACTIVE",
+  IN_PROGRESS = "IN_PROGRESS",
+  PENDING = "PENDING",
+  SUSPENDED = "SUSPENDED",
+  FAILED = "FAILED",
+  UNRECOGNIZED = "UNRECOGNIZED",
+}
+
+export function activationStatusFromJSON(object: any): ActivationStatus {
+  switch (object) {
+    case 0:
+    case "UNDEFINED_STATUS":
+      return ActivationStatus.UNDEFINED_STATUS;
+    case 1:
+    case "ACTIVE":
+      return ActivationStatus.ACTIVE;
+    case 2:
+    case "IN_PROGRESS":
+      return ActivationStatus.IN_PROGRESS;
+    case 3:
+    case "PENDING":
+      return ActivationStatus.PENDING;
+    case 4:
+    case "SUSPENDED":
+      return ActivationStatus.SUSPENDED;
+    case 5:
+    case "FAILED":
+      return ActivationStatus.FAILED;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ActivationStatus.UNRECOGNIZED;
+  }
+}
+
+export function activationStatusToJSON(object: ActivationStatus): string {
+  switch (object) {
+    case ActivationStatus.UNDEFINED_STATUS:
+      return "UNDEFINED_STATUS";
+    case ActivationStatus.ACTIVE:
+      return "ACTIVE";
+    case ActivationStatus.IN_PROGRESS:
+      return "IN_PROGRESS";
+    case ActivationStatus.PENDING:
+      return "PENDING";
+    case ActivationStatus.SUSPENDED:
+      return "SUSPENDED";
+    case ActivationStatus.FAILED:
+      return "FAILED";
+    case ActivationStatus.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+export function activationStatusToNumber(object: ActivationStatus): number {
+  switch (object) {
+    case ActivationStatus.UNDEFINED_STATUS:
+      return 0;
+    case ActivationStatus.ACTIVE:
+      return 1;
+    case ActivationStatus.IN_PROGRESS:
+      return 2;
+    case ActivationStatus.PENDING:
+      return 3;
+    case ActivationStatus.SUSPENDED:
+      return 4;
+    case ActivationStatus.FAILED:
+      return 5;
+    case ActivationStatus.UNRECOGNIZED:
+    default:
+      return -1;
+  }
+}
+
+export enum SecretIdName {
+  /** UNDEFINED_SECRET - needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789 */
+  UNDEFINED_SECRET = "UNDEFINED_SECRET",
+  ACCESS_CREDENTIALS = "ACCESS_CREDENTIALS",
+  UNRECOGNIZED = "UNRECOGNIZED",
+}
+
+export function secretIdNameFromJSON(object: any): SecretIdName {
+  switch (object) {
+    case 0:
+    case "UNDEFINED_SECRET":
+      return SecretIdName.UNDEFINED_SECRET;
+    case 1:
+    case "ACCESS_CREDENTIALS":
+      return SecretIdName.ACCESS_CREDENTIALS;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return SecretIdName.UNRECOGNIZED;
+  }
+}
+
+export function secretIdNameToJSON(object: SecretIdName): string {
+  switch (object) {
+    case SecretIdName.UNDEFINED_SECRET:
+      return "UNDEFINED_SECRET";
+    case SecretIdName.ACCESS_CREDENTIALS:
+      return "ACCESS_CREDENTIALS";
+    case SecretIdName.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+export function secretIdNameToNumber(object: SecretIdName): number {
+  switch (object) {
+    case SecretIdName.UNDEFINED_SECRET:
+      return 0;
+    case SecretIdName.ACCESS_CREDENTIALS:
+      return 1;
+    case SecretIdName.UNRECOGNIZED:
+    default:
+      return -1;
+  }
+}
+
+export interface ProviderConnection {
+  id: string;
+  provider: CloudProvider;
+  status: ActivationStatus;
+  createdAt: string;
+}
+
+export interface GetAllProviderConnectionResponse {
+  connections: ProviderConnection[];
+}
+
+export interface CreateProviderConnectionRequest {
+  provider: CloudProvider;
+  secretId: SecretIdName;
+  credentials: { [key: string]: string };
+}
+
+export interface CreateProviderConnectionRequest_CredentialsEntry {
+  key: string;
+  value: string;
+}
+
+export interface CreateProviderConnectionResponse {
+  connection: ProviderConnection | undefined;
+}
+
+function createBaseProviderConnection(): ProviderConnection {
+  return {
+    id: "0",
+    provider: CloudProvider.UNDEFINED_PROVIDER,
+    status: ActivationStatus.UNDEFINED_STATUS,
+    createdAt: "",
+  };
+}
+
+export const ProviderConnection: MessageFns<ProviderConnection> = {
+  encode(message: ProviderConnection, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "0") {
+      writer.uint32(8).int64(message.id);
+    }
+    if (message.provider !== CloudProvider.UNDEFINED_PROVIDER) {
+      writer.uint32(16).int32(cloudProviderToNumber(message.provider));
+    }
+    if (message.status !== ActivationStatus.UNDEFINED_STATUS) {
+      writer.uint32(24).int32(activationStatusToNumber(message.status));
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(34).string(message.createdAt);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): HelloRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): ProviderConnection {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseHelloRequest();
+    const message = createBaseProviderConnection();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1: {
-          if (tag !== 10) {
+          if (tag !== 8) {
             break;
           }
 
-          message.name = reader.string();
+          message.id = reader.int64().toString();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.provider = cloudProviderFromJSON(reader.int32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.status = activationStatusFromJSON(reader.int32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.createdAt = reader.string();
           continue;
         }
       }
@@ -53,44 +311,61 @@ export const HelloRequest: MessageFns<HelloRequest> = {
     return message;
   },
 
-  fromJSON(object: any): HelloRequest {
-    return { name: isSet(object.name) ? globalThis.String(object.name) : "" };
+  fromJSON(object: any): ProviderConnection {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "0",
+      provider: isSet(object.provider) ? cloudProviderFromJSON(object.provider) : CloudProvider.UNDEFINED_PROVIDER,
+      status: isSet(object.status) ? activationStatusFromJSON(object.status) : ActivationStatus.UNDEFINED_STATUS,
+      createdAt: isSet(object.createdAt) ? globalThis.String(object.createdAt) : "",
+    };
   },
 
-  toJSON(message: HelloRequest): unknown {
+  toJSON(message: ProviderConnection): unknown {
     const obj: any = {};
-    if (message.name !== "") {
-      obj.name = message.name;
+    if (message.id !== "0") {
+      obj.id = message.id;
+    }
+    if (message.provider !== CloudProvider.UNDEFINED_PROVIDER) {
+      obj.provider = cloudProviderToJSON(message.provider);
+    }
+    if (message.status !== ActivationStatus.UNDEFINED_STATUS) {
+      obj.status = activationStatusToJSON(message.status);
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
     }
     return obj;
   },
 
-  create(base?: DeepPartial<HelloRequest>): HelloRequest {
-    return HelloRequest.fromPartial(base ?? {});
+  create(base?: DeepPartial<ProviderConnection>): ProviderConnection {
+    return ProviderConnection.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<HelloRequest>): HelloRequest {
-    const message = createBaseHelloRequest();
-    message.name = object.name ?? "";
+  fromPartial(object: DeepPartial<ProviderConnection>): ProviderConnection {
+    const message = createBaseProviderConnection();
+    message.id = object.id ?? "0";
+    message.provider = object.provider ?? CloudProvider.UNDEFINED_PROVIDER;
+    message.status = object.status ?? ActivationStatus.UNDEFINED_STATUS;
+    message.createdAt = object.createdAt ?? "";
     return message;
   },
 };
 
-function createBaseHelloResponse(): HelloResponse {
-  return { message: "" };
+function createBaseGetAllProviderConnectionResponse(): GetAllProviderConnectionResponse {
+  return { connections: [] };
 }
 
-export const HelloResponse: MessageFns<HelloResponse> = {
-  encode(message: HelloResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
-      writer.uint32(10).string(message.message);
+export const GetAllProviderConnectionResponse: MessageFns<GetAllProviderConnectionResponse> = {
+  encode(message: GetAllProviderConnectionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.connections) {
+      ProviderConnection.encode(v!, writer.uint32(10).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): HelloResponse {
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAllProviderConnectionResponse {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseHelloResponse();
+    const message = createBaseGetAllProviderConnectionResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -99,7 +374,7 @@ export const HelloResponse: MessageFns<HelloResponse> = {
             break;
           }
 
-          message.message = reader.string();
+          message.connections.push(ProviderConnection.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -111,24 +386,288 @@ export const HelloResponse: MessageFns<HelloResponse> = {
     return message;
   },
 
-  fromJSON(object: any): HelloResponse {
-    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+  fromJSON(object: any): GetAllProviderConnectionResponse {
+    return {
+      connections: globalThis.Array.isArray(object?.connections)
+        ? object.connections.map((e: any) => ProviderConnection.fromJSON(e))
+        : [],
+    };
   },
 
-  toJSON(message: HelloResponse): unknown {
+  toJSON(message: GetAllProviderConnectionResponse): unknown {
     const obj: any = {};
-    if (message.message !== "") {
-      obj.message = message.message;
+    if (message.connections?.length) {
+      obj.connections = message.connections.map((e) => ProviderConnection.toJSON(e));
     }
     return obj;
   },
 
-  create(base?: DeepPartial<HelloResponse>): HelloResponse {
-    return HelloResponse.fromPartial(base ?? {});
+  create(base?: DeepPartial<GetAllProviderConnectionResponse>): GetAllProviderConnectionResponse {
+    return GetAllProviderConnectionResponse.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<HelloResponse>): HelloResponse {
-    const message = createBaseHelloResponse();
-    message.message = object.message ?? "";
+  fromPartial(object: DeepPartial<GetAllProviderConnectionResponse>): GetAllProviderConnectionResponse {
+    const message = createBaseGetAllProviderConnectionResponse();
+    message.connections = object.connections?.map((e) => ProviderConnection.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseCreateProviderConnectionRequest(): CreateProviderConnectionRequest {
+  return { provider: CloudProvider.UNDEFINED_PROVIDER, secretId: SecretIdName.UNDEFINED_SECRET, credentials: {} };
+}
+
+export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectionRequest> = {
+  encode(message: CreateProviderConnectionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.provider !== CloudProvider.UNDEFINED_PROVIDER) {
+      writer.uint32(8).int32(cloudProviderToNumber(message.provider));
+    }
+    if (message.secretId !== SecretIdName.UNDEFINED_SECRET) {
+      writer.uint32(16).int32(secretIdNameToNumber(message.secretId));
+    }
+    Object.entries(message.credentials).forEach(([key, value]) => {
+      CreateProviderConnectionRequest_CredentialsEntry.encode({ key: key as any, value }, writer.uint32(26).fork())
+        .join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateProviderConnectionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateProviderConnectionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.provider = cloudProviderFromJSON(reader.int32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.secretId = secretIdNameFromJSON(reader.int32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          const entry3 = CreateProviderConnectionRequest_CredentialsEntry.decode(reader, reader.uint32());
+          if (entry3.value !== undefined) {
+            message.credentials[entry3.key] = entry3.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateProviderConnectionRequest {
+    return {
+      provider: isSet(object.provider) ? cloudProviderFromJSON(object.provider) : CloudProvider.UNDEFINED_PROVIDER,
+      secretId: isSet(object.secretId) ? secretIdNameFromJSON(object.secretId) : SecretIdName.UNDEFINED_SECRET,
+      credentials: isObject(object.credentials)
+        ? Object.entries(object.credentials).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {})
+        : {},
+    };
+  },
+
+  toJSON(message: CreateProviderConnectionRequest): unknown {
+    const obj: any = {};
+    if (message.provider !== CloudProvider.UNDEFINED_PROVIDER) {
+      obj.provider = cloudProviderToJSON(message.provider);
+    }
+    if (message.secretId !== SecretIdName.UNDEFINED_SECRET) {
+      obj.secretId = secretIdNameToJSON(message.secretId);
+    }
+    if (message.credentials) {
+      const entries = Object.entries(message.credentials);
+      if (entries.length > 0) {
+        obj.credentials = {};
+        entries.forEach(([k, v]) => {
+          obj.credentials[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CreateProviderConnectionRequest>): CreateProviderConnectionRequest {
+    return CreateProviderConnectionRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CreateProviderConnectionRequest>): CreateProviderConnectionRequest {
+    const message = createBaseCreateProviderConnectionRequest();
+    message.provider = object.provider ?? CloudProvider.UNDEFINED_PROVIDER;
+    message.secretId = object.secretId ?? SecretIdName.UNDEFINED_SECRET;
+    message.credentials = Object.entries(object.credentials ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseCreateProviderConnectionRequest_CredentialsEntry(): CreateProviderConnectionRequest_CredentialsEntry {
+  return { key: "", value: "" };
+}
+
+export const CreateProviderConnectionRequest_CredentialsEntry: MessageFns<
+  CreateProviderConnectionRequest_CredentialsEntry
+> = {
+  encode(
+    message: CreateProviderConnectionRequest_CredentialsEntry,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateProviderConnectionRequest_CredentialsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateProviderConnectionRequest_CredentialsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateProviderConnectionRequest_CredentialsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CreateProviderConnectionRequest_CredentialsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create(
+    base?: DeepPartial<CreateProviderConnectionRequest_CredentialsEntry>,
+  ): CreateProviderConnectionRequest_CredentialsEntry {
+    return CreateProviderConnectionRequest_CredentialsEntry.fromPartial(base ?? {});
+  },
+  fromPartial(
+    object: DeepPartial<CreateProviderConnectionRequest_CredentialsEntry>,
+  ): CreateProviderConnectionRequest_CredentialsEntry {
+    const message = createBaseCreateProviderConnectionRequest_CredentialsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateProviderConnectionResponse(): CreateProviderConnectionResponse {
+  return { connection: undefined };
+}
+
+export const CreateProviderConnectionResponse: MessageFns<CreateProviderConnectionResponse> = {
+  encode(message: CreateProviderConnectionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.connection !== undefined) {
+      ProviderConnection.encode(message.connection, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateProviderConnectionResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateProviderConnectionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.connection = ProviderConnection.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateProviderConnectionResponse {
+    return { connection: isSet(object.connection) ? ProviderConnection.fromJSON(object.connection) : undefined };
+  },
+
+  toJSON(message: CreateProviderConnectionResponse): unknown {
+    const obj: any = {};
+    if (message.connection !== undefined) {
+      obj.connection = ProviderConnection.toJSON(message.connection);
+    }
+    return obj;
+  },
+
+  create(base?: DeepPartial<CreateProviderConnectionResponse>): CreateProviderConnectionResponse {
+    return CreateProviderConnectionResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<CreateProviderConnectionResponse>): CreateProviderConnectionResponse {
+    const message = createBaseCreateProviderConnectionResponse();
+    message.connection = (object.connection !== undefined && object.connection !== null)
+      ? ProviderConnection.fromPartial(object.connection)
+      : undefined;
     return message;
   },
 };
@@ -140,6 +679,10 @@ export type DeepPartial<T> = T extends Builtin ? T
   : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
   : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
+}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

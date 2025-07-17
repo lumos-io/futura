@@ -29,7 +29,3 @@ const (
 	AuthX509Url   = "auth_provider_x509_cert_url"
 	ClientX509Url = "client_x509_cert_url"
 )
-
-const (
-	AccessCredentialsSecretID string = "AccessCredentials"
-)

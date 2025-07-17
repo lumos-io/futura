@@ -33,8 +33,6 @@ const ClustersOverview: React.FC = () => {
   }, [user?.organizationId]);
 
   const handleAddCluster = () => {
-    console.log(clusters);
-
     const addedCluster: Cluster = {
       id: clusters.length + 1,
       name: newCluster.name,

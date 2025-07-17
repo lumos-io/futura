@@ -21,71 +21,257 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type HelloRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
+type CloudProvider int32
 
-func (x *HelloRequest) Reset() {
-	*x = HelloRequest{}
-	mi := &file_backend_backend_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
+const (
+	CloudProvider_UNDEFINED_PROVIDER CloudProvider = 0 // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	CloudProvider_AWS                CloudProvider = 1
+	CloudProvider_AZURE              CloudProvider = 2
+	CloudProvider_ALIBABA            CloudProvider = 3
+	CloudProvider_DIGITALOCEAN       CloudProvider = 4
+	CloudProvider_GCP                CloudProvider = 5
+)
 
-func (x *HelloRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*HelloRequest) ProtoMessage() {}
-
-func (x *HelloRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_backend_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+// Enum value maps for CloudProvider.
+var (
+	CloudProvider_name = map[int32]string{
+		0: "UNDEFINED_PROVIDER",
+		1: "AWS",
+		2: "AZURE",
+		3: "ALIBABA",
+		4: "DIGITALOCEAN",
+		5: "GCP",
 	}
-	return mi.MessageOf(x)
+	CloudProvider_value = map[string]int32{
+		"UNDEFINED_PROVIDER": 0,
+		"AWS":                1,
+		"AZURE":              2,
+		"ALIBABA":            3,
+		"DIGITALOCEAN":       4,
+		"GCP":                5,
+	}
+)
+
+func (x CloudProvider) Enum() *CloudProvider {
+	p := new(CloudProvider)
+	*p = x
+	return p
 }
 
-// Deprecated: Use HelloRequest.ProtoReflect.Descriptor instead.
-func (*HelloRequest) Descriptor() ([]byte, []int) {
+func (x CloudProvider) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CloudProvider) Descriptor() protoreflect.EnumDescriptor {
+	return file_backend_backend_proto_enumTypes[0].Descriptor()
+}
+
+func (CloudProvider) Type() protoreflect.EnumType {
+	return &file_backend_backend_proto_enumTypes[0]
+}
+
+func (x CloudProvider) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CloudProvider.Descriptor instead.
+func (CloudProvider) EnumDescriptor() ([]byte, []int) {
 	return file_backend_backend_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *HelloRequest) GetName() string {
-	if x != nil {
-		return x.Name
+type ActivationStatus int32
+
+const (
+	ActivationStatus_UNDEFINED_STATUS ActivationStatus = 0 // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	ActivationStatus_ACTIVE           ActivationStatus = 1
+	ActivationStatus_IN_PROGRESS      ActivationStatus = 2
+	ActivationStatus_PENDING          ActivationStatus = 3
+	ActivationStatus_SUSPENDED        ActivationStatus = 4
+	ActivationStatus_FAILED           ActivationStatus = 5
+)
+
+// Enum value maps for ActivationStatus.
+var (
+	ActivationStatus_name = map[int32]string{
+		0: "UNDEFINED_STATUS",
+		1: "ACTIVE",
+		2: "IN_PROGRESS",
+		3: "PENDING",
+		4: "SUSPENDED",
+		5: "FAILED",
 	}
-	return ""
+	ActivationStatus_value = map[string]int32{
+		"UNDEFINED_STATUS": 0,
+		"ACTIVE":           1,
+		"IN_PROGRESS":      2,
+		"PENDING":          3,
+		"SUSPENDED":        4,
+		"FAILED":           5,
+	}
+)
+
+func (x ActivationStatus) Enum() *ActivationStatus {
+	p := new(ActivationStatus)
+	*p = x
+	return p
 }
 
-type HelloResponse struct {
+func (x ActivationStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ActivationStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_backend_backend_proto_enumTypes[1].Descriptor()
+}
+
+func (ActivationStatus) Type() protoreflect.EnumType {
+	return &file_backend_backend_proto_enumTypes[1]
+}
+
+func (x ActivationStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ActivationStatus.Descriptor instead.
+func (ActivationStatus) EnumDescriptor() ([]byte, []int) {
+	return file_backend_backend_proto_rawDescGZIP(), []int{1}
+}
+
+type SecretIdName int32
+
+const (
+	SecretIdName_UNDEFINED_SECRET   SecretIdName = 0 // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	SecretIdName_ACCESS_CREDENTIALS SecretIdName = 1
+)
+
+// Enum value maps for SecretIdName.
+var (
+	SecretIdName_name = map[int32]string{
+		0: "UNDEFINED_SECRET",
+		1: "ACCESS_CREDENTIALS",
+	}
+	SecretIdName_value = map[string]int32{
+		"UNDEFINED_SECRET":   0,
+		"ACCESS_CREDENTIALS": 1,
+	}
+)
+
+func (x SecretIdName) Enum() *SecretIdName {
+	p := new(SecretIdName)
+	*p = x
+	return p
+}
+
+func (x SecretIdName) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SecretIdName) Descriptor() protoreflect.EnumDescriptor {
+	return file_backend_backend_proto_enumTypes[2].Descriptor()
+}
+
+func (SecretIdName) Type() protoreflect.EnumType {
+	return &file_backend_backend_proto_enumTypes[2]
+}
+
+func (x SecretIdName) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SecretIdName.Descriptor instead.
+func (SecretIdName) EnumDescriptor() ([]byte, []int) {
+	return file_backend_backend_proto_rawDescGZIP(), []int{2}
+}
+
+type ProviderConnection struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Provider      CloudProvider          `protobuf:"varint,2,opt,name=provider,proto3,enum=backend.CloudProvider" json:"provider,omitempty"`
+	Status        ActivationStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=backend.ActivationStatus" json:"status,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *HelloResponse) Reset() {
-	*x = HelloResponse{}
+func (x *ProviderConnection) Reset() {
+	*x = ProviderConnection{}
+	mi := &file_backend_backend_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProviderConnection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProviderConnection) ProtoMessage() {}
+
+func (x *ProviderConnection) ProtoReflect() protoreflect.Message {
+	mi := &file_backend_backend_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProviderConnection.ProtoReflect.Descriptor instead.
+func (*ProviderConnection) Descriptor() ([]byte, []int) {
+	return file_backend_backend_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ProviderConnection) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ProviderConnection) GetProvider() CloudProvider {
+	if x != nil {
+		return x.Provider
+	}
+	return CloudProvider_UNDEFINED_PROVIDER
+}
+
+func (x *ProviderConnection) GetStatus() ActivationStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ActivationStatus_UNDEFINED_STATUS
+}
+
+func (x *ProviderConnection) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+type GetAllProviderConnectionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Connections   []*ProviderConnection  `protobuf:"bytes,1,rep,name=connections,proto3" json:"connections,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAllProviderConnectionResponse) Reset() {
+	*x = GetAllProviderConnectionResponse{}
 	mi := &file_backend_backend_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *HelloResponse) String() string {
+func (x *GetAllProviderConnectionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*HelloResponse) ProtoMessage() {}
+func (*GetAllProviderConnectionResponse) ProtoMessage() {}
 
-func (x *HelloResponse) ProtoReflect() protoreflect.Message {
+func (x *GetAllProviderConnectionResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_backend_backend_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -97,27 +283,165 @@ func (x *HelloResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use HelloResponse.ProtoReflect.Descriptor instead.
-func (*HelloResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAllProviderConnectionResponse.ProtoReflect.Descriptor instead.
+func (*GetAllProviderConnectionResponse) Descriptor() ([]byte, []int) {
 	return file_backend_backend_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *HelloResponse) GetMessage() string {
+func (x *GetAllProviderConnectionResponse) GetConnections() []*ProviderConnection {
 	if x != nil {
-		return x.Message
+		return x.Connections
 	}
-	return ""
+	return nil
+}
+
+type CreateProviderConnectionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Provider      CloudProvider          `protobuf:"varint,1,opt,name=provider,proto3,enum=backend.CloudProvider" json:"provider,omitempty"`
+	SecretId      SecretIdName           `protobuf:"varint,2,opt,name=secret_id,json=secretId,proto3,enum=backend.SecretIdName" json:"secret_id,omitempty"`
+	Credentials   map[string]string      `protobuf:"bytes,3,rep,name=credentials,proto3" json:"credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateProviderConnectionRequest) Reset() {
+	*x = CreateProviderConnectionRequest{}
+	mi := &file_backend_backend_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateProviderConnectionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateProviderConnectionRequest) ProtoMessage() {}
+
+func (x *CreateProviderConnectionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_backend_backend_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateProviderConnectionRequest.ProtoReflect.Descriptor instead.
+func (*CreateProviderConnectionRequest) Descriptor() ([]byte, []int) {
+	return file_backend_backend_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *CreateProviderConnectionRequest) GetProvider() CloudProvider {
+	if x != nil {
+		return x.Provider
+	}
+	return CloudProvider_UNDEFINED_PROVIDER
+}
+
+func (x *CreateProviderConnectionRequest) GetSecretId() SecretIdName {
+	if x != nil {
+		return x.SecretId
+	}
+	return SecretIdName_UNDEFINED_SECRET
+}
+
+func (x *CreateProviderConnectionRequest) GetCredentials() map[string]string {
+	if x != nil {
+		return x.Credentials
+	}
+	return nil
+}
+
+type CreateProviderConnectionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Connection    *ProviderConnection    `protobuf:"bytes,1,opt,name=connection,proto3" json:"connection,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateProviderConnectionResponse) Reset() {
+	*x = CreateProviderConnectionResponse{}
+	mi := &file_backend_backend_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateProviderConnectionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateProviderConnectionResponse) ProtoMessage() {}
+
+func (x *CreateProviderConnectionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_backend_backend_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateProviderConnectionResponse.ProtoReflect.Descriptor instead.
+func (*CreateProviderConnectionResponse) Descriptor() ([]byte, []int) {
+	return file_backend_backend_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CreateProviderConnectionResponse) GetConnection() *ProviderConnection {
+	if x != nil {
+		return x.Connection
+	}
+	return nil
 }
 
 var File_backend_backend_proto protoreflect.FileDescriptor
 
 const file_backend_backend_proto_rawDesc = "" +
 	"\n" +
-	"\x15backend/backend.proto\x12\abackend\"\"\n" +
-	"\fHelloRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\")\n" +
-	"\rHelloResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessageB:Z8github.com/opisvigilant/futura/proto/gen/backend;backendb\x06proto3"
+	"\x15backend/backend.proto\x12\abackend\"\xaa\x01\n" +
+	"\x12ProviderConnection\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x122\n" +
+	"\bprovider\x18\x02 \x01(\x0e2\x16.backend.CloudProviderR\bprovider\x121\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x19.backend.ActivationStatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\tR\tcreatedAt\"a\n" +
+	" GetAllProviderConnectionResponse\x12=\n" +
+	"\vconnections\x18\x01 \x03(\v2\x1b.backend.ProviderConnectionR\vconnections\"\xa6\x02\n" +
+	"\x1fCreateProviderConnectionRequest\x122\n" +
+	"\bprovider\x18\x01 \x01(\x0e2\x16.backend.CloudProviderR\bprovider\x122\n" +
+	"\tsecret_id\x18\x02 \x01(\x0e2\x15.backend.SecretIdNameR\bsecretId\x12[\n" +
+	"\vcredentials\x18\x03 \x03(\v29.backend.CreateProviderConnectionRequest.CredentialsEntryR\vcredentials\x1a>\n" +
+	"\x10CredentialsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"_\n" +
+	" CreateProviderConnectionResponse\x12;\n" +
+	"\n" +
+	"connection\x18\x01 \x01(\v2\x1b.backend.ProviderConnectionR\n" +
+	"connection*c\n" +
+	"\rCloudProvider\x12\x16\n" +
+	"\x12UNDEFINED_PROVIDER\x10\x00\x12\a\n" +
+	"\x03AWS\x10\x01\x12\t\n" +
+	"\x05AZURE\x10\x02\x12\v\n" +
+	"\aALIBABA\x10\x03\x12\x10\n" +
+	"\fDIGITALOCEAN\x10\x04\x12\a\n" +
+	"\x03GCP\x10\x05*m\n" +
+	"\x10ActivationStatus\x12\x14\n" +
+	"\x10UNDEFINED_STATUS\x10\x00\x12\n" +
+	"\n" +
+	"\x06ACTIVE\x10\x01\x12\x0f\n" +
+	"\vIN_PROGRESS\x10\x02\x12\v\n" +
+	"\aPENDING\x10\x03\x12\r\n" +
+	"\tSUSPENDED\x10\x04\x12\n" +
+	"\n" +
+	"\x06FAILED\x10\x05*<\n" +
+	"\fSecretIdName\x12\x14\n" +
+	"\x10UNDEFINED_SECRET\x10\x00\x12\x16\n" +
+	"\x12ACCESS_CREDENTIALS\x10\x01B:Z8github.com/opisvigilant/futura/proto/gen/backend;backendb\x06proto3"
 
 var (
 	file_backend_backend_proto_rawDescOnce sync.Once
@@ -131,17 +455,31 @@ func file_backend_backend_proto_rawDescGZIP() []byte {
 	return file_backend_backend_proto_rawDescData
 }
 
-var file_backend_backend_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_backend_backend_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_backend_backend_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_backend_backend_proto_goTypes = []any{
-	(*HelloRequest)(nil),  // 0: backend.HelloRequest
-	(*HelloResponse)(nil), // 1: backend.HelloResponse
+	(CloudProvider)(0),                       // 0: backend.CloudProvider
+	(ActivationStatus)(0),                    // 1: backend.ActivationStatus
+	(SecretIdName)(0),                        // 2: backend.SecretIdName
+	(*ProviderConnection)(nil),               // 3: backend.ProviderConnection
+	(*GetAllProviderConnectionResponse)(nil), // 4: backend.GetAllProviderConnectionResponse
+	(*CreateProviderConnectionRequest)(nil),  // 5: backend.CreateProviderConnectionRequest
+	(*CreateProviderConnectionResponse)(nil), // 6: backend.CreateProviderConnectionResponse
+	nil,                                      // 7: backend.CreateProviderConnectionRequest.CredentialsEntry
 }
 var file_backend_backend_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: backend.ProviderConnection.provider:type_name -> backend.CloudProvider
+	1, // 1: backend.ProviderConnection.status:type_name -> backend.ActivationStatus
+	3, // 2: backend.GetAllProviderConnectionResponse.connections:type_name -> backend.ProviderConnection
+	0, // 3: backend.CreateProviderConnectionRequest.provider:type_name -> backend.CloudProvider
+	2, // 4: backend.CreateProviderConnectionRequest.secret_id:type_name -> backend.SecretIdName
+	7, // 5: backend.CreateProviderConnectionRequest.credentials:type_name -> backend.CreateProviderConnectionRequest.CredentialsEntry
+	3, // 6: backend.CreateProviderConnectionResponse.connection:type_name -> backend.ProviderConnection
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_backend_backend_proto_init() }
@@ -154,13 +492,14 @@ func file_backend_backend_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_backend_backend_proto_rawDesc), len(file_backend_backend_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_backend_backend_proto_goTypes,
 		DependencyIndexes: file_backend_backend_proto_depIdxs,
+		EnumInfos:         file_backend_backend_proto_enumTypes,
 		MessageInfos:      file_backend_backend_proto_msgTypes,
 	}.Build()
 	File_backend_backend_proto = out.File
