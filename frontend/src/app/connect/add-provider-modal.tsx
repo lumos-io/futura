@@ -91,7 +91,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
       }
     );
 
-    const result = await res.json();    
+    const result = await res.json();
     setTestSuccess(res.ok && result?.success);
   };
 

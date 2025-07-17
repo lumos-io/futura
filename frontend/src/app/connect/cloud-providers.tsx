@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Cloud, CloudSun, CloudRain, Zap } from "lucide-react";
 import AddProviderModal from "@/app/connect/add-provider-modal";
 import {
   AlertDialog,
@@ -23,6 +29,24 @@ import {
   activationStatusFromJSON,
   CloudProvider as ProtoCloudProvider,
 } from "../../../../proto/gen/backend/backend";
+import { Badge } from "@/components/ui/badge";
+
+const CloudIcon = ({ provider }: { provider: string }) => {
+  switch (provider) {
+    case "AWS":
+      return <Cloud className="w-5 h-5 text-yellow-500" />;
+    case "GCP":
+      return <CloudSun className="w-5 h-5 text-blue-500" />;
+    case "AZURE":
+      return <Zap className="w-5 h-5 text-blue-700" />;
+    case "DIGITALOCEAN":
+      return <Cloud className="w-5 h-5 text-indigo-500" />;
+    case "ALIBABA":
+      return <CloudRain className="w-5 h-5 text-orange-500" />;
+    default:
+      return null;
+  }
+};
 
 const CloudProviders: React.FC = () => {
   const { user } = useAuth();
@@ -31,7 +55,6 @@ const CloudProviders: React.FC = () => {
     []
   );
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editMode, setEditMode] = useState<false | CloudProvider>(false);
   const [newProvider, setNewProvider] = useState<CloudProvider>({
     createdAt: "",
     id: "-1",
@@ -57,54 +80,23 @@ const CloudProviders: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (editMode) {
-      // Edit mode
-      const input = CreateProviderConnectionRequest.fromJSON({
-        provider: newProvider?.name,
-        secretId: SecretIdName.ACCESS_CREDENTIALS,
-        credentials: extractCredentials(newProvider),
-      });
+    const input = CreateProviderConnectionRequest.fromJSON({
+      provider: newProvider?.name,
+      secretId: SecretIdName.ACCESS_CREDENTIALS,
+      credentials: extractCredentials(newProvider),
+    });
 
-      await fetch(
-        `/api/organizations/${user?.organizationId}/connects/${editMode.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(input),
-        }
-      );
+    const res = await fetch(
+      `/api/organizations/${user?.organizationId}/connects`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      }
+    );
 
-      console.log("edit newProvider: " + JSON.stringify(newProvider));
-
-      setConnectedProviders((prev) =>
-        prev.map((p) => (p.id === editMode.id ? { ...p, ...newProvider } : p))
-      );
-    } else {
-      // Create mode
-      const input = CreateProviderConnectionRequest.fromJSON({
-        provider: newProvider?.name,
-        secretId: SecretIdName.ACCESS_CREDENTIALS,
-        credentials: extractCredentials(newProvider),
-      });
-
-      const res = await fetch(
-        `/api/organizations/${user?.organizationId}/connects`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(input),
-        }
-      );
-
-      console.log("create newProvider: " + JSON.stringify(newProvider));
-
-      const created = await res.json();
-      console.log("created: " + JSON.stringify(created.data));
-
-      setConnectedProviders((prev) => {
-        return [...prev, created.data];
-      });
-    }
+    const created = await res.json();
+    setConnectedProviders((prev) => [...prev, created.data]);
 
     setDialogOpen(false);
     setNewProvider({
@@ -113,13 +105,10 @@ const CloudProviders: React.FC = () => {
       provider: ProtoCloudProvider.UNRECOGNIZED,
       status: ActivationStatus.UNRECOGNIZED,
     });
-    setEditMode(false);
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) {
-      return;
-    }
+    if (!deleteTarget) return;
 
     await fetch(
       `/api/organizations/${user?.organizationId}/connects/${deleteTarget.id}`,
@@ -133,25 +122,15 @@ const CloudProviders: React.FC = () => {
     setDeleteTarget(null);
   };
 
-  // Fetch connected providers from API
   useEffect(() => {
     const handleGetAll = async () => {
       const orgId = user?.organizationId;
       const res = await fetch(`/api/organizations/${orgId}/connects`);
-
       const data = await res.json();
-      console.log(data.data);
-
       setConnectedProviders(data.data);
     };
     handleGetAll();
   }, [user?.organizationId]);
-
-  const openEdit = (provider: CloudProvider) => {
-    setNewProvider(provider);
-    setEditMode(provider);
-    setDialogOpen(true);
-  };
 
   const openAdd = () => {
     setNewProvider({
@@ -160,7 +139,6 @@ const CloudProviders: React.FC = () => {
       provider: ProtoCloudProvider.UNRECOGNIZED,
       status: ActivationStatus.UNRECOGNIZED,
     });
-    setEditMode(false);
     setDialogOpen(true);
   };
 
@@ -172,16 +150,11 @@ const CloudProviders: React.FC = () => {
         </h1>
         <AddProviderModal
           open={dialogOpen}
-          onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) {
-              setEditMode(false);
-            }
-          }}
+          onOpenChange={setDialogOpen}
           newProvider={newProvider}
           setNewProvider={setNewProvider}
           onSave={handleSave}
-          mode={editMode ? "edit" : "create"}
+          mode="create" // Always create now
         />
         <Button onClick={openAdd}>Add Provider</Button>
       </div>
@@ -193,60 +166,65 @@ const CloudProviders: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {connectedProviders.map((provider) => (
-            <Card>
-              <CardHeader className="flex justify-between items-start">
+            <Card
+              key={provider.id}
+              className="shadow-md hover:shadow-lg transition-shadow rounded-2xl border border-muted"
+            >
+              <CardHeader className="flex justify-between items-start space-y-0 pb-2">
                 <div>
-                  <CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CloudIcon provider={provider.provider} />
                     {cloudProviderFromJSON(provider.provider)}
                   </CardTitle>
-                  <p className="text-xs text-muted-foreground">
+                  <CardDescription className="text-xs text-muted-foreground">
+                    Connected account for{" "}
                     {cloudProviderFromJSON(provider.provider)}
-                  </p>
+                  </CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEdit(provider)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
 
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteTarget(provider)}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Are you sure you want to delete this provider?
-                        </AlertDialogTitle>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel
-                          onClick={() => setDeleteTarget(null)}
-                        >
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeleteTarget(provider)}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you sure you want to delete this provider?
+                      </AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setDeleteTarget(null)}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardHeader>
-              <CardContent className="text-sm text-gray-700 space-y-1">
-                <p>
-                  <strong>Status:</strong>{" "}
-                  {activationStatusFromJSON(provider.status)}
-                </p>
+
+              <CardContent className="text-sm text-gray-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <Badge
+                    className={`text-xs h-5 px-2 rounded-full ${
+                      provider.status === "ACTIVE"
+                        ? "bg-green-500 text-white"
+                        : provider.status === "FAILED"
+                        ? "bg-red-500 text-white"
+                        : "bg-yellow-400 text-black"
+                    }`}
+                  >
+                    {activationStatusFromJSON(provider.status)}
+                  </Badge>
+                </div>
               </CardContent>
             </Card>
           ))}
