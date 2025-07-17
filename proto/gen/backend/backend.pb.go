@@ -363,50 +363,6 @@ func (x *CreateProviderConnectionRequest) GetCredentials() map[string]string {
 	return nil
 }
 
-type CreateProviderConnectionResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Connection    *ProviderConnection    `protobuf:"bytes,1,opt,name=connection,proto3" json:"connection,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateProviderConnectionResponse) Reset() {
-	*x = CreateProviderConnectionResponse{}
-	mi := &file_backend_backend_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateProviderConnectionResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateProviderConnectionResponse) ProtoMessage() {}
-
-func (x *CreateProviderConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_backend_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateProviderConnectionResponse.ProtoReflect.Descriptor instead.
-func (*CreateProviderConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_backend_backend_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *CreateProviderConnectionResponse) GetConnection() *ProviderConnection {
-	if x != nil {
-		return x.Connection
-	}
-	return nil
-}
-
 var File_backend_backend_proto protoreflect.FileDescriptor
 
 const file_backend_backend_proto_rawDesc = "" +
@@ -428,11 +384,7 @@ const file_backend_backend_proto_rawDesc = "" +
 	"\vcredentials\x18\x03 \x03(\v29.backend.CreateProviderConnectionRequest.CredentialsEntryR\vcredentials\x1a>\n" +
 	"\x10CredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"_\n" +
-	" CreateProviderConnectionResponse\x12;\n" +
-	"\n" +
-	"connection\x18\x01 \x01(\v2\x1b.backend.ProviderConnectionR\n" +
-	"connection*c\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*c\n" +
 	"\rCloudProvider\x12\x16\n" +
 	"\x12UNDEFINED_PROVIDER\x10\x00\x12\a\n" +
 	"\x03AWS\x10\x01\x12\t\n" +
@@ -467,7 +419,7 @@ func file_backend_backend_proto_rawDescGZIP() []byte {
 }
 
 var file_backend_backend_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_backend_backend_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_backend_backend_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_backend_backend_proto_goTypes = []any{
 	(CloudProvider)(0),                       // 0: backend.CloudProvider
 	(ActivationStatus)(0),                    // 1: backend.ActivationStatus
@@ -475,8 +427,7 @@ var file_backend_backend_proto_goTypes = []any{
 	(*ProviderConnection)(nil),               // 3: backend.ProviderConnection
 	(*GetAllProviderConnectionResponse)(nil), // 4: backend.GetAllProviderConnectionResponse
 	(*CreateProviderConnectionRequest)(nil),  // 5: backend.CreateProviderConnectionRequest
-	(*CreateProviderConnectionResponse)(nil), // 6: backend.CreateProviderConnectionResponse
-	nil,                                      // 7: backend.CreateProviderConnectionRequest.CredentialsEntry
+	nil,                                      // 6: backend.CreateProviderConnectionRequest.CredentialsEntry
 }
 var file_backend_backend_proto_depIdxs = []int32{
 	0, // 0: backend.ProviderConnection.provider:type_name -> backend.CloudProvider
@@ -484,13 +435,12 @@ var file_backend_backend_proto_depIdxs = []int32{
 	3, // 2: backend.GetAllProviderConnectionResponse.connections:type_name -> backend.ProviderConnection
 	0, // 3: backend.CreateProviderConnectionRequest.provider:type_name -> backend.CloudProvider
 	2, // 4: backend.CreateProviderConnectionRequest.secret_name:type_name -> backend.SecretName
-	7, // 5: backend.CreateProviderConnectionRequest.credentials:type_name -> backend.CreateProviderConnectionRequest.CredentialsEntry
-	3, // 6: backend.CreateProviderConnectionResponse.connection:type_name -> backend.ProviderConnection
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	6, // 5: backend.CreateProviderConnectionRequest.credentials:type_name -> backend.CreateProviderConnectionRequest.CredentialsEntry
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_backend_backend_proto_init() }
@@ -504,7 +454,7 @@ func file_backend_backend_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_backend_backend_proto_rawDesc), len(file_backend_backend_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   5,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -22,6 +22,7 @@ import KubernetesNetwork from "./app/kubernetes/network";
 import KubernetesStorage from "./app/kubernetes/storage";
 import KubernetesWorkloads from "./app/kubernetes/workloads";
 import CloudProviders from "./app/connect/cloud-providers";
+import ClusterServices from "./app/clusters/services";
 
 const allRoutes: RouteObject[] = [
   {
@@ -49,6 +50,14 @@ const allRoutes: RouteObject[] = [
         element: (
           <PrivateRoute
             element={<ClusterWorkloadsHealth title="Workloads Health" />}
+          />
+        ),
+      },
+      {
+        path: "clusters/services",
+        element: (
+          <PrivateRoute
+            element={<ClusterServices title="Cluster Services" />}
           />
         ),
       },

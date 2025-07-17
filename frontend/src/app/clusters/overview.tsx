@@ -1,46 +1,84 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import Cluster from "@/models/kubernetes";
 import { useAuth } from "@/hooks/auth_provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cloudProviderToJSON } from "@proto/backend/backend";
+import { CloudProviderConnection } from "@/models/cloud-provider";
 
 const ClustersOverview: React.FC = () => {
   const { user } = useAuth();
 
+  const [providersConnection, setProvidersConnection] = useState<
+    CloudProviderConnection[]
+  >([]);
+  const [selectedProvider, setSelectedProvider] =
+    useState<CloudProviderConnection>();
   const [clusters, setClusters] = useState<Cluster[]>([]);
-  const [newCluster, setNewCluster] = useState({ name: "", description: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch clusters from API
+  // Fetch connected providers on mount
   useEffect(() => {
-    const fetchClusters = async () => {
+    const fetchProviders = async () => {
       const orgId = user?.organizationId;
-
-      const res = await fetch(`/api/organizations/${orgId}/clusters`);
+      if (!orgId) {
+        return;
+      }
+      const res = await fetch(`/api/organizations/${orgId}/connects`);
+      if (!res.ok) {
+        return;
+      }
       const data = await res.json();
-      setClusters(data.data);
+      console.log(data);
+      setProvidersConnection(data.data);
     };
-    fetchClusters();
+    fetchProviders();
   }, [user?.organizationId]);
 
-  const handleAddCluster = () => {
-    const addedCluster: Cluster = {
-      id: clusters.length + 1,
-      name: newCluster.name,
-      description: newCluster.description,
+  useEffect(() => {
+    const fetchClusters = async (provider: CloudProviderConnection) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const orgId = user?.organizationId;
+        // Adjust API URL accordingly; assuming it accepts provider param
+        const res = await fetch(
+          `/api/organizations/${orgId}/clusters?provider=${provider.id}`
+        );
+        if (!res.ok) {
+          throw new Error(
+            `Failed to fetch clusters for ${cloudProviderToJSON(
+              provider.provider
+            )}`
+          );
+        }
+        const data = await res.json();
+        console.log(data);
+        setClusters(data.data ?? []);
+      } catch (err: unknown) {
+        console.error(err);
+        setError("Unknown error");
+        setClusters([]);
+      } finally {
+        setLoading(false);
+      }
     };
-    setClusters([...clusters, addedCluster]);
-    setNewCluster({ name: "", description: "" });
-  };
+
+    if (providersConnection.length > 0) {
+      setSelectedProvider(providersConnection[0]);
+      if (selectedProvider) {
+        fetchClusters(selectedProvider);
+      }
+    }
+  }, [providersConnection, selectedProvider, user?.organizationId]);
 
   return (
     <div className="p-10 space-y-6">
@@ -48,55 +86,68 @@ const ClustersOverview: React.FC = () => {
         <h1 className="text-3xl font-semibold text-gray-800">
           Clusters Overview
         </h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>Add Cluster</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Cluster</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Input
-                placeholder="Cluster Name"
-                value={newCluster.name}
-                onChange={(e) => {
-                  setNewCluster({ ...newCluster, name: e.target.value });
-                }}
-              />
-              <Input
-                placeholder="Description"
-                value={newCluster.description}
-                onChange={(e) => {
-                  setNewCluster({ ...newCluster, description: e.target.value });
-                }}
-              />
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button onClick={handleAddCluster}>Save</Button>
-              </DialogClose>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+
+        <div className="w-48">
+          <Select
+            value={
+              selectedProvider
+                ? cloudProviderToJSON(selectedProvider.provider)
+                : ""
+            }
+            onValueChange={(value) => {
+              // Find the full object by the string value
+              const found = providersConnection.find(
+                (p) => cloudProviderToJSON(p.provider) === value
+              );
+              if (found) {
+                setSelectedProvider(found);
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Cloud Provider" />
+            </SelectTrigger>
+            <SelectContent>
+              {providersConnection.map((provider) => (
+                <SelectItem
+                  key={cloudProviderToJSON(provider.provider)}
+                  value={cloudProviderToJSON(provider.provider)}
+                >
+                  {cloudProviderToJSON(provider.provider)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {clusters.length === 0 ? (
-        <p className="text-gray-500 text-center">No cluster connected.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clusters.map((cluster) => (
-            <Card key={cluster.id}>
-              <CardHeader>
-                <CardTitle>{cluster.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">{cluster.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {loading && <p className="text-gray-500">Loading clusters...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+
+      {clusters.length === 0 && !loading && !error && (
+        <p className="text-gray-500 text-center">
+          No clusters found for{" "}
+          {selectedProvider
+            ? cloudProviderToJSON(selectedProvider.provider)
+            : ""}
+          .
+        </p>
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {clusters.map((cluster) => (
+          <Card key={cluster.id}>
+            <CardHeader>
+              <CardTitle>{cluster.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                {cluster.description || "No description"}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };

@@ -234,10 +234,6 @@ export interface CreateProviderConnectionRequest_CredentialsEntry {
   value: string;
 }
 
-export interface CreateProviderConnectionResponse {
-  connection: ProviderConnection | undefined;
-}
-
 function createBaseProviderConnection(): ProviderConnection {
   return {
     id: "0",
@@ -626,66 +622,6 @@ export const CreateProviderConnectionRequest_CredentialsEntry: MessageFns<
     const message = createBaseCreateProviderConnectionRequest_CredentialsEntry();
     message.key = object.key ?? "";
     message.value = object.value ?? "";
-    return message;
-  },
-};
-
-function createBaseCreateProviderConnectionResponse(): CreateProviderConnectionResponse {
-  return { connection: undefined };
-}
-
-export const CreateProviderConnectionResponse: MessageFns<CreateProviderConnectionResponse> = {
-  encode(message: CreateProviderConnectionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.connection !== undefined) {
-      ProviderConnection.encode(message.connection, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): CreateProviderConnectionResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateProviderConnectionResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.connection = ProviderConnection.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CreateProviderConnectionResponse {
-    return { connection: isSet(object.connection) ? ProviderConnection.fromJSON(object.connection) : undefined };
-  },
-
-  toJSON(message: CreateProviderConnectionResponse): unknown {
-    const obj: any = {};
-    if (message.connection !== undefined) {
-      obj.connection = ProviderConnection.toJSON(message.connection);
-    }
-    return obj;
-  },
-
-  create(base?: DeepPartial<CreateProviderConnectionResponse>): CreateProviderConnectionResponse {
-    return CreateProviderConnectionResponse.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<CreateProviderConnectionResponse>): CreateProviderConnectionResponse {
-    const message = createBaseCreateProviderConnectionResponse();
-    message.connection = (object.connection !== undefined && object.connection !== null)
-      ? ProviderConnection.fromPartial(object.connection)
-      : undefined;
     return message;
   },
 };
