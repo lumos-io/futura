@@ -27,14 +27,15 @@ import { useAuth } from "@/hooks/auth_provider";
 import {
   CreateProviderConnectionRequest,
   SecretName,
+  CloudProvider,
   cloudProviderFromJSON,
   activationStatusFromJSON,
-  CloudProvider,
+  ActivationStatus,
 } from "@proto/backend/backend";
 import { Badge } from "@/components/ui/badge";
 
-const CloudIcon = ({ provider }: { provider: string }) => {
-  switch (provider) {
+const CloudIcon = ({ provider }: { provider: CloudProvider }) => {
+  switch (cloudProviderFromJSON(provider)) {
     case CloudProvider.AWS:
       return <Cloud className="w-5 h-5 text-yellow-500" />;
     case CloudProvider.GCP:
@@ -45,6 +46,59 @@ const CloudIcon = ({ provider }: { provider: string }) => {
       return <Cloud className="w-5 h-5 text-indigo-500" />;
     case CloudProvider.ALIBABA:
       return <CloudRain className="w-5 h-5 text-orange-500" />;
+    default:
+      return null;
+  }
+};
+
+const RenderActivationStatus = ({ status }: { status: ActivationStatus }) => {
+  const s = activationStatusFromJSON(status);
+  switch (s) {
+    case ActivationStatus.ACTIVE:
+      return (
+        <Badge
+          className={`text-xs h-5 px-2 rounded-full bg-green-500 text-white`}
+        >
+          {" "}
+          {s}
+        </Badge>
+      );
+    case ActivationStatus.FAILED:
+      return (
+        <Badge
+          className={`text-xs h-5 px-2 rounded-full bg-red-500 text-white`}
+        >
+          {" "}
+          {s}
+        </Badge>
+      );
+    case ActivationStatus.IN_PROGRESS:
+      return (
+        <Badge
+          className={`text-xs h-5 px-2 rounded-full bg-blue-500 text-white`}
+        >
+          {" "}
+          {s}
+        </Badge>
+      );
+    case ActivationStatus.PENDING:
+      return (
+        <Badge
+          className={`text-xs h-5 px-2 rounded-full bg-gray-500 text-white`}
+        >
+          {" "}
+          {s}
+        </Badge>
+      );
+    case ActivationStatus.SUSPENDED:
+      return (
+        <Badge
+          className={`text-xs h-5 px-2 rounded-full bg-orange-500 text-white`}
+        >
+          {" "}
+          {s}
+        </Badge>
+      );
     default:
       return null;
   }
@@ -62,10 +116,14 @@ const CloudProviders: React.FC = () => {
   const [deleteTarget, setDeleteTarget] =
     useState<CloudProviderConnection | null>(null);
 
-  const handleSave = async (credentials: { [key: string]: string }) => {
+  const handleSave = async (
+    connectionName: string,
+    credentials: { [key: string]: string }
+  ) => {
     const input = CreateProviderConnectionRequest.fromJSON({
       provider: newProvider.provider,
-      secretName: SecretName.ACCESS_CREDENTIALS,
+      connection_name: connectionName,
+      secret_name: SecretName.ACCESS_CREDENTIALS,
       credentials: credentials,
     });
 
@@ -105,6 +163,7 @@ const CloudProviders: React.FC = () => {
       const orgId = user?.organizationId;
       const res = await fetch(`/api/organizations/${orgId}/connects`);
       const data = await res.json();
+
       setConnectedProviders(data.data);
     };
     handleGetAll();
@@ -126,8 +185,8 @@ const CloudProviders: React.FC = () => {
           onOpenChange={setDialogOpen}
           newProvider={newProvider}
           setNewProvider={setNewProvider}
-          onSave={(credentials) => {
-            handleSave(credentials);
+          onSave={(connectionName, credentials) => {
+            handleSave(connectionName, credentials);
           }}
         />
         <Button onClick={openAdd}>Add Provider</Button>
@@ -144,64 +203,58 @@ const CloudProviders: React.FC = () => {
               key={provider.id}
               className="shadow-md hover:shadow-lg transition-shadow rounded-2xl border border-muted"
             >
-              <CardHeader className="flex justify-between items-start space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <CloudIcon provider={provider.provider} />
-                    {cloudProviderFromJSON(provider.provider)}
-                  </CardTitle>
-                  <CardDescription className="text-xs text-muted-foreground">
-                    Connected account for{" "}
-                    {cloudProviderFromJSON(provider.provider)}
-                    <span className="text-muted-foreground">
-                      <b>Secret Id</b>
-                      {provider.secretId}
-                    </span>
-                  </CardDescription>
-                </div>
+              <CardHeader className="pb-2 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <CloudIcon provider={provider.provider} />
+                      <CardTitle className="text-lg">
+                        {cloudProviderFromJSON(provider.provider)}
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      <div>{provider.connection_name}</div>
+                      <div>{provider.secret_id}</div>
+                    </CardDescription>
+                  </div>
 
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeleteTarget(provider)}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Are you sure you want to delete this provider?
-                      </AlertDialogTitle>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => setDeleteTarget(null)}>
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteTarget(provider)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you sure you want to delete this provider?
+                        </AlertDialogTitle>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel
+                          onClick={() => setDeleteTarget(null)}
+                        >
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </CardHeader>
 
               <CardContent className="text-sm text-gray-700 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  <Badge
-                    className={`text-xs h-5 px-2 rounded-full ${
-                      provider.status === "ACTIVE"
-                        ? "bg-green-500 text-white"
-                        : provider.status === "FAILED"
-                        ? "bg-red-500 text-white"
-                        : "bg-yellow-400 text-black"
-                    }`}
-                  >
-                    {activationStatusFromJSON(provider.status)}
-                  </Badge>
+                  <span className="text-muted-foreground">
+                    <b>Status</b>
+                  </span>
+                  <RenderActivationStatus status={provider.status} />
                 </div>
               </CardContent>
             </Card>

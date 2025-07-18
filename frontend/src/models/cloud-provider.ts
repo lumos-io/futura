@@ -18,9 +18,10 @@ interface AddProviderModalProps {
 
 function EmptyCloudProvider(): CloudProviderConnection {
     return {
-        createdAt: "",
+        created_at: "",
         id: "-1",
-        secretId: "",
+        secret_id: "",
+        connection_name: "",
         provider: ProtoCloudProvider.UNRECOGNIZED,
         status: ActivationStatus.UNRECOGNIZED,
     }

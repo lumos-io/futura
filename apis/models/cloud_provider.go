@@ -11,10 +11,11 @@ import (
 
 type CloudProvider struct {
 	gorm.Model
-	Provider       CloudProviderName `json:"name"`
-	SecretName     pb.SecretName     `json:"secretName"`
-	SecretID       uuid.UUID         `json:"secretId"`
-	Status         ActivationStatus  `gorm:"default:PENDING" json:"activationStatus"`
+	Provider       CloudProviderName `gorm:"not null" json:"provider"`
+	ConnectionName string            `gorm:"uniqueIndex,not null" json:"connectionName"`
+	SecretName     pb.SecretName     `gorm:"not null" json:"secretName"`
+	SecretID       uuid.UUID         `gorm:"not null" json:"secretId"`
+	Status         ActivationStatus  `gorm:"default:PENDING,not null" json:"activationStatus"`
 	OrganizationID uint              `gorm:"index;not null"`
 	Organization   Organization
 }

@@ -184,14 +184,15 @@ func (SecretName) EnumDescriptor() ([]byte, []int) {
 }
 
 type ProviderConnection struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Provider      CloudProvider          `protobuf:"varint,2,opt,name=provider,proto3,enum=backend.CloudProvider" json:"provider,omitempty"`
-	Status        ActivationStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=backend.ActivationStatus" json:"status,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	SecretId      string                 `protobuf:"bytes,5,opt,name=secret_id,json=secretId,proto3" json:"secret_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Provider       CloudProvider          `protobuf:"varint,2,opt,name=provider,proto3,enum=backend.CloudProvider" json:"provider,omitempty"`
+	Status         ActivationStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=backend.ActivationStatus" json:"status,omitempty"`
+	CreatedAt      string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	SecretId       string                 `protobuf:"bytes,5,opt,name=secret_id,json=secretId,proto3" json:"secret_id,omitempty"`
+	ConnectionName string                 `protobuf:"bytes,6,opt,name=connection_name,json=connectionName,proto3" json:"connection_name,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ProviderConnection) Reset() {
@@ -259,6 +260,13 @@ func (x *ProviderConnection) GetSecretId() string {
 	return ""
 }
 
+func (x *ProviderConnection) GetConnectionName() string {
+	if x != nil {
+		return x.ConnectionName
+	}
+	return ""
+}
+
 type GetAllProviderConnectionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Connections   []*ProviderConnection  `protobuf:"bytes,1,rep,name=connections,proto3" json:"connections,omitempty"`
@@ -304,12 +312,13 @@ func (x *GetAllProviderConnectionResponse) GetConnections() []*ProviderConnectio
 }
 
 type CreateProviderConnectionRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Provider      CloudProvider          `protobuf:"varint,1,opt,name=provider,proto3,enum=backend.CloudProvider" json:"provider,omitempty"`
-	SecretName    SecretName             `protobuf:"varint,2,opt,name=secret_name,json=secretName,proto3,enum=backend.SecretName" json:"secret_name,omitempty"`
-	Credentials   map[string]string      `protobuf:"bytes,3,rep,name=credentials,proto3" json:"credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Provider       CloudProvider          `protobuf:"varint,1,opt,name=provider,proto3,enum=backend.CloudProvider" json:"provider,omitempty"`
+	SecretName     SecretName             `protobuf:"varint,2,opt,name=secret_name,json=secretName,proto3,enum=backend.SecretName" json:"secret_name,omitempty"`
+	Credentials    map[string]string      `protobuf:"bytes,3,rep,name=credentials,proto3" json:"credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ConnectionName string                 `protobuf:"bytes,4,opt,name=connection_name,json=connectionName,proto3" json:"connection_name,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *CreateProviderConnectionRequest) Reset() {
@@ -363,25 +372,34 @@ func (x *CreateProviderConnectionRequest) GetCredentials() map[string]string {
 	return nil
 }
 
+func (x *CreateProviderConnectionRequest) GetConnectionName() string {
+	if x != nil {
+		return x.ConnectionName
+	}
+	return ""
+}
+
 var File_backend_backend_proto protoreflect.FileDescriptor
 
 const file_backend_backend_proto_rawDesc = "" +
 	"\n" +
-	"\x15backend/backend.proto\x12\abackend\"\xc7\x01\n" +
+	"\x15backend/backend.proto\x12\abackend\"\xf0\x01\n" +
 	"\x12ProviderConnection\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x122\n" +
 	"\bprovider\x18\x02 \x01(\x0e2\x16.backend.CloudProviderR\bprovider\x121\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x19.backend.ActivationStatusR\x06status\x12\x1d\n" +
 	"\n" +
 	"created_at\x18\x04 \x01(\tR\tcreatedAt\x12\x1b\n" +
-	"\tsecret_id\x18\x05 \x01(\tR\bsecretId\"a\n" +
+	"\tsecret_id\x18\x05 \x01(\tR\bsecretId\x12'\n" +
+	"\x0fconnection_name\x18\x06 \x01(\tR\x0econnectionName\"a\n" +
 	" GetAllProviderConnectionResponse\x12=\n" +
-	"\vconnections\x18\x01 \x03(\v2\x1b.backend.ProviderConnectionR\vconnections\"\xa8\x02\n" +
+	"\vconnections\x18\x01 \x03(\v2\x1b.backend.ProviderConnectionR\vconnections\"\xd1\x02\n" +
 	"\x1fCreateProviderConnectionRequest\x122\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x16.backend.CloudProviderR\bprovider\x124\n" +
 	"\vsecret_name\x18\x02 \x01(\x0e2\x13.backend.SecretNameR\n" +
 	"secretName\x12[\n" +
-	"\vcredentials\x18\x03 \x03(\v29.backend.CreateProviderConnectionRequest.CredentialsEntryR\vcredentials\x1a>\n" +
+	"\vcredentials\x18\x03 \x03(\v29.backend.CreateProviderConnectionRequest.CredentialsEntryR\vcredentials\x12'\n" +
+	"\x0fconnection_name\x18\x04 \x01(\tR\x0econnectionName\x1a>\n" +
 	"\x10CredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*c\n" +

@@ -33,6 +33,7 @@ message ProviderConnection {
   ActivationStatus status = 3;
   string created_at = 4;
   string secret_id = 5;
+  string connection_name = 6;
 }
 
 message GetAllProviderConnectionResponse {
@@ -42,5 +43,6 @@ message GetAllProviderConnectionResponse {
 message CreateProviderConnectionRequest {
   CloudProvider provider = 1;
   SecretName secret_name = 2;
-  map<string,string> credentials = 3;		
+  map<string,string> credentials = 3;
+  string connection_name = 4;
 }

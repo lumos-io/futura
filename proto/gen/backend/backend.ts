@@ -215,8 +215,9 @@ export interface ProviderConnection {
   id: string;
   provider: CloudProvider;
   status: ActivationStatus;
-  createdAt: string;
-  secretId: string;
+  created_at: string;
+  secret_id: string;
+  connection_name: string;
 }
 
 export interface GetAllProviderConnectionResponse {
@@ -225,8 +226,9 @@ export interface GetAllProviderConnectionResponse {
 
 export interface CreateProviderConnectionRequest {
   provider: CloudProvider;
-  secretName: SecretName;
+  secret_name: SecretName;
   credentials: { [key: string]: string };
+  connection_name: string;
 }
 
 export interface CreateProviderConnectionRequest_CredentialsEntry {
@@ -239,8 +241,9 @@ function createBaseProviderConnection(): ProviderConnection {
     id: "0",
     provider: CloudProvider.UNDEFINED_PROVIDER,
     status: ActivationStatus.UNDEFINED_STATUS,
-    createdAt: "",
-    secretId: "",
+    created_at: "",
+    secret_id: "",
+    connection_name: "",
   };
 }
 
@@ -255,11 +258,14 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     if (message.status !== ActivationStatus.UNDEFINED_STATUS) {
       writer.uint32(24).int32(activationStatusToNumber(message.status));
     }
-    if (message.createdAt !== "") {
-      writer.uint32(34).string(message.createdAt);
+    if (message.created_at !== "") {
+      writer.uint32(34).string(message.created_at);
     }
-    if (message.secretId !== "") {
-      writer.uint32(42).string(message.secretId);
+    if (message.secret_id !== "") {
+      writer.uint32(42).string(message.secret_id);
+    }
+    if (message.connection_name !== "") {
+      writer.uint32(50).string(message.connection_name);
     }
     return writer;
   },
@@ -300,7 +306,7 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
             break;
           }
 
-          message.createdAt = reader.string();
+          message.created_at = reader.string();
           continue;
         }
         case 5: {
@@ -308,7 +314,15 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
             break;
           }
 
-          message.secretId = reader.string();
+          message.secret_id = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.connection_name = reader.string();
           continue;
         }
       }
@@ -325,8 +339,9 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
       id: isSet(object.id) ? globalThis.String(object.id) : "0",
       provider: isSet(object.provider) ? cloudProviderFromJSON(object.provider) : CloudProvider.UNDEFINED_PROVIDER,
       status: isSet(object.status) ? activationStatusFromJSON(object.status) : ActivationStatus.UNDEFINED_STATUS,
-      createdAt: isSet(object.createdAt) ? globalThis.String(object.createdAt) : "",
-      secretId: isSet(object.secretId) ? globalThis.String(object.secretId) : "",
+      created_at: isSet(object.created_at) ? globalThis.String(object.created_at) : "",
+      secret_id: isSet(object.secret_id) ? globalThis.String(object.secret_id) : "",
+      connection_name: isSet(object.connection_name) ? globalThis.String(object.connection_name) : "",
     };
   },
 
@@ -341,11 +356,14 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     if (message.status !== ActivationStatus.UNDEFINED_STATUS) {
       obj.status = activationStatusToJSON(message.status);
     }
-    if (message.createdAt !== "") {
-      obj.createdAt = message.createdAt;
+    if (message.created_at !== "") {
+      obj.created_at = message.created_at;
     }
-    if (message.secretId !== "") {
-      obj.secretId = message.secretId;
+    if (message.secret_id !== "") {
+      obj.secret_id = message.secret_id;
+    }
+    if (message.connection_name !== "") {
+      obj.connection_name = message.connection_name;
     }
     return obj;
   },
@@ -358,8 +376,9 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     message.id = object.id ?? "0";
     message.provider = object.provider ?? CloudProvider.UNDEFINED_PROVIDER;
     message.status = object.status ?? ActivationStatus.UNDEFINED_STATUS;
-    message.createdAt = object.createdAt ?? "";
-    message.secretId = object.secretId ?? "";
+    message.created_at = object.created_at ?? "";
+    message.secret_id = object.secret_id ?? "";
+    message.connection_name = object.connection_name ?? "";
     return message;
   },
 };
@@ -427,7 +446,12 @@ export const GetAllProviderConnectionResponse: MessageFns<GetAllProviderConnecti
 };
 
 function createBaseCreateProviderConnectionRequest(): CreateProviderConnectionRequest {
-  return { provider: CloudProvider.UNDEFINED_PROVIDER, secretName: SecretName.UNDEFINED_SECRET, credentials: {} };
+  return {
+    provider: CloudProvider.UNDEFINED_PROVIDER,
+    secret_name: SecretName.UNDEFINED_SECRET,
+    credentials: {},
+    connection_name: "",
+  };
 }
 
 export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectionRequest> = {
@@ -435,13 +459,16 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
     if (message.provider !== CloudProvider.UNDEFINED_PROVIDER) {
       writer.uint32(8).int32(cloudProviderToNumber(message.provider));
     }
-    if (message.secretName !== SecretName.UNDEFINED_SECRET) {
-      writer.uint32(16).int32(secretNameToNumber(message.secretName));
+    if (message.secret_name !== SecretName.UNDEFINED_SECRET) {
+      writer.uint32(16).int32(secretNameToNumber(message.secret_name));
     }
     Object.entries(message.credentials).forEach(([key, value]) => {
       CreateProviderConnectionRequest_CredentialsEntry.encode({ key: key as any, value }, writer.uint32(26).fork())
         .join();
     });
+    if (message.connection_name !== "") {
+      writer.uint32(34).string(message.connection_name);
+    }
     return writer;
   },
 
@@ -465,7 +492,7 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
             break;
           }
 
-          message.secretName = secretNameFromJSON(reader.int32());
+          message.secret_name = secretNameFromJSON(reader.int32());
           continue;
         }
         case 3: {
@@ -477,6 +504,14 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
           if (entry3.value !== undefined) {
             message.credentials[entry3.key] = entry3.value;
           }
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.connection_name = reader.string();
           continue;
         }
       }
@@ -491,13 +526,14 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
   fromJSON(object: any): CreateProviderConnectionRequest {
     return {
       provider: isSet(object.provider) ? cloudProviderFromJSON(object.provider) : CloudProvider.UNDEFINED_PROVIDER,
-      secretName: isSet(object.secretName) ? secretNameFromJSON(object.secretName) : SecretName.UNDEFINED_SECRET,
+      secret_name: isSet(object.secret_name) ? secretNameFromJSON(object.secret_name) : SecretName.UNDEFINED_SECRET,
       credentials: isObject(object.credentials)
         ? Object.entries(object.credentials).reduce<{ [key: string]: string }>((acc, [key, value]) => {
           acc[key] = String(value);
           return acc;
         }, {})
         : {},
+      connection_name: isSet(object.connection_name) ? globalThis.String(object.connection_name) : "",
     };
   },
 
@@ -506,8 +542,8 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
     if (message.provider !== CloudProvider.UNDEFINED_PROVIDER) {
       obj.provider = cloudProviderToJSON(message.provider);
     }
-    if (message.secretName !== SecretName.UNDEFINED_SECRET) {
-      obj.secretName = secretNameToJSON(message.secretName);
+    if (message.secret_name !== SecretName.UNDEFINED_SECRET) {
+      obj.secret_name = secretNameToJSON(message.secret_name);
     }
     if (message.credentials) {
       const entries = Object.entries(message.credentials);
@@ -518,6 +554,9 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
         });
       }
     }
+    if (message.connection_name !== "") {
+      obj.connection_name = message.connection_name;
+    }
     return obj;
   },
 
@@ -527,7 +566,7 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
   fromPartial(object: DeepPartial<CreateProviderConnectionRequest>): CreateProviderConnectionRequest {
     const message = createBaseCreateProviderConnectionRequest();
     message.provider = object.provider ?? CloudProvider.UNDEFINED_PROVIDER;
-    message.secretName = object.secretName ?? SecretName.UNDEFINED_SECRET;
+    message.secret_name = object.secret_name ?? SecretName.UNDEFINED_SECRET;
     message.credentials = Object.entries(object.credentials ?? {}).reduce<{ [key: string]: string }>(
       (acc, [key, value]) => {
         if (value !== undefined) {
@@ -537,6 +576,7 @@ export const CreateProviderConnectionRequest: MessageFns<CreateProviderConnectio
       },
       {},
     );
+    message.connection_name = object.connection_name ?? "";
     return message;
   },
 };

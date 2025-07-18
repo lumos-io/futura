@@ -39,8 +39,7 @@ func (cc *ConnectController) GetConnects(c *gin.Context) {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to fetch connects")
 		return
 	}
-
-	result := make([]pb.ProviderConnection, len(connects))
+	result := make([]*pb.ProviderConnection, len(connects))
 	for i, conn := range connects {
 		s, err := models.ConvertToProtoFromActivationStatus(conn.Status)
 		if err != nil {
@@ -52,15 +51,15 @@ func (cc *ConnectController) GetConnects(c *gin.Context) {
 			utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert CloudProvider to Proto")
 			return
 		}
-		result[i] = pb.ProviderConnection{
-			Id:        int64(conn.ID),
-			Provider:  p,
-			Status:    s,
-			SecretId:  conn.SecretID.String(),
-			CreatedAt: conn.CreatedAt.String(),
+		result[i] = &pb.ProviderConnection{
+			Id:             int64(conn.ID),
+			Provider:       p,
+			Status:         s,
+			SecretId:       conn.SecretID.String(),
+			CreatedAt:      conn.CreatedAt.String(),
+			ConnectionName: conn.ConnectionName,
 		}
 	}
-
 	utils.RespondOK(c, result)
 }
 
@@ -99,6 +98,7 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		Provider:       prov,
 		SecretID:       secretID,
 		SecretName:     input.SecretName,
+		ConnectionName: input.ConnectionName,
 		OrganizationID: orgID,
 		Status:         models.ActiveStatus, // I assume the "Test Connection" was done before this operation is performed
 	}
@@ -118,11 +118,12 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		return
 	}
 	utils.RespondCreated(c, pb.ProviderConnection{
-		Id:        int64(cp.ID),
-		Provider:  p,
-		Status:    s,
-		SecretId:  secretID.String(),
-		CreatedAt: cp.CreatedAt.String(),
+		Id:             int64(cp.ID),
+		Provider:       p,
+		Status:         s,
+		SecretId:       secretID.String(),
+		CreatedAt:      cp.CreatedAt.String(),
+		ConnectionName: cp.ConnectionName,
 	})
 }
 

@@ -29,7 +29,10 @@ interface AddProviderModalProps {
   onOpenChange: (open: boolean) => void;
   newProvider: CloudProviderConnection;
   setNewProvider: (provider: CloudProviderConnection) => void;
-  onSave: (credentials: { [key: string]: string }) => void;
+  onSave: (
+    connectionName: string,
+    credentials: { [key: string]: string }
+  ) => void;
 }
 
 const providerOptions = ["ALIBABA", "AWS", "GCP", "DIGITALOCEAN", "AZURE"];
@@ -79,6 +82,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
   const [testing, setTesting] = useState(false);
   const [testSuccess, setTestSuccess] = useState<boolean | null>(null);
   const [credentials, setCredentials] = useState<{ [key: string]: string }>({});
+  const [connectionName, setConnectionName] = useState<string>("");
 
   const handleTestConnection = async () => {
     setTesting(true);
@@ -137,21 +141,31 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
           </div>
 
           {fields.length > 0 ? (
-            fields.map((field) => (
-              <div key={field.key} className="space-y-2">
-                <Label>{field.label}</Label>
+            <>
+              <div className="space-y-2">
+                <Label>Name</Label>
                 <Input
-                  placeholder={field.placeholder || ""}
-                  value={credentials[field.key] ?? ""}
-                  onChange={(e) =>
-                    setCredentials({
-                      ...credentials,
-                      [field.key]: e.target.value,
-                    })
-                  }
+                  placeholder={"Friendly Name"}
+                  value={connectionName}
+                  onChange={(e) => setConnectionName(e.target.value)}
                 />
               </div>
-            ))
+              {fields.map((field) => (
+                <div key={field.key} className="space-y-2">
+                  <Label>{field.label}</Label>
+                  <Input
+                    placeholder={field.placeholder || ""}
+                    value={credentials[field.key] ?? ""}
+                    onChange={(e) =>
+                      setCredentials({
+                        ...credentials,
+                        [field.key]: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              ))}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">
               No specific fields defined for this provider.
@@ -188,7 +202,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
           </div>
 
           <Button
-            onClick={() => onSave(credentials)}
+            onClick={() => onSave(connectionName, credentials)}
             disabled={testSuccess ? true : false}
             className="w-full"
           >
