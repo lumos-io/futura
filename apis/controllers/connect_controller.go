@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/internal/providers"
+	"github.com/opisvigilant/futura/apis/internal/workflow"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -17,6 +18,7 @@ import (
 
 type ConnectController struct {
 	cloudProviderAuth *providers.CloudProviderAuth
+	workflowManager   *workflow.WorkflowManager
 }
 
 func NewConnectController(config *config.Configuration) (*ConnectController, error) {
@@ -24,8 +26,15 @@ func NewConnectController(config *config.Configuration) (*ConnectController, err
 	if err != nil {
 		return nil, err
 	}
+
+	wfm, err := workflow.New(config)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ConnectController{
 		cloudProviderAuth: p,
+		workflowManager:   wfm,
 	}, nil
 }
 
@@ -100,12 +109,15 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		SecretName:     input.SecretName,
 		ConnectionName: input.ConnectionName,
 		OrganizationID: orgID,
-		Status:         models.ActiveStatus, // I assume the "Test Connection" was done before this operation is performed
+		Status:         models.InProgressStatus, // I assume the "Test Connection" was done before this operation is performed
 	}
 	if err := models.GetDB().Create(&cp).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to create connection")
 		return
 	}
+
+	// trigger workflow to fetch all the clusters
+	// ...
 
 	s, err := models.ConvertToProtoFromActivationStatus(cp.Status)
 	if err != nil {

@@ -169,6 +169,10 @@ const CloudProviders: React.FC = () => {
     handleGetAll();
   }, [user?.organizationId]);
 
+  const canConnectionBeDeleted = (status: ActivationStatus): boolean => {
+    return activationStatusFromJSON(status) !== ActivationStatus.IN_PROGRESS;
+  };
+
   const openAdd = () => {
     setNewProvider(EmptyCloudProvider);
     setDialogOpen(true);
@@ -240,7 +244,10 @@ const CloudProviders: React.FC = () => {
                         >
                           Cancel
                         </AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          disabled={canConnectionBeDeleted(provider.status)}
+                        >
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>

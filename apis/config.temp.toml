@@ -26,3 +26,8 @@ csfr_secret = ""
 
 [frontend]
 url = "http://localhost:8080/"
+
+[temporal]
+address = "localhost"
+port = "7233"
+namespace = "default"
