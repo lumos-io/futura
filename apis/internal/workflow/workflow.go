@@ -1,9 +1,13 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/opisvigilant/futura/apis/internal/config"
+	"github.com/rs/zerolog/log"
+
 	workflowclusters "github.com/opisvigilant/futura/apis/internal/workflow/clusters"
 
 	tpclient "go.temporal.io/sdk/client"
@@ -43,6 +47,24 @@ func (c *WorkflowManager) StartWorker() error {
 	workflowclusters.RegisterWorkflowFetchClusters(w)
 
 	return w.Run(worker.InterruptCh())
+}
+
+func (c *WorkflowManager) ExecuteFetchClustersWorkflow(input *workflowclusters.WorkflowFetchClustersInput) error {
+	opts := tpclient.StartWorkflowOptions{
+		ID:        "fetch-clusters-workflow-" + time.Now().String(),
+		TaskQueue: WorkflowTaskQueueName,
+	}
+
+	run, err := c.temporalClient.ExecuteWorkflow(
+		context.Background(),
+		opts,
+		workflowclusters.WorkflowFetchClusters,
+		input,
+	)
+
+	log.Logger.Info().Msgf("workflow with ID `%s` started", run.GetRunID())
+
+	return err
 }
 
 func (c *WorkflowManager) Stop() error {

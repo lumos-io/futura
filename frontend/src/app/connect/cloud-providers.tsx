@@ -33,6 +33,8 @@ import {
   ActivationStatus,
 } from "@proto/backend/backend";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { TooltipTrigger } from "@radix-ui/react-tooltip";
 
 const CloudIcon = ({ provider }: { provider: CloudProvider }) => {
   switch (cloudProviderFromJSON(provider)) {
@@ -169,8 +171,11 @@ const CloudProviders: React.FC = () => {
     handleGetAll();
   }, [user?.organizationId]);
 
-  const canConnectionBeDeleted = (status: ActivationStatus): boolean => {
-    return activationStatusFromJSON(status) !== ActivationStatus.IN_PROGRESS;
+  const disableDeletionForConnection = (status: ActivationStatus): boolean => {
+    const res =
+      activationStatusFromJSON(status) === ActivationStatus.IN_PROGRESS;
+    console.log(res);
+    return res;
   };
 
   const openAdd = () => {
@@ -224,13 +229,31 @@ const CloudProviders: React.FC = () => {
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteTarget(provider)}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
+                      {disableDeletionForConnection(provider.status) ? (
+                        <Tooltip>
+                          <TooltipTrigger className="cursor-not-allowed self-end">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled
+                              onClick={() => setDeleteTarget(provider)}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Fetching clusters metadata in progress...</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteTarget(provider)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </Button>
+                      )}
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -244,10 +267,7 @@ const CloudProviders: React.FC = () => {
                         >
                           Cancel
                         </AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDelete}
-                          disabled={canConnectionBeDeleted(provider.status)}
-                        >
+                        <AlertDialogAction onClick={handleDelete}>
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>

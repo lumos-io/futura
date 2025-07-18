@@ -11,13 +11,13 @@ import (
 
 var db *gorm.DB
 
-func connectDatabase(apisCfg *config.Configuration) error {
+func connectDatabase(dbConfig *config.Database) error {
 	var err error
 
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		apisCfg.Database.Host, apisCfg.Database.Port, apisCfg.Database.User,
-		apisCfg.Database.Password, apisCfg.Database.Name, apisCfg.Database.SSLMode,
+		dbConfig.Host, dbConfig.Port, dbConfig.User,
+		dbConfig.Password, dbConfig.Name, dbConfig.SSLMode,
 	)
 
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -28,8 +28,8 @@ func connectDatabase(apisCfg *config.Configuration) error {
 	return nil
 }
 
-func AutoMigrate(apisCfg *config.Configuration) error {
-	if err := connectDatabase(apisCfg); err != nil {
+func AutoMigrate(dbConfig *config.Database) error {
+	if err := connectDatabase(dbConfig); err != nil {
 		return err
 	}
 

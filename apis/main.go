@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// Automigrate
-	if err := models.AutoMigrate(apisCfg); err != nil {
+	if err := models.AutoMigrate(apisCfg.Database); err != nil {
 		log.Fatalf("failed to automigrate: %v", err)
 	}
 

@@ -85,7 +85,7 @@ func Fetch() *Configuration {
 		Temporal: &Temporal{
 			Address:   viper.GetString("temporal.address"),
 			Port:      viper.GetString("temporal.port"),
-			Namespace: viper.GetString("temporal.name"),
+			Namespace: viper.GetString("temporal.namespace"),
 		},
 	}
 }

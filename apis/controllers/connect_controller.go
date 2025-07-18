@@ -9,14 +9,17 @@ import (
 	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/internal/providers"
 	"github.com/opisvigilant/futura/apis/internal/workflow"
+	workflowclusters "github.com/opisvigilant/futura/apis/internal/workflow/clusters"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
 
 type ConnectController struct {
+	config            *config.Configuration
 	cloudProviderAuth *providers.CloudProviderAuth
 	workflowManager   *workflow.WorkflowManager
 }
@@ -33,6 +36,7 @@ func NewConnectController(config *config.Configuration) (*ConnectController, err
 	}
 
 	return &ConnectController{
+		config:            config,
 		cloudProviderAuth: p,
 		workflowManager:   wfm,
 	}, nil
@@ -116,8 +120,17 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		return
 	}
 
-	// trigger workflow to fetch all the clusters
-	// ...
+	// trigger workflow to fetch all the clusters in a separate go routine
+	go func() {
+		if err := cc.workflowManager.ExecuteFetchClustersWorkflow(&workflowclusters.WorkflowFetchClustersInput{
+			DBConfig:       cc.config.Database,
+			OrganizationID: orgID,
+			Provider:       input.Provider,
+			Credentials:    input.Credentials,
+		}); err != nil {
+			log.Logger.Error().Err(err).Msg("FetchClustersWorkflow failed with error")
+		}
+	}()
 
 	s, err := models.ConvertToProtoFromActivationStatus(cp.Status)
 	if err != nil {

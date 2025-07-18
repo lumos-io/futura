@@ -23,8 +23,7 @@ type InMemorySecretStore struct {
 type secret struct {
 	ID             uuid.UUID         `json:"id"`
 	OrganizationID uint              `json:"organizationId"`
-	Provider       string            `json:"provider"`
-	ConnectionName string            `json:"connectionName"`
+	Provider       string            `json:"provider"`	
 	SecretName     pb.SecretName     `json:"secretName"`
 	Credentials    map[string]string `json:"credentials"`
 }
