@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cloudProviderToJSON } from "@proto/backend/backend";
 import { CloudProviderConnection } from "@/models/cloud-provider";
 
 const ClustersOverview: React.FC = () => {
@@ -24,46 +23,46 @@ const ClustersOverview: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch connected providers on mount
   useEffect(() => {
     const fetchProviders = async () => {
       const orgId = user?.organizationId;
-      if (!orgId) {
-        return;
-      }
+      if (!orgId) return;
+
       const res = await fetch(`/api/organizations/${orgId}/connects`);
-      if (!res.ok) {
-        return;
-      }
+      if (!res.ok) return;
+
       const data = await res.json();
-      console.log(data);
       setProvidersConnection(data.data);
     };
+
     fetchProviders();
   }, [user?.organizationId]);
 
   useEffect(() => {
-    const fetchClusters = async (provider: CloudProviderConnection) => {
+    if (providersConnection.length > 0 && !selectedProvider) {
+      setSelectedProvider(providersConnection[0]);
+    }
+  }, [providersConnection, selectedProvider]);
+
+  useEffect(() => {
+    if (!selectedProvider || !user?.organizationId) return;
+
+    const fetchClusters = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const orgId = user?.organizationId;
-        // Adjust API URL accordingly; assuming it accepts provider param
+        const orgId = user.organizationId;
         const res = await fetch(
-          `/api/organizations/${orgId}/clusters?provider=${provider.id}`
+          `/api/organizations/${orgId}/connects/${selectedProvider.id}/clusters`
         );
         if (!res.ok) {
-          throw new Error(
-            `Failed to fetch clusters for ${cloudProviderToJSON(
-              provider.provider
-            )}`
-          );
+          throw new Error("Failed to fetch clusters");
         }
+
         const data = await res.json();
-        console.log(data);
         setClusters(data.data ?? []);
-      } catch (err: unknown) {
+      } catch (err) {
         console.error(err);
         setError("Unknown error");
         setClusters([]);
@@ -72,13 +71,8 @@ const ClustersOverview: React.FC = () => {
       }
     };
 
-    if (providersConnection.length > 0) {
-      setSelectedProvider(providersConnection[0]);
-      if (selectedProvider) {
-        fetchClusters(selectedProvider);
-      }
-    }
-  }, [providersConnection, selectedProvider, user?.organizationId]);
+    fetchClusters();
+  }, [selectedProvider, user?.organizationId]);
 
   return (
     <div className="p-10 space-y-6">
@@ -89,15 +83,10 @@ const ClustersOverview: React.FC = () => {
 
         <div className="w-48">
           <Select
-            value={
-              selectedProvider
-                ? cloudProviderToJSON(selectedProvider.provider)
-                : ""
-            }
+            value={selectedProvider ? selectedProvider.id.toString() : ""}
             onValueChange={(value) => {
-              // Find the full object by the string value
               const found = providersConnection.find(
-                (p) => cloudProviderToJSON(p.provider) === value
+                (p) => p.id.toString() === value
               );
               if (found) {
                 setSelectedProvider(found);
@@ -109,11 +98,8 @@ const ClustersOverview: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               {providersConnection.map((provider) => (
-                <SelectItem
-                  key={cloudProviderToJSON(provider.provider)}
-                  value={cloudProviderToJSON(provider.provider)}
-                >
-                  {cloudProviderToJSON(provider.provider)}
+                <SelectItem key={provider.id} value={provider.id.toString()}>
+                  {provider.connection_name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -127,10 +113,7 @@ const ClustersOverview: React.FC = () => {
       {clusters.length === 0 && !loading && !error && (
         <p className="text-gray-500 text-center">
           No clusters found for{" "}
-          {selectedProvider
-            ? cloudProviderToJSON(selectedProvider.provider)
-            : ""}
-          .
+          {selectedProvider ? selectedProvider.connection_name : ""}.
         </p>
       )}
 

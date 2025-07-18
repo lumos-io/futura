@@ -78,7 +78,7 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 				orgConnects.POST("/test-connection", cc.TestConnection)
 			}
 
-			orgClusters := org.Group("/:org_id/clusters")
+			orgClusters := orgConnects.Group("/:connect_id/clusters")
 			{
 				orgClusters.GET("/", controllers.GetClusters)
 				orgClusters.POST("/", controllers.CreateCluster)

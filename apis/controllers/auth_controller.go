@@ -139,13 +139,13 @@ func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Conf
 		}
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user)
+	accessToken, err := utils.GenerateAccessToken(user.ID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate access token")
 		return
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(user)
+	refreshToken, _, err := utils.GenerateRefreshToken(user.ID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token")
 		return
@@ -291,13 +291,13 @@ func (a *AuthController) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	newAccessToken, err := utils.GenerateAccessToken(user)
+	newAccessToken, err := utils.GenerateAccessToken(user.ID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "TOKEN_ERROR", "Failed to generate new access token")
 		return
 	}
 
-	newRefreshToken, err := utils.GenerateRefreshToken(user)
+	newRefreshToken, _, err := utils.GenerateRefreshToken(user.ID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token")
 		return

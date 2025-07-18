@@ -15,8 +15,17 @@ func GetClusters(c *gin.Context) {
 		return
 	}
 
+	connectID, err := parseConnectID(c)
+	if err != nil {
+		return
+	}
+
 	var clusters []models.Cluster
-	if err := models.GetDB().Where("organization_id = ?", orgID).Find(&clusters).Error; err != nil {
+	if err := models.GetDB().
+		Preload("CloudProvider").
+		Preload("Organization").
+		Where("organization_id = ? AND cloud_provider_id = ?", orgID, connectID).
+		Find(&clusters).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to fetch clusters")
 		return
 	}
@@ -111,4 +120,14 @@ func DeleteCluster(c *gin.Context) {
 		return
 	}
 	utils.RespondOK(c, nil)
+}
+
+// helper to extract connect ID
+func parseConnectID(c *gin.Context) (uint, error) {
+	connectID, err := strconv.Atoi(c.Param("connect_id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Invalid connect id")
+		return 0, err
+	}
+	return uint(connectID), nil
 }
