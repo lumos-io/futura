@@ -52,15 +52,15 @@ func (cp *CloudProviderAuth) TestConnection(provider string, creds map[string]st
 	var err error
 	switch models.CloudProviderName(provider) {
 	case models.AWS:
-		ap, err = awsprovider.New()
+		ap, err = awsprovider.New(creds)
 	case models.Alibaba:
-		ap, err = alibabaprovider.New()
+		ap, err = alibabaprovider.New(creds)
 	case models.DigitalOcean:
-		ap, err = digitaloceanprovider.New()
+		ap, err = digitaloceanprovider.New(creds)
 	case models.Azure:
-		ap, err = azureprovider.New()
+		ap, err = azureprovider.New(creds)
 	case models.GoogleCloud:
-		ap, err = gcpprovider.New()
+		ap, err = gcpprovider.New(creds)
 	default:
 		return errors.New("not a valid provider name")
 	}

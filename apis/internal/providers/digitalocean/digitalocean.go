@@ -1,13 +1,20 @@
 package digitaloceanprovider
 
 import (
+	"context"
 	"errors"
+
+	"github.com/opisvigilant/futura/apis/models"
+)
+
+const (
+	DIGITALOCEAN_ACCESS_TOKEN string = "AccessToken"
 )
 
 type DigitalOceanProvider struct {
 }
 
-func New() (*DigitalOceanProvider, error) {
+func New(credentials map[string]string) (*DigitalOceanProvider, error) {
 	return &DigitalOceanProvider{}, nil
 }
 
@@ -16,4 +23,12 @@ func (a *DigitalOceanProvider) Test(creds map[string]string) error {
 }
 
 type DigitalOceanCredentials struct {
+}
+
+func (a *DigitalOceanProvider) FetchClusters(ctx context.Context) ([]string, error) {
+	return nil, nil
+}
+
+func (a *DigitalOceanProvider) FetchClusterMetadata(ctx context.Context, clusterID string) (*models.ClusterMetadata, error) {
+	return nil, nil
 }

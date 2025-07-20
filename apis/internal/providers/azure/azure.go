@@ -1,13 +1,22 @@
 package azureprovider
 
 import (
+	"context"
 	"errors"
+
+	"github.com/opisvigilant/futura/apis/models"
+)
+
+const (
+	AZURE_TENANT_ID     string = "TenantId"
+	AZURE_CLIENT_ID     string = "ClientId"
+	AZURE_CLIENT_SECRET string = "ClientSecret"
 )
 
 type AzureProvider struct {
 }
 
-func New() (*AzureProvider, error) {
+func New(credentials map[string]string) (*AzureProvider, error) {
 	return &AzureProvider{}, nil
 }
 
@@ -16,4 +25,12 @@ func (a *AzureProvider) Test(creds map[string]string) error {
 }
 
 type AzureCredentials struct {
+}
+
+func (a *AzureProvider) FetchClusters(ctx context.Context) ([]string, error) {
+	return nil, nil
+}
+
+func (a *AzureProvider) FetchClusterMetadata(ctx context.Context, clusterID string) (*models.ClusterMetadata, error) {
+	return nil, nil
 }

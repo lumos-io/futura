@@ -31,7 +31,7 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 	// viteStaticFS := os.DirFS(distDir)
 	router.Use(static.Serve("/", static.LocalFile(distDir, false)))
 
-	// router.GET("/healthz", controllers.Healthz)
+	router.GET("/healthz", controllers.Healthz)
 
 	// Auth routes
 	a := controllers.NewAuthController(config)
@@ -81,8 +81,6 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 			orgClusters := orgConnects.Group("/:connect_id/clusters")
 			{
 				orgClusters.GET("/", controllers.GetClusters)
-				orgClusters.POST("/", controllers.CreateCluster)
-				orgClusters.PUT("/:cluster_id", controllers.UpdateCluster)
 				orgClusters.DELETE("/:cluster_id", controllers.DeleteCluster)
 			}
 		}

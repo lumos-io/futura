@@ -2,10 +2,9 @@ package workflowclusters
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
-
-	"sync"
 
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/worker"
@@ -14,8 +13,9 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/opisvigilant/futura/apis/internal/config"
+	"github.com/opisvigilant/futura/apis/internal/providers"
+	"github.com/opisvigilant/futura/apis/models"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
-	"github.com/rs/zerolog/log"
 )
 
 func RegisterWorkflowFetchClusters(worker worker.Worker) {
@@ -44,8 +44,8 @@ func WorkflowFetchClusters(ctx workflow.Context, input WorkflowFetchClustersInpu
 		},
 	})
 
-	var client providerClient
-	err := workflow.ExecuteActivity(ctx, CreateProviderClient, providerConfig{
+	var client providers.ProviderClient
+	err := workflow.ExecuteActivity(ctx, CreateProviderClient, providers.ProviderConfig{
 		Provider:    input.Provider,
 		Credentials: input.Credentials,
 	}).Get(ctx, &client)
@@ -60,70 +60,101 @@ func WorkflowFetchClusters(ctx workflow.Context, input WorkflowFetchClustersInpu
 	}
 
 	for _, clusterID := range clusterIDs {
-		var metadata ClusterMetadata
-		err = workflow.ExecuteActivity(ctx, FetchMetadata, client, clusterID).Get(ctx, &metadata)
+		var metadata *models.ClusterMetadata
+		err = workflow.ExecuteActivity(ctx, FetchMetadata, client, clusterID).Get(ctx, metadata)
 		if err != nil {
 			workflow.GetLogger(ctx).Error("Failed fetching metadata", "cluster", clusterID, "err", err)
 			continue // or return err to fail fast
 		}
 
-		err = workflow.ExecuteActivity(ctx, StoreMetadata, metadata).Get(ctx, nil)
+		err = workflow.ExecuteActivity(ctx, StoreMetadata, input.DBConfig, input.Provider, metadata).Get(ctx, nil)
 		if err != nil {
 			workflow.GetLogger(ctx).Error("Failed storing metadata", "cluster", clusterID, "err", err)
 			continue
 		}
 	}
-
 	return nil
 }
 
-var (
-	db     *gorm.DB
-	dbOnce sync.Once
-)
+func CreateProviderClient(ctx context.Context, config providers.ProviderConfig) (providers.ProviderClient, error) {
+	return providers.CreateProviderClient(ctx, config)
+}
 
-func NewDB(config *config.Database) *gorm.DB {
-	dbOnce.Do(func() {
-		// create a postgres client
-		dsn := fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-			config.Host, config.Port, config.User,
-			config.Password, config.Name, config.SSLMode,
-		)
-		var err error
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-		if err != nil {
-			log.Logger.Fatal().Err(err).Msg("couldn't open the connection to the db")
+func FetchClusterIDs(ctx context.Context, client providers.ProviderClient) ([]string, error) {
+	return client.FetchClusters(ctx)
+}
+
+func FetchMetadata(ctx context.Context, client providers.ProviderClient, clusterID string) (*models.ClusterMetadata, error) {
+	return client.FetchClusterMetadata(ctx, clusterID)
+}
+
+func StoreMetadata(ctx context.Context, dbConfig *config.Database, provider pb.CloudProvider, metadata *models.ClusterMetadata) error {
+	// create a postgres client
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		dbConfig.Host, dbConfig.Port, dbConfig.User,
+		dbConfig.Password, dbConfig.Name, dbConfig.SSLMode,
+	)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	defer sqlDB.Close()
+
+	// Save the ClusterMetadata
+	if err := db.Create(metadata).Error; err != nil {
+		return fmt.Errorf("failed to create ClusterMetadata: %w", err)
+	}
+
+	// Set the FK in cluster specific Metadata and save it
+	switch provider {
+	case pb.CloudProvider_ALIBABA:
+		if metadata.ACKMetadata == nil {
+			return errors.New("ACKMetadata is nil in the ClusterMetadata object for the Alibaba Provider")
 		}
-	})
-	return db
-}
+		metadata.ACKMetadata.ClusterMetadataID = metadata.ID
+		if err := db.Create(metadata.ACKMetadata).Error; err != nil {
+			return fmt.Errorf("failed to create ACKMetadata: %w", err)
+		}
+	case pb.CloudProvider_AWS:
+		if metadata.EKSMetadata == nil {
+			return errors.New("EKSMetadata is nil in the ClusterMetadata object for the AWS Provider")
+		}
+		metadata.EKSMetadata.ClusterMetadataID = metadata.ID
+		if err := db.Create(metadata.EKSMetadata).Error; err != nil {
+			return fmt.Errorf("failed to create EKSMetadata: %w", err)
+		}
+	case pb.CloudProvider_AZURE:
+		if metadata.AKSMetadata == nil {
+			return errors.New("AKSMetadata is nil in the ClusterMetadata object for the Azure Provider")
+		}
+		metadata.AKSMetadata.ClusterMetadataID = metadata.ID
+		if err := db.Create(metadata.AKSMetadata).Error; err != nil {
+			return fmt.Errorf("failed to create AKSMetadata: %w", err)
+		}
+	case pb.CloudProvider_DIGITALOCEAN:
+		if metadata.DOKSMetadata == nil {
+			return errors.New("DOKSMetadata is nil in the ClusterMetadata object for the DigitalOcean Provider")
+		}
+		metadata.DOKSMetadata.ClusterMetadataID = metadata.ID
+		if err := db.Create(metadata.DOKSMetadata).Error; err != nil {
+			return fmt.Errorf("failed to create DOKSMetadata: %w", err)
+		}
+	case pb.CloudProvider_GCP:
+		if metadata.GKEMetadata == nil {
+			return errors.New("GKEMetadata is nil in the ClusterMetadata object for the GCP Provider")
+		}
+		metadata.GKEMetadata.ClusterMetadataID = metadata.ID
+		if err := db.Create(metadata.GKEMetadata).Error; err != nil {
+			return fmt.Errorf("failed to create GKEMetadata: %w", err)
+		}
+	default:
+		return errors.New("invalid pb.CloudProvider in StoreMetadata Activity")
+	}
 
-type providerClient interface{}
-
-type providerConfig struct {
-	Provider    pb.CloudProvider
-	Credentials map[string]string
-}
-
-func CreateProviderClient(ctx context.Context, pc providerConfig) (providerClient, error) {
-	return nil, nil
-}
-
-func FetchClusterIDs(ctx context.Context, client providerClient) ([]string, error) {
-	// Some transformation or logic
-	return nil, nil
-}
-
-type ClusterMetadata struct {
-	OrganizationID uint
-}
-
-func FetchMetadata(ctx context.Context, input string) (ClusterMetadata, error) {
-	return ClusterMetadata{}, nil
-}
-
-func StoreMetadata(ctx context.Context, metadata ClusterMetadata) error {
-	// database := NewDB(nil)
 	return nil
 }
