@@ -21,7 +21,7 @@ const (
 	StatusFailed  WorkflowStatus = "FAILED"
 )
 
-const NatsWorkflowFetchClusterTopic = "organization.%s.fetchclustersworkflow.result"
+const NatsWorkflowFetchClusterTopic = "fetchclustersworkflow.result"
 
 type WorkflowFetchClustersStatusSignal struct {
 	ProviderConnectionID int64          `json:"providerConnectionId"`

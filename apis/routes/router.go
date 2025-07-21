@@ -20,6 +20,10 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 	// observability
 	router.Use(middleware.TraceIDMiddleware())
 
+	// websocket endpoint
+	wc := controllers.NewWebsocketController(config.Nats)
+	router.GET("/ws/:connect_id", wc.Handler)
+
 	// ref: https://github.com/gin-gonic/gin/issues/3709
 	// Frontend serving
 	dir, err := os.Getwd()
@@ -51,6 +55,7 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 	api := router.Group("/api")
 	api.Use(middleware.AuthMiddleware()) // JWT auth
 	{
+		// organization endpoints
 		org := api.Group("/organizations")
 		{
 			org.GET("/", controllers.GetOrganizations)

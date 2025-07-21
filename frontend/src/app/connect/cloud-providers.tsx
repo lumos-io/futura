@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Trash2, Cloud, CloudSun, CloudRain, Zap, Ghost } from "lucide-react";
 import AddProviderModal from "@/app/connect/add-provider-modal";
@@ -35,6 +36,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
+import { useMultiWsConnections } from "@/hooks/use-connect-updates";
 
 const CloudIcon = ({ provider }: { provider: CloudProvider }) => {
   switch (cloudProviderFromJSON(provider)) {
@@ -119,6 +121,38 @@ const CloudProviders: React.FC = () => {
     useState<CloudProviderConnection>(EmptyCloudProvider);
   const [deleteTarget, setDeleteTarget] =
     useState<CloudProviderConnection | null>(null);
+
+  // Handler for WebSocket updates
+  const handleUpdate = (update: CloudProviderConnection) => {
+    setConnectedProviders((prev) =>
+      prev.map((p) => {
+        if (p.id === update.id) {
+          if (p.status !== update.status) {
+            if (update.status === "ACTIVE") {
+              toast.success(`Connection ${p.connection_name} is now active.`);
+            } else if (update.status === "FAILED") {
+              toast.error(`Connection ${p.connection_name} failed.`);
+            } else if (update.status === "SUSPENDED") {
+              toast(`Connection ${p.connection_name} was suspended.`, {
+                icon: "⚠️",
+              });
+            }
+          }
+          return { ...p, status: update.status };
+        }
+        return p;
+      })
+    );
+  };
+
+  // Use the hook, passing all provider IDs and update handler
+  useMultiWsConnections(
+    connectedProviders.map((p) => p.id),
+    {
+      onUpdate: handleUpdate,
+      wsBaseUrl: import.meta.env.VITE_WS_URL,
+    }
+  );
 
   const handleSave = async (
     connectionName: string,

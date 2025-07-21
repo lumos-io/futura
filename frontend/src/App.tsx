@@ -1,6 +1,7 @@
 import "./App.css";
 import { useRoutes } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import allRoutes from "@/routes";
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="futura-ui-theme">
       {routes}
+      <Toaster />
     </ThemeProvider>
   );
 }
