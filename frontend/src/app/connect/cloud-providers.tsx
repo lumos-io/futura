@@ -172,10 +172,7 @@ const CloudProviders: React.FC = () => {
   }, [user?.organizationId]);
 
   const disableDeletionForConnection = (status: ActivationStatus): boolean => {
-    const res =
-      activationStatusFromJSON(status) === ActivationStatus.IN_PROGRESS;
-    console.log(res);
-    return res;
+    return status === ActivationStatus.IN_PROGRESS;
   };
 
   const openAdd = () => {

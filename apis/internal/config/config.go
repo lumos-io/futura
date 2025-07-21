@@ -13,6 +13,7 @@ type Configuration struct {
 	Secrets     *Secrets  `toml:"secrets"`
 	Frontend    *Frontend `toml:"frontend"`
 	Temporal    *Temporal `toml:"temporal"`
+	Unleash     *Unleash  `toml:"unleash"`
 }
 
 type Database struct {
@@ -51,6 +52,12 @@ type Temporal struct {
 	Namespace string `toml:"namespace"`
 }
 
+type Unleash struct {
+	AppName  string `toml:"app_name"`
+	APIToken string `toml:"api_token"`
+	URL      string `toml:"url"`
+}
+
 func Fetch() *Configuration {
 	return &Configuration{
 		Environment: getStringOrDefault("environment", "development"),
@@ -87,6 +94,11 @@ func Fetch() *Configuration {
 			Port:      viper.GetString("temporal.port"),
 			Namespace: viper.GetString("temporal.namespace"),
 		},
+		Unleash: &Unleash{
+			AppName:  viper.GetString("unleash.app_name"),
+			APIToken: viper.GetString("unleash.api_token"),
+			URL:      viper.GetString("unleash.url"),
+		},
 	}
 }
 
@@ -117,6 +129,12 @@ func (c *Configuration) Validate() error {
 	}
 	if c.Temporal == nil || c.Temporal.Address == "" || c.Temporal.Namespace == "" || c.Temporal.Port == "" {
 		return errors.New("[temporal] entry is missing or some entries are incorrect because empty")
+	}
+	if c.Unleash == nil {
+		return errors.New("[unleash] entry is missing from the configuration")
+	}
+	if c.Unleash.APIToken == "" || c.Unleash.URL == "" || c.Unleash.AppName == "" {
+		return errors.New("[unleash] entries are incorrect because some are empty")
 	}
 	return nil
 }

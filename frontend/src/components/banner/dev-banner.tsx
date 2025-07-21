@@ -1,5 +1,7 @@
 const DevBanner: React.FC = () => {
-  if (import.meta.env.VITE_ENV !== "development") return null;
+  if (import.meta.env.VITE_ENV !== "development") {
+    return null;
+  }
 
   return (
     <div className="dev-banner">

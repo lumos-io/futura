@@ -4,12 +4,19 @@ services:
     container_name: postgres
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=futura
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: futura
+      POSTGRES_MULTIPLE_DATABASES: unleash
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
+      - ./scritps/init-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
       - ../data/postgres:/var/lib/postgresql/data
 
   temporal:
@@ -49,6 +56,36 @@ services:
     image: temporalio/ui:v2.37.3
     ports:
       - 8088:8080
+
+  unleash:
+    image: unleashorg/unleash-server:latest
+    container_name: unleash
+    ports:
+      - "4242:4242"
+    environment:
+      DATABASE_HOST: "postgres"
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: "unleash"
+      DATABASE_USERNAME: "postgres"
+      DATABASE_PASSWORD: "postgres"
+      DATABASE_SCHEMA: "public"
+      # Disable SSL for database connections.
+      DATABASE_SSL: "false"
+      # Changing log levels:
+      LOG_LEVEL: "warn"
+      INIT_FRONTEND_API_TOKENS: "default:development.unleash-insecure-frontend-api-token"
+      # The default API token is insecure and should not be used in production.
+      INIT_CLIENT_API_TOKENS: "default:development.unleash-insecure-api-token"
+      CHECK_VERSION: false
+      SEND_TELEMETRY: false
+    depends_on:
+      - postgres
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:4242/health || exit 1
+      interval: 1s
+      timeout: 1m
+      retries: 5
+      start_period: 15s
 
 volumes:
   db:

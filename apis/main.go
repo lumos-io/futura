@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Unleash/unleash-client-go/v4"
 	"github.com/fsnotify/fsnotify"
 	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/models"
@@ -27,6 +28,11 @@ func main() {
 	// Load configuration
 	if err := setupConfiguration(); err != nil {
 		log.Fatalf("failed to load config.toml file: %v", err)
+	}
+
+	// setup feature flag
+	if err := initializeUnleash(); err != nil {
+		log.Fatalf("failed to initialize unleash: %v", err)
 	}
 
 	// Automigrate
@@ -54,6 +60,11 @@ func main() {
 	go func() {
 		<-signalCh
 		fmt.Println("Shutting down api...")
+
+		// close unleash http connection
+		if err := unleash.Close(); err != nil {
+			log.Fatalf("unleash failed to close: %v", err)
+		}
 
 		// Give the server 5 seconds to finish ongoing requests
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -97,4 +108,14 @@ func setupConfiguration() error {
 		panic(err.Error())
 	}
 	return nil
+}
+
+func initializeUnleash() error {
+	return unleash.Initialize(
+		unleash.WithRefreshInterval(15*time.Second),
+		unleash.WithEnvironment(apisCfg.Environment),
+		unleash.WithAppName(apisCfg.Unleash.AppName),
+		unleash.WithUrl(apisCfg.Unleash.URL),
+		unleash.WithCustomHeaders(http.Header{"Authorization": {apisCfg.Unleash.APIToken}}),
+	)
 }

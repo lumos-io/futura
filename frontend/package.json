@@ -23,6 +23,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tailwindcss/postcss": "^4.1.10",
     "@tailwindcss/vite": "^4.1.10",
+    "@unleash/proxy-client-react": "^5.0.0",
     "add": "^2.0.6",
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
@@ -39,7 +40,8 @@
     "shadcn": "^2.7.0",
     "switch": "^0.0.0",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.1.10"
+    "tailwindcss": "^4.1.10",
+    "unleash-proxy-client": "^3.7.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

@@ -31,3 +31,8 @@ url = "http://localhost:8080/"
 address = "localhost"
 port = "7233"
 namespace = "default"
+
+[unleash]
+app_name = "futura-apis"
+url = "http://localhost:4242/api/"
+api_token = "default:development.unleash-insecure-api-token"
