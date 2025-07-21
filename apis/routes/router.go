@@ -32,6 +32,7 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 	router.Use(static.Serve("/", static.LocalFile(distDir, false)))
 
 	router.GET("/healthz", controllers.Healthz)
+	router.GET("/version", controllers.Version)
 
 	// Auth routes
 	a := controllers.NewAuthController(config)

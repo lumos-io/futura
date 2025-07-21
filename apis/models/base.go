@@ -45,7 +45,7 @@ func AutoMigrate(dbConfig *config.Database) error {
 		&ACKClusterMetadata{},
 	)
 
-	db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_cluster_org_provider_name ON cluster_metadata (organization_id, cloud_provider_id, name);`)
+	db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_cluster_org_provider_name ON cluster_metadata (organization_id, cloud_provider_id);`)
 
 	if err != nil {
 		return fmt.Errorf("❌ Failed to auto-migrate models: %v", err)
