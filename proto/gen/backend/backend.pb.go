@@ -30,6 +30,10 @@ const (
 	CloudProvider_ALIBABA            CloudProvider = 3
 	CloudProvider_DIGITALOCEAN       CloudProvider = 4
 	CloudProvider_GCP                CloudProvider = 5
+	// ATTENTION: this parameter will be available in the proto but in the Frontend/APIs
+	// only when the services are in `development` mode and the feature-flag `kind.cluster` is
+	// enabled in the specific environment -- DO NOT USE IT ANYWHERE ELSE
+	CloudProvider_KIND CloudProvider = 6
 )
 
 // Enum value maps for CloudProvider.
@@ -41,6 +45,7 @@ var (
 		3: "ALIBABA",
 		4: "DIGITALOCEAN",
 		5: "GCP",
+		6: "KIND",
 	}
 	CloudProvider_value = map[string]int32{
 		"UNDEFINED_PROVIDER": 0,
@@ -49,6 +54,7 @@ var (
 		"ALIBABA":            3,
 		"DIGITALOCEAN":       4,
 		"GCP":                5,
+		"KIND":               6,
 	}
 )
 
@@ -402,14 +408,15 @@ const file_backend_backend_proto_rawDesc = "" +
 	"\x0fconnection_name\x18\x04 \x01(\tR\x0econnectionName\x1a>\n" +
 	"\x10CredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*c\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*m\n" +
 	"\rCloudProvider\x12\x16\n" +
 	"\x12UNDEFINED_PROVIDER\x10\x00\x12\a\n" +
 	"\x03AWS\x10\x01\x12\t\n" +
 	"\x05AZURE\x10\x02\x12\v\n" +
 	"\aALIBABA\x10\x03\x12\x10\n" +
 	"\fDIGITALOCEAN\x10\x04\x12\a\n" +
-	"\x03GCP\x10\x05*m\n" +
+	"\x03GCP\x10\x05\x12\b\n" +
+	"\x04KIND\x10\x06*m\n" +
 	"\x10ActivationStatus\x12\x14\n" +
 	"\x10UNDEFINED_STATUS\x10\x00\x12\n" +
 	"\n" +

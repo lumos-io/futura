@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Cluster from "@/models/kubernetes";
-import { useAuth } from "@/hooks/auth_provider";
+import { useAuth } from "@/hooks/auth-provider";
 import {
   Select,
   SelectContent,

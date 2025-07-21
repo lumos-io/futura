@@ -1,7 +1,7 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Placeholder from "@/assets/placeholder.svg";
-import { useAuth } from "@/hooks/auth_provider";
+import { useAuth } from "@/hooks/auth-provider";
 
 export default function LoginPage() {
   const { login } = useAuth();

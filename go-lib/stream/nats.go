@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/nats-io/nats.go"
-	"github.com/opisvigilant/futura/pipeline/internal/config"
 )
 
 type jetstreamClient struct {
@@ -14,8 +13,8 @@ type jetstreamClient struct {
 	js nats.JetStreamContext
 }
 
-func NewNATSJetstreamClient(ctx context.Context, config *config.Configuration) (Stream, error) {
-	nc, err := nats.Connect(strings.Join(config.Nats.Servers, ","))
+func NewNATSJetstreamClient(ctx context.Context, servers []string) (Stream, error) {
+	nc, err := nats.Connect(strings.Join(servers, ","))
 	if err != nil {
 		return nil, fmt.Errorf("connect error: %w", err)
 	}

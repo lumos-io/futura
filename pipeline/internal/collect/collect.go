@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/opisvigilant/futura/go-lib/kv"
+	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
-	"github.com/opisvigilant/futura/pipeline/pkg/kv"
-	"github.com/opisvigilant/futura/pipeline/pkg/stream"
 	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
@@ -24,12 +24,12 @@ type CollectServer struct {
 
 func NewCollectServer(config *config.Configuration) (*CollectServer, error) {
 	ctx := context.Background()
-	js, err := stream.NewNATSJetstreamClient(ctx, config)
+	js, err := stream.NewNATSJetstreamClient(ctx, config.Nats.Servers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Stream: %v", err)
 	}
 
-	ns, err := kv.NewNATSStore(ctx, config)
+	ns, err := kv.NewNATSStore(ctx, config.Nats.Servers, config.Nats.APKBucket)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to KV: %v", err)
 	}

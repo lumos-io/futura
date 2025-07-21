@@ -22,8 +22,9 @@ import {
   CloudProvider,
 } from "@proto/backend/backend";
 import * as ProviderAuthConstant from "@/models/provider-auth";
+import { useProviderOptions } from "@/hooks/provider-auth";
 import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/auth_provider";
+import { useAuth } from "@/hooks/auth-provider";
 
 interface AddProviderModalProps {
   open: boolean;
@@ -121,6 +122,17 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
 }) => {
   const { user } = useAuth();
 
+  const providers = useProviderOptions();
+  if (providers.includes("KIND")) {
+    providerFormFields.KIND = [
+      {
+        key: "ProviderToken",
+        label: "Provider Token",
+        placeholder: "it doesn't matter",
+      },
+    ];
+  }
+
   const fields =
     providerFormFields[
       typeof newProvider.provider === "string" ? newProvider.provider : ""
@@ -178,7 +190,7 @@ const AddProviderModal: React.FC<AddProviderModalProps> = ({
                 <SelectValue placeholder="Select provider" />
               </SelectTrigger>
               <SelectContent>
-                {ProviderAuthConstant.PROVIDER_OPTIONS.map((provider) => (
+                {providers.map((provider) => (
                   <SelectItem key={provider} value={provider}>
                     {provider}
                   </SelectItem>

@@ -61,8 +61,12 @@ func (c *WorkflowManager) ExecuteFetchClustersWorkflow(input *workflowclusters.W
 		workflowclusters.WorkflowFetchClusters,
 		input,
 	)
+	if err != nil {
+		log.Logger.Error().Err(err).Msg("failed to execute fetch clusters workflow")
+		return err
+	}
 
-	log.Logger.Info().Msgf("workflow with ID `%s` started", run.GetRunID())
+	log.Logger.Info().Msgf("workflow with ID `%s` started", run.GetID())
 
 	return err
 }

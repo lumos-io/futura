@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { FlagProvider } from "@unleash/proxy-client-react";
-import { AuthProvider } from "@/hooks/auth_provider";
+import { AuthProvider } from "@/hooks/auth-provider.tsx";
 import DevBanner from "@/components/banner/dev-banner.tsx";
 import "./index.css";
 import App from "./App.tsx";

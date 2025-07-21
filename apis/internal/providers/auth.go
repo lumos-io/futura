@@ -10,6 +10,7 @@ import (
 	azureprovider "github.com/opisvigilant/futura/apis/internal/providers/azure"
 	digitaloceanprovider "github.com/opisvigilant/futura/apis/internal/providers/digitalocean"
 	gcpprovider "github.com/opisvigilant/futura/apis/internal/providers/gcp"
+	kindprovider "github.com/opisvigilant/futura/apis/internal/providers/kind"
 	"github.com/opisvigilant/futura/apis/internal/secrets"
 	"github.com/opisvigilant/futura/apis/models"
 
@@ -61,6 +62,8 @@ func (cp *CloudProviderAuth) TestConnection(provider string, creds map[string]st
 		ap, err = azureprovider.New(creds)
 	case models.GoogleCloud:
 		ap, err = gcpprovider.New(creds)
+	case models.Kind:
+		ap, err = kindprovider.New(creds)
 	default:
 		return errors.New("not a valid provider name")
 	}

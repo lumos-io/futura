@@ -17,6 +17,12 @@ export enum CloudProvider {
   ALIBABA = "ALIBABA",
   DIGITALOCEAN = "DIGITALOCEAN",
   GCP = "GCP",
+  /**
+   * KIND - ATTENTION: this parameter will be available in the proto but in the Frontend/APIs
+   * only when the services are in `development` mode and the feature-flag `kind.cluster` is
+   * enabled in the specific environment -- DO NOT USE IT ANYWHERE ELSE
+   */
+  KIND = "KIND",
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
@@ -40,6 +46,9 @@ export function cloudProviderFromJSON(object: any): CloudProvider {
     case 5:
     case "GCP":
       return CloudProvider.GCP;
+    case 6:
+    case "KIND":
+      return CloudProvider.KIND;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -61,6 +70,8 @@ export function cloudProviderToJSON(object: CloudProvider): string {
       return "DIGITALOCEAN";
     case CloudProvider.GCP:
       return "GCP";
+    case CloudProvider.KIND:
+      return "KIND";
     case CloudProvider.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -81,6 +92,8 @@ export function cloudProviderToNumber(object: CloudProvider): number {
       return 4;
     case CloudProvider.GCP:
       return 5;
+    case CloudProvider.KIND:
+      return 6;
     case CloudProvider.UNRECOGNIZED:
     default:
       return -1;

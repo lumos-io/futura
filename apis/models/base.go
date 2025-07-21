@@ -2,9 +2,10 @@ package models
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/Unleash/unleash-client-go/v4"
 	"github.com/opisvigilant/futura/apis/internal/config"
+	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -24,7 +25,7 @@ func connectDatabase(dbConfig *config.Database) error {
 	if err != nil {
 		return fmt.Errorf("❌ Failed to connect to database: %v", err)
 	}
-	log.Println("✅ Connected to the database")
+	log.Logger.Info().Msg("✅ Connected to the database")
 	return nil
 }
 
@@ -33,7 +34,7 @@ func AutoMigrate(dbConfig *config.Database) error {
 		return err
 	}
 
-	err := db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&Organization{},
 		&User{},
 		&CloudProvider{},
@@ -43,15 +44,21 @@ func AutoMigrate(dbConfig *config.Database) error {
 		&AKSClusterMetadata{},
 		&DOKSClusterMetadata{},
 		&ACKClusterMetadata{},
-	)
-
-	db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_cluster_org_provider_name ON cluster_metadata (organization_id, cloud_provider_id);`)
-
-	if err != nil {
+	); err != nil {
 		return fmt.Errorf("❌ Failed to auto-migrate models: %v", err)
 	}
+	
+	if unleash.IsEnabled("kind.cluster") {
+		if err := db.AutoMigrate(&KindClusterMetadata{}); err != nil {
+			return fmt.Errorf("❌ Failed to auto-migrate model: %v", err)
+		}
+	}
 
-	log.Println("✅ Database migration complete")
+	if err := db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_cluster_org_provider_name ON cluster_metadata (organization_id, cloud_provider_id);`).Error; err != nil {
+		return fmt.Errorf("❌ Failed to create unique index: %v", err)
+	}
+
+	log.Logger.Info().Msg("✅ Database migration complete")
 	return nil
 }
 

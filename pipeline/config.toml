@@ -1,4 +1,3 @@
-# Configuration file running Pipeline locally
 [nats]
 servers = ["nats://localhost:4222"]
 apkBucket = "api_keys"

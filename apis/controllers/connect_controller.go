@@ -120,18 +120,7 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		return
 	}
 
-	// trigger workflow to fetch all the clusters in a separate go routine
-	go func() {
-		if err := cc.workflowManager.ExecuteFetchClustersWorkflow(&workflowclusters.WorkflowFetchClustersInput{
-			DBConfig:       cc.config.Database,
-			OrganizationID: orgID,
-			Provider:       input.Provider,
-			Credentials:    input.Credentials,
-		}); err != nil {
-			log.Logger.Error().Err(err).Msg("FetchClustersWorkflow failed with error")
-		}
-	}()
-
+	// prepare values to be passed to the proto message
 	s, err := models.ConvertToProtoFromActivationStatus(cp.Status)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert ActiveStatus to Proto")
@@ -142,14 +131,30 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert CloudProvider to Proto")
 		return
 	}
-	utils.RespondCreated(c, pb.ProviderConnection{
+
+	// create response object
+	pc := &pb.ProviderConnection{
 		Id:             int64(cp.ID),
 		Provider:       p,
 		Status:         s,
 		SecretId:       secretID.String(),
 		CreatedAt:      cp.CreatedAt.String(),
 		ConnectionName: cp.ConnectionName,
-	})
+	}
+
+	// trigger workflow to fetch all the clusters in a separate go routine
+	go func() {
+		if err := cc.workflowManager.ExecuteFetchClustersWorkflow(&workflowclusters.WorkflowFetchClustersInput{
+			Config:             cc.config,
+			OrganizationID:     orgID,
+			ProviderConnection: pc,
+			Credentials:        input.Credentials,
+		}); err != nil {
+			log.Logger.Error().Err(err).Msg("FetchClustersWorkflow failed with error")
+		}
+	}()
+
+	utils.RespondCreated(c, pc)
 }
 
 func (cc *ConnectController) DeleteConnect(c *gin.Context) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,8 +13,10 @@ import (
 	"github.com/Unleash/unleash-client-go/v4"
 	"github.com/fsnotify/fsnotify"
 	"github.com/opisvigilant/futura/apis/internal/config"
+	"github.com/opisvigilant/futura/apis/internal/workflow"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/routes"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -27,23 +28,23 @@ var apisCfg *config.Configuration
 func main() {
 	// Load configuration
 	if err := setupConfiguration(); err != nil {
-		log.Fatalf("failed to load config.toml file: %v", err)
+		log.Logger.Fatal().Msgf("failed to load config.toml file: %v", err)
 	}
 
 	// setup feature flag
 	if err := initializeUnleash(); err != nil {
-		log.Fatalf("failed to initialize unleash: %v", err)
+		log.Logger.Fatal().Msgf("failed to initialize unleash: %v", err)
 	}
 
 	// Automigrate
 	if err := models.AutoMigrate(apisCfg.Database); err != nil {
-		log.Fatalf("failed to automigrate: %v", err)
+		log.Logger.Fatal().Msgf("failed to automigrate: %v", err)
 	}
 
 	// Setup router
 	router, err := routes.SetupRouter(embeddedFiles, apisCfg)
 	if err != nil {
-		log.Fatalf("failed to define routes: %v", err)
+		log.Logger.Fatal().Msgf("failed to define routes: %v", err)
 	}
 
 	// Create HTTP server
@@ -51,6 +52,17 @@ func main() {
 		Addr:    ":8080",
 		Handler: router,
 	}
+
+	wf, err := workflow.New(apisCfg)
+	if err != nil {
+		log.Logger.Fatal().Msgf("failed to initialize workflow manager: %v", err)
+	}
+
+	go func() {
+		if err := wf.StartWorker(); err != nil {
+			log.Logger.Fatal().Msgf("failed to start workflow worker: %v", err)
+		}
+	}()
 
 	// Signal handling
 	signalCh := make(chan os.Signal, 1)
@@ -63,7 +75,11 @@ func main() {
 
 		// close unleash http connection
 		if err := unleash.Close(); err != nil {
-			log.Fatalf("unleash failed to close: %v", err)
+			log.Logger.Fatal().Msgf("failed to close unleash connection: %v", err)
+		}
+
+		if err := wf.Stop(); err != nil {
+			log.Logger.Fatal().Msgf("failed to stop workflow worker: %v", err)
 		}
 
 		// Give the server 5 seconds to finish ongoing requests
@@ -71,13 +87,13 @@ func main() {
 		defer cancel()
 
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Fatalf("Server forced to shutdown: %v", err)
+			log.Logger.Fatal().Msgf("Server forced to shutdown: %v", err)
 		}
 	}()
 
 	// Start server
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("failed to serve: %v", err)
+		log.Logger.Fatal().Msgf("failed to serve: %v", err)
 	}
 }
 

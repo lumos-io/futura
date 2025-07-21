@@ -24,4 +24,11 @@ export const DIGITALOCEAN_ACCESS_TOKEN = "AccessToken";
 export const ALIBABA_ACCESS_KEY_ID = "AccessKeyId";
 export const ALIBABA_ACCESS_SECRET = "AccessSecret";
 
-export const PROVIDER_OPTIONS = ["ALIBABA", "AWS", "GCP", "DIGITALOCEAN", "AZURE"];
+// Base list without feature-flag-controlled items
+export const BASE_PROVIDER_OPTIONS = [
+    "ALIBABA",
+    "AWS",
+    "GCP",
+    "DIGITALOCEAN",
+    "AZURE",
+];

@@ -11,6 +11,10 @@ enum CloudProvider {
   ALIBABA = 3;
   DIGITALOCEAN = 4;
   GCP = 5;
+  // ATTENTION: this parameter will be available in the proto but in the Frontend/APIs
+  // only when the services are in `development` mode and the feature-flag `kind.cluster` is
+  // enabled in the specific environment -- DO NOT USE IT ANYWHERE ELSE
+  KIND = 6;
 }
 
 enum ActivationStatus {

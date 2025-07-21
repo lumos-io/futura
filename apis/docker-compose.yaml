@@ -87,5 +87,19 @@ services:
       retries: 5
       start_period: 15s
 
+  nats:
+    image: nats:alpine
+    container_name: nats
+    restart: always
+    command: -c /etc/nats/nats.conf
+    ports:
+      - "4222:4222" # client port
+      - "6222:6222" # cluster port
+      - "8222:8222" # monitoring port
+    volumes:
+      - ../data/nats:/data
+    networks:
+      - monitor-net
+
 volumes:
   db:

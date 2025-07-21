@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, Cloud, CloudSun, CloudRain, Zap } from "lucide-react";
+import { Trash2, Cloud, CloudSun, CloudRain, Zap, Ghost } from "lucide-react";
 import AddProviderModal from "@/app/connect/add-provider-modal";
 import {
   AlertDialog,
@@ -23,7 +23,7 @@ import {
   CloudProviderConnection,
   EmptyCloudProvider,
 } from "@/models/cloud-provider";
-import { useAuth } from "@/hooks/auth_provider";
+import { useAuth } from "@/hooks/auth-provider";
 import {
   CreateProviderConnectionRequest,
   SecretName,
@@ -48,6 +48,8 @@ const CloudIcon = ({ provider }: { provider: CloudProvider }) => {
       return <Cloud className="w-5 h-5 text-indigo-500" />;
     case CloudProvider.ALIBABA:
       return <CloudRain className="w-5 h-5 text-orange-500" />;
+    case CloudProvider.KIND:
+      return <Ghost className="w-5 h-5 text-purple-500" />;
     default:
       return null;
   }
@@ -172,7 +174,7 @@ const CloudProviders: React.FC = () => {
   }, [user?.organizationId]);
 
   const disableDeletionForConnection = (status: ActivationStatus): boolean => {
-    return status === ActivationStatus.IN_PROGRESS;
+    return activationStatusFromJSON(status) === ActivationStatus.IN_PROGRESS;
   };
 
   const openAdd = () => {
@@ -228,7 +230,7 @@ const CloudProviders: React.FC = () => {
                     <AlertDialogTrigger asChild>
                       {disableDeletionForConnection(provider.status) ? (
                         <Tooltip>
-                          <TooltipTrigger className="cursor-not-allowed self-end">
+                          <TooltipTrigger className="cursor-not-allowed">
                             <Button
                               variant="ghost"
                               size="icon"

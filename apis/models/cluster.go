@@ -21,6 +21,9 @@ type ClusterMetadata struct {
 	GKEMetadata  *GKEClusterMetadata  `gorm:"foreignKey:ClusterMetadataID"`
 	DOKSMetadata *DOKSClusterMetadata `gorm:"foreignKey:ClusterMetadataID"`
 	ACKMetadata  *ACKClusterMetadata  `gorm:"foreignKey:ClusterMetadataID"`
+
+	// KindMetadata is only used for testing - do not use it in production
+	KindMetadata *KindClusterMetadata `gorm:"foreignKey:ClusterMetadataID"`
 }
 
 type EKSClusterMetadata struct {
@@ -71,4 +74,21 @@ type ACKClusterMetadata struct {
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null"`
 	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnDelete:CASCADE"`
+}
+
+/*
+Attention: this below is only used in developemnt mode and behind a feature-flag
+*/
+type KindClusterMetadata struct {
+	gorm.Model
+	KindClusterName   string
+	Status            string            `gorm:"size:64" json:"status"`
+	Version           string            `gorm:"size:32" json:"version"`
+	Endpoint          string            `gorm:"size:512" json:"endpoint"`
+	EKSClusterID      string            `gorm:"size:512" json:"eksClusterId"`
+	ClusterCreatedAt  *time.Time        `json:"clusterCreatedAt"`
+	PlatformVersion   string            `gorm:"size:64" json:"platformVersion"`
+	Tags              datatypes.JSONMap `json:"tags"`
+	ClusterMetadataID uint              `gorm:"uniqueIndex;not null"`
+	ClusterMetadata   *ClusterMetadata  `gorm:"constraint:OnDelete:CASCADE"`
 }

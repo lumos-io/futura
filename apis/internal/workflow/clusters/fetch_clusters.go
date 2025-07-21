@@ -2,6 +2,7 @@ package workflowclusters
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -14,7 +15,9 @@ import (
 
 	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/internal/providers"
+	workflowsignals "github.com/opisvigilant/futura/apis/internal/workflow/signals"
 	"github.com/opisvigilant/futura/apis/models"
+	"github.com/opisvigilant/futura/go-lib/stream"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
 
@@ -28,14 +31,19 @@ func RegisterWorkflowFetchClusters(worker worker.Worker) {
 }
 
 type WorkflowFetchClustersInput struct {
-	DBConfig *config.Database
+	Config *config.Configuration
 
-	OrganizationID uint
-	Provider       pb.CloudProvider
-	Credentials    map[string]string
+	OrganizationID     uint
+	ProviderConnection *pb.ProviderConnection
+	Credentials        map[string]string
 }
 
-func WorkflowFetchClusters(ctx workflow.Context, input WorkflowFetchClustersInput) error {
+func WorkflowFetchClusters(ctx workflow.Context, input *WorkflowFetchClustersInput) error {
+	js, err := stream.NewNATSJetstreamClient(context.Background(), input.Config.Nats.Servers)
+	if err != nil {
+		return fmt.Errorf("failed to connect to Stream: %v", err)
+	}
+
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -45,18 +53,33 @@ func WorkflowFetchClusters(ctx workflow.Context, input WorkflowFetchClustersInpu
 	})
 
 	var client providers.ProviderClient
-	err := workflow.ExecuteActivity(ctx, CreateProviderClient, providers.ProviderConfig{
-		Provider:    input.Provider,
+	if err := workflow.ExecuteActivity(ctx, CreateProviderClient, providers.ProviderConfig{
+		Provider:    input.ProviderConnection.Provider,
 		Credentials: input.Credentials,
-	}).Get(ctx, &client)
-	if err != nil {
-		return err
+	}).Get(ctx, &client); err != nil {
+		// FIXME: how do I deal with the potential Marshal failure?
+		// ignore the error here since it doesn't matter
+		b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+			ProviderConnectionID: input.ProviderConnection.Id,
+			OrganizationID:       input.OrganizationID,
+			Status:               workflowsignals.StatusFailed,
+			Error:                err.Error(),
+		})
+		return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
 	}
 
 	var clusterIDs []string
 	err = workflow.ExecuteActivity(ctx, FetchClusterIDs, client).Get(ctx, &clusterIDs)
 	if err != nil {
-		return err
+		// FIXME: how do I deal with the potential Marshal failure?
+		// ignore the error here since it doesn't matter
+		b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+			ProviderConnectionID: input.ProviderConnection.Id,
+			OrganizationID:       input.OrganizationID,
+			Status:               workflowsignals.StatusFailed,
+			Error:                err.Error(),
+		})
+		return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
 	}
 
 	for _, clusterID := range clusterIDs {
@@ -64,16 +87,41 @@ func WorkflowFetchClusters(ctx workflow.Context, input WorkflowFetchClustersInpu
 		err = workflow.ExecuteActivity(ctx, FetchMetadata, client, clusterID).Get(ctx, metadata)
 		if err != nil {
 			workflow.GetLogger(ctx).Error("Failed fetching metadata", "cluster", clusterID, "err", err)
-			continue // or return err to fail fast
+			// FIXME: how do I deal with the potential Marshal failure?
+			// ignore the error here since it doesn't matter
+			b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+				ProviderConnectionID: input.ProviderConnection.Id,
+				OrganizationID:       input.OrganizationID,
+				Status:               workflowsignals.StatusFailed,
+				Error:                err.Error(),
+			})
+			return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
 		}
 
-		err = workflow.ExecuteActivity(ctx, StoreMetadata, input.DBConfig, input.Provider, metadata).Get(ctx, nil)
+		err = workflow.ExecuteActivity(ctx, StoreMetadata, input.Config.Database, input.ProviderConnection.Provider, metadata).Get(ctx, nil)
 		if err != nil {
 			workflow.GetLogger(ctx).Error("Failed storing metadata", "cluster", clusterID, "err", err)
-			continue
+			// FIXME: how do I deal with the potential Marshal failure?
+			// ignore the error here since it doesn't matter
+			b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+				ProviderConnectionID: input.ProviderConnection.Id,
+				OrganizationID:       input.OrganizationID,
+				Status:               workflowsignals.StatusFailed,
+				Error:                err.Error(),
+			})
+			return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
 		}
 	}
-	return nil
+
+	// FIXME: how do I deal with the potential Marshal failure?
+	// ignore the error here since it doesn't matter
+	b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+		ProviderConnectionID: input.ProviderConnection.Id,
+		OrganizationID:       input.OrganizationID,
+		Status:               workflowsignals.StatusSuccess,
+		Error:                err.Error(),
+	})
+	return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
 }
 
 func CreateProviderClient(ctx context.Context, config providers.ProviderConfig) (providers.ProviderClient, error) {
@@ -151,6 +199,14 @@ func StoreMetadata(ctx context.Context, dbConfig *config.Database, provider pb.C
 		metadata.GKEMetadata.ClusterMetadataID = metadata.ID
 		if err := db.Create(metadata.GKEMetadata).Error; err != nil {
 			return fmt.Errorf("failed to create GKEMetadata: %w", err)
+		}
+	case pb.CloudProvider_KIND:
+		if metadata.KindMetadata == nil {
+			return errors.New("KindMetadata is nil in the ClusterMetadata object for the KIND Provider")
+		}
+		metadata.KindMetadata.ClusterMetadataID = metadata.ID
+		if err := db.Create(metadata.KindMetadata).Error; err != nil {
+			return fmt.Errorf("failed to create KindMetadata: %w", err)
 		}
 	default:
 		return errors.New("invalid pb.CloudProvider in StoreMetadata Activity")

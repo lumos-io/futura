@@ -1,6 +1,6 @@
 // src/routes/dashboardRoutes.tsx
 import { Navigate, RouteObject } from "react-router-dom";
-import { useAuth } from "./hooks/auth_provider";
+import { useAuth } from "./hooks/auth-provider";
 
 import MainDashboard from "@/app/dashboard/dashboard";
 import LoginPage from "@/app/login/login";

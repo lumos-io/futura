@@ -7,15 +7,14 @@ import (
 	"strings"
 
 	"github.com/nats-io/nats.go"
-	"github.com/opisvigilant/futura/pipeline/internal/config"
 )
 
 type NATSStore struct {
 	apkKV nats.KeyValue
 }
 
-func NewNATSStore(ctx context.Context, config *config.Configuration) (*NATSStore, error) {
-	nc, err := nats.Connect(strings.Join(config.Nats.Servers, ","))
+func NewNATSStore(ctx context.Context, servers []string, bucket string) (*NATSStore, error) {
+	nc, err := nats.Connect(strings.Join(servers, ","))
 	if err != nil {
 		return nil, fmt.Errorf("connect error: %w", err)
 	}
@@ -26,7 +25,7 @@ func NewNATSStore(ctx context.Context, config *config.Configuration) (*NATSStore
 		return nil, fmt.Errorf("jetstream context error: %w", err)
 	}
 
-	kv, err := js.KeyValue(config.Nats.APKBucket)
+	kv, err := js.KeyValue(bucket)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open KV bucket: %w", err)
 	}

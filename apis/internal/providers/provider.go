@@ -9,6 +9,7 @@ import (
 	azureprovider "github.com/opisvigilant/futura/apis/internal/providers/azure"
 	digitaloceanprovider "github.com/opisvigilant/futura/apis/internal/providers/digitalocean"
 	gcpprovider "github.com/opisvigilant/futura/apis/internal/providers/gcp"
+	kindprovider "github.com/opisvigilant/futura/apis/internal/providers/kind"
 	"github.com/opisvigilant/futura/apis/models"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
@@ -37,6 +38,8 @@ func CreateProviderClient(ctx context.Context, config ProviderConfig) (ProviderC
 		pr, err = azureprovider.New(config.Credentials)
 	case pb.CloudProvider_GCP:
 		pr, err = gcpprovider.New(config.Credentials)
+	case pb.CloudProvider_KIND:
+		pr, err = kindprovider.New(config.Credentials)
 	default:
 		return nil, errors.New("not a valid provider name")
 	}

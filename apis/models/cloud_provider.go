@@ -28,6 +28,7 @@ const (
 	Azure        CloudProviderName = "AZURE"
 	DigitalOcean CloudProviderName = "DIGITALOCEAN"
 	GoogleCloud  CloudProviderName = "GCP"
+	Kind         CloudProviderName = "KIND"
 )
 
 type ActivationStatus string
@@ -86,6 +87,8 @@ func ConvertToProtoFromCloudProvider(val CloudProviderName) (pb.CloudProvider, e
 		return pb.CloudProvider_DIGITALOCEAN, nil
 	case GoogleCloud:
 		return pb.CloudProvider_GCP, nil
+	case Kind:
+		return pb.CloudProvider_KIND, nil
 	default:
 		return -1, fmt.Errorf("invalid Cloud Provider Name - could not convert to Proto for the given value `%s`", val)
 	}
@@ -103,6 +106,8 @@ func ConvertToCloudProviderFromProto(val pb.CloudProvider) (CloudProviderName, e
 		return DigitalOcean, nil
 	case pb.CloudProvider_GCP:
 		return GoogleCloud, nil
+	case pb.CloudProvider_KIND:
+		return Kind, nil
 	default:
 		return "", fmt.Errorf("invalid pb.CloudProvider - could not convert to CloudProviderName for the given value `%s`", val)
 	}
