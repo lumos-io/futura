@@ -1,5 +1,7 @@
 package stream
 
+import "context"
+
 type Message interface {
 	Data() []byte
 	Ack() error
@@ -8,7 +10,7 @@ type Message interface {
 type HandlerFunc func(Message)
 
 type Stream interface {
-	Publish(subject string, data []byte) error
-	Subscribe(subject string, handler HandlerFunc) error
+	Publish(ctx context.Context, subject string, data []byte) error
+	Subscribe(ctx context.Context, subject string, handler HandlerFunc) error
 	Close()
 }

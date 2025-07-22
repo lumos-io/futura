@@ -39,7 +39,7 @@ type WorkflowFetchClustersInput struct {
 }
 
 func WorkflowFetchClusters(ctx workflow.Context, input *WorkflowFetchClustersInput) error {
-	js, err := stream.NewNATSJetstreamClient(context.Background(), input.Config.Nats.Servers)
+	js, err := stream.NewNATSJetstreamClient(input.Config.Nats.Servers, "workflow_stream", []string{"fetchclustersworkflow.*"})
 	if err != nil {
 		return fmt.Errorf("failed to connect to Stream: %v", err)
 	}
@@ -59,13 +59,13 @@ func WorkflowFetchClusters(ctx workflow.Context, input *WorkflowFetchClustersInp
 	}).Get(ctx, &client); err != nil {
 		// FIXME: how do I deal with the potential Marshal failure?
 		// ignore the error here since it doesn't matter
-		b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+		b, _ := json.Marshal(workflowsignals.WorkflowFetchClustersStatusSignal{
 			ProviderConnectionID: input.ProviderConnection.Id,
 			OrganizationID:       input.OrganizationID,
 			Status:               workflowsignals.StatusFailed,
 			Error:                err.Error(),
 		})
-		return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
+		return js.Publish(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, b)
 	}
 
 	var clusterIDs []string
@@ -73,13 +73,13 @@ func WorkflowFetchClusters(ctx workflow.Context, input *WorkflowFetchClustersInp
 	if err != nil {
 		// FIXME: how do I deal with the potential Marshal failure?
 		// ignore the error here since it doesn't matter
-		b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+		b, _ := json.Marshal(workflowsignals.WorkflowFetchClustersStatusSignal{
 			ProviderConnectionID: input.ProviderConnection.Id,
 			OrganizationID:       input.OrganizationID,
 			Status:               workflowsignals.StatusFailed,
 			Error:                err.Error(),
 		})
-		return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
+		return js.Publish(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, b)
 	}
 
 	for _, clusterID := range clusterIDs {
@@ -89,13 +89,13 @@ func WorkflowFetchClusters(ctx workflow.Context, input *WorkflowFetchClustersInp
 			workflow.GetLogger(ctx).Error("Failed fetching metadata", "cluster", clusterID, "err", err)
 			// FIXME: how do I deal with the potential Marshal failure?
 			// ignore the error here since it doesn't matter
-			b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+			b, _ := json.Marshal(workflowsignals.WorkflowFetchClustersStatusSignal{
 				ProviderConnectionID: input.ProviderConnection.Id,
 				OrganizationID:       input.OrganizationID,
 				Status:               workflowsignals.StatusFailed,
 				Error:                err.Error(),
 			})
-			return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
+			return js.Publish(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, b)
 		}
 
 		err = workflow.ExecuteActivity(ctx, StoreMetadata, input.Config.Database, input.ProviderConnection.Provider, metadata).Get(ctx, nil)
@@ -103,25 +103,25 @@ func WorkflowFetchClusters(ctx workflow.Context, input *WorkflowFetchClustersInp
 			workflow.GetLogger(ctx).Error("Failed storing metadata", "cluster", clusterID, "err", err)
 			// FIXME: how do I deal with the potential Marshal failure?
 			// ignore the error here since it doesn't matter
-			b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+			b, _ := json.Marshal(workflowsignals.WorkflowFetchClustersStatusSignal{
 				ProviderConnectionID: input.ProviderConnection.Id,
 				OrganizationID:       input.OrganizationID,
 				Status:               workflowsignals.StatusFailed,
 				Error:                err.Error(),
 			})
-			return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
+			return js.Publish(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, b)
 		}
 	}
 
 	// FIXME: how do I deal with the potential Marshal failure?
 	// ignore the error here since it doesn't matter
-	b, _ := json.Marshal(&workflowsignals.WorkflowFetchClustersStatusSignal{
+	b, _ := json.Marshal(workflowsignals.WorkflowFetchClustersStatusSignal{
 		ProviderConnectionID: input.ProviderConnection.Id,
 		OrganizationID:       input.OrganizationID,
 		Status:               workflowsignals.StatusSuccess,
 		Error:                err.Error(),
 	})
-	return js.Publish(workflowsignals.NatsWorkflowFetchClusterTopic, b)
+	return js.Publish(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, b)
 }
 
 func CreateProviderClient(ctx context.Context, config providers.ProviderConfig) (providers.ProviderClient, error) {

@@ -21,7 +21,7 @@ type SSEController struct {
 }
 
 func NewSSEController(config *config.Nats) (*SSEController, error) {
-	js, err := stream.NewNATSJetstreamClient(context.Background(), config.Servers)
+	js, err := stream.NewNATSJetstreamClient(config.Servers, "workflow_stream", []string{"fetchclustersworkflow.*"})
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +44,14 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 	// Create a channel to receive messages
 	msgCh := make(chan ConnectUpdate, 64)
 
-	if err := s.js.Subscribe(workflowsignals.NatsWorkflowFetchClusterTopic, func(msg stream.Message) {
+	if err := s.js.Subscribe(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, func(msg stream.Message) {
+		log.Logger.Info().Msg(string(msg.Data()))
+
 		var update ConnectUpdate
 		if err := json.Unmarshal(msg.Data(), &update); err != nil {
 			log.Logger.Error().Err(err).Msg("invalid NATS message")
 			return
 		}
-		log.Logger.Debug().Interface("message", update).Msg("read message from queue")
 
 		if err := msg.Ack(); err != nil {
 			log.Logger.Error().Err(err).Msgf("failed to ACK message in topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)

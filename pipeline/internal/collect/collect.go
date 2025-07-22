@@ -24,7 +24,7 @@ type CollectServer struct {
 
 func NewCollectServer(config *config.Configuration) (*CollectServer, error) {
 	ctx := context.Background()
-	js, err := stream.NewNATSJetstreamClient(ctx, config.Nats.Servers)
+	js, err := stream.NewNATSJetstreamClient(config.Nats.Servers, "pipeline_stream", []string{"raw.k8s.*"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Stream: %v", err)
 	}
@@ -46,7 +46,7 @@ func (s *CollectServer) SendEvent(ctx context.Context, req *pbev.KubernetesEvent
 	}
 	for _, event := range req.Events {
 		log.Logger.Debug().Msg(event.String())
-		// if err := s.streamClient.Publish("raw.k8s.events", []byte(event.String())); err != nil {
+		// if err := s.streamClient.Publish(ctx, "raw.k8s.events", []byte(event.String())); err != nil {
 		// 	return nil, err
 		// }
 	}
@@ -59,7 +59,7 @@ func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.Kubern
 	}
 	for _, obj := range req.Objects {
 		log.Logger.Debug().Msg(obj.String())
-		// if err := s.streamClient.Publish("raw.k8s.metrics", []byte(metric.String())); err != nil {
+		// if err := s.streamClient.Publish(ctx, "raw.k8s.metrics", []byte(metric.String())); err != nil {
 		// 	return nil, err
 		// }
 	}
@@ -72,7 +72,7 @@ func (s *CollectServer) SendKubeletStats(ctx context.Context, req *pbst.Kubernet
 	}
 
 	log.Logger.Debug().Msg(req.KubeletMetrics.String())
-	// if err := s.streamClient.Publish("raw.k8s.kubelet", []byte(req.KubeletMetrics.String())); err != nil {
+	// if err := s.streamClient.Publish(ctx, "raw.k8s.kubelet", []byte(req.KubeletMetrics.String())); err != nil {
 	// 	return nil, err
 	// }
 

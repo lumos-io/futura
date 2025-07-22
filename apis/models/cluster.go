@@ -85,8 +85,7 @@ type KindClusterMetadata struct {
 	Status            string            `gorm:"size:64" json:"status"`
 	Version           string            `gorm:"size:32" json:"version"`
 	Endpoint          string            `gorm:"size:512" json:"endpoint"`
-	EKSClusterID      string            `gorm:"size:512" json:"eksClusterId"`
-	ClusterCreatedAt  *time.Time        `json:"clusterCreatedAt"`
+	ClusterCreatedAt  time.Time         `json:"clusterCreatedAt"`
 	PlatformVersion   string            `gorm:"size:64" json:"platformVersion"`
 	Tags              datatypes.JSONMap `json:"tags"`
 	ClusterMetadataID uint              `gorm:"uniqueIndex;not null"`
