@@ -49,7 +49,7 @@ func (j *jetstreamClient) Subscribe(subject string, handler HandlerFunc) error {
 
 	_, err := j.js.Subscribe(subject, func(m *nats.Msg) {
 		handler(&jetstreamMsg{msg: m})
-	}, nats.ManualAck())
+	})
 	return err
 }
 

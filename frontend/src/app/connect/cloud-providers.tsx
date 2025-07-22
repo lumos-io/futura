@@ -134,11 +134,30 @@ const CloudProviders: React.FC = () => {
     return orgId ? `/api/organizations/${orgId}/connects/result` : null;
   }, [orgId]);
 
+  const connectedProvidersRef =
+    React.useRef<CloudProviderConnection[]>(connectedProviders);
+  // Keep the ref updated whenever connectedProviders changes
+  useEffect(() => {
+    connectedProvidersRef.current = connectedProviders;
+  }, [connectedProviders]);
+
   const options = React.useMemo(
     () => ({
       event: "fetch_clusters_result",
       onMessage: (msg: FetchClustersResultEvent) => {
-        toast(`Provider updated with status "${msg.status}"`);
+        const provider = connectedProvidersRef.current.find(
+          (p) => String(p.id) === String(msg.connect_id)
+        );
+
+        if (provider) {
+          toast(
+            `Provider "${provider.connection_name}" updated with status "${msg.status}"`
+          );
+        } else {
+          toast(
+            `Provider with ID ${msg.connect_id} updated with status "${msg.status}"`
+          );
+        }
       },
       onError: (err: unknown) => {
         console.error("SSE failed:", err);

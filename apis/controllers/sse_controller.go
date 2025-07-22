@@ -50,6 +50,12 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 			log.Logger.Error().Err(err).Msg("invalid NATS message")
 			return
 		}
+		log.Logger.Debug().Interface("message", update).Msg("read message from queue")
+
+		if err := msg.Ack(); err != nil {
+			log.Logger.Error().Err(err).Msgf("failed to ACK message in topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
+		}
+
 		msgCh <- update
 	}); err != nil {
 		log.Logger.Error().Err(err).Msgf("failed to subscribe to topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
@@ -63,6 +69,8 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 	for {
 		select {
 		case msg := <-msgCh:
+			log.Logger.Debug().Interface("message", msg).Msg("stream message")
+
 			b, err := json.Marshal(msg)
 			if err != nil {
 				log.Logger.Error().Err(err).Msg("failed to marshal message to JSON")
