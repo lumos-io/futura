@@ -20,10 +20,6 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 	// observability
 	router.Use(middleware.TraceIDMiddleware())
 
-	// websocket endpoint
-	wc := controllers.NewWebsocketController(config.Nats)
-	router.GET("/ws/:connect_id", wc.Handler)
-
 	// ref: https://github.com/gin-gonic/gin/issues/3709
 	// Frontend serving
 	dir, err := os.Getwd()
@@ -76,12 +72,18 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 			if err != nil {
 				return nil, err
 			}
+			ssec, err := controllers.NewSSEController(config.Nats)
+			if err != nil {
+				return nil, err
+			}
 			orgConnects := org.Group("/:org_id/connects")
 			{
 				orgConnects.GET("/", cc.GetConnects)
 				orgConnects.POST("/", cc.CreateConnect)
 				orgConnects.DELETE("/:connect_id", cc.DeleteConnect)
 				orgConnects.POST("/test-connection", cc.TestConnection)
+				// sse endpoint
+				orgConnects.GET("/result", ssec.FetchClustersResultHandler)
 			}
 
 			orgClusters := orgConnects.Group("/:connect_id/clusters")

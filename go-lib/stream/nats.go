@@ -34,10 +34,21 @@ func (j *jetstreamClient) Publish(subject string, data []byte) error {
 }
 
 func (j *jetstreamClient) Subscribe(subject string, handler HandlerFunc) error {
+	info, _ := j.js.StreamInfo(strings.ToUpper(subject))
+	if info == nil {
+		// Create a stream if it doesn't exist
+		if _, err := j.js.AddStream(&nats.StreamConfig{
+			Name:     strings.ToUpper(subject),
+			Subjects: []string{subject},
+			Storage:  nats.FileStorage,
+		}); err != nil {
+			return err
+		}
+	}
+
 	_, err := j.js.Subscribe(subject, func(m *nats.Msg) {
 		handler(&jetstreamMsg{msg: m})
 	}, nats.ManualAck())
-
 	return err
 }
 

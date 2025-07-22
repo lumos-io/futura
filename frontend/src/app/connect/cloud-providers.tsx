@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Trash2, Cloud, CloudSun, CloudRain, Zap, Ghost } from "lucide-react";
 import AddProviderModal from "@/app/connect/add-provider-modal";
@@ -36,7 +35,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import { useMultiWsConnections } from "@/hooks/use-connect-updates";
+import { useSSE } from "@/hooks/sse-handler";
+import { toast } from "sonner";
 
 const CloudIcon = ({ provider }: { provider: CloudProvider }) => {
   switch (cloudProviderFromJSON(provider)) {
@@ -110,6 +110,12 @@ const RenderActivationStatus = ({ status }: { status: ActivationStatus }) => {
   }
 };
 
+type FetchClustersResultEvent = {
+  connect_id: number;
+  message: string;
+  status: string;
+};
+
 const CloudProviders: React.FC = () => {
   const { user } = useAuth();
 
@@ -122,37 +128,30 @@ const CloudProviders: React.FC = () => {
   const [deleteTarget, setDeleteTarget] =
     useState<CloudProviderConnection | null>(null);
 
-  // Handler for WebSocket updates
-  const handleUpdate = (update: CloudProviderConnection) => {
-    setConnectedProviders((prev) =>
-      prev.map((p) => {
-        if (p.id === update.id) {
-          if (p.status !== update.status) {
-            if (update.status === "ACTIVE") {
-              toast.success(`Connection ${p.connection_name} is now active.`);
-            } else if (update.status === "FAILED") {
-              toast.error(`Connection ${p.connection_name} failed.`);
-            } else if (update.status === "SUSPENDED") {
-              toast(`Connection ${p.connection_name} was suspended.`, {
-                icon: "⚠️",
-              });
-            }
-          }
-          return { ...p, status: update.status };
-        }
-        return p;
-      })
-    );
-  };
-
-  // Use the hook, passing all provider IDs and update handler
-  useMultiWsConnections(
-    connectedProviders.map((p) => p.id),
+  const { latest } = useSSE<FetchClustersResultEvent>(
+    `/api/organizations/${user?.organizationId}/connects/result`,
     {
-      onUpdate: handleUpdate,
-      wsBaseUrl: import.meta.env.VITE_WS_URL,
+      event: "fetch_clusters_result",
+      onMessage: (msg) => {
+        toast(`Provider has been updated with status "${msg.status}"`);
+      },
+      onError: (err) => {
+        console.error("SSE failed:", err);
+      },
     }
   );
+
+  useEffect(() => {
+    if (latest) {
+      console.log(latest);
+
+      connectedProviders.forEach((provider: CloudProviderConnection) => {
+        if (provider.id === latest.connect_id + "") {
+          provider.status = activationStatusFromJSON(latest.status);
+        }
+      });
+    }
+  }, [connectedProviders, latest]);
 
   const handleSave = async (
     connectionName: string,
@@ -182,7 +181,9 @@ const CloudProviders: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget) {
+      return;
+    }
 
     await fetch(
       `/api/organizations/${user?.organizationId}/connects/${deleteTarget.id}`,
