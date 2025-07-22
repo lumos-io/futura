@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,12 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
-	c.Writer.Flush()
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		http.Error(c.Writer, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
 
 	// Create a channel to receive messages
 	msgCh := make(chan ConnectUpdate, 64)
@@ -49,8 +55,6 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 		log.Logger.Error().Err(err).Msgf("failed to subscribe to topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
 	}
 
-	// FIXME: how do I unsubscribe?
-
 	// Heartbeat ticker
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -65,11 +69,11 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 				continue
 			}
 			c.SSEvent(FetchClustersSSEEventName, b)
-			c.Writer.Flush()
+			flusher.Flush()
 		case <-ticker.C:
 			// Send a comment to keep the connection alive
 			c.Writer.Write([]byte(": ping\n\n"))
-			c.Writer.Flush()
+			flusher.Flush()
 		case <-c.Request.Context().Done():
 			// Client disconnected
 			return

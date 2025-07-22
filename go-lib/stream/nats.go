@@ -34,11 +34,12 @@ func (j *jetstreamClient) Publish(subject string, data []byte) error {
 }
 
 func (j *jetstreamClient) Subscribe(subject string, handler HandlerFunc) error {
-	info, _ := j.js.StreamInfo(strings.ToUpper(subject))
+	streamName := strings.ReplaceAll(subject, ".", "_")
+	info, _ := j.js.StreamInfo(strings.ToUpper(streamName))
 	if info == nil {
 		// Create a stream if it doesn't exist
 		if _, err := j.js.AddStream(&nats.StreamConfig{
-			Name:     strings.ToUpper(subject),
+			Name:     strings.ToUpper(streamName),
 			Subjects: []string{subject},
 			Storage:  nats.FileStorage,
 		}); err != nil {

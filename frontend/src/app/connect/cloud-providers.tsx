@@ -128,30 +128,45 @@ const CloudProviders: React.FC = () => {
   const [deleteTarget, setDeleteTarget] =
     useState<CloudProviderConnection | null>(null);
 
-  const { latest } = useSSE<FetchClustersResultEvent>(
-    `/api/organizations/${user?.organizationId}/connects/result`,
-    {
+  const orgId = user?.organizationId;
+
+  const sseUrl = React.useMemo(() => {
+    return orgId ? `/api/organizations/${orgId}/connects/result` : null;
+  }, [orgId]);
+
+  const options = React.useMemo(
+    () => ({
       event: "fetch_clusters_result",
-      onMessage: (msg) => {
-        toast(`Provider has been updated with status "${msg.status}"`);
+      onMessage: (msg: FetchClustersResultEvent) => {
+        toast(`Provider updated with status "${msg.status}"`);
       },
-      onError: (err) => {
+      onError: (err: unknown) => {
         console.error("SSE failed:", err);
       },
-    }
+    }),
+    []
+  );
+
+  const { latest } = useSSE<FetchClustersResultEvent>(
+    sseUrl ? sseUrl : "",
+    options
   );
 
   useEffect(() => {
     if (latest) {
-      console.log(latest);
-
-      connectedProviders.forEach((provider: CloudProviderConnection) => {
-        if (provider.id === latest.connect_id + "") {
-          provider.status = activationStatusFromJSON(latest.status);
-        }
+      setConnectedProviders((prevProviders) => {
+        return prevProviders.map((provider) => {
+          if (provider.id == String(latest.connect_id)) {
+            return {
+              ...provider,
+              status: activationStatusFromJSON(latest.status),
+            };
+          }
+          return provider;
+        });
       });
     }
-  }, [connectedProviders, latest]);
+  }, [latest]);
 
   const handleSave = async (
     connectionName: string,
@@ -164,14 +179,11 @@ const CloudProviders: React.FC = () => {
       credentials: credentials,
     });
 
-    const res = await fetch(
-      `/api/organizations/${user?.organizationId}/connects`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      }
-    );
+    const res = await fetch(`/api/organizations/${orgId}/connects`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
 
     const created = await res.json();
     setConnectedProviders((prev) => [...prev, created.data]);
@@ -185,12 +197,9 @@ const CloudProviders: React.FC = () => {
       return;
     }
 
-    await fetch(
-      `/api/organizations/${user?.organizationId}/connects/${deleteTarget.id}`,
-      {
-        method: "DELETE",
-      }
-    );
+    await fetch(`/api/organizations/${orgId}/connects/${deleteTarget.id}`, {
+      method: "DELETE",
+    });
     setConnectedProviders((prev) =>
       prev.filter((p) => p.id !== deleteTarget.id)
     );
@@ -199,14 +208,13 @@ const CloudProviders: React.FC = () => {
 
   useEffect(() => {
     const handleGetAll = async () => {
-      const orgId = user?.organizationId;
       const res = await fetch(`/api/organizations/${orgId}/connects`);
       const data = await res.json();
 
       setConnectedProviders(data.data);
     };
     handleGetAll();
-  }, [user?.organizationId]);
+  }, [orgId]);
 
   const disableDeletionForConnection = (status: ActivationStatus): boolean => {
     return activationStatusFromJSON(status) === ActivationStatus.IN_PROGRESS;

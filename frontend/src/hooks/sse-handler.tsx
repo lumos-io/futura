@@ -19,6 +19,13 @@ export function useSSE<T = unknown>(
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
+    if (url === "") {
+      console.log("empty sseUrl");
+      return;
+    }
+
+    console.log("Opening SSE connection to", url);
+
     const source = new EventSource(url, {
       withCredentials: options?.withCredentials ?? false,
     });
@@ -53,9 +60,10 @@ export function useSSE<T = unknown>(
     }
 
     return () => {
+      console.log("Closing SSE connection to", url);
       source.close();
     };
-  }, [url, options]);
+  }, [url, options?.event, options]);
 
   return { latest, connected };
 }
