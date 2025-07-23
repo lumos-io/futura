@@ -1,9 +1,7 @@
 package models
 
-import "gorm.io/gorm"
-
 type Organization struct {
-	gorm.Model
+	BaseModel
 	Name    string
 	Members []User `gorm:"many2many:organization_members;"`
 }

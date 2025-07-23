@@ -43,6 +43,7 @@ export function useSSE<T = unknown>(
     const onMessage = (event: MessageEvent) => {
       try {
         const data: T = JSON.parse(event.data);
+        console.log("useSSE data: ", JSON.stringify(data));
         setLatest(data);
         options?.onMessage?.(data);
       } catch (err) {

@@ -59,7 +59,7 @@ func main() {
 	}
 
 	go func() {
-		if err := wf.StartWorker(); err != nil {
+		if err := wf.StartWorkers(); err != nil {
 			log.Logger.Fatal().Msgf("failed to start workflow worker: %v", err)
 		}
 	}()

@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Unleash/unleash-client-go/v4"
 	"github.com/opisvigilant/futura/apis/internal/config"
@@ -47,15 +48,11 @@ func AutoMigrate(dbConfig *config.Database) error {
 	); err != nil {
 		return fmt.Errorf("❌ Failed to auto-migrate models: %v", err)
 	}
-	
+
 	if unleash.IsEnabled("kind.cluster") {
 		if err := db.AutoMigrate(&KindClusterMetadata{}); err != nil {
 			return fmt.Errorf("❌ Failed to auto-migrate model: %v", err)
 		}
-	}
-
-	if err := db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_cluster_org_provider_name ON cluster_metadata (organization_id, cloud_provider_id);`).Error; err != nil {
-		return fmt.Errorf("❌ Failed to create unique index: %v", err)
 	}
 
 	log.Logger.Info().Msg("✅ Database migration complete")
@@ -64,4 +61,10 @@ func AutoMigrate(dbConfig *config.Database) error {
 
 func GetDB() *gorm.DB {
 	return db
+}
+
+type BaseModel struct {
+	ID        uint `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

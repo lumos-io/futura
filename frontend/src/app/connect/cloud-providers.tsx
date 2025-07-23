@@ -111,8 +111,9 @@ const RenderActivationStatus = ({ status }: { status: ActivationStatus }) => {
 };
 
 type FetchClustersResultEvent = {
-  connect_id: number;
-  message: string;
+  providerConnectionId: number;
+  organizationId: number;
+  error: string;
   status: string;
 };
 
@@ -146,7 +147,7 @@ const CloudProviders: React.FC = () => {
       event: "fetch_clusters_result",
       onMessage: (msg: FetchClustersResultEvent) => {
         const provider = connectedProvidersRef.current.find(
-          (p) => String(p.id) === String(msg.connect_id)
+          (p) => String(p.id) === String(msg.providerConnectionId)
         );
 
         if (provider) {
@@ -155,7 +156,7 @@ const CloudProviders: React.FC = () => {
           );
         } else {
           toast(
-            `Provider with ID ${msg.connect_id} updated with status "${msg.status}"`
+            `Provider with ID ${msg.providerConnectionId} updated with status "${msg.status}"`
           );
         }
       },
@@ -174,12 +175,21 @@ const CloudProviders: React.FC = () => {
   useEffect(() => {
     if (latest) {
       setConnectedProviders((prevProviders) => {
+        console.log("latest is updated: " + JSON.stringify(latest));
         return prevProviders.map((provider) => {
-          if (provider.id == String(latest.connect_id)) {
-            return {
-              ...provider,
-              status: activationStatusFromJSON(latest.status),
-            };
+          console.log("current provider: " + JSON.stringify(provider));
+          if (provider.id == String(latest.providerConnectionId)) {
+            if (latest.status == "SUCCESS") {
+              return {
+                ...provider,
+                status: ActivationStatus.ACTIVE,
+              };
+            } else {
+              return {
+                ...provider,
+                status: ActivationStatus.FAILED,
+              };
+            }
           }
           return provider;
         });
