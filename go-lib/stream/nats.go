@@ -59,6 +59,7 @@ func (j *jetstreamClient) Subscribe(ctx context.Context, subject string, handler
 	cons, err := s.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
 		Durable:       durableName,
 		AckPolicy:     jetstream.AckExplicitPolicy,
+		AckWait:       5,
 		FilterSubject: subject,
 		DeliverPolicy: jetstream.DeliverNewPolicy, // only new messages
 	})

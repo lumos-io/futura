@@ -14,3 +14,7 @@ func banana() {
     }
 }
 ```
+
+## NATS gotcha
+
+The consumers are in pull-mode and there is an ack time of 30s

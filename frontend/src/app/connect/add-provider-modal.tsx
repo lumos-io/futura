@@ -22,9 +22,9 @@ import {
   CloudProvider,
 } from "@proto/backend/backend";
 import * as ProviderAuthConstant from "@/models/provider-auth";
-import { useProviderOptions } from "@/hooks/provider-auth";
 import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/auth-provider";
+import { useProviderOptions } from "@/hooks/provider-auth";
 
 interface AddProviderModalProps {
   open: boolean;

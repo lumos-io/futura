@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 interface UseSSEOptions<T> {
-  event?: string; // Optional: named event
+  event?: string;
   onMessage?: (data: T) => void;
   onError?: (error: Event) => void;
   withCredentials?: boolean;
@@ -19,31 +19,21 @@ export function useSSE<T = unknown>(
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    if (url === "") {
-      console.log("empty sseUrl");
-      return;
-    }
-
-    console.log("Opening SSE connection to", url);
+    if (!url) return;
 
     const source = new EventSource(url, {
       withCredentials: options?.withCredentials ?? false,
     });
     eventSourceRef.current = source;
 
-    const onOpen = () => {
-      setConnected(true);
-    };
-
+    const onOpen = () => setConnected(true);
     const onError = (err: Event) => {
       setConnected(false);
       options?.onError?.(err);
     };
-
     const onMessage = (event: MessageEvent) => {
       try {
         const data: T = JSON.parse(event.data);
-        console.log("useSSE data: ", JSON.stringify(data));
         setLatest(data);
         options?.onMessage?.(data);
       } catch (err) {
@@ -61,10 +51,9 @@ export function useSSE<T = unknown>(
     }
 
     return () => {
-      console.log("Closing SSE connection to", url);
       source.close();
     };
-  }, [url, options?.event, options]);
+  }, [url, options?.event]);
 
   return { latest, connected };
 }
