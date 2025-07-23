@@ -42,13 +42,13 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 	}
 
 	// Create a channel to receive messages
-	msgCh := make(chan ConnectUpdate, 64)
+	msgCh := make(chan workflowsignals.WorkflowFetchClustersStatusSignal, 64)
 
 	if err := s.js.Subscribe(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, func(msg stream.Message) {
 		log.Logger.Info().Msg(string(msg.Data()))
 
-		var update ConnectUpdate
-		if err := json.Unmarshal(msg.Data(), &update); err != nil {
+		var result workflowsignals.WorkflowFetchClustersStatusSignal
+		if err := json.Unmarshal(msg.Data(), &result); err != nil {
 			log.Logger.Error().Err(err).Msg("invalid NATS message")
 			return
 		}
@@ -57,7 +57,7 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 			log.Logger.Error().Err(err).Msgf("failed to ACK message in topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
 		}
 
-		msgCh <- update
+		msgCh <- result
 	}); err != nil {
 		log.Logger.Error().Err(err).Msgf("failed to subscribe to topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
 	}

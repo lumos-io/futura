@@ -5,12 +5,10 @@ import (
 
 	"github.com/google/uuid"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
-
-	"gorm.io/gorm"
 )
 
 type CloudProvider struct {
-	gorm.Model
+	BaseModel
 	Provider       CloudProviderName `gorm:"not null" json:"provider"`
 	ConnectionName string            `gorm:"uniqueIndex,not null" json:"connectionName"`
 	SecretName     pb.SecretName     `gorm:"not null" json:"secretName"`

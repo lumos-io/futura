@@ -4,14 +4,13 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
 
 type ClusterMetadata struct {
-	gorm.Model
+	BaseModel
 	APIKey          string        `gorm:"size:512" json:"-"` // don't expose in API responses by default
 	CloudProviderID uint          `gorm:"index;not null"`
-	CloudProvider   CloudProvider `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
+	CloudProvider   CloudProvider `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 
 	OrganizationID uint         `gorm:"index;not null"`
 	Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
@@ -27,7 +26,7 @@ type ClusterMetadata struct {
 }
 
 type EKSClusterMetadata struct {
-	gorm.Model
+	BaseModel
 	// Raw AWS values
 	EKSClusterName   string            `gorm:"size:255;not null" json:"name"`
 	Status           string            `gorm:"size:64" json:"status"`
@@ -45,7 +44,7 @@ type EKSClusterMetadata struct {
 }
 
 type GKEClusterMetadata struct {
-	gorm.Model
+	BaseModel
 	GKEClusterName string
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null"`
@@ -53,7 +52,7 @@ type GKEClusterMetadata struct {
 }
 
 type AKSClusterMetadata struct {
-	gorm.Model
+	BaseModel
 	AKSClusterName string
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null"`
@@ -61,7 +60,7 @@ type AKSClusterMetadata struct {
 }
 
 type DOKSClusterMetadata struct {
-	gorm.Model
+	BaseModel
 	AKSClusterName string
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null"`
@@ -69,7 +68,7 @@ type DOKSClusterMetadata struct {
 }
 
 type ACKClusterMetadata struct {
-	gorm.Model
+	BaseModel
 	AKSClusterName string
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null"`
@@ -77,10 +76,10 @@ type ACKClusterMetadata struct {
 }
 
 /*
-Attention: this below is only used in developemnt mode and behind a feature-flag
+Attention: this below is only used in development mode and behind a feature-flag
 */
 type KindClusterMetadata struct {
-	gorm.Model
+	BaseModel
 	KindClusterName   string
 	Status            string            `gorm:"size:64" json:"status"`
 	Version           string            `gorm:"size:32" json:"version"`
