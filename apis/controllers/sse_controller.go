@@ -42,22 +42,21 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 	}
 
 	// Create a channel to receive messages
-	msgCh := make(chan workflowsignals.WorkflowFetchClustersStatusSignal, 64)
+	msgCh := make(chan *workflowsignals.WorkflowFetchClustersStatusSignal)
 
 	if err := s.js.Subscribe(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, func(msg stream.Message) {
-		log.Logger.Info().Msg(string(msg.Data()))
-
-		var result workflowsignals.WorkflowFetchClustersStatusSignal
+		var result *workflowsignals.WorkflowFetchClustersStatusSignal
 		if err := json.Unmarshal(msg.Data(), &result); err != nil {
 			log.Logger.Error().Err(err).Msg("invalid NATS message")
 			return
 		}
 
+		// push message to the channel
+		msgCh <- result
+
 		if err := msg.Ack(); err != nil {
 			log.Logger.Error().Err(err).Msgf("failed to ACK message in topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
 		}
-
-		msgCh <- result
 	}); err != nil {
 		log.Logger.Error().Err(err).Msgf("failed to subscribe to topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
 	}
@@ -70,8 +69,6 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 	for {
 		select {
 		case msg := <-msgCh:
-			log.Logger.Debug().Interface("message", msg).Msg("stream message")
-
 			b, err := json.Marshal(msg)
 			if err != nil {
 				log.Logger.Error().Err(err).Msg("failed to marshal message to JSON")
