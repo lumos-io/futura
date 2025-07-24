@@ -8,14 +8,14 @@ import (
 
 // Config struct contains watcher configuration
 type Configuration struct {
-	Nats    *Nats    `toml:"nats"`
+	Redis   *Redis   `toml:"redis"`
 	Collect *Collect `toml:"collect"`
 	Log     *Log     `toml:"log"`
 }
 
-type Nats struct {
+type Redis struct {
 	Servers   []string `toml:"servers"`
-	APKBucket string   `toml:"apkBucket"`
+	Namespace string   `toml:"namespace"`
 }
 
 type Log struct {
@@ -28,9 +28,9 @@ type Collect struct {
 
 func Fetch() *Configuration {
 	return &Configuration{
-		Nats: &Nats{
-			Servers:   viper.GetStringSlice("nats.servers"),
-			APKBucket: viper.GetString("nats.apkBucket"),
+		Redis: &Redis{
+			Servers:   viper.GetStringSlice("redis.servers"),
+			Namespace: viper.GetString("redis.namespace"),
 		},
 		Collect: &Collect{
 			Endpoint: getStringOrDefault("collect.endpoint", "localhost:50051"),
@@ -45,14 +45,14 @@ func (c *Configuration) Validate() error {
 	if c.Collect == nil {
 		return errors.New("[collect] entry is missing from the configuration")
 	}
-	if c.Nats == nil {
-		return errors.New("[nats] entry is missing from the configuration")
+	if c.Redis == nil {
+		return errors.New("[redis] entry is missing from the configuration")
 	}
-	if len(c.Nats.Servers) == 0 {
-		return errors.New("nats server endpoint missing from the list")
+	if len(c.Redis.Servers) == 0 {
+		return errors.New("redis server endpoint missing from the list")
 	}
-	if c.Nats.APKBucket == "" {
-		return errors.New("nats kv bucket is missing")
+	if c.Redis.Namespace == "" {
+		return errors.New("redis kv bucket is missing")
 	}
 	if c.Log != nil {
 		if c.Log.Level != "debug" && c.Log.Level != "info" && c.Log.Level != "warn" && c.Log.Level != "error" {

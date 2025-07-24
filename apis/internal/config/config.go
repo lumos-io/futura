@@ -13,7 +13,7 @@ type Configuration struct {
 	Secrets     *Secrets  `toml:"secrets"`
 	Frontend    *Frontend `toml:"frontend"`
 	Temporal    *Temporal `toml:"temporal"`
-	Nats        *Nats     `toml:"nats"`
+	Redis       *Redis    `toml:"redis"`
 	Unleash     *Unleash  `toml:"unleash"`
 }
 
@@ -53,9 +53,9 @@ type Temporal struct {
 	Namespace string `toml:"namespace"`
 }
 
-type Nats struct {
+type Redis struct {
 	Servers   []string `toml:"servers"`
-	APKBucket string   `toml:"apkBucket"`
+	Namespace string   `toml:"namespace"`
 }
 
 type Unleash struct {
@@ -100,9 +100,9 @@ func Fetch() *Configuration {
 			Port:      viper.GetString("temporal.port"),
 			Namespace: viper.GetString("temporal.namespace"),
 		},
-		Nats: &Nats{
-			Servers:   viper.GetStringSlice("nats.servers"),
-			APKBucket: viper.GetString("nats.apkBucket"),
+		Redis: &Redis{
+			Servers:   viper.GetStringSlice("redis.servers"),
+			Namespace: viper.GetString("redis.namespace"),
 		},
 		Unleash: &Unleash{
 			AppName:  viper.GetString("unleash.app_name"),
@@ -140,14 +140,14 @@ func (c *Configuration) Validate() error {
 	if c.Temporal == nil || c.Temporal.Address == "" || c.Temporal.Namespace == "" || c.Temporal.Port == "" {
 		return errors.New("[temporal] entry is missing or some entries are incorrect because empty")
 	}
-	if c.Nats == nil {
-		return errors.New("[nats] entry is missing from the configuration")
+	if c.Redis == nil {
+		return errors.New("[redis] entry is missing from the configuration")
 	}
-	if len(c.Nats.Servers) == 0 {
-		return errors.New("nats server endpoint missing from the list")
+	if len(c.Redis.Servers) == 0 {
+		return errors.New("redis server endpoint missing from the list")
 	}
-	if c.Nats.APKBucket == "" {
-		return errors.New("nats kv bucket is missing")
+	if c.Redis.Namespace == "" {
+		return errors.New("redis kv bucket is missing")
 	}
 	if c.Unleash == nil {
 		return errors.New("[unleash] entry is missing from the configuration")

@@ -17,16 +17,16 @@ import (
 const FetchClustersSSEEventName = "fetch_clusters_result"
 
 type SSEController struct {
-	js stream.Stream
+	rs stream.Stream
 }
 
-func NewSSEController(config *config.Nats) (*SSEController, error) {
-	js, err := stream.NewNATSJetstreamClient(config.Servers, "workflow_stream", []string{"fetchclustersworkflow.*"})
+func NewSSEController(config *config.Redis) (*SSEController, error) {
+	js, err := stream.NewRedisStreamClient(config.Servers)
 	if err != nil {
 		return nil, err
 	}
 	return &SSEController{
-		js: js,
+		rs: js,
 	}, nil
 }
 
@@ -44,18 +44,16 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 	// Create a channel to receive messages
 	msgCh := make(chan *workflowsignals.WorkflowFetchClustersStatusSignal)
 
-	if err := s.js.Subscribe(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, func(msg stream.Message) {
+	if err := s.rs.Subscribe(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, func(msg stream.Message, ack func() error) {
 		var result *workflowsignals.WorkflowFetchClustersStatusSignal
 		if err := json.Unmarshal(msg.Data(), &result); err != nil {
 			log.Logger.Error().Err(err).Msg("invalid NATS message")
 			return
 		}
-
 		// push message to the channel
 		msgCh <- result
-
-		if err := msg.Ack(); err != nil {
-			log.Logger.Error().Err(err).Msgf("failed to ACK message in topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
+		if err := ack(); err != nil {
+			log.Logger.Error().Err(err).Msg("failed to ack message")
 		}
 	}); err != nil {
 		log.Logger.Error().Err(err).Msgf("failed to subscribe to topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)

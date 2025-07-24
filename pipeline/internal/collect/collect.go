@@ -19,25 +19,36 @@ type CollectServer struct {
 	pbsvc.UnimplementedCollectServiceServer
 
 	streamClient stream.Stream
-	kvClient     kv.Store
+	kvClient     kv.KVStore
+	namespace    string
 }
 
 func NewCollectServer(config *config.Configuration) (*CollectServer, error) {
-	ctx := context.Background()
-	js, err := stream.NewNATSJetstreamClient(config.Nats.Servers, "pipeline_stream", []string{"raw.k8s.*"})
+	rs, err := stream.NewRedisStreamClient(config.Redis.Servers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Stream: %v", err)
 	}
 
-	ns, err := kv.NewNATSStore(ctx, config.Nats.Servers, config.Nats.APKBucket)
+	rss, err := kv.NewRedisKVStore(config.Redis.Servers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to KV: %v", err)
 	}
 
 	return &CollectServer{
-		streamClient: js,
-		kvClient:     ns,
+		streamClient: rs,
+		kvClient:     rss,
+		namespace:    config.Redis.Namespace,
 	}, nil
+}
+
+func (s *CollectServer) Close() error {
+	if err := s.kvClient.Close(); err != nil {
+		return err
+	}
+	if err := s.streamClient.Close(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *CollectServer) SendEvent(ctx context.Context, req *pbev.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
@@ -80,7 +91,7 @@ func (s *CollectServer) SendKubeletStats(ctx context.Context, req *pbst.Kubernet
 }
 
 func (s *CollectServer) validateAPIKey(ctx context.Context, apiKey string) error {
-	b, err := s.kvClient.Get(ctx, apiKey)
+	b, err := s.kvClient.Get(ctx, s.namespace, apiKey)
 	if err != nil {
 		return err
 	}

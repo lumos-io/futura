@@ -4,13 +4,12 @@ import "context"
 
 type Message interface {
 	Data() []byte
-	Ack() error
 }
 
-type HandlerFunc func(Message)
+type HandlerFunc func(msg Message, ack func() error)
 
 type Stream interface {
-	Publish(ctx context.Context, subject string, data []byte) error
-	Subscribe(ctx context.Context, subject string, handler HandlerFunc) error
-	Close()
+	Publish(ctx context.Context, stream string, data []byte) error
+	Subscribe(ctx context.Context, stream string, handler HandlerFunc) error
+	Close() error
 }
