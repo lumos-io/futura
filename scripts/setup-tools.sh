@@ -48,11 +48,11 @@ done
 # 5. Apply custom service manifests
 echo "📦 Deploying services..."
 
-if [ -f ./kind/nats.yaml ]; then
-  echo "🚀 Deploying NATS..."
-  kubectl apply -f ./kind/nats.yaml
+if [ -f ./kind/redis.yaml ]; then
+  echo "🚀 Deploying Redis..."
+  kubectl apply -f ./kind/redis.yaml
 else
-  echo "⚠️  nats.yaml not found"
+  echo "⚠️  redis.yaml not found"
 fi
 
 if [ -f ./kind/metrics-server.yaml ]; then

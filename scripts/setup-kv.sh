@@ -1,33 +1,47 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NATS_SERVICE_PORT=4222
-LOCAL_PORT=14222
-BUCKET_NAME="api_keys"
+REDIS_SERVICE_PORT=6379
+LOCAL_PORT=16379
 KEY_NAME="df9166bbacd761c74aecc50bb7a902342dd61a1de84551e253f7133154947d88"
 KEY_VALUE='{"customer_id":"1", "status":"active", "cluster_id":"1", "cloud_provider_id":"1"}'
 
-# Give it a second to come up
-sleep 5
+MAX_RETRIES=5
+RETRY_DELAY=3
+PF_PID=""
 
-# Port-forward NATS port (runs in background)
-kubectl port-forward svc/nats "$LOCAL_PORT:$NATS_SERVICE_PORT" > /tmp/nats-portforward.log 2>&1 &
-PF_PID=$!
-echo "✅ Port-forward started (PID $PF_PID), waiting for connection..."
+# Function to attempt port-forward with retry
+port_forward() {
+  for attempt in $(seq 1 "$MAX_RETRIES"); do
+    echo "🔄 Attempt $attempt to port-forward Redis..."
 
-# Give it a second to connect
-sleep 2
+    kubectl port-forward svc/redis "$LOCAL_PORT:$REDIS_SERVICE_PORT" > /tmp/redis-portforward.log 2>&1 &
+    PF_PID=$!
 
-# Set NATS CLI context to local forwarded port
-export NATS_URL="nats://localhost:$LOCAL_PORT"
+    sleep 2
 
-# Create bucket (ignore error if it exists)
-nats kv add "$BUCKET_NAME" || echo "✅ Bucket '$BUCKET_NAME' may already exist, continuing..."
+    # Check if port-forward is working by probing the port
+    if nc -z localhost "$LOCAL_PORT"; then
+      echo "✅ Port-forward successful (PID $PF_PID)"
+      return 0
+    else
+      echo "⚠️  Port-forward attempt $attempt failed, retrying in $RETRY_DELAY seconds..."
+      kill "$PF_PID" >/dev/null 2>&1 || true
+      sleep "$RETRY_DELAY"
+    fi
+  done
 
-# Add key with JSON value
-nats kv put "$BUCKET_NAME" "$KEY_NAME" "$KEY_VALUE"
+  echo "❌ Failed to port-forward Redis after $MAX_RETRIES attempts."
+  exit 1
+}
 
-echo "✅ Added key '$KEY_NAME' to bucket '$BUCKET_NAME'"
+# Try to start port-forward
+port_forward
+
+# Add key with JSON value using redis-cli
+echo "SET $KEY_NAME '$KEY_VALUE'" | redis-cli -p "$LOCAL_PORT"
+
+echo "✅ Added key '$KEY_NAME' to Redis"
 
 # Cleanup port-forward
-kill "$PF_PID"
+kill "$PF_PID" >/dev/null 2>&1 || true

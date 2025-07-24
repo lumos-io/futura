@@ -24,8 +24,8 @@
           ko
           kind
           bun
-          nodejs_22          
-          natscli      
+          nodejs_22
+          redis
         ];
 
       in {
