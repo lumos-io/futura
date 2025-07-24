@@ -12,7 +12,6 @@ type Configuration struct {
 	OAuth       *OAuth    `toml:"oauth"`
 	Secrets     *Secrets  `toml:"secrets"`
 	Frontend    *Frontend `toml:"frontend"`
-	Temporal    *Temporal `toml:"temporal"`
 	Redis       *Redis    `toml:"redis"`
 	Unleash     *Unleash  `toml:"unleash"`
 }
@@ -45,12 +44,6 @@ type Secrets struct {
 
 type Frontend struct {
 	URL string `toml:"url"`
-}
-
-type Temporal struct {
-	Address   string `toml:"address"`
-	Port      string `toml:"port"`
-	Namespace string `toml:"namespace"`
 }
 
 type Redis struct {
@@ -95,11 +88,6 @@ func Fetch() *Configuration {
 		Frontend: &Frontend{
 			URL: viper.GetString("frontend.url"),
 		},
-		Temporal: &Temporal{
-			Address:   viper.GetString("temporal.address"),
-			Port:      viper.GetString("temporal.port"),
-			Namespace: viper.GetString("temporal.namespace"),
-		},
 		Redis: &Redis{
 			Servers:   viper.GetStringSlice("redis.servers"),
 			Namespace: viper.GetString("redis.namespace"),
@@ -136,9 +124,6 @@ func (c *Configuration) Validate() error {
 	}
 	if c.Frontend == nil || c.Frontend.URL == "" {
 		return errors.New("[frontend] entry is missing from the configuration or `url` entry is empty")
-	}
-	if c.Temporal == nil || c.Temporal.Address == "" || c.Temporal.Namespace == "" || c.Temporal.Port == "" {
-		return errors.New("[temporal] entry is missing or some entries are incorrect because empty")
 	}
 	if c.Redis == nil {
 		return errors.New("[redis] entry is missing from the configuration")

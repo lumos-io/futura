@@ -2,7 +2,9 @@ package stream
 
 import (
 	"context"
+	"fmt"
 	"maps"
+	"strings"
 	"sync"
 	"time"
 
@@ -91,8 +93,9 @@ func (r *redisStreamClient) Subscribe(ctx context.Context, stream string, handle
 	consumer := "consumer-" + time.Now().Format("20060102150405.000")
 
 	// Ensure stream & group exist
-	if err := r.client.XGroupCreateMkStream(ctx, stream, group, "$").Err(); err != nil {
-		return err
+	err := r.client.XGroupCreateMkStream(ctx, stream, group, "$").Err()
+	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP Consumer Group name already exists") {
+		return fmt.Errorf("failed to create consumer group: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
