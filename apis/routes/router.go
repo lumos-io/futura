@@ -72,7 +72,7 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 			if err != nil {
 				return nil, err
 			}
-			ssec, err := controllers.NewSSEController(config.Nats)
+			ssec, err := controllers.NewSSEController(config.Redis)
 			if err != nil {
 				return nil, err
 			}

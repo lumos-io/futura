@@ -37,13 +37,6 @@ var collectCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// start shutdown goroutine
-		go func() {
-			// capture sigterm and other system call here
-			<-signalCh
-			fmt.Println("Shutting down collector stage...")
-		}()
-
 		grpcServer := grpc.NewServer()
 
 		cs, err := collect.NewCollectServer(pipelineCfg)
@@ -51,6 +44,18 @@ var collectCmd = &cobra.Command{
 			log.Fatalf("failed to create the collect server: %v", err)
 			os.Exit(1)
 		}
+
+		// start shutdown goroutine
+		go func() {
+			// capture sigterm and other system call here
+			<-signalCh
+			if err := cs.Close(); err != nil {
+				panic(err)
+			}
+			grpcServer.GracefulStop()
+
+			fmt.Println("Shutting down collector stage...")
+		}()
 
 		pb.RegisterCollectServiceServer(grpcServer, cs)
 

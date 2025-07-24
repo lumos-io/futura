@@ -32,9 +32,9 @@ address = "localhost"
 port = "7233"
 namespace = "default"
 
-[nats]
-servers = ["nats://localhost:4222"]
-apkBucket = "api_keys"
+[redis]
+servers = ["localhost:6379"]
+namespace = "api_keys"
 
 [unleash]
 app_name = "futura-apis"

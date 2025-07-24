@@ -35,3 +35,13 @@ api_keys > df9166bbacd761c74aecc50bb7a902342dd61a1de84551e253f7133154947d88 revi
 ```
 
 For more commands, check this [page](https://docs.nats.io/nats-concepts/jetstream/key-value-store/kv_walkthrough).
+
+## Docker Compose Profile
+
+Now all the containers need to be created for local development. I have attached a `profile` flag to the containers so that they will be created if and only if the profile is specified. For example
+
+```bash
+docker compose --profile dev-tools up -d
+```
+
+will also start the containers with that profile (like `redisinsight`).

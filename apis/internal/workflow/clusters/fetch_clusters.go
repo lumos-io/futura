@@ -32,7 +32,7 @@ type WorkflowFetchClustersWorker struct {
 }
 
 func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[WorkflowFetchClustersInput]) error {
-	js, err := stream.NewNATSJetstreamClient(job.Args.Config.Nats.Servers, "workflow_stream", []string{"fetchclustersworkflow.*"})
+	js, err := stream.NewRedisStreamClient(job.Args.Config.Redis.Servers)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Stream: %v", err)
 	}
