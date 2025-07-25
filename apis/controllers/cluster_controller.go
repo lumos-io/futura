@@ -20,16 +20,44 @@ func GetClusters(c *gin.Context) {
 		return
 	}
 
+	db := models.GetDB()
+
+	var connect models.CloudProvider
+	if err := db.
+		Where("organization_id = ? AND id = ?", orgID, connectID).
+		Find(&connect).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to fetch connect")
+		return
+	}
+
+	// Preload only the cluster for that particular provider and do not
+	// do a massive JOIN operation
+	switch connect.Provider {
+	case models.AWS:
+		db = db.Preload("EKSMetadata")
+	case models.GoogleCloud:
+		db = db.Preload("GKEMetadata")
+	case models.Azure:
+		db = db.Preload("AKSMetadata")
+	case models.DigitalOcean:
+		db = db.Preload("DOKSMetadata")
+	case models.Alibaba:
+		db = db.Preload("ACKMetadata")
+	case models.Kind:
+		db = db.Preload("KindMetadata")
+	default:
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Invalid provider name")
+		return
+	}
+
 	var clusters []models.ClusterMetadata
-	if err := models.GetDB().
-		Preload("CloudProvider").
-		Preload("Organization").
+	if err := db.
 		Where("organization_id = ? AND cloud_provider_id = ?", orgID, connectID).
 		Find(&clusters).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to fetch clusters metadata")
 		return
 	}
-	utils.RespondOK(c, clusters)
+	utils.RespondOK(c, models.ConvertToProtoClusterMetadataList(clusters))
 }
 
 func DeleteCluster(c *gin.Context) {

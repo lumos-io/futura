@@ -12,7 +12,7 @@ You need to create a `.env.local` file where you add secrets that shouldn't be p
 
 ### Run Nix
 
-Assuming `nix` has been installed correctly and the `.env.local` is available, you can proceed with `nix develop` to enter the environment. By default, `kind` is not created (also metric-server and redis are skipped). To enable Kind deployment, run nix as follow `SKIP_KIND=true nix develop`.
+Assuming `nix` has been installed correctly and the `.env.local` is available, you can proceed with `nix develop` to enter the environment. By default, `kind` is not created (also metric-server and redis are skipped). To enable Kind deployment, run nix as follow `SKIP_KIND=false nix develop`.
 
 #### Accessing Redis
 

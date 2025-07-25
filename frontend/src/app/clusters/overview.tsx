@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Cluster from "@/models/kubernetes";
 import { useAuth } from "@/hooks/auth-provider";
 import {
@@ -10,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CloudProviderConnection } from "@/models/cloud-provider";
+import OverviewClusterCard from "./components/overview-card";
 
 const ClustersOverview: React.FC = () => {
   const { user } = useAuth();
@@ -23,20 +23,25 @@ const ClustersOverview: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const orgId = user?.organizationId;
+
   useEffect(() => {
     const fetchProviders = async () => {
-      const orgId = user?.organizationId;
-      if (!orgId) return;
+      if (!orgId) {
+        return;
+      }
 
       const res = await fetch(`/api/organizations/${orgId}/connects`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        return;
+      }
 
       const data = await res.json();
       setProvidersConnection(data.data);
     };
 
     fetchProviders();
-  }, [user?.organizationId]);
+  }, [orgId]);
 
   useEffect(() => {
     if (providersConnection.length > 0 && !selectedProvider) {
@@ -119,16 +124,7 @@ const ClustersOverview: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {clusters.map((cluster) => (
-          <Card key={cluster.id}>
-            <CardHeader>
-              <CardTitle>{cluster.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                {cluster.description || "No description"}
-              </p>
-            </CardContent>
-          </Card>
+          <OverviewClusterCard provider={selectedProvider} cluster={cluster} />
         ))}
       </div>
     </div>

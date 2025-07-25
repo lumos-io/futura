@@ -1,7 +1,7 @@
-interface Cluster {
-    id: number;
-    name: string;
-    description: string;
-}
+import {
+    ClusterMetadata
+} from "@proto/backend/cluster";
+
+type Cluster = ClusterMetadata;
 
 export default Cluster;

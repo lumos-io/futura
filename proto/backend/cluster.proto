@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package backend;
+
+option go_package = "github.com/opisvigilant/futura/proto/gen/backend;backend";
+
+import "google/protobuf/timestamp.proto";
+
+message ClusterMetadata {
+  uint64 id = 1;
+  
+  uint64 cloud_provider_id = 3;  
+  uint64 organization_id = 5;
+
+  EKSClusterMetadata eks_metadata = 7;
+  AKSClusterMetadata aks_metadata = 8;
+  GKEClusterMetadata gke_metadata = 9;
+  DOKSClusterMetadata doks_metadata = 10;
+  ACKClusterMetadata ack_metadata = 11;
+
+  // Used only in dev/testing
+  KindClusterMetadata kind_metadata = 12;
+
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+message EKSClusterMetadata {
+  uint64 id = 1;  
+
+  string name = 2;
+  string status = 3;
+  string version = 4;
+  string endpoint = 5;
+  string arn = 6;
+  string eks_cluster_id = 7;
+  google.protobuf.Timestamp cluster_created_at = 8;
+  string platform_version = 9;
+  map<string, string> tags = 10;
+
+  uint64 cluster_metadata_id = 11;
+}
+
+message KindClusterMetadata {
+  uint64 id = 1;  
+
+  string name = 2;
+  string status = 3;
+  string version = 4;
+  string endpoint = 5;
+  google.protobuf.Timestamp cluster_created_at = 6;
+  string platform_version = 7;
+  map<string, string> tags = 8;
+  uint64 cluster_metadata_id = 9;
+}
+
+message GKEClusterMetadata {
+  uint64 id = 1;
+  
+  string name = 2;
+  uint64 cluster_metadata_id = 3;
+}
+
+message AKSClusterMetadata {
+  uint64 id = 1;
+  
+  string name = 2;
+  uint64 cluster_metadata_id = 3;
+}
+
+message DOKSClusterMetadata {
+  uint64 id = 1;
+  
+  string name = 2;
+  uint64 cluster_metadata_id = 3;
+}
+
+message ACKClusterMetadata {
+  uint64 id = 1;
+  
+  string name = 2;
+  uint64 cluster_metadata_id = 3;
+}
