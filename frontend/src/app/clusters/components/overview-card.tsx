@@ -1,28 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatProtoOrDate } from "@/lib/utils";
 import { CloudProviderConnection } from "@/models/cloud-provider";
-import Cluster from "@/models/kubernetes";
+import Cluster, { GetClusterName } from "@/models/kubernetes";
 import { CloudProvider, cloudProviderFromJSON } from "@proto/backend/backend";
-
-/*
-"kind_metadata": {
-    "id": 53,
-    "name": "kind-cluster-1",
-    "status": "Available",
-    "version": "v1.2.3",
-    "endpoint": "localhost",
-    "cluster_created_at": {
-        "seconds": 1753300605,
-        "nanos": 314652000
-    },
-    "platform_version": "platform-v.3.2.1",
-    "tags": {
-        "key": "value",
-        "test": "test-test"
-    }
-}
-
-*/
 
 type ClusterCardProps = {
   provider: CloudProviderConnection | undefined;
@@ -114,7 +95,7 @@ function renderClusterCardContent({ provider, cluster }: ClusterCardProps) {
           <p>
             Created At:{" "}
             {metadata.cluster_created_at
-              ? metadata.cluster_created_at.toLocaleString()
+              ? formatProtoOrDate(metadata.cluster_created_at)
               : ""}
           </p>
           {metadata.tags &&
@@ -143,7 +124,9 @@ const OverviewClusterCard: React.FC<{
   return (
     <Card key={props.cluster.id}>
       <CardHeader>
-        <CardTitle>Banana</CardTitle>
+        <CardTitle>
+          {props.provider ? GetClusterName(props.cluster, props.provider) : ""}
+        </CardTitle>
       </CardHeader>
       {renderClusterCardContent({
         provider: props.provider,

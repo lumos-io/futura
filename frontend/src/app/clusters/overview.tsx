@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Cluster from "@/models/kubernetes";
+import Cluster, { GetClusterName } from "@/models/kubernetes";
 import { useAuth } from "@/hooks/auth-provider";
 import {
   Select,
@@ -20,6 +20,7 @@ const ClustersOverview: React.FC = () => {
   const [selectedProvider, setSelectedProvider] =
     useState<CloudProviderConnection>();
   const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [selectedCluster, setSelectedCluster] = useState<Cluster>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +44,7 @@ const ClustersOverview: React.FC = () => {
     fetchProviders();
   }, [orgId]);
 
+  // Set initial provider if not already selected
   useEffect(() => {
     if (providersConnection.length > 0 && !selectedProvider) {
       setSelectedProvider(providersConnection[0]);
@@ -50,14 +52,15 @@ const ClustersOverview: React.FC = () => {
   }, [providersConnection, selectedProvider]);
 
   useEffect(() => {
-    if (!selectedProvider || !user?.organizationId) return;
+    if (!selectedProvider) {
+      return;
+    }
 
     const fetchClusters = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const orgId = user.organizationId;
         const res = await fetch(
           `/api/organizations/${orgId}/connects/${selectedProvider.id}/clusters`
         );
@@ -66,29 +69,34 @@ const ClustersOverview: React.FC = () => {
         }
 
         const data = await res.json();
-        setClusters(data.data ?? []);
+        const fetchedClusters: Cluster[] = data.data ?? [];
+        console.log(fetchedClusters);
+        setClusters(fetchedClusters);
+        setSelectedCluster(fetchedClusters[0]);
       } catch (err) {
         console.error(err);
         setError("Unknown error");
         setClusters([]);
+        setSelectedCluster(undefined);
       } finally {
         setLoading(false);
       }
     };
 
     fetchClusters();
-  }, [selectedProvider, user?.organizationId]);
+  }, [selectedProvider, orgId]);
 
   return (
     <div className="p-10 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold text-gray-800">
-          Clusters Overview
-        </h1>
+      <h1 className="text-3xl font-semibold text-gray-800">
+        Clusters Overview
+      </h1>
 
-        <div className="w-48">
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Cloud Provider Dropdown */}
+        <div className="w-full md:w-60">
           <Select
-            value={selectedProvider ? selectedProvider.id.toString() : ""}
+            value={selectedProvider?.id.toString() ?? ""}
             onValueChange={(value) => {
               const found = providersConnection.find(
                 (p) => p.id.toString() === value
@@ -110,23 +118,55 @@ const ClustersOverview: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Cluster Dropdown */}
+        <div className="w-full md:w-60">
+          <Select
+            value={selectedCluster?.id.toString() ?? ""}
+            onValueChange={(value) => {
+              const found = clusters.find((c) => c.id.toString() === value);
+              if (found) {
+                setSelectedCluster(found);
+              }
+            }}
+            disabled={clusters.length === 0}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Cluster" />
+            </SelectTrigger>
+            <SelectContent>
+              {clusters.map((cluster) => (
+                <SelectItem key={cluster.id} value={cluster.id.toString()}>
+                  {GetClusterName(cluster, selectedProvider!)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
+      {/* Loading / Error / Empty States */}
       {loading && <p className="text-gray-500">Loading clusters...</p>}
       {error && <p className="text-red-500">{error}</p>}
-
       {clusters.length === 0 && !loading && !error && (
         <p className="text-gray-500 text-center">
           No clusters found for{" "}
-          {selectedProvider ? selectedProvider.connection_name : ""}.
+          {selectedProvider
+            ? selectedProvider.connection_name
+            : "this provider"}
+          .
         </p>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {clusters.map((cluster) => (
-          <OverviewClusterCard provider={selectedProvider} cluster={cluster} />
-        ))}
-      </div>
+      {/* Show selected cluster */}
+      {selectedCluster && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <OverviewClusterCard
+            cluster={selectedCluster}
+            provider={selectedProvider}
+          />
+        </div>
+      )}
     </div>
   );
 };
