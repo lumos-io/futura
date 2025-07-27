@@ -5,11 +5,12 @@ import {
     SecretName,
 } from "@proto/backend/backend";
 import { useAuth } from "@/hooks/auth-provider";
-import { CloudProviderConnection, EmptyCloudProvider } from "@/models/cloud-provider";
+import { CloudProviderConnection, ClusterInfo, EmptyCloudProvider } from "@/models/cloud-provider";
 
 export type FetchClustersResultEvent = {
     providerConnectionId: number;
     organizationId: number;
+    data: ClusterInfo[];
     error: string;
     status: string;
 };

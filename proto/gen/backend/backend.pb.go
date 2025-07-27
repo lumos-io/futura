@@ -190,15 +190,16 @@ func (SecretName) EnumDescriptor() ([]byte, []int) {
 }
 
 type ProviderConnection struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Provider       CloudProvider          `protobuf:"varint,2,opt,name=provider,proto3,enum=backend.CloudProvider" json:"provider,omitempty"`
-	Status         ActivationStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=backend.ActivationStatus" json:"status,omitempty"`
-	CreatedAt      string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	SecretId       string                 `protobuf:"bytes,5,opt,name=secret_id,json=secretId,proto3" json:"secret_id,omitempty"`
-	ConnectionName string                 `protobuf:"bytes,6,opt,name=connection_name,json=connectionName,proto3" json:"connection_name,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Id               int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Provider         CloudProvider          `protobuf:"varint,2,opt,name=provider,proto3,enum=backend.CloudProvider" json:"provider,omitempty"`
+	Status           ActivationStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=backend.ActivationStatus" json:"status,omitempty"`
+	CreatedAt        string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	SecretId         string                 `protobuf:"bytes,5,opt,name=secret_id,json=secretId,proto3" json:"secret_id,omitempty"`
+	ConnectionName   string                 `protobuf:"bytes,6,opt,name=connection_name,json=connectionName,proto3" json:"connection_name,omitempty"`
+	ImportedClusters uint64                 `protobuf:"varint,7,opt,name=imported_clusters,json=importedClusters,proto3" json:"imported_clusters,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ProviderConnection) Reset() {
@@ -271,6 +272,13 @@ func (x *ProviderConnection) GetConnectionName() string {
 		return x.ConnectionName
 	}
 	return ""
+}
+
+func (x *ProviderConnection) GetImportedClusters() uint64 {
+	if x != nil {
+		return x.ImportedClusters
+	}
+	return 0
 }
 
 type GetAllProviderConnectionResponse struct {
@@ -389,7 +397,7 @@ var File_backend_backend_proto protoreflect.FileDescriptor
 
 const file_backend_backend_proto_rawDesc = "" +
 	"\n" +
-	"\x15backend/backend.proto\x12\abackend\"\xf0\x01\n" +
+	"\x15backend/backend.proto\x12\abackend\"\x9d\x02\n" +
 	"\x12ProviderConnection\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x122\n" +
 	"\bprovider\x18\x02 \x01(\x0e2\x16.backend.CloudProviderR\bprovider\x121\n" +
@@ -397,7 +405,8 @@ const file_backend_backend_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x04 \x01(\tR\tcreatedAt\x12\x1b\n" +
 	"\tsecret_id\x18\x05 \x01(\tR\bsecretId\x12'\n" +
-	"\x0fconnection_name\x18\x06 \x01(\tR\x0econnectionName\"a\n" +
+	"\x0fconnection_name\x18\x06 \x01(\tR\x0econnectionName\x12+\n" +
+	"\x11imported_clusters\x18\a \x01(\x04R\x10importedClusters\"a\n" +
 	" GetAllProviderConnectionResponse\x12=\n" +
 	"\vconnections\x18\x01 \x03(\v2\x1b.backend.ProviderConnectionR\vconnections\"\xd1\x02\n" +
 	"\x1fCreateProviderConnectionRequest\x122\n" +

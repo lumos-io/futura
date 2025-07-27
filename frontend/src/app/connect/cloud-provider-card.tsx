@@ -25,9 +25,9 @@ import {
   activationStatusFromJSON,
   CloudProvider,
   cloudProviderFromJSON,
-  ProviderConnection,
 } from "@proto/backend/backend";
 import { Badge } from "@/components/ui/badge";
+import { CloudProviderConnection } from "@/models/cloud-provider";
 
 const CloudIcon = ({ provider }: { provider: CloudProvider }) => {
   switch (cloudProviderFromJSON(provider)) {
@@ -102,7 +102,7 @@ export const CloudProviderCard = ({
   handleDelete,
   disableDelete,
 }: {
-  provider: ProviderConnection;
+  provider: CloudProviderConnection;
   handleDelete: () => void;
   disableDelete: boolean;
 }) => {
@@ -164,6 +164,15 @@ export const CloudProviderCard = ({
           <span className="text-muted-foreground font-semibold">Status</span>
           <RenderActivationStatus status={provider.status} />
         </div>
+
+        {provider.imported_clusters && (
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground font-semibold">
+              Clusters available
+            </span>
+            {provider.imported_clusters}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

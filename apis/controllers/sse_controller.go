@@ -84,9 +84,3 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 		}
 	}
 }
-
-type ConnectUpdate struct {
-	ConnectID uint   `json:"connect_id"`
-	Status    string `json:"status"` // "started", "succeeded", "failed"
-	Message   string `json:"message"`
-}

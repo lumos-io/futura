@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatProtoOrDate } from "@/lib/utils";
 import { CloudProviderConnection } from "@/models/cloud-provider";
-import Cluster, { GetClusterName } from "@/models/kubernetes";
+import { Cluster } from "@/models/kubernetes";
 import { CloudProvider, cloudProviderFromJSON } from "@proto/backend/backend";
 
 type ClusterCardProps = {
@@ -36,7 +36,7 @@ function renderClusterCardContent({ provider, cluster }: ClusterCardProps) {
       return (
         <CardContent>
           <p className="text-sm font-medium">EKS Cluster</p>
-          <p>Name: {metadata.name}</p>
+          <p>Id: {metadata.cluster_metadata_id}</p>
         </CardContent>
       );
     }
@@ -49,7 +49,7 @@ function renderClusterCardContent({ provider, cluster }: ClusterCardProps) {
       return (
         <CardContent>
           <p className="text-sm font-medium">EKS Cluster</p>
-          <p>Name: {metadata.name}</p>
+          <p>Id: {metadata.cluster_metadata_id}</p>
         </CardContent>
       );
     }
@@ -62,7 +62,7 @@ function renderClusterCardContent({ provider, cluster }: ClusterCardProps) {
       return (
         <CardContent>
           <p className="text-sm font-medium">EKS Cluster</p>
-          <p>Name: {metadata.name}</p>
+          <p>Id: {metadata.cluster_metadata_id}</p>
         </CardContent>
       );
     }
@@ -75,7 +75,7 @@ function renderClusterCardContent({ provider, cluster }: ClusterCardProps) {
       return (
         <CardContent>
           <p className="text-sm font-medium">EKS Cluster</p>
-          <p>Name: {metadata.name}</p>
+          <p>Id: {metadata.cluster_metadata_id}</p>
         </CardContent>
       );
     }
@@ -124,9 +124,7 @@ const OverviewClusterCard: React.FC<{
   return (
     <Card key={props.cluster.id}>
       <CardHeader>
-        <CardTitle>
-          {props.provider ? GetClusterName(props.cluster, props.provider) : ""}
-        </CardTitle>
+        <CardTitle>{props.provider ? props.cluster.name : ""}</CardTitle>
       </CardHeader>
       {renderClusterCardContent({
         provider: props.provider,

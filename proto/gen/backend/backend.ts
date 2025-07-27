@@ -231,6 +231,7 @@ export interface ProviderConnection {
   created_at: string;
   secret_id: string;
   connection_name: string;
+  imported_clusters: number;
 }
 
 export interface GetAllProviderConnectionResponse {
@@ -257,6 +258,7 @@ function createBaseProviderConnection(): ProviderConnection {
     created_at: "",
     secret_id: "",
     connection_name: "",
+    imported_clusters: 0,
   };
 }
 
@@ -279,6 +281,9 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     }
     if (message.connection_name !== "") {
       writer.uint32(50).string(message.connection_name);
+    }
+    if (message.imported_clusters !== 0) {
+      writer.uint32(56).uint64(message.imported_clusters);
     }
     return writer;
   },
@@ -338,6 +343,14 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
           message.connection_name = reader.string();
           continue;
         }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.imported_clusters = longToNumber(reader.uint64());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -355,6 +368,7 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
       created_at: isSet(object.created_at) ? globalThis.String(object.created_at) : "",
       secret_id: isSet(object.secret_id) ? globalThis.String(object.secret_id) : "",
       connection_name: isSet(object.connection_name) ? globalThis.String(object.connection_name) : "",
+      imported_clusters: isSet(object.imported_clusters) ? globalThis.Number(object.imported_clusters) : 0,
     };
   },
 
@@ -378,6 +392,9 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     if (message.connection_name !== "") {
       obj.connection_name = message.connection_name;
     }
+    if (message.imported_clusters !== 0) {
+      obj.imported_clusters = Math.round(message.imported_clusters);
+    }
     return obj;
   },
 
@@ -392,6 +409,7 @@ export const ProviderConnection: MessageFns<ProviderConnection> = {
     message.created_at = object.created_at ?? "";
     message.secret_id = object.secret_id ?? "";
     message.connection_name = object.connection_name ?? "";
+    message.imported_clusters = object.imported_clusters ?? 0;
     return message;
   },
 };

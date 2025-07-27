@@ -101,7 +101,6 @@ func (a *AWSProvider) FetchClusterMetadata(ctx context.Context, clusterID string
 	}
 	cluster := resp.Cluster
 	m := &models.EKSClusterMetadata{
-		Name:             aws.ToString(cluster.Name),
 		Status:           string(cluster.Status),
 		Version:          aws.ToString(cluster.Version),
 		Endpoint:         aws.ToString(cluster.Endpoint),
@@ -112,6 +111,7 @@ func (a *AWSProvider) FetchClusterMetadata(ctx context.Context, clusterID string
 		Tags:             datatypes.JSONMap(utils.ConvertStringMapToInterfaceMap(cluster.Tags)),
 	}
 	return &models.ClusterMetadata{
+		Name:        aws.ToString(cluster.Name),
 		EKSMetadata: m,
 	}, nil
 }

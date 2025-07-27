@@ -9,6 +9,7 @@ import "google/protobuf/timestamp.proto";
 message ClusterMetadata {
   uint64 id = 1;
   
+  string name = 2;
   uint64 cloud_provider_id = 3;  
   uint64 organization_id = 5;
 
@@ -27,57 +28,51 @@ message ClusterMetadata {
 
 message EKSClusterMetadata {
   uint64 id = 1;  
+  
+  string status = 2;
+  string version = 3;
+  string endpoint = 4;
+  string arn = 5;
+  string eks_cluster_id = 6;
+  google.protobuf.Timestamp cluster_created_at = 7;
+  string platform_version = 8;
+  map<string, string> tags = 9;
 
-  string name = 2;
-  string status = 3;
-  string version = 4;
-  string endpoint = 5;
-  string arn = 6;
-  string eks_cluster_id = 7;
-  google.protobuf.Timestamp cluster_created_at = 8;
-  string platform_version = 9;
-  map<string, string> tags = 10;
-
-  uint64 cluster_metadata_id = 11;
+  uint64 cluster_metadata_id = 10;
 }
 
 message KindClusterMetadata {
   uint64 id = 1;  
-
-  string name = 2;
-  string status = 3;
-  string version = 4;
-  string endpoint = 5;
-  google.protobuf.Timestamp cluster_created_at = 6;
-  string platform_version = 7;
-  map<string, string> tags = 8;
-  uint64 cluster_metadata_id = 9;
+  
+  string status = 2;
+  string version = 3;
+  string endpoint = 4;
+  google.protobuf.Timestamp cluster_created_at = 5;
+  string platform_version = 6;
+  map<string, string> tags = 7;
+  uint64 cluster_metadata_id = 8;
 }
 
 message GKEClusterMetadata {
   uint64 id = 1;
-  
-  string name = 2;
-  uint64 cluster_metadata_id = 3;
+    
+  uint64 cluster_metadata_id = 2;
 }
 
 message AKSClusterMetadata {
   uint64 id = 1;
-  
-  string name = 2;
-  uint64 cluster_metadata_id = 3;
+    
+  uint64 cluster_metadata_id = 2;
 }
 
 message DOKSClusterMetadata {
   uint64 id = 1;
-  
-  string name = 2;
-  uint64 cluster_metadata_id = 3;
+    
+  uint64 cluster_metadata_id = 2;
 }
 
 message ACKClusterMetadata {
   uint64 id = 1;
-  
-  string name = 2;
-  uint64 cluster_metadata_id = 3;
+    
+  uint64 cluster_metadata_id = 2;
 }

@@ -65,12 +65,13 @@ func (cc *ConnectController) GetConnects(c *gin.Context) {
 			return
 		}
 		result[i] = &pb.ProviderConnection{
-			Id:             int64(conn.ID),
-			Provider:       p,
-			Status:         s,
-			SecretId:       conn.SecretID.String(),
-			CreatedAt:      conn.CreatedAt.String(),
-			ConnectionName: conn.ConnectionName,
+			Id:               int64(conn.ID),
+			Provider:         p,
+			Status:           s,
+			SecretId:         conn.SecretID.String(),
+			CreatedAt:        conn.CreatedAt.String(),
+			ConnectionName:   conn.ConnectionName,
+			ImportedClusters: uint64(conn.ImportedClusters),
 		}
 	}
 	utils.RespondOK(c, result)
@@ -134,12 +135,13 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 
 	// create response object
 	pc := &pb.ProviderConnection{
-		Id:             int64(cp.ID),
-		Provider:       p,
-		Status:         s,
-		SecretId:       secretID.String(),
-		CreatedAt:      cp.CreatedAt.String(),
-		ConnectionName: cp.ConnectionName,
+		Id:               int64(cp.ID),
+		Provider:         p,
+		Status:           s,
+		SecretId:         secretID.String(),
+		CreatedAt:        cp.CreatedAt.String(),
+		ConnectionName:   cp.ConnectionName,
+		ImportedClusters: 0, // it gets updated after the import
 	}
 
 	// trigger workflow to fetch all the clusters in a separate go routine

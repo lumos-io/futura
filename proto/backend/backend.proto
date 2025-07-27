@@ -38,6 +38,7 @@ message ProviderConnection {
   string created_at = 4;
   string secret_id = 5;
   string connection_name = 6;
+  uint64 imported_clusters = 7;
 }
 
 message GetAllProviderConnectionResponse {

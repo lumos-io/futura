@@ -5,9 +5,9 @@ import {
     CloudProvider as ProtoCloudProvider,
 } from "@proto/backend/backend";
 
-type CloudProviderConnection = ProviderConnection & Record<string, string | number | undefined>;
+export type CloudProviderConnection = ProviderConnection & Record<string, string | number | undefined>;
 
-interface AddProviderModalProps {
+export interface AddProviderModalProps {
     open: boolean;
     mode: "create" | "edit";
     onOpenChange: (open: boolean) => void;
@@ -16,7 +16,7 @@ interface AddProviderModalProps {
     onSave: () => void;
 }
 
-function EmptyCloudProvider(): CloudProviderConnection {
+export function EmptyCloudProvider(): CloudProviderConnection {
     return {
         created_at: "",
         id: -1,
@@ -24,7 +24,10 @@ function EmptyCloudProvider(): CloudProviderConnection {
         connection_name: "",
         provider: ProtoCloudProvider.UNRECOGNIZED,
         status: ActivationStatus.UNRECOGNIZED,
-    }
+        imported_clusters: 0,
+    };
 }
 
-export { CloudProviderConnection, EmptyCloudProvider, AddProviderModalProps }
+export type ClusterInfo = {
+    name: string,
+}

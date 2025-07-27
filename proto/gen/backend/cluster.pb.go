@@ -25,6 +25,7 @@ const (
 type ClusterMetadata struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Id              uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	CloudProviderId uint64                 `protobuf:"varint,3,opt,name=cloud_provider_id,json=cloudProviderId,proto3" json:"cloud_provider_id,omitempty"`
 	OrganizationId  uint64                 `protobuf:"varint,5,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
 	EksMetadata     *EKSClusterMetadata    `protobuf:"bytes,7,opt,name=eks_metadata,json=eksMetadata,proto3" json:"eks_metadata,omitempty"`
@@ -75,6 +76,13 @@ func (x *ClusterMetadata) GetId() uint64 {
 		return x.Id
 	}
 	return 0
+}
+
+func (x *ClusterMetadata) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 func (x *ClusterMetadata) GetCloudProviderId() uint64 {
@@ -150,16 +158,15 @@ func (x *ClusterMetadata) GetUpdatedAt() *timestamppb.Timestamp {
 type EKSClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Status            string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	Version           string                 `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
-	Endpoint          string                 `protobuf:"bytes,5,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	Arn               string                 `protobuf:"bytes,6,opt,name=arn,proto3" json:"arn,omitempty"`
-	EksClusterId      string                 `protobuf:"bytes,7,opt,name=eks_cluster_id,json=eksClusterId,proto3" json:"eks_cluster_id,omitempty"`
-	ClusterCreatedAt  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=cluster_created_at,json=clusterCreatedAt,proto3" json:"cluster_created_at,omitempty"`
-	PlatformVersion   string                 `protobuf:"bytes,9,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
-	Tags              map[string]string      `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	ClusterMetadataId uint64                 `protobuf:"varint,11,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	Status            string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Version           string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Endpoint          string                 `protobuf:"bytes,4,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Arn               string                 `protobuf:"bytes,5,opt,name=arn,proto3" json:"arn,omitempty"`
+	EksClusterId      string                 `protobuf:"bytes,6,opt,name=eks_cluster_id,json=eksClusterId,proto3" json:"eks_cluster_id,omitempty"`
+	ClusterCreatedAt  *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=cluster_created_at,json=clusterCreatedAt,proto3" json:"cluster_created_at,omitempty"`
+	PlatformVersion   string                 `protobuf:"bytes,8,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
+	Tags              map[string]string      `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ClusterMetadataId uint64                 `protobuf:"varint,10,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -199,13 +206,6 @@ func (x *EKSClusterMetadata) GetId() uint64 {
 		return x.Id
 	}
 	return 0
-}
-
-func (x *EKSClusterMetadata) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
 }
 
 func (x *EKSClusterMetadata) GetStatus() string {
@@ -274,14 +274,13 @@ func (x *EKSClusterMetadata) GetClusterMetadataId() uint64 {
 type KindClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Status            string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	Version           string                 `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
-	Endpoint          string                 `protobuf:"bytes,5,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	ClusterCreatedAt  *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=cluster_created_at,json=clusterCreatedAt,proto3" json:"cluster_created_at,omitempty"`
-	PlatformVersion   string                 `protobuf:"bytes,7,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
-	Tags              map[string]string      `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	ClusterMetadataId uint64                 `protobuf:"varint,9,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	Status            string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Version           string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Endpoint          string                 `protobuf:"bytes,4,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	ClusterCreatedAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=cluster_created_at,json=clusterCreatedAt,proto3" json:"cluster_created_at,omitempty"`
+	PlatformVersion   string                 `protobuf:"bytes,6,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
+	Tags              map[string]string      `protobuf:"bytes,7,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ClusterMetadataId uint64                 `protobuf:"varint,8,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -321,13 +320,6 @@ func (x *KindClusterMetadata) GetId() uint64 {
 		return x.Id
 	}
 	return 0
-}
-
-func (x *KindClusterMetadata) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
 }
 
 func (x *KindClusterMetadata) GetStatus() string {
@@ -382,8 +374,7 @@ func (x *KindClusterMetadata) GetClusterMetadataId() uint64 {
 type GKEClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ClusterMetadataId uint64                 `protobuf:"varint,3,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	ClusterMetadataId uint64                 `protobuf:"varint,2,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -425,13 +416,6 @@ func (x *GKEClusterMetadata) GetId() uint64 {
 	return 0
 }
 
-func (x *GKEClusterMetadata) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 func (x *GKEClusterMetadata) GetClusterMetadataId() uint64 {
 	if x != nil {
 		return x.ClusterMetadataId
@@ -442,8 +426,7 @@ func (x *GKEClusterMetadata) GetClusterMetadataId() uint64 {
 type AKSClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ClusterMetadataId uint64                 `protobuf:"varint,3,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	ClusterMetadataId uint64                 `protobuf:"varint,2,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -485,13 +468,6 @@ func (x *AKSClusterMetadata) GetId() uint64 {
 	return 0
 }
 
-func (x *AKSClusterMetadata) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 func (x *AKSClusterMetadata) GetClusterMetadataId() uint64 {
 	if x != nil {
 		return x.ClusterMetadataId
@@ -502,8 +478,7 @@ func (x *AKSClusterMetadata) GetClusterMetadataId() uint64 {
 type DOKSClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ClusterMetadataId uint64                 `protobuf:"varint,3,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	ClusterMetadataId uint64                 `protobuf:"varint,2,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -545,13 +520,6 @@ func (x *DOKSClusterMetadata) GetId() uint64 {
 	return 0
 }
 
-func (x *DOKSClusterMetadata) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 func (x *DOKSClusterMetadata) GetClusterMetadataId() uint64 {
 	if x != nil {
 		return x.ClusterMetadataId
@@ -562,8 +530,7 @@ func (x *DOKSClusterMetadata) GetClusterMetadataId() uint64 {
 type ACKClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ClusterMetadataId uint64                 `protobuf:"varint,3,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	ClusterMetadataId uint64                 `protobuf:"varint,2,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -605,13 +572,6 @@ func (x *ACKClusterMetadata) GetId() uint64 {
 	return 0
 }
 
-func (x *ACKClusterMetadata) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 func (x *ACKClusterMetadata) GetClusterMetadataId() uint64 {
 	if x != nil {
 		return x.ClusterMetadataId
@@ -623,9 +583,10 @@ var File_backend_cluster_proto protoreflect.FileDescriptor
 
 const file_backend_cluster_proto_rawDesc = "" +
 	"\n" +
-	"\x15backend/cluster.proto\x12\abackend\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf2\x04\n" +
+	"\x15backend/cluster.proto\x12\abackend\x1a\x1fgoogle/protobuf/timestamp.proto\"\x86\x05\n" +
 	"\x0fClusterMetadata\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12*\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12*\n" +
 	"\x11cloud_provider_id\x18\x03 \x01(\x04R\x0fcloudProviderId\x12'\n" +
 	"\x0forganization_id\x18\x05 \x01(\x04R\x0eorganizationId\x12>\n" +
 	"\feks_metadata\x18\a \x01(\v2\x1b.backend.EKSClusterMetadataR\veksMetadata\x12>\n" +
@@ -638,52 +599,46 @@ const file_backend_cluster_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xd7\x03\n" +
+	"updated_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xc3\x03\n" +
 	"\x12EKSClusterMetadata\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\x12\x18\n" +
-	"\aversion\x18\x04 \x01(\tR\aversion\x12\x1a\n" +
-	"\bendpoint\x18\x05 \x01(\tR\bendpoint\x12\x10\n" +
-	"\x03arn\x18\x06 \x01(\tR\x03arn\x12$\n" +
-	"\x0eeks_cluster_id\x18\a \x01(\tR\feksClusterId\x12H\n" +
-	"\x12cluster_created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x10clusterCreatedAt\x12)\n" +
-	"\x10platform_version\x18\t \x01(\tR\x0fplatformVersion\x129\n" +
-	"\x04tags\x18\n" +
-	" \x03(\v2%.backend.EKSClusterMetadata.TagsEntryR\x04tags\x12.\n" +
-	"\x13cluster_metadata_id\x18\v \x01(\x04R\x11clusterMetadataId\x1a7\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12\x1a\n" +
+	"\bendpoint\x18\x04 \x01(\tR\bendpoint\x12\x10\n" +
+	"\x03arn\x18\x05 \x01(\tR\x03arn\x12$\n" +
+	"\x0eeks_cluster_id\x18\x06 \x01(\tR\feksClusterId\x12H\n" +
+	"\x12cluster_created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x10clusterCreatedAt\x12)\n" +
+	"\x10platform_version\x18\b \x01(\tR\x0fplatformVersion\x129\n" +
+	"\x04tags\x18\t \x03(\v2%.backend.EKSClusterMetadata.TagsEntryR\x04tags\x12.\n" +
+	"\x13cluster_metadata_id\x18\n" +
+	" \x01(\x04R\x11clusterMetadataId\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa1\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8d\x03\n" +
 	"\x13KindClusterMetadata\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\x12\x18\n" +
-	"\aversion\x18\x04 \x01(\tR\aversion\x12\x1a\n" +
-	"\bendpoint\x18\x05 \x01(\tR\bendpoint\x12H\n" +
-	"\x12cluster_created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x10clusterCreatedAt\x12)\n" +
-	"\x10platform_version\x18\a \x01(\tR\x0fplatformVersion\x12:\n" +
-	"\x04tags\x18\b \x03(\v2&.backend.KindClusterMetadata.TagsEntryR\x04tags\x12.\n" +
-	"\x13cluster_metadata_id\x18\t \x01(\x04R\x11clusterMetadataId\x1a7\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12\x1a\n" +
+	"\bendpoint\x18\x04 \x01(\tR\bendpoint\x12H\n" +
+	"\x12cluster_created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x10clusterCreatedAt\x12)\n" +
+	"\x10platform_version\x18\x06 \x01(\tR\x0fplatformVersion\x12:\n" +
+	"\x04tags\x18\a \x03(\v2&.backend.KindClusterMetadata.TagsEntryR\x04tags\x12.\n" +
+	"\x13cluster_metadata_id\x18\b \x01(\x04R\x11clusterMetadataId\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"h\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"T\n" +
 	"\x12GKEClusterMetadata\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +
-	"\x13cluster_metadata_id\x18\x03 \x01(\x04R\x11clusterMetadataId\"h\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
+	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\"T\n" +
 	"\x12AKSClusterMetadata\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +
-	"\x13cluster_metadata_id\x18\x03 \x01(\x04R\x11clusterMetadataId\"i\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
+	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\"U\n" +
 	"\x13DOKSClusterMetadata\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +
-	"\x13cluster_metadata_id\x18\x03 \x01(\x04R\x11clusterMetadataId\"h\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
+	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\"T\n" +
 	"\x12ACKClusterMetadata\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12.\n" +
-	"\x13cluster_metadata_id\x18\x03 \x01(\x04R\x11clusterMetadataIdB:Z8github.com/opisvigilant/futura/proto/gen/backend;backendb\x06proto3"
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
+	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataIdB:Z8github.com/opisvigilant/futura/proto/gen/backend;backendb\x06proto3"
 
 var (
 	file_backend_cluster_proto_rawDescOnce sync.Once

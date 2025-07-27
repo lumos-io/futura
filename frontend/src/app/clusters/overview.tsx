@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Cluster, { GetClusterName } from "@/models/kubernetes";
+import { Cluster } from "@/models/kubernetes";
 import { useAuth } from "@/hooks/auth-provider";
 import {
   Select,
@@ -137,7 +137,7 @@ const ClustersOverview: React.FC = () => {
             <SelectContent>
               {clusters.map((cluster) => (
                 <SelectItem key={cluster.id} value={cluster.id.toString()}>
-                  {GetClusterName(cluster, selectedProvider!)}
+                  {cluster.name}
                 </SelectItem>
               ))}
             </SelectContent>

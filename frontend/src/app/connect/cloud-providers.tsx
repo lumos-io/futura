@@ -62,8 +62,11 @@ const CloudProviders: React.FC = () => {
     setConnectedProviders((prevProviders) => {
       return prevProviders.map((provider) => {
         if (String(provider.id) === String(latest.providerConnectionId)) {
+          console.log(latest);
+          const n = latest.data ? latest.data.length : 0;
           return {
             ...provider,
+            imported_clusters: n,
             status:
               latest.status === "SUCCESS"
                 ? ActivationStatus.ACTIVE
@@ -71,7 +74,7 @@ const CloudProviders: React.FC = () => {
           };
         }
         return provider;
-      });
+      }) as typeof prevProviders;
     });
   }, [latest]);
 

@@ -53,39 +53,64 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 
 	allClusters, err := client.FetchClusters(ctx)
 	if err != nil {
-		return publishResult(ctx, js, job.Args.ProviderConnection.Id, job.Args.OrganizationID, workflowsignals.StatusFailed, err.Error())
+		return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
+			ProviderConnectionID: job.Args.ProviderConnection.Id,
+			OrganizationID:       job.Args.OrganizationID,
+			Status:               workflowsignals.StatusFailed,
+			Error:                err.Error(),
+		})
 	}
 
-	for _, clusterID := range allClusters {
+	data := make([]workflowsignals.ClusterInfo, len(allClusters))
+	for i, clusterID := range allClusters {
 		metadata, err := client.FetchClusterMetadata(ctx, clusterID)
+		if err != nil {
+			return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
+				ProviderConnectionID: job.Args.ProviderConnection.Id,
+				OrganizationID:       job.Args.OrganizationID,
+				Status:               workflowsignals.StatusFailed,
+				Error:                err.Error(),
+			})
+		}
+
 		// enrich the object
 		metadata.CloudProviderID = uint(job.Args.ProviderConnection.Id)
 		metadata.OrganizationID = job.Args.OrganizationID
 
-		if err != nil {
-			return publishResult(ctx, js, job.Args.ProviderConnection.Id, job.Args.OrganizationID, workflowsignals.StatusFailed, err.Error())
-		}
 		if err := storeClusterMetadata(job.Args.Config.Database, metadata); err != nil {
-			return publishResult(ctx, js, job.Args.ProviderConnection.Id, job.Args.OrganizationID, workflowsignals.StatusFailed, err.Error())
+			return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
+				ProviderConnectionID: job.Args.ProviderConnection.Id,
+				OrganizationID:       job.Args.OrganizationID,
+				Status:               workflowsignals.StatusFailed,
+				Error:                err.Error(),
+			})
+		}
+		data[i] = workflowsignals.ClusterInfo{
+			// Name: metadata.,
 		}
 	}
 
 	// if we arrive here, we managed to get all the metadata correctly
 	// we can now update the cloud_provider table to ACTIVE
-	if err := updateCloudProviderStatus(job.Args.Config.Database, job.Args.ProviderConnection.Id); err != nil {
-		return publishResult(ctx, js, job.Args.ProviderConnection.Id, job.Args.OrganizationID, workflowsignals.StatusFailed, err.Error())
+	if err := updateCloudProviderStatus(job.Args.Config.Database, job.Args.ProviderConnection.Id, len(allClusters)); err != nil {
+		return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
+			ProviderConnectionID: job.Args.ProviderConnection.Id,
+			OrganizationID:       job.Args.OrganizationID,
+			Status:               workflowsignals.StatusFailed,
+			Error:                err.Error(),
+		})
 	}
 
-	return publishResult(ctx, js, job.Args.ProviderConnection.Id, job.Args.OrganizationID, workflowsignals.StatusSuccess, "")
+	return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
+		ProviderConnectionID: job.Args.ProviderConnection.Id,
+		OrganizationID:       job.Args.OrganizationID,
+		Status:               workflowsignals.StatusFailed,
+		Error:                "",
+	})
 }
 
-func publishResult(ctx context.Context, js stream.Stream, providerConnectionID int64, organizationID uint, success workflowsignals.WorkflowStatus, errMsg string) error {
-	b, err := json.Marshal(workflowsignals.WorkflowFetchClustersStatusSignal{
-		ProviderConnectionID: providerConnectionID,
-		OrganizationID:       organizationID,
-		Status:               success,
-		Error:                errMsg,
-	})
+func publishResult(ctx context.Context, js stream.Stream, result workflowsignals.WorkflowFetchClustersStatusSignal) error {
+	b, err := json.Marshal(result)
 	if err != nil {
 		return err
 	}
@@ -111,7 +136,7 @@ func storeClusterMetadata(dbConfig *config.Database, metadata *models.ClusterMet
 	return nil
 }
 
-func updateCloudProviderStatus(dbConfig *config.Database, providerID int64) error {
+func updateCloudProviderStatus(dbConfig *config.Database, providerID int64, importedClusters int) error {
 	// create a postgres client
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
@@ -122,7 +147,13 @@ func updateCloudProviderStatus(dbConfig *config.Database, providerID int64) erro
 	if err != nil {
 		return err
 	}
-	if err := db.Model(&models.CloudProvider{}).Where("id = ?", providerID).Update("status", pb.ActivationStatus_ACTIVE).Error; err != nil {
+
+	if err := db.Model(&models.CloudProvider{}).
+		Where("id = ?", providerID).
+		Updates(map[string]any{
+			"status":            pb.ActivationStatus_ACTIVE,
+			"imported_clusters": importedClusters,
+		}).Error; err != nil {
 		return err
 	}
 	return nil

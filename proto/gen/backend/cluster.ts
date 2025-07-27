@@ -12,6 +12,7 @@ export const protobufPackage = "backend";
 
 export interface ClusterMetadata {
   id: number;
+  name: string;
   cloud_provider_id: number;
   organization_id: number;
   eks_metadata: EKSClusterMetadata | undefined;
@@ -29,7 +30,6 @@ export interface ClusterMetadata {
 
 export interface EKSClusterMetadata {
   id: number;
-  name: string;
   status: string;
   version: string;
   endpoint: string;
@@ -48,7 +48,6 @@ export interface EKSClusterMetadata_TagsEntry {
 
 export interface KindClusterMetadata {
   id: number;
-  name: string;
   status: string;
   version: string;
   endpoint: string;
@@ -65,31 +64,28 @@ export interface KindClusterMetadata_TagsEntry {
 
 export interface GKEClusterMetadata {
   id: number;
-  name: string;
   cluster_metadata_id: number;
 }
 
 export interface AKSClusterMetadata {
   id: number;
-  name: string;
   cluster_metadata_id: number;
 }
 
 export interface DOKSClusterMetadata {
   id: number;
-  name: string;
   cluster_metadata_id: number;
 }
 
 export interface ACKClusterMetadata {
   id: number;
-  name: string;
   cluster_metadata_id: number;
 }
 
 function createBaseClusterMetadata(): ClusterMetadata {
   return {
     id: 0,
+    name: "",
     cloud_provider_id: 0,
     organization_id: 0,
     eks_metadata: undefined,
@@ -107,6 +103,9 @@ export const ClusterMetadata: MessageFns<ClusterMetadata> = {
   encode(message: ClusterMetadata, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.id !== 0) {
       writer.uint32(8).uint64(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
     }
     if (message.cloud_provider_id !== 0) {
       writer.uint32(24).uint64(message.cloud_provider_id);
@@ -154,6 +153,14 @@ export const ClusterMetadata: MessageFns<ClusterMetadata> = {
           }
 
           message.id = longToNumber(reader.uint64());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
           continue;
         }
         case 3: {
@@ -248,6 +255,7 @@ export const ClusterMetadata: MessageFns<ClusterMetadata> = {
   fromJSON(object: any): ClusterMetadata {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
       cloud_provider_id: isSet(object.cloud_provider_id) ? globalThis.Number(object.cloud_provider_id) : 0,
       organization_id: isSet(object.organization_id) ? globalThis.Number(object.organization_id) : 0,
       eks_metadata: isSet(object.eks_metadata) ? EKSClusterMetadata.fromJSON(object.eks_metadata) : undefined,
@@ -265,6 +273,9 @@ export const ClusterMetadata: MessageFns<ClusterMetadata> = {
     const obj: any = {};
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
     }
     if (message.cloud_provider_id !== 0) {
       obj.cloud_provider_id = Math.round(message.cloud_provider_id);
@@ -305,6 +316,7 @@ export const ClusterMetadata: MessageFns<ClusterMetadata> = {
   fromPartial<I extends Exact<DeepPartial<ClusterMetadata>, I>>(object: I): ClusterMetadata {
     const message = createBaseClusterMetadata();
     message.id = object.id ?? 0;
+    message.name = object.name ?? "";
     message.cloud_provider_id = object.cloud_provider_id ?? 0;
     message.organization_id = object.organization_id ?? 0;
     message.eks_metadata = (object.eks_metadata !== undefined && object.eks_metadata !== null)
@@ -334,7 +346,6 @@ export const ClusterMetadata: MessageFns<ClusterMetadata> = {
 function createBaseEKSClusterMetadata(): EKSClusterMetadata {
   return {
     id: 0,
-    name: "",
     status: "",
     version: "",
     endpoint: "",
@@ -352,35 +363,32 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
     if (message.id !== 0) {
       writer.uint32(8).uint64(message.id);
     }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
     if (message.status !== "") {
-      writer.uint32(26).string(message.status);
+      writer.uint32(18).string(message.status);
     }
     if (message.version !== "") {
-      writer.uint32(34).string(message.version);
+      writer.uint32(26).string(message.version);
     }
     if (message.endpoint !== "") {
-      writer.uint32(42).string(message.endpoint);
+      writer.uint32(34).string(message.endpoint);
     }
     if (message.arn !== "") {
-      writer.uint32(50).string(message.arn);
+      writer.uint32(42).string(message.arn);
     }
     if (message.eks_cluster_id !== "") {
-      writer.uint32(58).string(message.eks_cluster_id);
+      writer.uint32(50).string(message.eks_cluster_id);
     }
     if (message.cluster_created_at !== undefined) {
-      Timestamp.encode(toTimestamp(message.cluster_created_at), writer.uint32(66).fork()).join();
+      Timestamp.encode(toTimestamp(message.cluster_created_at), writer.uint32(58).fork()).join();
     }
     if (message.platform_version !== "") {
-      writer.uint32(74).string(message.platform_version);
+      writer.uint32(66).string(message.platform_version);
     }
     Object.entries(message.tags).forEach(([key, value]) => {
-      EKSClusterMetadata_TagsEntry.encode({ key: key as any, value }, writer.uint32(82).fork()).join();
+      EKSClusterMetadata_TagsEntry.encode({ key: key as any, value }, writer.uint32(74).fork()).join();
     });
     if (message.cluster_metadata_id !== 0) {
-      writer.uint32(88).uint64(message.cluster_metadata_id);
+      writer.uint32(80).uint64(message.cluster_metadata_id);
     }
     return writer;
   },
@@ -405,7 +413,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
             break;
           }
 
-          message.name = reader.string();
+          message.status = reader.string();
           continue;
         }
         case 3: {
@@ -413,7 +421,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
             break;
           }
 
-          message.status = reader.string();
+          message.version = reader.string();
           continue;
         }
         case 4: {
@@ -421,7 +429,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
             break;
           }
 
-          message.version = reader.string();
+          message.endpoint = reader.string();
           continue;
         }
         case 5: {
@@ -429,7 +437,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
             break;
           }
 
-          message.endpoint = reader.string();
+          message.arn = reader.string();
           continue;
         }
         case 6: {
@@ -437,7 +445,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
             break;
           }
 
-          message.arn = reader.string();
+          message.eks_cluster_id = reader.string();
           continue;
         }
         case 7: {
@@ -445,7 +453,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
             break;
           }
 
-          message.eks_cluster_id = reader.string();
+          message.cluster_created_at = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         }
         case 8: {
@@ -453,7 +461,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
             break;
           }
 
-          message.cluster_created_at = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          message.platform_version = reader.string();
           continue;
         }
         case 9: {
@@ -461,22 +469,14 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
             break;
           }
 
-          message.platform_version = reader.string();
+          const entry9 = EKSClusterMetadata_TagsEntry.decode(reader, reader.uint32());
+          if (entry9.value !== undefined) {
+            message.tags[entry9.key] = entry9.value;
+          }
           continue;
         }
         case 10: {
-          if (tag !== 82) {
-            break;
-          }
-
-          const entry10 = EKSClusterMetadata_TagsEntry.decode(reader, reader.uint32());
-          if (entry10.value !== undefined) {
-            message.tags[entry10.key] = entry10.value;
-          }
-          continue;
-        }
-        case 11: {
-          if (tag !== 88) {
+          if (tag !== 80) {
             break;
           }
 
@@ -495,7 +495,6 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
   fromJSON(object: any): EKSClusterMetadata {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
       status: isSet(object.status) ? globalThis.String(object.status) : "",
       version: isSet(object.version) ? globalThis.String(object.version) : "",
       endpoint: isSet(object.endpoint) ? globalThis.String(object.endpoint) : "",
@@ -517,9 +516,6 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
     const obj: any = {};
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
     }
     if (message.status !== "") {
       obj.status = message.status;
@@ -563,7 +559,6 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
   fromPartial<I extends Exact<DeepPartial<EKSClusterMetadata>, I>>(object: I): EKSClusterMetadata {
     const message = createBaseEKSClusterMetadata();
     message.id = object.id ?? 0;
-    message.name = object.name ?? "";
     message.status = object.status ?? "";
     message.version = object.version ?? "";
     message.endpoint = object.endpoint ?? "";
@@ -661,7 +656,6 @@ export const EKSClusterMetadata_TagsEntry: MessageFns<EKSClusterMetadata_TagsEnt
 function createBaseKindClusterMetadata(): KindClusterMetadata {
   return {
     id: 0,
-    name: "",
     status: "",
     version: "",
     endpoint: "",
@@ -677,29 +671,26 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
     if (message.id !== 0) {
       writer.uint32(8).uint64(message.id);
     }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
     if (message.status !== "") {
-      writer.uint32(26).string(message.status);
+      writer.uint32(18).string(message.status);
     }
     if (message.version !== "") {
-      writer.uint32(34).string(message.version);
+      writer.uint32(26).string(message.version);
     }
     if (message.endpoint !== "") {
-      writer.uint32(42).string(message.endpoint);
+      writer.uint32(34).string(message.endpoint);
     }
     if (message.cluster_created_at !== undefined) {
-      Timestamp.encode(toTimestamp(message.cluster_created_at), writer.uint32(50).fork()).join();
+      Timestamp.encode(toTimestamp(message.cluster_created_at), writer.uint32(42).fork()).join();
     }
     if (message.platform_version !== "") {
-      writer.uint32(58).string(message.platform_version);
+      writer.uint32(50).string(message.platform_version);
     }
     Object.entries(message.tags).forEach(([key, value]) => {
-      KindClusterMetadata_TagsEntry.encode({ key: key as any, value }, writer.uint32(66).fork()).join();
+      KindClusterMetadata_TagsEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).join();
     });
     if (message.cluster_metadata_id !== 0) {
-      writer.uint32(72).uint64(message.cluster_metadata_id);
+      writer.uint32(64).uint64(message.cluster_metadata_id);
     }
     return writer;
   },
@@ -724,7 +715,7 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
             break;
           }
 
-          message.name = reader.string();
+          message.status = reader.string();
           continue;
         }
         case 3: {
@@ -732,7 +723,7 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
             break;
           }
 
-          message.status = reader.string();
+          message.version = reader.string();
           continue;
         }
         case 4: {
@@ -740,7 +731,7 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
             break;
           }
 
-          message.version = reader.string();
+          message.endpoint = reader.string();
           continue;
         }
         case 5: {
@@ -748,7 +739,7 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
             break;
           }
 
-          message.endpoint = reader.string();
+          message.cluster_created_at = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         }
         case 6: {
@@ -756,7 +747,7 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
             break;
           }
 
-          message.cluster_created_at = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          message.platform_version = reader.string();
           continue;
         }
         case 7: {
@@ -764,22 +755,14 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
             break;
           }
 
-          message.platform_version = reader.string();
+          const entry7 = KindClusterMetadata_TagsEntry.decode(reader, reader.uint32());
+          if (entry7.value !== undefined) {
+            message.tags[entry7.key] = entry7.value;
+          }
           continue;
         }
         case 8: {
-          if (tag !== 66) {
-            break;
-          }
-
-          const entry8 = KindClusterMetadata_TagsEntry.decode(reader, reader.uint32());
-          if (entry8.value !== undefined) {
-            message.tags[entry8.key] = entry8.value;
-          }
-          continue;
-        }
-        case 9: {
-          if (tag !== 72) {
+          if (tag !== 64) {
             break;
           }
 
@@ -798,7 +781,6 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
   fromJSON(object: any): KindClusterMetadata {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
       status: isSet(object.status) ? globalThis.String(object.status) : "",
       version: isSet(object.version) ? globalThis.String(object.version) : "",
       endpoint: isSet(object.endpoint) ? globalThis.String(object.endpoint) : "",
@@ -818,9 +800,6 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
     const obj: any = {};
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
     }
     if (message.status !== "") {
       obj.status = message.status;
@@ -858,7 +837,6 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
   fromPartial<I extends Exact<DeepPartial<KindClusterMetadata>, I>>(object: I): KindClusterMetadata {
     const message = createBaseKindClusterMetadata();
     message.id = object.id ?? 0;
-    message.name = object.name ?? "";
     message.status = object.status ?? "";
     message.version = object.version ?? "";
     message.endpoint = object.endpoint ?? "";
@@ -954,7 +932,7 @@ export const KindClusterMetadata_TagsEntry: MessageFns<KindClusterMetadata_TagsE
 };
 
 function createBaseGKEClusterMetadata(): GKEClusterMetadata {
-  return { id: 0, name: "", cluster_metadata_id: 0 };
+  return { id: 0, cluster_metadata_id: 0 };
 }
 
 export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
@@ -962,11 +940,8 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
     if (message.id !== 0) {
       writer.uint32(8).uint64(message.id);
     }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
     if (message.cluster_metadata_id !== 0) {
-      writer.uint32(24).uint64(message.cluster_metadata_id);
+      writer.uint32(16).uint64(message.cluster_metadata_id);
     }
     return writer;
   },
@@ -987,15 +962,7 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
           continue;
         }
         case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
+          if (tag !== 16) {
             break;
           }
 
@@ -1014,7 +981,6 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
   fromJSON(object: any): GKEClusterMetadata {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
     };
   },
@@ -1023,9 +989,6 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
     const obj: any = {};
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
     }
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
@@ -1039,14 +1002,13 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
   fromPartial<I extends Exact<DeepPartial<GKEClusterMetadata>, I>>(object: I): GKEClusterMetadata {
     const message = createBaseGKEClusterMetadata();
     message.id = object.id ?? 0;
-    message.name = object.name ?? "";
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
     return message;
   },
 };
 
 function createBaseAKSClusterMetadata(): AKSClusterMetadata {
-  return { id: 0, name: "", cluster_metadata_id: 0 };
+  return { id: 0, cluster_metadata_id: 0 };
 }
 
 export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
@@ -1054,11 +1016,8 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
     if (message.id !== 0) {
       writer.uint32(8).uint64(message.id);
     }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
     if (message.cluster_metadata_id !== 0) {
-      writer.uint32(24).uint64(message.cluster_metadata_id);
+      writer.uint32(16).uint64(message.cluster_metadata_id);
     }
     return writer;
   },
@@ -1079,15 +1038,7 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
           continue;
         }
         case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
+          if (tag !== 16) {
             break;
           }
 
@@ -1106,7 +1057,6 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
   fromJSON(object: any): AKSClusterMetadata {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
     };
   },
@@ -1115,9 +1065,6 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
     const obj: any = {};
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
     }
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
@@ -1131,14 +1078,13 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
   fromPartial<I extends Exact<DeepPartial<AKSClusterMetadata>, I>>(object: I): AKSClusterMetadata {
     const message = createBaseAKSClusterMetadata();
     message.id = object.id ?? 0;
-    message.name = object.name ?? "";
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
     return message;
   },
 };
 
 function createBaseDOKSClusterMetadata(): DOKSClusterMetadata {
-  return { id: 0, name: "", cluster_metadata_id: 0 };
+  return { id: 0, cluster_metadata_id: 0 };
 }
 
 export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
@@ -1146,11 +1092,8 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
     if (message.id !== 0) {
       writer.uint32(8).uint64(message.id);
     }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
     if (message.cluster_metadata_id !== 0) {
-      writer.uint32(24).uint64(message.cluster_metadata_id);
+      writer.uint32(16).uint64(message.cluster_metadata_id);
     }
     return writer;
   },
@@ -1171,15 +1114,7 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
           continue;
         }
         case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
+          if (tag !== 16) {
             break;
           }
 
@@ -1198,7 +1133,6 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
   fromJSON(object: any): DOKSClusterMetadata {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
     };
   },
@@ -1207,9 +1141,6 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
     const obj: any = {};
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
     }
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
@@ -1223,14 +1154,13 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
   fromPartial<I extends Exact<DeepPartial<DOKSClusterMetadata>, I>>(object: I): DOKSClusterMetadata {
     const message = createBaseDOKSClusterMetadata();
     message.id = object.id ?? 0;
-    message.name = object.name ?? "";
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
     return message;
   },
 };
 
 function createBaseACKClusterMetadata(): ACKClusterMetadata {
-  return { id: 0, name: "", cluster_metadata_id: 0 };
+  return { id: 0, cluster_metadata_id: 0 };
 }
 
 export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
@@ -1238,11 +1168,8 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
     if (message.id !== 0) {
       writer.uint32(8).uint64(message.id);
     }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
     if (message.cluster_metadata_id !== 0) {
-      writer.uint32(24).uint64(message.cluster_metadata_id);
+      writer.uint32(16).uint64(message.cluster_metadata_id);
     }
     return writer;
   },
@@ -1263,15 +1190,7 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
           continue;
         }
         case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
+          if (tag !== 16) {
             break;
           }
 
@@ -1290,7 +1209,6 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
   fromJSON(object: any): ACKClusterMetadata {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
     };
   },
@@ -1299,9 +1217,6 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
     const obj: any = {};
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
     }
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
@@ -1315,7 +1230,6 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
   fromPartial<I extends Exact<DeepPartial<ACKClusterMetadata>, I>>(object: I): ACKClusterMetadata {
     const message = createBaseACKClusterMetadata();
     message.id = object.id ?? 0;
-    message.name = object.name ?? "";
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
     return message;
   },

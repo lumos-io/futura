@@ -26,8 +26,8 @@ func (a *KindProvider) FetchClusters(ctx context.Context) ([]string, error) {
 
 func (a *KindProvider) FetchClusterMetadata(ctx context.Context, clusterID string) (*models.ClusterMetadata, error) {
 	return &models.ClusterMetadata{
+		Name: clusterID,
 		KindMetadata: &models.KindClusterMetadata{
-			Name:             clusterID,
 			Status:           "Available",
 			Version:          "v1.2.3",
 			Endpoint:         "localhost",

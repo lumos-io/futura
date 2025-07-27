@@ -26,6 +26,11 @@ const NatsWorkflowFetchClusterTopic = "fetchclustersworkflow.result"
 type WorkflowFetchClustersStatusSignal struct {
 	ProviderConnectionID int64          `json:"providerConnectionId"`
 	OrganizationID       uint           `json:"organizationId"`
-	Status               WorkflowStatus `json:"status"` // e.g., "FAILED", "SUCCESS"
+	Status               WorkflowStatus `json:"status"`         // e.g., "FAILED", "SUCCESS"
+	Data                 []ClusterInfo  `json:"data,omitempty"` // if "FAILED" then we don't need it
 	Error                string         `json:"error,omitempty"`
+}
+
+type ClusterInfo struct {
+	Name string
 }
