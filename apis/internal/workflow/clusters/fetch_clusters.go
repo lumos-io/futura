@@ -86,7 +86,7 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 			})
 		}
 		data[i] = workflowsignals.ClusterInfo{
-			// Name: metadata.,
+			Name: metadata.Name,
 		}
 	}
 
@@ -104,8 +104,8 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 	return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
 		ProviderConnectionID: job.Args.ProviderConnection.Id,
 		OrganizationID:       job.Args.OrganizationID,
-		Status:               workflowsignals.StatusFailed,
-		Error:                "",
+		Status:               workflowsignals.StatusSuccess,
+		Data:                 data,
 	})
 }
 
