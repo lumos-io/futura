@@ -1,9 +1,0 @@
-[redis]
-servers = ["localhost:6379"]
-namespace = "api_keys"
-
-[collect]
-endpoint = "localhost:50051"
-
-[log]
-level = "debug"

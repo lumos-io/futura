@@ -2,7 +2,10 @@ module github.com/opisvigilant/futura/go-lib
 
 go 1.24.4
 
-require github.com/redis/go-redis/v9 v9.11.0
+require (
+	github.com/confluentinc/confluent-kafka-go/v2 v2.11.0
+	github.com/redis/go-redis/v9 v9.11.0
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
