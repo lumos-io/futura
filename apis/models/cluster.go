@@ -13,9 +13,9 @@ import (
 type ClusterMetadata struct {
 	BaseModel
 
-	Name            string        `gorm:"size:255;not null" json:"name"`
-	CloudProviderID uint          `gorm:"index;not null" json:"cloudProviderId"`
-	CloudProvider   CloudProvider `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+	Name                 string             `gorm:"size:255;not null" json:"name"`
+	ProviderConnectionID uint               `gorm:"index;not null" json:"providerConnectionId"`
+	ProviderConnection   ProviderConnection `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 
 	OrganizationID uint         `gorm:"index;not null" json:"organizationId"`
 	Organization   Organization `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
@@ -97,7 +97,7 @@ func ConvertToProtoClusterMetadataList(models []ClusterMetadata) []*pb.ClusterMe
 		proto := &pb.ClusterMetadata{
 			Id:              uint64(model.ID),
 			Name:            model.Name,
-			CloudProviderId: uint64(model.CloudProviderID),
+			CloudProviderId: uint64(model.ProviderConnectionID),
 			OrganizationId:  uint64(model.OrganizationID),
 		}
 

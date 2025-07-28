@@ -47,7 +47,7 @@ func (cc *ConnectController) GetConnects(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	var connects []models.CloudProvider
+	var connects []models.ProviderConnection
 	if err := models.GetDB().Where("organization_id = ?", orgID).Find(&connects).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to fetch connects")
 		return
@@ -108,7 +108,7 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to convert pb.CloudProvider proto to CloudProviderName")
 		return
 	}
-	cp := models.CloudProvider{
+	cp := models.ProviderConnection{
 		Provider:       prov,
 		SecretID:       secretID,
 		SecretName:     input.SecretName,
@@ -172,15 +172,9 @@ func (cc *ConnectController) DeleteConnect(c *gin.Context) {
 		return
 	}
 
-	var cp models.CloudProvider
+	var cp models.ProviderConnection
 	if err := models.GetDB().Where("id = ? AND organization_id = ?", connectionID, orgID).First(&cp).Error; err != nil {
 		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Connection not found in this organization")
-		return
-	}
-
-	// delete from DB
-	if err := models.GetDB().Delete(&cp).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to delete connection")
 		return
 	}
 
@@ -190,7 +184,24 @@ func (cc *ConnectController) DeleteConnect(c *gin.Context) {
 		return
 	}
 
-	utils.RespondOK(c, gin.H{"result": "delete"})
+	// delete from DB
+	if err := models.GetDB().Delete(&cp).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to delete connection")
+		return
+	}
+
+	// trigger workflow to delete all the clusters in a separate go routine
+	go func() {
+		if err := cc.workflowManager.ExecuteDeleteClustersWorkflow(&workflowclusters.WorkflowDeleteClustersInput{
+			Config:         cc.config,
+			OrganizationID: orgID,
+			ConnectionID:   uint(connectionID),
+		}); err != nil {
+			log.Logger.Error().Err(err).Msg("DeleteClustersWorkflow failed with error")
+		}
+	}()
+
+	utils.RespondOK(c, gin.H{"result": "deletion in progress"})
 }
 
 func (cc *ConnectController) TestConnection(c *gin.Context) {

@@ -82,7 +82,7 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 		}
 
 		// enrich the object
-		metadata.CloudProviderID = uint(job.Args.ProviderConnection.Id)
+		metadata.ProviderConnectionID = uint(job.Args.ProviderConnection.Id)
 		metadata.OrganizationID = job.Args.OrganizationID
 
 		if err := storeClusterMetadata(job.Args.Config.Database, metadata); err != nil {
@@ -94,7 +94,7 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 			})
 		}
 
-		ak, err := createAPIKeyEntry(ctx, kvs, job.Args.OrganizationID, metadata.CloudProviderID, metadata.ID, job.Args.SecretID, job.Args.ProviderConnection)
+		ak, err := createAPIKeyEntry(ctx, kvs, job.Args.OrganizationID, metadata.ProviderConnectionID, metadata.ID, job.Args.SecretID, job.Args.ProviderConnection)
 		if err != nil {
 			return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
 				ProviderConnectionID: job.Args.ProviderConnection.Id,
@@ -168,7 +168,7 @@ func updateCloudProviderStatus(dbConfig *config.Database, providerID int64, impo
 		return err
 	}
 
-	if err := db.Model(&models.CloudProvider{}).
+	if err := db.Model(&models.ProviderConnection{}).
 		Where("id = ?", providerID).
 		Updates(map[string]any{
 			"status":            pb.ActivationStatus_ACTIVE,
@@ -183,34 +183,35 @@ type apiKeyInfo struct {
 	// FIXME: probably I will need more information so that the
 	// enrichment step in the pipeline will have all the context it needs
 	// for now, I start with these
-	OrganizationID    uint   `json:"organizationId"`
-	ProviderID        uint   `json:"providerId"`
-	ClusterID         uint   `json:"clusterId"`
-	CloudProviderEnum int32  `json:"cloudProviderId"` // this is used to eventually query the specific cloud provider
-	SecretID          string `json:"secretId"`        // this is a UUID that will be used to query the credentials if needed
-	CreatedAt         string `json:"createdAt"`
+	OrganizationID       uint   `json:"organizationId"`
+	ProviderConnectionID uint   `json:"providerConectionId"`
+	ClusterID            uint   `json:"clusterId"`
+	CloudProviderEnum    int32  `json:"cloudProviderId"` // this is used to eventually query the specific cloud provider
+	SecretID             string `json:"secretId"`        // this is a UUID that will be used to query the credentials if needed
+	CreatedAt            string `json:"createdAt"`
 }
 
-func createAPIKeyEntry(ctx context.Context, store kv.KVStore, orgID, providerID, clusterID uint, secretID string, provider *pb.ProviderConnection) (string, error) {
+func createAPIKeyEntry(ctx context.Context, store kv.KVStore, orgID, providerConnectionID, clusterID uint, secretID string, provider *pb.ProviderConnection) (string, error) {
 	// generate the API Key value here
 	apiKey, err := GenerateAPIKey()
 	if err != nil {
 		return "", err
 	}
 	b, err := json.Marshal(apiKeyInfo{
-		OrganizationID:    orgID,
-		ProviderID:        providerID,
-		ClusterID:         clusterID,
-		SecretID:          secretID,
-		CloudProviderEnum: int32(provider.Provider.Number()),
-		CreatedAt:         time.Now().String(),
+		OrganizationID:       orgID,
+		ProviderConnectionID: providerConnectionID,
+		ClusterID:            clusterID,
+		SecretID:             secretID,
+		CloudProviderEnum:    int32(provider.Provider.Number()),
+		CreatedAt:            time.Now().String(),
 	})
 	if err != nil {
 		return "", nil
 	}
 
 	// namespace: apikeys - key: apikey apikey_info
-	if err := store.Put(ctx, "apikeys", apiKey, b); err != nil {
+	ns := fmt.Sprintf("apikeys:%d", providerConnectionID)
+	if err := store.Put(ctx, ns, apiKey, b); err != nil {
 		return "", nil
 	}
 	return apiKey, nil

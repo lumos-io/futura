@@ -22,7 +22,7 @@ func GetClusters(c *gin.Context) {
 
 	db := models.GetDB()
 
-	var connect models.CloudProvider
+	var connect models.ProviderConnection
 	if err := db.
 		Where("organization_id = ? AND id = ?", orgID, connectID).
 		Find(&connect).Error; err != nil {

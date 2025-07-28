@@ -7,7 +7,7 @@ import (
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
 
-type CloudProvider struct {
+type ProviderConnection struct {
 	BaseModel
 	Provider         CloudProviderName `gorm:"not null" json:"provider"`
 	ConnectionName   string            `gorm:"uniqueIndex,not null" json:"connectionName"`

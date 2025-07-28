@@ -1,7 +1,7 @@
 # Configuration file running Watcher locally
 [collect]
 endpoint = "localhost:50051"
-apiKey = "df9166bbacd761c74aecc50bb7a902342dd61a1de84551e253f7133154947d88"
+apiKey = ""
 
 [kubernetes]
 namespaces = []

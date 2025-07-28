@@ -82,6 +82,15 @@ func (c *WorkflowManager) ExecuteFetchClustersWorkflow(input *workflowclusters.W
 	return err
 }
 
+func (c *WorkflowManager) ExecuteDeleteClustersWorkflow(input *workflowclusters.WorkflowDeleteClustersInput) error {
+	_, err := c.riverClient.Insert(context.Background(), workflowclusters.WorkflowDeleteClustersInput{
+		Config:         input.Config,
+		OrganizationID: input.OrganizationID,
+		ConnectionID:   input.ConnectionID,		
+	}, nil)
+	return err
+}
+
 func (c *WorkflowManager) Stop() error {
 	// Stop fetching new work and wait for active jobs to finish.
 	if err := c.riverClient.Stop(context.Background()); err != nil {
