@@ -12,7 +12,6 @@ import (
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
 	pbst "github.com/opisvigilant/futura/proto/gen/stats"
-	"github.com/rs/zerolog/log"
 )
 
 type CollectServer struct {
@@ -24,7 +23,7 @@ type CollectServer struct {
 }
 
 func NewCollectServer(config *config.Configuration) (*CollectServer, error) {
-	rs, err := stream.NewRedisStreamClient(config.Redis.Servers)
+	ks, err := stream.NewKafkaClient(config.Kafka.Brokers, "collect_events_group")
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Stream: %v", err)
 	}
@@ -35,7 +34,7 @@ func NewCollectServer(config *config.Configuration) (*CollectServer, error) {
 	}
 
 	return &CollectServer{
-		streamClient: rs,
+		streamClient: ks,
 		kvClient:     rss,
 		namespace:    config.Redis.Namespace,
 	}, nil
@@ -56,10 +55,9 @@ func (s *CollectServer) SendEvent(ctx context.Context, req *pbev.KubernetesEvent
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
 	for _, event := range req.Events {
-		log.Logger.Debug().Msg(event.String())
-		// if err := s.streamClient.Publish(ctx, "raw.k8s.events", []byte(event.String())); err != nil {
-		// 	return nil, err
-		// }
+		if err := s.streamClient.Publish(ctx, "raw.k8s.events", []byte(event.String())); err != nil {
+			return nil, err
+		}
 	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "event received"}, nil
 }
@@ -69,10 +67,9 @@ func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.Kubern
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
 	for _, obj := range req.Objects {
-		log.Logger.Debug().Msg(obj.String())
-		// if err := s.streamClient.Publish(ctx, "raw.k8s.metrics", []byte(metric.String())); err != nil {
-		// 	return nil, err
-		// }
+		if err := s.streamClient.Publish(ctx, "raw.k8s.metrics", []byte(obj.String())); err != nil {
+			return nil, err
+		}
 	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "cluster objects received"}, nil
 }
@@ -81,12 +78,9 @@ func (s *CollectServer) SendKubeletStats(ctx context.Context, req *pbst.Kubernet
 	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
-
-	log.Logger.Debug().Msg(req.KubeletMetrics.String())
-	// if err := s.streamClient.Publish(ctx, "raw.k8s.kubelet", []byte(req.KubeletMetrics.String())); err != nil {
-	// 	return nil, err
-	// }
-
+	if err := s.streamClient.Publish(ctx, "raw.k8s.kubelet", []byte(req.KubeletMetrics.String())); err != nil {
+		return nil, err
+	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "kubelet stats received"}, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -12,6 +13,7 @@ import (
 	"github.com/opisvigilant/futura/apis/internal/providers"
 	workflowsignals "github.com/opisvigilant/futura/apis/internal/workflow/signals"
 	"github.com/opisvigilant/futura/apis/models"
+	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 	"github.com/riverqueue/river"
@@ -23,6 +25,7 @@ type WorkflowFetchClustersInput struct {
 	OrganizationID     uint
 	ProviderConnection *pb.ProviderConnection
 	Credentials        map[string]string
+	SecretID           string
 }
 
 func (WorkflowFetchClustersInput) Kind() string { return "workflow_fetch_clusters" }
@@ -35,6 +38,11 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 	js, err := stream.NewRedisStreamClient(job.Args.Config.Redis.Servers)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Stream: %v", err)
+	}
+
+	kvs, err := kv.NewRedisKVStore(job.Args.Config.Redis.Servers)
+	if err != nil {
+		return fmt.Errorf("failed to connect to KV Stora: %v", err)
 	}
 
 	client, err := providers.CreateProviderClient(ctx, providers.ProviderConfig{
@@ -85,8 +93,20 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 				Error:                err.Error(),
 			})
 		}
+
+		ak, err := createAPIKeyEntry(ctx, kvs, job.Args.OrganizationID, metadata.CloudProviderID, metadata.ID, job.Args.SecretID, job.Args.ProviderConnection)
+		if err != nil {
+			return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
+				ProviderConnectionID: job.Args.ProviderConnection.Id,
+				OrganizationID:       job.Args.OrganizationID,
+				Status:               workflowsignals.StatusFailed,
+				Error:                err.Error(),
+			})
+		}
+
 		data[i] = workflowsignals.ClusterInfo{
-			Name: metadata.Name,
+			Name:   metadata.Name,
+			APIKey: ak,
 		}
 	}
 
@@ -157,4 +177,41 @@ func updateCloudProviderStatus(dbConfig *config.Database, providerID int64, impo
 		return err
 	}
 	return nil
+}
+
+type apiKeyInfo struct {
+	// FIXME: probably I will need more information so that the
+	// enrichment step in the pipeline will have all the context it needs
+	// for now, I start with these
+	OrganizationID    uint   `json:"organizationId"`
+	ProviderID        uint   `json:"providerId"`
+	ClusterID         uint   `json:"clusterId"`
+	CloudProviderEnum int32  `json:"cloudProviderId"` // this is used to eventually query the specific cloud provider
+	SecretID          string `json:"secretId"`        // this is a UUID that will be used to query the credentials if needed
+	CreatedAt         string `json:"createdAt"`
+}
+
+func createAPIKeyEntry(ctx context.Context, store kv.KVStore, orgID, providerID, clusterID uint, secretID string, provider *pb.ProviderConnection) (string, error) {
+	// generate the API Key value here
+	apiKey, err := GenerateAPIKey()
+	if err != nil {
+		return "", err
+	}
+	b, err := json.Marshal(apiKeyInfo{
+		OrganizationID:    orgID,
+		ProviderID:        providerID,
+		ClusterID:         clusterID,
+		SecretID:          secretID,
+		CloudProviderEnum: int32(provider.Provider.Number()),
+		CreatedAt:         time.Now().String(),
+	})
+	if err != nil {
+		return "", nil
+	}
+
+	// namespace: apikeys - key: apikey apikey_info
+	if err := store.Put(ctx, "apikeys", apiKey, b); err != nil {
+		return "", nil
+	}
+	return apiKey, nil
 }

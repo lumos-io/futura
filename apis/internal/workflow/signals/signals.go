@@ -32,5 +32,6 @@ type WorkflowFetchClustersStatusSignal struct {
 }
 
 type ClusterInfo struct {
-	Name string
+	Name   string
+	APIKey string
 }

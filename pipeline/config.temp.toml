@@ -2,6 +2,9 @@
 servers = ["localhost:6379"]
 namespace = "api_keys"
 
+[kafka]
+brokers = ["localhost:9092"]
+
 [collect]
 endpoint = "localhost:50051"
 

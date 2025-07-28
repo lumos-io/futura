@@ -24,4 +24,4 @@ run:
 	go run -ldflags="-X 'github.com/opisvigilant/futura/apis/version.Version=dev' \
                  -X 'github.com/opisvigilant/futura/apis/version.CommitSHA=$(git rev-parse HEAD)' \
                  -X 'github.com/opisvigilant/futura/apis/version.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
-	main.go
+		main.go

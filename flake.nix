@@ -13,11 +13,11 @@
           inherit system;
         };
 
-        go = pkgs.go_1_24;
+        go = pkgs.go_1_24;   
 
         # Plugins and other tools
         tools = with pkgs; [
-          go
+          go          
           protobuf
           protoc-gen-go
           protoc-gen-go-grpc
@@ -32,11 +32,10 @@
         devShells.default = pkgs.mkShell {
           buildInputs = tools;
 
-          # Set English locale for all tools
           LANG = "en_US.UTF-8";
-          LC_ALL = "en_US.UTF-8";
+          LC_ALL = "en_US.UTF-8";          
 
-          shellHook = ''            
+          shellHook = ''
             set -a
             if [ -f .env.local ]; then
               echo "📄 Loading environment from .env.local"
@@ -48,13 +47,13 @@
 
             ./scripts/docker-login.sh
             ./scripts/setup-tools.sh
-            
+
             if [ -z "$SKIP_KIND" ]; then
               echo "⏩ Skipping setup-kind.sh and setup-kv.sh because SKIP_KIND is set"
             else
               ./scripts/setup-kind.sh
               ./scripts/setup-kv.sh
-            fi            
+            fi
 
             echo "🚀 Development environment ready!"
           '';

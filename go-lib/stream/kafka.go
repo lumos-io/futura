@@ -5,21 +5,15 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/IBM/sarama"
 )
 
 type kafkaClient struct {
-	// producer it's lazy loaded when called
-	// Publish for the first time
-	producer *kafka.Producer
-
-	// for the consumer since I lazy load it
-	// only if there a call to Subscribe
-	brokers []string
-	groupID string
+	producer sarama.SyncProducer
+	brokers  []string
+	groupID  string
 }
 
 type kafkaMessage struct {
@@ -31,85 +25,132 @@ func (m *kafkaMessage) Data() []byte {
 }
 
 func NewKafkaClient(brokers []string, groupID string) (Stream, error) {
-	return &kafkaClient{brokers: brokers, groupID: groupID}, nil
+	return &kafkaClient{
+		brokers: brokers,
+		groupID: groupID,
+	}, nil
+}
+
+func (kc *kafkaClient) initProducer() error {
+	if kc.producer != nil {
+		return nil
+	}
+
+	config := sarama.NewConfig()
+	config.Producer.Return.Successes = true
+	config.Producer.Return.Errors = true
+	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Version = sarama.V4_0_0_0 // or appropriate version
+
+	producer, err := sarama.NewSyncProducer(kc.brokers, config)
+	if err != nil {
+		return fmt.Errorf("failed to create producer: %w", err)
+	}
+	kc.producer = producer
+	return nil
 }
 
 func (kc *kafkaClient) Publish(ctx context.Context, topic string, data []byte) error {
-	if kc.producer == nil {
-		producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": strings.Join(kc.brokers, ",")})
-		if err != nil {
-			return fmt.Errorf("producer init error: %w", err)
-		}
-		kc.producer = producer
+	if err := kc.initProducer(); err != nil {
+		return err
 	}
 
-	deliveryChan := make(chan kafka.Event)
-	defer close(deliveryChan)
+	msg := &sarama.ProducerMessage{
+		Topic: topic,
+		Value: sarama.ByteEncoder(data),
+	}
 
-	err := kc.producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          data,
-	}, deliveryChan)
+	_, _, err := kc.producer.SendMessage(msg)
 	if err != nil {
-		return fmt.Errorf("publish error: %w", err)
+		return fmt.Errorf("failed to send message: %w", err)
 	}
-
-	select {
-	case ev := <-deliveryChan:
-		m := ev.(*kafka.Message)
-		if m.TopicPartition.Error != nil {
-			return fmt.Errorf("delivery failed: %w", m.TopicPartition.Error)
-		}
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	return nil
 }
 
 func (kc *kafkaClient) Subscribe(ctx context.Context, topic string, handler HandlerFunc) error {
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": kc.brokers,
-		"group.id":          kc.groupID,
-		"auto.offset.reset": "earliest",
-	})
+	config := sarama.NewConfig()
+	config.Version = sarama.V4_0_0_0
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	config.Consumer.Group.Rebalance.GroupStrategies = append(config.Consumer.Group.Rebalance.GroupStrategies, sarama.NewBalanceStrategyRange())
+
+	client, err := sarama.NewConsumerGroup(kc.brokers, kc.groupID, config)
 	if err != nil {
-		return fmt.Errorf("consumer init error: %w", err)
+		return fmt.Errorf("failed to create consumer group: %w", err)
 	}
 
-	if err := consumer.SubscribeTopics([]string{topic}, nil); err != nil {
-		return fmt.Errorf("subscribe error: %w", err)
+	consumer := &consumerGroupHandler{
+		handler: handler,
+		ctx:     ctx,
+		// ready:   make(chan bool),
 	}
 
 	go func() {
-		defer consumer.Close()
+		defer client.Close()
 
 		sigchan := make(chan os.Signal, 1)
 		signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 		for {
-			select {
-			case <-ctx.Done():
+			// `Consume` is blocking, so call in loop to handle rebalance
+			if err := client.Consume(ctx, []string{topic}, consumer); err != nil {
+				fmt.Fprintf(os.Stderr, "Error from consumer: %v\n", err)
 				return
+			}
+			if ctx.Err() != nil {
+				return
+			}
+			// consumer.ready = make(chan bool)
+			select {
 			case <-sigchan:
 				return
 			default:
-				ev := consumer.Poll(100)
-				switch e := ev.(type) {
-				case *kafka.Message:
-					handler(&kafkaMessage{data: e.Value}, func() error {
-						_, err := consumer.CommitMessage(e)
-						return err
-					})
-				case kafka.Error:
-					fmt.Fprintf(os.Stderr, "Kafka error: %v\n", e)
-				}
 			}
 		}
 	}()
+
+	// <-consumer.ready // Await till the consumer has been set up
+
 	return nil
 }
 
 func (kc *kafkaClient) Close() error {
-	kc.producer.Close()
+	if kc.producer != nil {
+		return kc.producer.Close()
+	}
 	return nil
+}
+
+// consumerGroupHandler implements sarama.ConsumerGroupHandler interface
+type consumerGroupHandler struct {
+	handler HandlerFunc
+	ctx     context.Context
+	// ready   chan bool
+}
+
+func (h *consumerGroupHandler) Setup(sarama.ConsumerGroupSession) error {
+	// Mark the consumer as ready
+	// close(h.ready)
+	return nil
+}
+
+func (h *consumerGroupHandler) Cleanup(sarama.ConsumerGroupSession) error { return nil }
+
+func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for {
+		select {
+		case <-h.ctx.Done():
+			return nil
+		case msg, ok := <-claim.Messages():
+			if !ok {
+				return nil
+			}
+
+			h.handler(&kafkaMessage{data: msg.Value}, func() error {
+				session.MarkMessage(msg, "consumed")
+				return nil
+			})
+
+			session.Commit()
+		}
+	}
 }

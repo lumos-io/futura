@@ -151,6 +151,7 @@ func (cc *ConnectController) CreateConnect(c *gin.Context) {
 			OrganizationID:     orgID,
 			ProviderConnection: pc,
 			Credentials:        input.Credentials,
+			SecretID:           secretID.String(),
 		}); err != nil {
 			log.Logger.Error().Err(err).Msg("FetchClustersWorkflow failed with error")
 		}

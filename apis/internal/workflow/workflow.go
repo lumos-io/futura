@@ -77,6 +77,7 @@ func (c *WorkflowManager) ExecuteFetchClustersWorkflow(input *workflowclusters.W
 		OrganizationID:     input.OrganizationID,
 		ProviderConnection: input.ProviderConnection,
 		Credentials:        input.Credentials,
+		SecretID:           input.SecretID,
 	}, nil)
 	return err
 }
