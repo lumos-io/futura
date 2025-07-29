@@ -25,7 +25,7 @@ type ConnectController struct {
 }
 
 func NewConnectController(config *config.Configuration) (*ConnectController, error) {
-	p, err := providers.New(config)
+	p, err := providers.NewProviderAuth(config)
 	if err != nil {
 		return nil, err
 	}
@@ -169,24 +169,6 @@ func (cc *ConnectController) DeleteConnect(c *gin.Context) {
 	connectionID, err := strconv.Atoi(c.Param("connect_id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid connect_id")
-		return
-	}
-
-	var cp models.ProviderConnection
-	if err := models.GetDB().Where("id = ? AND organization_id = ?", connectionID, orgID).First(&cp).Error; err != nil {
-		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Connection not found in this organization")
-		return
-	}
-
-	// delete from secrets
-	if err := cc.cloudProviderAuth.DeleteCredentials(cp.SecretID); err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to delete secret storage")
-		return
-	}
-
-	// delete from DB
-	if err := models.GetDB().Delete(&cp).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CONNECT_OPERATION", "Failed to delete connection")
 		return
 	}
 

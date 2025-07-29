@@ -9,5 +9,6 @@ type KVStore interface {
 	Put(ctx context.Context, namespace, key string, value []byte) error
 	// Delete removes the key (no-op if it does not exist).
 	Delete(ctx context.Context, namespace, key string) error
+	List(ctx context.Context, namespace string) ([][]byte, error)
 	Close() error
 }

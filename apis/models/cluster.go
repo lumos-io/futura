@@ -14,6 +14,7 @@ type ClusterMetadata struct {
 	BaseModel
 
 	Name                 string             `gorm:"size:255;not null" json:"name"`
+	APIKey               string             `gorm:"size:255;not null" json:"api_key"`
 	ProviderConnectionID uint               `gorm:"index;not null" json:"providerConnectionId"`
 	ProviderConnection   ProviderConnection `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 
@@ -44,35 +45,35 @@ type EKSClusterMetadata struct {
 
 	// FK back to generic cluster record
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
-	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }
 
 type GKEClusterMetadata struct {
 	BaseModel
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
-	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }
 
 type AKSClusterMetadata struct {
 	BaseModel
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
-	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }
 
 type DOKSClusterMetadata struct {
 	BaseModel
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
-	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }
 
 type ACKClusterMetadata struct {
 	BaseModel
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
-	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }
 
 /*
@@ -87,7 +88,7 @@ type KindClusterMetadata struct {
 	PlatformVersion   string            `gorm:"size:64" json:"platformVersion"`
 	Tags              datatypes.JSONMap `json:"tags"`
 	ClusterMetadataID uint              `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
-	ClusterMetadata   *ClusterMetadata  `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	ClusterMetadata   *ClusterMetadata  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }
 
 func ConvertToProtoClusterMetadataList(models []ClusterMetadata) []*pb.ClusterMetadata {

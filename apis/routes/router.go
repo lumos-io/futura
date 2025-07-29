@@ -83,7 +83,9 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 				orgConnects.DELETE("/:connect_id", cc.DeleteConnect)
 				orgConnects.POST("/test-connection", cc.TestConnection)
 				// sse endpoint
-				orgConnects.GET("/result", ssec.FetchClustersResultHandler)
+				orgConnects.GET("/fetch", ssec.FetchClustersResultHandler)
+				// TODO: move the DELETE endpoint here to make it a nicer UX
+				// orgConnects.GET("/delete", ssec.DeleteClustersResultHandler)
 			}
 
 			orgClusters := orgConnects.Group("/:connect_id/clusters")

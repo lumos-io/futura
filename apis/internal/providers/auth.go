@@ -25,7 +25,7 @@ type CloudProviderAuth struct {
 	secretStore secrets.SecretStore
 }
 
-func New(config *config.Configuration) (*CloudProviderAuth, error) {
+func NewProviderAuth(config *config.Configuration) (*CloudProviderAuth, error) {
 	// TODO: change this to an actual Secret Manager
 	ss, err := secrets.NewInMemorySecretStore()
 	if err != nil {

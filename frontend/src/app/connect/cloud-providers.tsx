@@ -30,7 +30,7 @@ const CloudProviders: React.FC = () => {
   } = useCloudProviders();
 
   const sseUrl = React.useMemo(() => {
-    return orgId ? `/api/organizations/${orgId}/connects/result` : null;
+    return orgId ? `/api/organizations/${orgId}/connects/fetch` : null;
   }, [orgId]);
 
   const { latest } = useSSE<FetchClustersResultEvent>(sseUrl || "", {
