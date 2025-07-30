@@ -27,12 +27,10 @@ func NewCollectServer(config *config.Configuration) (*CollectServer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Stream: %v", err)
 	}
-
 	rss, err := kv.NewRedisKVStore(config.Redis.Servers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to KV: %v", err)
 	}
-
 	return &CollectServer{
 		streamClient: ks,
 		kvClient:     rss,
