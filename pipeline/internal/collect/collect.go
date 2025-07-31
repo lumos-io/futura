@@ -65,7 +65,7 @@ func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.Kubern
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
 	for _, obj := range req.Objects {
-		if err := s.streamClient.Publish(ctx, "raw.k8s.metrics", []byte(obj.String())); err != nil {
+		if err := s.streamClient.Publish(ctx, "raw.k8s.objects", []byte(obj.String())); err != nil {
 			return nil, err
 		}
 	}
@@ -76,7 +76,7 @@ func (s *CollectServer) SendKubeletStats(ctx context.Context, req *pbst.Kubernet
 	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
-	if err := s.streamClient.Publish(ctx, "raw.k8s.kubelet", []byte(req.KubeletMetrics.String())); err != nil {
+	if err := s.streamClient.Publish(ctx, "raw.k8s.stats", []byte(req.KubeletMetrics.String())); err != nil {
 		return nil, err
 	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "kubelet stats received"}, nil
