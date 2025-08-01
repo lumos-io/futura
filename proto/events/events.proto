@@ -8,13 +8,11 @@ import "common/metadata.proto";
 
 // Main batch message
 message KubernetesEventBatch {
-  common.APIKey apikey = 1;
-  common.Metadata metadata = 2;
   repeated KubernetesEvent events = 3;
 }
 
 // Envelope for all possible event types
-message KubernetesEvent {
+message KubernetesEvent {  
   string object_kind = 1;
   string object_name = 2;
   string object_uid = 3;  
@@ -33,6 +31,9 @@ message KubernetesEvent {
   string object_api_version = 16;
   string object_resource_version = 17;
   string node_name = 18;
+
+  common.APIKey apikey = 19;
+  common.Metadata metadata = 20;
 
   EnrichmentMetadata enrichment = 100;
 }

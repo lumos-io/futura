@@ -61,7 +61,7 @@ func NewKubeletScraper(config *config.Configuration, k8sClient k8s.Interface) (*
 	}, nil
 }
 
-func (ks *KubeletScraper) DoScrape() (*pbst.KubernetesKubeletMetrics, error) {
+func (ks *KubeletScraper) DoScrape() (*pbst.KubernetesKubeletStats, error) {
 	summary, err := ks.statsProvider.StatsSummary()
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("call to /stats/summary endpoint failed")

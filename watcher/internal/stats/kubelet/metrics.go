@@ -23,8 +23,8 @@ func MetricsData(summary *stats.Summary, md Metadata) *Accumulator {
 	return acc
 }
 
-func (a *Accumulator) Emit() *pbst.KubernetesKubeletMetrics {
-	return &pbst.KubernetesKubeletMetrics{
+func (a *Accumulator) Emit() *pbst.KubernetesKubeletStats {
+	return &pbst.KubernetesKubeletStats{
 		Node: a.NodeStats,
 		Pods: a.PodStats,
 	}

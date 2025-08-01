@@ -76,7 +76,7 @@ func (v *Validator) Start(ctx context.Context) error {
 		defer v.wg.Done()
 
 		if err := v.stream.Subscribe(ctx, RawStatsTopic, func(msg stream.Message, ack func() error) {
-			var m *pbst.KubernetesKubeletMetrics
+			var m *pbst.KubernetesKubeletStats
 			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
@@ -274,8 +274,8 @@ func (v *Validator) validateTimestampPB(ts *timestamppb.Timestamp, field string)
 	return nil
 }
 
-// ValidateKubeletMetrics performs sanity checks on KubernetesKubeletMetrics
-func (v *Validator) ValidateKubeletMetrics(m *pbst.KubernetesKubeletMetrics) error {
+// ValidateKubeletMetrics performs sanity checks on KubernetesKubeletStats
+func (v *Validator) ValidateKubeletMetrics(m *pbst.KubernetesKubeletStats) error {
 	if m == nil {
 		return errors.New("metrics message is nil")
 	}

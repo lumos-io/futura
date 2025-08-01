@@ -8,9 +8,7 @@ import "google/protobuf/timestamp.proto";
 import "common/metadata.proto";
 
 // Main batch message
-message KubernetesClusterObjectBatch {
-  common.APIKey apikey = 1;
-  common.Metadata metadata = 2;
+message KubernetesClusterObjectBatch {  
   repeated KubernetesClusterObject objects = 3;
 }
 
@@ -88,6 +86,9 @@ message KubernetesClusterObject {
   int64 daemonset_desired_number_scheduled = 46;
   int64 daemonset_number_misscheduled = 47;
   int64 daemonset_number_ready = 48;
+
+  common.APIKey apikey = 49;
+  common.Metadata metadata = 50;
 
   EnrichmentMetadata enrichment = 100;
 }

@@ -76,7 +76,7 @@ func (ksc *KuberentesStatsCollector) startScrape(client k8s.Interface, interval 
 			if err != nil {
 				return err
 			}
-			sender.KubernetesKubeletMetrics <- data
+			sender.KubernetesKubeletStats <- data
 		}
 	}
 }

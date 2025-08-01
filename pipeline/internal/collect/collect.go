@@ -49,10 +49,10 @@ func (s *CollectServer) Close() error {
 }
 
 func (s *CollectServer) SendEvent(ctx context.Context, req *pbev.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
-	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
-		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
-	}
 	for _, event := range req.Events {
+		if err := s.validateAPIKey(ctx, event.Apikey.Key); err != nil {
+			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
+		}
 		if err := s.streamClient.Publish(ctx, "raw.k8s.events", []byte(event.String())); err != nil {
 			return nil, err
 		}
@@ -61,10 +61,10 @@ func (s *CollectServer) SendEvent(ctx context.Context, req *pbev.KubernetesEvent
 }
 
 func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.KubernetesClusterObjectBatch) (*pbsvc.CollectAck, error) {
-	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
-		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
-	}
 	for _, obj := range req.Objects {
+		if err := s.validateAPIKey(ctx, obj.Apikey.Key); err != nil {
+			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
+		}
 		if err := s.streamClient.Publish(ctx, "raw.k8s.objects", []byte(obj.String())); err != nil {
 			return nil, err
 		}
@@ -76,7 +76,7 @@ func (s *CollectServer) SendKubeletStats(ctx context.Context, req *pbst.Kubernet
 	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
-	if err := s.streamClient.Publish(ctx, "raw.k8s.stats", []byte(req.KubeletMetrics.String())); err != nil {
+	if err := s.streamClient.Publish(ctx, "raw.k8s.stats", []byte(req.String())); err != nil {
 		return nil, err
 	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "kubelet stats received"}, nil

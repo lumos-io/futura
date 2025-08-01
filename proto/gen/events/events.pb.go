@@ -25,8 +25,6 @@ const (
 // Main batch message
 type KubernetesEventBatch struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Apikey        *common.APIKey         `protobuf:"bytes,1,opt,name=apikey,proto3" json:"apikey,omitempty"`
-	Metadata      *common.Metadata       `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Events        []*KubernetesEvent     `protobuf:"bytes,3,rep,name=events,proto3" json:"events,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -62,20 +60,6 @@ func (*KubernetesEventBatch) Descriptor() ([]byte, []int) {
 	return file_events_events_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *KubernetesEventBatch) GetApikey() *common.APIKey {
-	if x != nil {
-		return x.Apikey
-	}
-	return nil
-}
-
-func (x *KubernetesEventBatch) GetMetadata() *common.Metadata {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
 func (x *KubernetesEventBatch) GetEvents() []*KubernetesEvent {
 	if x != nil {
 		return x.Events
@@ -104,6 +88,8 @@ type KubernetesEvent struct {
 	ObjectApiVersion      string                 `protobuf:"bytes,16,opt,name=object_api_version,json=objectApiVersion,proto3" json:"object_api_version,omitempty"`
 	ObjectResourceVersion string                 `protobuf:"bytes,17,opt,name=object_resource_version,json=objectResourceVersion,proto3" json:"object_resource_version,omitempty"`
 	NodeName              string                 `protobuf:"bytes,18,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	Apikey                *common.APIKey         `protobuf:"bytes,19,opt,name=apikey,proto3" json:"apikey,omitempty"`
+	Metadata              *common.Metadata       `protobuf:"bytes,20,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Enrichment            *EnrichmentMetadata    `protobuf:"bytes,100,opt,name=enrichment,proto3" json:"enrichment,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
@@ -265,6 +251,20 @@ func (x *KubernetesEvent) GetNodeName() string {
 	return ""
 }
 
+func (x *KubernetesEvent) GetApikey() *common.APIKey {
+	if x != nil {
+		return x.Apikey
+	}
+	return nil
+}
+
+func (x *KubernetesEvent) GetMetadata() *common.Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 func (x *KubernetesEvent) GetEnrichment() *EnrichmentMetadata {
 	if x != nil {
 		return x.Enrichment
@@ -352,11 +352,9 @@ var File_events_events_proto protoreflect.FileDescriptor
 
 const file_events_events_proto_rawDesc = "" +
 	"\n" +
-	"\x13events/events.proto\x12\x06events\x1a\x15common/metadata.proto\"\x9d\x01\n" +
-	"\x14KubernetesEventBatch\x12&\n" +
-	"\x06apikey\x18\x01 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x12/\n" +
-	"\x06events\x18\x03 \x03(\v2\x17.events.KubernetesEventR\x06events\"\x87\x06\n" +
+	"\x13events/events.proto\x12\x06events\x1a\x15common/metadata.proto\"G\n" +
+	"\x14KubernetesEventBatch\x12/\n" +
+	"\x06events\x18\x03 \x03(\v2\x17.events.KubernetesEventR\x06events\"\xdd\x06\n" +
 	"\x0fKubernetesEvent\x12\x1f\n" +
 	"\vobject_kind\x18\x01 \x01(\tR\n" +
 	"objectKind\x12\x1f\n" +
@@ -381,7 +379,9 @@ const file_events_events_proto_rawDesc = "" +
 	"eventCount\x12,\n" +
 	"\x12object_api_version\x18\x10 \x01(\tR\x10objectApiVersion\x126\n" +
 	"\x17object_resource_version\x18\x11 \x01(\tR\x15objectResourceVersion\x12\x1b\n" +
-	"\tnode_name\x18\x12 \x01(\tR\bnodeName\x12:\n" +
+	"\tnode_name\x18\x12 \x01(\tR\bnodeName\x12&\n" +
+	"\x06apikey\x18\x13 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
+	"\bmetadata\x18\x14 \x01(\v2\x10.common.MetadataR\bmetadata\x12:\n" +
 	"\n" +
 	"enrichment\x18d \x01(\v2\x1a.events.EnrichmentMetadataR\n" +
 	"enrichment\"\xd2\x01\n" +
@@ -414,9 +414,9 @@ var file_events_events_proto_goTypes = []any{
 	(*common.Metadata)(nil),      // 4: common.Metadata
 }
 var file_events_events_proto_depIdxs = []int32{
-	3, // 0: events.KubernetesEventBatch.apikey:type_name -> common.APIKey
-	4, // 1: events.KubernetesEventBatch.metadata:type_name -> common.Metadata
-	1, // 2: events.KubernetesEventBatch.events:type_name -> events.KubernetesEvent
+	1, // 0: events.KubernetesEventBatch.events:type_name -> events.KubernetesEvent
+	3, // 1: events.KubernetesEvent.apikey:type_name -> common.APIKey
+	4, // 2: events.KubernetesEvent.metadata:type_name -> common.Metadata
 	2, // 3: events.KubernetesEvent.enrichment:type_name -> events.EnrichmentMetadata
 	4, // [4:4] is the sub-list for method output_type
 	4, // [4:4] is the sub-list for method input_type

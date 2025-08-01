@@ -82,7 +82,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 		defer e.wg.Done()
 
 		if err := e.stream.Subscribe(ctx, ValidatedStatsTopic, func(msg stream.Message, ack func() error) {
-			var m *pbst.KubernetesKubeletMetrics
+			var m *pbst.KubernetesKubeletStats
 			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
@@ -133,16 +133,19 @@ func (e *Enricher) Start(ctx context.Context) error {
 }
 
 func (e *Enricher) EnrichEventMessage(m *pbev.KubernetesEvent) *pbev.KubernetesEvent {
-	e.rc.Get(context.Background(), "apikeys", "")
-
+	e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
 
 	return nil
 }
 
-func (e *Enricher) EnrichStatsMessage(m *pbst.KubernetesKubeletMetrics) *pbst.KubernetesKubeletMetrics {
+func (e *Enricher) EnrichStatsMessage(m *pbst.KubernetesKubeletStats) *pbst.KubernetesKubeletStats {
+	e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
+
 	return nil
 }
 
 func (e *Enricher) EnrichObjectMessage(m *pbcl.KubernetesClusterObject) *pbcl.KubernetesClusterObject {
+	e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
+
 	return nil
 }

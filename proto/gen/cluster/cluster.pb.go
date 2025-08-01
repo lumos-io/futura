@@ -26,8 +26,6 @@ const (
 // Main batch message
 type KubernetesClusterObjectBatch struct {
 	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Apikey        *common.APIKey             `protobuf:"bytes,1,opt,name=apikey,proto3" json:"apikey,omitempty"`
-	Metadata      *common.Metadata           `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Objects       []*KubernetesClusterObject `protobuf:"bytes,3,rep,name=objects,proto3" json:"objects,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -61,20 +59,6 @@ func (x *KubernetesClusterObjectBatch) ProtoReflect() protoreflect.Message {
 // Deprecated: Use KubernetesClusterObjectBatch.ProtoReflect.Descriptor instead.
 func (*KubernetesClusterObjectBatch) Descriptor() ([]byte, []int) {
 	return file_cluster_cluster_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *KubernetesClusterObjectBatch) GetApikey() *common.APIKey {
-	if x != nil {
-		return x.Apikey
-	}
-	return nil
-}
-
-func (x *KubernetesClusterObjectBatch) GetMetadata() *common.Metadata {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
 }
 
 func (x *KubernetesClusterObjectBatch) GetObjects() []*KubernetesClusterObject {
@@ -142,6 +126,8 @@ type KubernetesClusterObject struct {
 	DaemonsetDesiredNumberScheduled int64               `protobuf:"varint,46,opt,name=daemonset_desired_number_scheduled,json=daemonsetDesiredNumberScheduled,proto3" json:"daemonset_desired_number_scheduled,omitempty"`
 	DaemonsetNumberMisscheduled     int64               `protobuf:"varint,47,opt,name=daemonset_number_misscheduled,json=daemonsetNumberMisscheduled,proto3" json:"daemonset_number_misscheduled,omitempty"`
 	DaemonsetNumberReady            int64               `protobuf:"varint,48,opt,name=daemonset_number_ready,json=daemonsetNumberReady,proto3" json:"daemonset_number_ready,omitempty"`
+	Apikey                          *common.APIKey      `protobuf:"bytes,49,opt,name=apikey,proto3" json:"apikey,omitempty"`
+	Metadata                        *common.Metadata    `protobuf:"bytes,50,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Enrichment                      *EnrichmentMetadata `protobuf:"bytes,100,opt,name=enrichment,proto3" json:"enrichment,omitempty"`
 	unknownFields                   protoimpl.UnknownFields
 	sizeCache                       protoimpl.SizeCache
@@ -511,6 +497,20 @@ func (x *KubernetesClusterObject) GetDaemonsetNumberReady() int64 {
 		return x.DaemonsetNumberReady
 	}
 	return 0
+}
+
+func (x *KubernetesClusterObject) GetApikey() *common.APIKey {
+	if x != nil {
+		return x.Apikey
+	}
+	return nil
+}
+
+func (x *KubernetesClusterObject) GetMetadata() *common.Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
 }
 
 func (x *KubernetesClusterObject) GetEnrichment() *EnrichmentMetadata {
@@ -1490,11 +1490,9 @@ var File_cluster_cluster_proto protoreflect.FileDescriptor
 
 const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
-	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"\xb0\x01\n" +
-	"\x1cKubernetesClusterObjectBatch\x12&\n" +
-	"\x06apikey\x18\x01 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x12:\n" +
-	"\aobjects\x18\x03 \x03(\v2 .cluster.KubernetesClusterObjectR\aobjects\"\xf3\x12\n" +
+	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"Z\n" +
+	"\x1cKubernetesClusterObjectBatch\x12:\n" +
+	"\aobjects\x18\x03 \x03(\v2 .cluster.KubernetesClusterObjectR\aobjects\"\xc9\x13\n" +
 	"\x17KubernetesClusterObject\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
@@ -1554,7 +1552,9 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\"daemonset_current_number_scheduled\x18- \x01(\x03R\x1fdaemonsetCurrentNumberScheduled\x12K\n" +
 	"\"daemonset_desired_number_scheduled\x18. \x01(\x03R\x1fdaemonsetDesiredNumberScheduled\x12B\n" +
 	"\x1ddaemonset_number_misscheduled\x18/ \x01(\x03R\x1bdaemonsetNumberMisscheduled\x124\n" +
-	"\x16daemonset_number_ready\x180 \x01(\x03R\x14daemonsetNumberReady\x12;\n" +
+	"\x16daemonset_number_ready\x180 \x01(\x03R\x14daemonsetNumberReady\x12&\n" +
+	"\x06apikey\x181 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
+	"\bmetadata\x182 \x01(\v2\x10.common.MetadataR\bmetadata\x12;\n" +
 	"\n" +
 	"enrichment\x18d \x01(\v2\x1b.cluster.EnrichmentMetadataR\n" +
 	"enrichment\x1a9\n" +
@@ -1685,24 +1685,24 @@ var file_cluster_cluster_proto_goTypes = []any{
 	nil,                                  // 18: cluster.KubernetesClusterObject.AffinityEntry
 	nil,                                  // 19: cluster.KubernetesClusterObject.ExtraEntry
 	nil,                                  // 20: cluster.AllocatableResources.OthersEntry
-	(*common.APIKey)(nil),                // 21: common.APIKey
-	(*common.Metadata)(nil),              // 22: common.Metadata
-	(*timestamppb.Timestamp)(nil),        // 23: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil),        // 21: google.protobuf.Timestamp
+	(*common.APIKey)(nil),                // 22: common.APIKey
+	(*common.Metadata)(nil),              // 23: common.Metadata
 }
 var file_cluster_cluster_proto_depIdxs = []int32{
-	21, // 0: cluster.KubernetesClusterObjectBatch.apikey:type_name -> common.APIKey
-	22, // 1: cluster.KubernetesClusterObjectBatch.metadata:type_name -> common.Metadata
-	1,  // 2: cluster.KubernetesClusterObjectBatch.objects:type_name -> cluster.KubernetesClusterObject
-	23, // 3: cluster.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
-	16, // 4: cluster.KubernetesClusterObject.labels:type_name -> cluster.KubernetesClusterObject.LabelsEntry
-	17, // 5: cluster.KubernetesClusterObject.annotations:type_name -> cluster.KubernetesClusterObject.AnnotationsEntry
-	3,  // 6: cluster.KubernetesClusterObject.containers:type_name -> cluster.ContainerSpec
-	6,  // 7: cluster.KubernetesClusterObject.volumes:type_name -> cluster.VolumeSpec
-	18, // 8: cluster.KubernetesClusterObject.affinity:type_name -> cluster.KubernetesClusterObject.AffinityEntry
-	19, // 9: cluster.KubernetesClusterObject.extra:type_name -> cluster.KubernetesClusterObject.ExtraEntry
-	11, // 10: cluster.KubernetesClusterObject.conditions:type_name -> cluster.NodeCondition
-	12, // 11: cluster.KubernetesClusterObject.allocatable:type_name -> cluster.AllocatableResources
-	13, // 12: cluster.KubernetesClusterObject.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
+	1,  // 0: cluster.KubernetesClusterObjectBatch.objects:type_name -> cluster.KubernetesClusterObject
+	21, // 1: cluster.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
+	16, // 2: cluster.KubernetesClusterObject.labels:type_name -> cluster.KubernetesClusterObject.LabelsEntry
+	17, // 3: cluster.KubernetesClusterObject.annotations:type_name -> cluster.KubernetesClusterObject.AnnotationsEntry
+	3,  // 4: cluster.KubernetesClusterObject.containers:type_name -> cluster.ContainerSpec
+	6,  // 5: cluster.KubernetesClusterObject.volumes:type_name -> cluster.VolumeSpec
+	18, // 6: cluster.KubernetesClusterObject.affinity:type_name -> cluster.KubernetesClusterObject.AffinityEntry
+	19, // 7: cluster.KubernetesClusterObject.extra:type_name -> cluster.KubernetesClusterObject.ExtraEntry
+	11, // 8: cluster.KubernetesClusterObject.conditions:type_name -> cluster.NodeCondition
+	12, // 9: cluster.KubernetesClusterObject.allocatable:type_name -> cluster.AllocatableResources
+	13, // 10: cluster.KubernetesClusterObject.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
+	22, // 11: cluster.KubernetesClusterObject.apikey:type_name -> common.APIKey
+	23, // 12: cluster.KubernetesClusterObject.metadata:type_name -> common.Metadata
 	2,  // 13: cluster.KubernetesClusterObject.enrichment:type_name -> cluster.EnrichmentMetadata
 	4,  // 14: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
 	7,  // 15: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
@@ -1712,9 +1712,9 @@ var file_cluster_cluster_proto_depIdxs = []int32{
 	8,  // 19: cluster.ContainerState.waiting:type_name -> cluster.ContainerStateWaiting
 	9,  // 20: cluster.ContainerState.running:type_name -> cluster.ContainerStateRunning
 	10, // 21: cluster.ContainerState.terminated:type_name -> cluster.ContainerStateTerminated
-	23, // 22: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
-	23, // 23: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
-	23, // 24: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
+	21, // 22: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
+	21, // 23: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
+	21, // 24: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
 	20, // 25: cluster.AllocatableResources.others:type_name -> cluster.AllocatableResources.OthersEntry
 	15, // 26: cluster.ClusterResourceQuotaMetadata.total_limits:type_name -> cluster.QuotaResource
 	15, // 27: cluster.ClusterResourceQuotaMetadata.total_usage:type_name -> cluster.QuotaResource

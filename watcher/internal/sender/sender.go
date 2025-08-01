@@ -31,7 +31,7 @@ type Sender struct {
 
 	KubernetesEventChan         chan *pbev.KubernetesEvent
 	KubernetesClusterObjectChan chan *pbcl.KubernetesClusterObject
-	KubernetesKubeletMetrics    chan *pbst.KubernetesKubeletMetrics
+	KubernetesKubeletStats      chan *pbst.KubernetesKubeletStats
 }
 
 // Init prepares Webhook configuration
@@ -52,7 +52,7 @@ func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
 		pbc:                         client,
 		KubernetesEventChan:         make(chan *pbev.KubernetesEvent, 5*resourceChanSize),
 		KubernetesClusterObjectChan: make(chan *pbcl.KubernetesClusterObject, 5*resourceChanSize),
-		KubernetesKubeletMetrics:    make(chan *pbst.KubernetesKubeletMetrics),
+		KubernetesKubeletStats:      make(chan *pbst.KubernetesKubeletStats),
 	}
 
 	// events are resynced every 60 seconds on kubernetes informers
@@ -64,7 +64,7 @@ func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
 	eventsInterval := 5 * time.Second
 	go s.sendEventsInBatch(s.KubernetesEventChan, eventsInterval)
 	go s.sendObjectsClusterInBatch(s.KubernetesClusterObjectChan, eventsInterval)
-	go s.sendKubeletStats(s.KubernetesKubeletMetrics)
+	go s.sendKubeletStats(s.KubernetesKubeletStats)
 
 	return s, nil
 }
@@ -88,6 +88,13 @@ func (s *Sender) sendEventsInBatch(ch chan *pbev.KubernetesEvent, interval time.
 			for i := 0; (i < s.batchSize) && loop; i++ {
 				select {
 				case ev := <-ch:
+					ev.Apikey = &pbcm.APIKey{
+						Key: s.apiKey,
+					}
+					ev.Metadata = &pbcm.Metadata{
+						IdempotencyKey: uuid.NewString(),
+						WatcherVersion: utils.WatcherVersion,
+					}
 					batch = append(batch, ev)
 				case <-time.After(100 * time.Millisecond):
 					loop = false
@@ -99,13 +106,6 @@ func (s *Sender) sendEventsInBatch(ch chan *pbev.KubernetesEvent, interval time.
 			}
 
 			payload := &pbev.KubernetesEventBatch{
-				Apikey: &pbcm.APIKey{
-					Key: s.apiKey,
-				},
-				Metadata: &pbcm.Metadata{
-					IdempotencyKey: uuid.NewString(),
-					WatcherVersion: utils.WatcherVersion,
-				},
 				Events: batch,
 			}
 
@@ -139,6 +139,13 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbcl.KubernetesClusterObject
 			for i := 0; (i < s.batchSize) && loop; i++ {
 				select {
 				case ev := <-ch:
+					ev.Apikey = &pbcm.APIKey{
+						Key: s.apiKey,
+					}
+					ev.Metadata = &pbcm.Metadata{
+						IdempotencyKey: uuid.NewString(),
+						WatcherVersion: utils.WatcherVersion,
+					}
 					batch = append(batch, ev)
 				case <-time.After(100 * time.Millisecond):
 					loop = false
@@ -150,13 +157,6 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbcl.KubernetesClusterObject
 			}
 
 			payload := &pbcl.KubernetesClusterObjectBatch{
-				Apikey: &pbcm.APIKey{
-					Key: s.apiKey,
-				},
-				Metadata: &pbcm.Metadata{
-					IdempotencyKey: uuid.NewString(),
-					WatcherVersion: utils.WatcherVersion,
-				},
 				Objects: batch,
 			}
 
@@ -171,25 +171,21 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbcl.KubernetesClusterObject
 	}
 }
 
-func (s *Sender) sendKubeletStats(ch chan *pbst.KubernetesKubeletMetrics) {
+func (s *Sender) sendKubeletStats(ch chan *pbst.KubernetesKubeletStats) {
 	select {
 	case ev := <-ch:
-		payload := &pbst.KubernetesKubeletStats{
-			Apikey: &pbcm.APIKey{
-				Key: s.apiKey,
-			},
-			Metadata: &pbcm.Metadata{
-				IdempotencyKey: uuid.NewString(),
-				WatcherVersion: utils.WatcherVersion,
-			},
-			KubeletMetrics: ev,
+		ev.Apikey = &pbcm.APIKey{
+			Key: s.apiKey,
 		}
-
+		ev.Metadata = &pbcm.Metadata{
+			IdempotencyKey: uuid.NewString(),
+			WatcherVersion: utils.WatcherVersion,
+		}
 		// Send the batch to the server
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if _, err := s.pbc.SendKubeletMetrics(ctx, payload); err != nil {
+		if _, err := s.pbc.SendKubeletMetrics(ctx, ev); err != nil {
 			log.Logger.Error().Msgf("SendEvent failed: %v", err)
 		}
 	case <-s.ctx.Done():
