@@ -77,8 +77,6 @@ type Metadata struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	IdempotencyKey string                 `protobuf:"bytes,1,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
 	WatcherVersion string                 `protobuf:"bytes,2,opt,name=watcher_version,json=watcherVersion,proto3" json:"watcher_version,omitempty"`
-	ClusterId      string                 `protobuf:"bytes,3,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
-	CloudProvider  string                 `protobuf:"bytes,5,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -123,20 +121,6 @@ func (x *Metadata) GetIdempotencyKey() string {
 func (x *Metadata) GetWatcherVersion() string {
 	if x != nil {
 		return x.WatcherVersion
-	}
-	return ""
-}
-
-func (x *Metadata) GetClusterId() string {
-	if x != nil {
-		return x.ClusterId
-	}
-	return ""
-}
-
-func (x *Metadata) GetCloudProvider() string {
-	if x != nil {
-		return x.CloudProvider
 	}
 	return ""
 }
@@ -313,13 +297,10 @@ var File_common_metadata_proto protoreflect.FileDescriptor
 
 const file_common_metadata_proto_rawDesc = "" +
 	"\n" +
-	"\x15common/metadata.proto\x12\x06common\"\xa2\x01\n" +
+	"\x15common/metadata.proto\x12\x06common\"\\\n" +
 	"\bMetadata\x12'\n" +
 	"\x0fidempotency_key\x18\x01 \x01(\tR\x0eidempotencyKey\x12'\n" +
-	"\x0fwatcher_version\x18\x02 \x01(\tR\x0ewatcherVersion\x12\x1d\n" +
-	"\n" +
-	"cluster_id\x18\x03 \x01(\tR\tclusterId\x12%\n" +
-	"\x0ecloud_provider\x18\x05 \x01(\tR\rcloudProvider\"\x1a\n" +
+	"\x0fwatcher_version\x18\x02 \x01(\tR\x0ewatcherVersion\"\x1a\n" +
 	"\x06APIKey\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\"\xa3\x03\n" +
 	"\n" +

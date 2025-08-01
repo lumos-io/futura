@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
+	pbmt "github.com/opisvigilant/futura/proto/gen/common"
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 )
@@ -62,7 +63,12 @@ func (e *Enricher) Start(ctx context.Context) error {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the validated event message")
 				return
 			}
-			m = e.EnrichEventMessage(m)
+			m, err := e.EnrichEventMessage(m)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to enrich the event message")
+				return
+			}
+
 			b, err := protojson.Marshal(m)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched event message")
@@ -87,7 +93,12 @@ func (e *Enricher) Start(ctx context.Context) error {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
 			}
-			m = e.EnrichStatsMessage(m)
+			m, err := e.EnrichStatsMessage(m)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to enrich the stats message")
+				return
+			}
+
 			b, err := protojson.Marshal(m)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched stats message")
@@ -112,7 +123,12 @@ func (e *Enricher) Start(ctx context.Context) error {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
 				return
 			}
-			m = e.EnrichObjectMessage(m)
+			m, err := e.EnrichObjectMessage(m)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to enrich the object message")
+				return
+			}
+
 			b, err := protojson.Marshal(m)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched object message")
@@ -132,20 +148,40 @@ func (e *Enricher) Start(ctx context.Context) error {
 	return nil
 }
 
-func (e *Enricher) EnrichEventMessage(m *pbev.KubernetesEvent) *pbev.KubernetesEvent {
-	e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
-
-	return nil
+func (e *Enricher) EnrichEventMessage(m *pbev.KubernetesEvent) (*pbev.KubernetesEvent, error) {
+	b, err := e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
+	if err != nil {
+		return nil, err
+	}
+	var apiKeyInfo *pbmt.ApiKeyInfo
+	if err := protojson.Unmarshal(b, apiKeyInfo); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
-func (e *Enricher) EnrichStatsMessage(m *pbst.KubernetesKubeletStats) *pbst.KubernetesKubeletStats {
-	e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
+func (e *Enricher) EnrichStatsMessage(m *pbst.KubernetesKubeletStats) (*pbst.KubernetesKubeletStats, error) {
+	b, err := e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
+	if err != nil {
+		return nil, err
+	}
+	var apiKeyInfo *pbmt.ApiKeyInfo
+	if err := protojson.Unmarshal(b, apiKeyInfo); err != nil {
+		return nil, err
+	}
 
-	return nil
+	return nil, nil
 }
 
-func (e *Enricher) EnrichObjectMessage(m *pbcl.KubernetesClusterObject) *pbcl.KubernetesClusterObject {
-	e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
+func (e *Enricher) EnrichObjectMessage(m *pbcl.KubernetesClusterObject) (*pbcl.KubernetesClusterObject, error) {
+	b, err := e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
+	if err != nil {
+		return nil, err
+	}
+	var apiKeyInfo *pbmt.ApiKeyInfo
+	if err := protojson.Unmarshal(b, apiKeyInfo); err != nil {
+		return nil, err
+	}
 
-	return nil
+	return nil, nil
 }

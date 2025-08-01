@@ -7,8 +7,6 @@ option go_package = "github.com/opisvigilant/futura/proto/gen/common;common";
 message Metadata {
   string idempotency_key = 1;
   string watcher_version = 2;
-  string cluster_id = 3;
-  string cloud_provider = 5;
 }
 
 message APIKey {
