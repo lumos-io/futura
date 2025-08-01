@@ -167,6 +167,7 @@ type EKSClusterMetadata struct {
 	PlatformVersion   string                 `protobuf:"bytes,8,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
 	Tags              map[string]string      `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ClusterMetadataId uint64                 `protobuf:"varint,10,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	Region            string                 `protobuf:"bytes,11,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -271,6 +272,13 @@ func (x *EKSClusterMetadata) GetClusterMetadataId() uint64 {
 	return 0
 }
 
+func (x *EKSClusterMetadata) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
 type KindClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -281,6 +289,7 @@ type KindClusterMetadata struct {
 	PlatformVersion   string                 `protobuf:"bytes,6,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
 	Tags              map[string]string      `protobuf:"bytes,7,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ClusterMetadataId uint64                 `protobuf:"varint,8,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	Region            string                 `protobuf:"bytes,9,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -371,10 +380,19 @@ func (x *KindClusterMetadata) GetClusterMetadataId() uint64 {
 	return 0
 }
 
+func (x *KindClusterMetadata) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
 type GKEClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	ClusterMetadataId uint64                 `protobuf:"varint,2,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	Version           string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Region            string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -423,10 +441,26 @@ func (x *GKEClusterMetadata) GetClusterMetadataId() uint64 {
 	return 0
 }
 
+func (x *GKEClusterMetadata) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *GKEClusterMetadata) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
 type AKSClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	ClusterMetadataId uint64                 `protobuf:"varint,2,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	Version           string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Region            string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -475,10 +509,26 @@ func (x *AKSClusterMetadata) GetClusterMetadataId() uint64 {
 	return 0
 }
 
+func (x *AKSClusterMetadata) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *AKSClusterMetadata) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
 type DOKSClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	ClusterMetadataId uint64                 `protobuf:"varint,2,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	Version           string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Region            string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -527,10 +577,26 @@ func (x *DOKSClusterMetadata) GetClusterMetadataId() uint64 {
 	return 0
 }
 
+func (x *DOKSClusterMetadata) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *DOKSClusterMetadata) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
 type ACKClusterMetadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	ClusterMetadataId uint64                 `protobuf:"varint,2,opt,name=cluster_metadata_id,json=clusterMetadataId,proto3" json:"cluster_metadata_id,omitempty"`
+	Version           string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Region            string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -579,6 +645,20 @@ func (x *ACKClusterMetadata) GetClusterMetadataId() uint64 {
 	return 0
 }
 
+func (x *ACKClusterMetadata) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *ACKClusterMetadata) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
 var File_backend_cluster_proto protoreflect.FileDescriptor
 
 const file_backend_cluster_proto_rawDesc = "" +
@@ -599,7 +679,7 @@ const file_backend_cluster_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xc3\x03\n" +
+	"updated_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xdb\x03\n" +
 	"\x12EKSClusterMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
@@ -611,10 +691,11 @@ const file_backend_cluster_proto_rawDesc = "" +
 	"\x10platform_version\x18\b \x01(\tR\x0fplatformVersion\x129\n" +
 	"\x04tags\x18\t \x03(\v2%.backend.EKSClusterMetadata.TagsEntryR\x04tags\x12.\n" +
 	"\x13cluster_metadata_id\x18\n" +
-	" \x01(\x04R\x11clusterMetadataId\x1a7\n" +
+	" \x01(\x04R\x11clusterMetadataId\x12\x16\n" +
+	"\x06region\x18\v \x01(\tR\x06region\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8d\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa5\x03\n" +
 	"\x13KindClusterMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x18\n" +
@@ -623,22 +704,31 @@ const file_backend_cluster_proto_rawDesc = "" +
 	"\x12cluster_created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x10clusterCreatedAt\x12)\n" +
 	"\x10platform_version\x18\x06 \x01(\tR\x0fplatformVersion\x12:\n" +
 	"\x04tags\x18\a \x03(\v2&.backend.KindClusterMetadata.TagsEntryR\x04tags\x12.\n" +
-	"\x13cluster_metadata_id\x18\b \x01(\x04R\x11clusterMetadataId\x1a7\n" +
+	"\x13cluster_metadata_id\x18\b \x01(\x04R\x11clusterMetadataId\x12\x16\n" +
+	"\x06region\x18\t \x01(\tR\x06region\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"T\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x86\x01\n" +
 	"\x12GKEClusterMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
-	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\"T\n" +
+	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12\x16\n" +
+	"\x06region\x18\x04 \x01(\tR\x06region\"\x86\x01\n" +
 	"\x12AKSClusterMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
-	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\"U\n" +
+	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12\x16\n" +
+	"\x06region\x18\x04 \x01(\tR\x06region\"\x87\x01\n" +
 	"\x13DOKSClusterMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
-	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\"T\n" +
+	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12\x16\n" +
+	"\x06region\x18\x04 \x01(\tR\x06region\"\x86\x01\n" +
 	"\x12ACKClusterMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12.\n" +
-	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataIdB:Z8github.com/opisvigilant/futura/proto/gen/backend;backendb\x06proto3"
+	"\x13cluster_metadata_id\x18\x02 \x01(\x04R\x11clusterMetadataId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12\x16\n" +
+	"\x06region\x18\x04 \x01(\tR\x06regionB:Z8github.com/opisvigilant/futura/proto/gen/backend;backendb\x06proto3"
 
 var (
 	file_backend_cluster_proto_rawDescOnce sync.Once

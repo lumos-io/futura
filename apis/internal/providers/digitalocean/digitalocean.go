@@ -30,5 +30,12 @@ func (a *DigitalOceanProvider) FetchClusters(ctx context.Context) ([]string, err
 }
 
 func (a *DigitalOceanProvider) FetchClusterMetadata(ctx context.Context, clusterID string) (*models.ClusterMetadata, error) {
-	return nil, nil
+	m := &models.DOKSClusterMetadata{
+		Version: "v1.33.2",
+		Region:  "us-east-2",
+	}
+	return &models.ClusterMetadata{
+		Name:         clusterID,
+		DOKSMetadata: m,
+	}, nil
 }

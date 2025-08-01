@@ -31,9 +31,22 @@ type ClusterMetadata struct {
 	KindMetadata *KindClusterMetadata `gorm:"foreignKey:ClusterMetadataID" json:"kindMetadata,omitempty"`
 }
 
+func (cm *ClusterMetadata) GetKubernetesVersion() string {
+	if cm.ACKMetadata != nil {
+		return ""
+	}
+
+	return ""
+}
+
+func (cm *ClusterMetadata) GetRegion() string {
+	return ""
+}
+
 type EKSClusterMetadata struct {
 	BaseModel
 
+	Region           string            `gorm:"size:32" json:"region"`
 	Status           string            `gorm:"size:64" json:"status"`
 	Version          string            `gorm:"size:32" json:"version"`
 	Endpoint         string            `gorm:"size:512" json:"endpoint"`
@@ -50,6 +63,9 @@ type EKSClusterMetadata struct {
 
 type GKEClusterMetadata struct {
 	BaseModel
+
+	Version string `gorm:"size:32" json:"version"`
+	Region  string `gorm:"size:32" json:"region"`
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
 	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
@@ -57,6 +73,9 @@ type GKEClusterMetadata struct {
 
 type AKSClusterMetadata struct {
 	BaseModel
+
+	Version string `gorm:"size:32" json:"version"`
+	Region  string `gorm:"size:32" json:"region"`
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
 	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
@@ -64,6 +83,9 @@ type AKSClusterMetadata struct {
 
 type DOKSClusterMetadata struct {
 	BaseModel
+
+	Version string `gorm:"size:32" json:"version"`
+	Region  string `gorm:"size:32" json:"region"`
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
 	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
@@ -71,6 +93,9 @@ type DOKSClusterMetadata struct {
 
 type ACKClusterMetadata struct {
 	BaseModel
+
+	Version string `gorm:"size:32" json:"version"`
+	Region  string `gorm:"size:32" json:"region"`
 	// ... other fields ...
 	ClusterMetadataID uint             `gorm:"uniqueIndex;not null" json:"clusterMetadataId"` // one-to-one enforced
 	ClusterMetadata   *ClusterMetadata `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
@@ -81,6 +106,8 @@ Attention: this below is only used in development mode and behind a feature-flag
 */
 type KindClusterMetadata struct {
 	BaseModel
+
+	Region            string            `gorm:"size:32" json:"region"`
 	Status            string            `gorm:"size:64" json:"status"`
 	Version           string            `gorm:"size:32" json:"version"`
 	Endpoint          string            `gorm:"size:512" json:"endpoint"`
@@ -105,8 +132,9 @@ func ConvertToProtoClusterMetadataList(models []ClusterMetadata) []*pb.ClusterMe
 		if model.EKSMetadata != nil {
 			proto.EksMetadata = &pb.EKSClusterMetadata{
 				Id:              uint64(model.EKSMetadata.ID),
-				Status:          model.EKSMetadata.Status,
+				Region:          model.EKSMetadata.Region,
 				Version:         model.EKSMetadata.Version,
+				Status:          model.EKSMetadata.Status,
 				Endpoint:        model.EKSMetadata.Endpoint,
 				Arn:             model.EKSMetadata.Arn,
 				EksClusterId:    model.EKSMetadata.EKSClusterID,
@@ -128,25 +156,33 @@ func ConvertToProtoClusterMetadataList(models []ClusterMetadata) []*pb.ClusterMe
 
 		if model.GKEMetadata != nil {
 			proto.GkeMetadata = &pb.GKEClusterMetadata{
-				Id: uint64(model.GKEMetadata.ID),
+				Id:      uint64(model.GKEMetadata.ID),
+				Region:  model.GKEMetadata.Region,
+				Version: model.GKEMetadata.Version,
 			}
 		}
 
 		if model.AKSMetadata != nil {
 			proto.AksMetadata = &pb.AKSClusterMetadata{
-				Id: uint64(model.AKSMetadata.ID),
+				Id:      uint64(model.AKSMetadata.ID),
+				Region:  model.AKSMetadata.Region,
+				Version: model.AKSMetadata.Version,
 			}
 		}
 
 		if model.DOKSMetadata != nil {
 			proto.DoksMetadata = &pb.DOKSClusterMetadata{
-				Id: uint64(model.DOKSMetadata.ID),
+				Id:      uint64(model.DOKSMetadata.ID),
+				Region:  model.DOKSMetadata.Region,
+				Version: model.DOKSMetadata.Version,
 			}
 		}
 
 		if model.ACKMetadata != nil {
 			proto.AckMetadata = &pb.ACKClusterMetadata{
-				Id: uint64(model.ACKMetadata.ID),
+				Id:      uint64(model.ACKMetadata.ID),
+				Region:  model.ACKMetadata.Region,
+				Version: model.ACKMetadata.Version,
 			}
 		}
 
@@ -154,6 +190,7 @@ func ConvertToProtoClusterMetadataList(models []ClusterMetadata) []*pb.ClusterMe
 			proto.KindMetadata = &pb.KindClusterMetadata{
 				Id:              uint64(model.KindMetadata.ID),
 				Status:          model.KindMetadata.Status,
+				Region:          model.KindMetadata.Region,
 				Version:         model.KindMetadata.Version,
 				Endpoint:        model.KindMetadata.Endpoint,
 				PlatformVersion: model.KindMetadata.PlatformVersion,

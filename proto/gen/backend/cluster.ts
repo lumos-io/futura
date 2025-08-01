@@ -39,6 +39,7 @@ export interface EKSClusterMetadata {
   platform_version: string;
   tags: { [key: string]: string };
   cluster_metadata_id: number;
+  region: string;
 }
 
 export interface EKSClusterMetadata_TagsEntry {
@@ -55,6 +56,7 @@ export interface KindClusterMetadata {
   platform_version: string;
   tags: { [key: string]: string };
   cluster_metadata_id: number;
+  region: string;
 }
 
 export interface KindClusterMetadata_TagsEntry {
@@ -65,21 +67,29 @@ export interface KindClusterMetadata_TagsEntry {
 export interface GKEClusterMetadata {
   id: number;
   cluster_metadata_id: number;
+  version: string;
+  region: string;
 }
 
 export interface AKSClusterMetadata {
   id: number;
   cluster_metadata_id: number;
+  version: string;
+  region: string;
 }
 
 export interface DOKSClusterMetadata {
   id: number;
   cluster_metadata_id: number;
+  version: string;
+  region: string;
 }
 
 export interface ACKClusterMetadata {
   id: number;
   cluster_metadata_id: number;
+  version: string;
+  region: string;
 }
 
 function createBaseClusterMetadata(): ClusterMetadata {
@@ -355,6 +365,7 @@ function createBaseEKSClusterMetadata(): EKSClusterMetadata {
     platform_version: "",
     tags: {},
     cluster_metadata_id: 0,
+    region: "",
   };
 }
 
@@ -389,6 +400,9 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
     });
     if (message.cluster_metadata_id !== 0) {
       writer.uint32(80).uint64(message.cluster_metadata_id);
+    }
+    if (message.region !== "") {
+      writer.uint32(90).string(message.region);
     }
     return writer;
   },
@@ -483,6 +497,14 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
           message.cluster_metadata_id = longToNumber(reader.uint64());
           continue;
         }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.region = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -509,6 +531,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
         }, {})
         : {},
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
+      region: isSet(object.region) ? globalThis.String(object.region) : "",
     };
   },
 
@@ -550,6 +573,9 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
     }
+    if (message.region !== "") {
+      obj.region = message.region;
+    }
     return obj;
   },
 
@@ -573,6 +599,7 @@ export const EKSClusterMetadata: MessageFns<EKSClusterMetadata> = {
       return acc;
     }, {});
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
+    message.region = object.region ?? "";
     return message;
   },
 };
@@ -663,6 +690,7 @@ function createBaseKindClusterMetadata(): KindClusterMetadata {
     platform_version: "",
     tags: {},
     cluster_metadata_id: 0,
+    region: "",
   };
 }
 
@@ -691,6 +719,9 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
     });
     if (message.cluster_metadata_id !== 0) {
       writer.uint32(64).uint64(message.cluster_metadata_id);
+    }
+    if (message.region !== "") {
+      writer.uint32(74).string(message.region);
     }
     return writer;
   },
@@ -769,6 +800,14 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
           message.cluster_metadata_id = longToNumber(reader.uint64());
           continue;
         }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.region = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -793,6 +832,7 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
         }, {})
         : {},
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
+      region: isSet(object.region) ? globalThis.String(object.region) : "",
     };
   },
 
@@ -828,6 +868,9 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
     }
+    if (message.region !== "") {
+      obj.region = message.region;
+    }
     return obj;
   },
 
@@ -849,6 +892,7 @@ export const KindClusterMetadata: MessageFns<KindClusterMetadata> = {
       return acc;
     }, {});
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
+    message.region = object.region ?? "";
     return message;
   },
 };
@@ -932,7 +976,7 @@ export const KindClusterMetadata_TagsEntry: MessageFns<KindClusterMetadata_TagsE
 };
 
 function createBaseGKEClusterMetadata(): GKEClusterMetadata {
-  return { id: 0, cluster_metadata_id: 0 };
+  return { id: 0, cluster_metadata_id: 0, version: "", region: "" };
 }
 
 export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
@@ -942,6 +986,12 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
     }
     if (message.cluster_metadata_id !== 0) {
       writer.uint32(16).uint64(message.cluster_metadata_id);
+    }
+    if (message.version !== "") {
+      writer.uint32(26).string(message.version);
+    }
+    if (message.region !== "") {
+      writer.uint32(34).string(message.region);
     }
     return writer;
   },
@@ -969,6 +1019,22 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
           message.cluster_metadata_id = longToNumber(reader.uint64());
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.region = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -982,6 +1048,8 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      region: isSet(object.region) ? globalThis.String(object.region) : "",
     };
   },
 
@@ -993,6 +1061,12 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
     }
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    if (message.region !== "") {
+      obj.region = message.region;
+    }
     return obj;
   },
 
@@ -1003,12 +1077,14 @@ export const GKEClusterMetadata: MessageFns<GKEClusterMetadata> = {
     const message = createBaseGKEClusterMetadata();
     message.id = object.id ?? 0;
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
+    message.version = object.version ?? "";
+    message.region = object.region ?? "";
     return message;
   },
 };
 
 function createBaseAKSClusterMetadata(): AKSClusterMetadata {
-  return { id: 0, cluster_metadata_id: 0 };
+  return { id: 0, cluster_metadata_id: 0, version: "", region: "" };
 }
 
 export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
@@ -1018,6 +1094,12 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
     }
     if (message.cluster_metadata_id !== 0) {
       writer.uint32(16).uint64(message.cluster_metadata_id);
+    }
+    if (message.version !== "") {
+      writer.uint32(26).string(message.version);
+    }
+    if (message.region !== "") {
+      writer.uint32(34).string(message.region);
     }
     return writer;
   },
@@ -1045,6 +1127,22 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
           message.cluster_metadata_id = longToNumber(reader.uint64());
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.region = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1058,6 +1156,8 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      region: isSet(object.region) ? globalThis.String(object.region) : "",
     };
   },
 
@@ -1069,6 +1169,12 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
     }
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    if (message.region !== "") {
+      obj.region = message.region;
+    }
     return obj;
   },
 
@@ -1079,12 +1185,14 @@ export const AKSClusterMetadata: MessageFns<AKSClusterMetadata> = {
     const message = createBaseAKSClusterMetadata();
     message.id = object.id ?? 0;
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
+    message.version = object.version ?? "";
+    message.region = object.region ?? "";
     return message;
   },
 };
 
 function createBaseDOKSClusterMetadata(): DOKSClusterMetadata {
-  return { id: 0, cluster_metadata_id: 0 };
+  return { id: 0, cluster_metadata_id: 0, version: "", region: "" };
 }
 
 export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
@@ -1094,6 +1202,12 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
     }
     if (message.cluster_metadata_id !== 0) {
       writer.uint32(16).uint64(message.cluster_metadata_id);
+    }
+    if (message.version !== "") {
+      writer.uint32(26).string(message.version);
+    }
+    if (message.region !== "") {
+      writer.uint32(34).string(message.region);
     }
     return writer;
   },
@@ -1121,6 +1235,22 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
           message.cluster_metadata_id = longToNumber(reader.uint64());
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.region = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1134,6 +1264,8 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      region: isSet(object.region) ? globalThis.String(object.region) : "",
     };
   },
 
@@ -1145,6 +1277,12 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
     }
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    if (message.region !== "") {
+      obj.region = message.region;
+    }
     return obj;
   },
 
@@ -1155,12 +1293,14 @@ export const DOKSClusterMetadata: MessageFns<DOKSClusterMetadata> = {
     const message = createBaseDOKSClusterMetadata();
     message.id = object.id ?? 0;
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
+    message.version = object.version ?? "";
+    message.region = object.region ?? "";
     return message;
   },
 };
 
 function createBaseACKClusterMetadata(): ACKClusterMetadata {
-  return { id: 0, cluster_metadata_id: 0 };
+  return { id: 0, cluster_metadata_id: 0, version: "", region: "" };
 }
 
 export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
@@ -1170,6 +1310,12 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
     }
     if (message.cluster_metadata_id !== 0) {
       writer.uint32(16).uint64(message.cluster_metadata_id);
+    }
+    if (message.version !== "") {
+      writer.uint32(26).string(message.version);
+    }
+    if (message.region !== "") {
+      writer.uint32(34).string(message.region);
     }
     return writer;
   },
@@ -1197,6 +1343,22 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
           message.cluster_metadata_id = longToNumber(reader.uint64());
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.region = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1210,6 +1372,8 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
       cluster_metadata_id: isSet(object.cluster_metadata_id) ? globalThis.Number(object.cluster_metadata_id) : 0,
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      region: isSet(object.region) ? globalThis.String(object.region) : "",
     };
   },
 
@@ -1221,6 +1385,12 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
     if (message.cluster_metadata_id !== 0) {
       obj.cluster_metadata_id = Math.round(message.cluster_metadata_id);
     }
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    if (message.region !== "") {
+      obj.region = message.region;
+    }
     return obj;
   },
 
@@ -1231,6 +1401,8 @@ export const ACKClusterMetadata: MessageFns<ACKClusterMetadata> = {
     const message = createBaseACKClusterMetadata();
     message.id = object.id ?? 0;
     message.cluster_metadata_id = object.cluster_metadata_id ?? 0;
+    message.version = object.version ?? "";
+    message.region = object.region ?? "";
     return message;
   },
 };

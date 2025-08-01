@@ -31,5 +31,12 @@ func (a *GCPProvider) FetchClusters(ctx context.Context) ([]string, error) {
 }
 
 func (a *GCPProvider) FetchClusterMetadata(ctx context.Context, clusterID string) (*models.ClusterMetadata, error) {
-	return nil, nil
+	m := &models.GKEClusterMetadata{
+		Version: "v1.33.2",
+		Region:  "us-east-2",
+	}
+	return &models.ClusterMetadata{
+		Name:        clusterID,
+		GKEMetadata: m,
+	}, nil
 }

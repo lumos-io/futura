@@ -33,4 +33,14 @@ message KubernetesEvent {
   string object_api_version = 16;
   string object_resource_version = 17;
   string node_name = 18;
+
+  EnrichmentMetadata enrichment = 100;
+}
+
+message EnrichmentMetadata {
+  string organization_id = 1;
+  string cluster_name = 2;
+  string cloud_provider = 3;
+  string k8s_version = 4;
+  int64 received_at_unix = 5;  // UNIX timestamp
 }

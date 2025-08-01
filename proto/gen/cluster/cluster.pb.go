@@ -138,10 +138,11 @@ type KubernetesClusterObject struct {
 	// Cluster quota
 	ClusterQuota *ClusterResourceQuotaMetadata `protobuf:"bytes,44,opt,name=cluster_quota,json=clusterQuota,proto3" json:"cluster_quota,omitempty"`
 	// for daemonset
-	DaemonsetCurrentNumberScheduled int64 `protobuf:"varint,45,opt,name=daemonset_current_number_scheduled,json=daemonsetCurrentNumberScheduled,proto3" json:"daemonset_current_number_scheduled,omitempty"`
-	DaemonsetDesiredNumberScheduled int64 `protobuf:"varint,46,opt,name=daemonset_desired_number_scheduled,json=daemonsetDesiredNumberScheduled,proto3" json:"daemonset_desired_number_scheduled,omitempty"`
-	DaemonsetNumberMisscheduled     int64 `protobuf:"varint,47,opt,name=daemonset_number_misscheduled,json=daemonsetNumberMisscheduled,proto3" json:"daemonset_number_misscheduled,omitempty"`
-	DaemonsetNumberReady            int64 `protobuf:"varint,48,opt,name=daemonset_number_ready,json=daemonsetNumberReady,proto3" json:"daemonset_number_ready,omitempty"`
+	DaemonsetCurrentNumberScheduled int64               `protobuf:"varint,45,opt,name=daemonset_current_number_scheduled,json=daemonsetCurrentNumberScheduled,proto3" json:"daemonset_current_number_scheduled,omitempty"`
+	DaemonsetDesiredNumberScheduled int64               `protobuf:"varint,46,opt,name=daemonset_desired_number_scheduled,json=daemonsetDesiredNumberScheduled,proto3" json:"daemonset_desired_number_scheduled,omitempty"`
+	DaemonsetNumberMisscheduled     int64               `protobuf:"varint,47,opt,name=daemonset_number_misscheduled,json=daemonsetNumberMisscheduled,proto3" json:"daemonset_number_misscheduled,omitempty"`
+	DaemonsetNumberReady            int64               `protobuf:"varint,48,opt,name=daemonset_number_ready,json=daemonsetNumberReady,proto3" json:"daemonset_number_ready,omitempty"`
+	Enrichment                      *EnrichmentMetadata `protobuf:"bytes,100,opt,name=enrichment,proto3" json:"enrichment,omitempty"`
 	unknownFields                   protoimpl.UnknownFields
 	sizeCache                       protoimpl.SizeCache
 }
@@ -512,6 +513,73 @@ func (x *KubernetesClusterObject) GetDaemonsetNumberReady() int64 {
 	return 0
 }
 
+func (x *KubernetesClusterObject) GetEnrichment() *EnrichmentMetadata {
+	if x != nil {
+		return x.Enrichment
+	}
+	return nil
+}
+
+type EnrichmentMetadata struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	CloudProvider  string                 `protobuf:"bytes,1,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
+	K8SVersion     string                 `protobuf:"bytes,2,opt,name=k8s_version,json=k8sVersion,proto3" json:"k8s_version,omitempty"`
+	ReceivedAtUnix int64                  `protobuf:"varint,3,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EnrichmentMetadata) Reset() {
+	*x = EnrichmentMetadata{}
+	mi := &file_cluster_cluster_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EnrichmentMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnrichmentMetadata) ProtoMessage() {}
+
+func (x *EnrichmentMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_cluster_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnrichmentMetadata.ProtoReflect.Descriptor instead.
+func (*EnrichmentMetadata) Descriptor() ([]byte, []int) {
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *EnrichmentMetadata) GetCloudProvider() string {
+	if x != nil {
+		return x.CloudProvider
+	}
+	return ""
+}
+
+func (x *EnrichmentMetadata) GetK8SVersion() string {
+	if x != nil {
+		return x.K8SVersion
+	}
+	return ""
+}
+
+func (x *EnrichmentMetadata) GetReceivedAtUnix() int64 {
+	if x != nil {
+		return x.ReceivedAtUnix
+	}
+	return 0
+}
+
 // Represents a container and its resource specs.
 type ContainerSpec struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
@@ -530,7 +598,7 @@ type ContainerSpec struct {
 
 func (x *ContainerSpec) Reset() {
 	*x = ContainerSpec{}
-	mi := &file_cluster_cluster_proto_msgTypes[2]
+	mi := &file_cluster_cluster_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -542,7 +610,7 @@ func (x *ContainerSpec) String() string {
 func (*ContainerSpec) ProtoMessage() {}
 
 func (x *ContainerSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[2]
+	mi := &file_cluster_cluster_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -555,7 +623,7 @@ func (x *ContainerSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerSpec.ProtoReflect.Descriptor instead.
 func (*ContainerSpec) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{2}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ContainerSpec) GetName() string {
@@ -632,7 +700,7 @@ type ContainerResources struct {
 
 func (x *ContainerResources) Reset() {
 	*x = ContainerResources{}
-	mi := &file_cluster_cluster_proto_msgTypes[3]
+	mi := &file_cluster_cluster_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -644,7 +712,7 @@ func (x *ContainerResources) String() string {
 func (*ContainerResources) ProtoMessage() {}
 
 func (x *ContainerResources) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[3]
+	mi := &file_cluster_cluster_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -657,7 +725,7 @@ func (x *ContainerResources) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerResources.ProtoReflect.Descriptor instead.
 func (*ContainerResources) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{3}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ContainerResources) GetLimits() *ResourceQuantities {
@@ -687,7 +755,7 @@ type ResourceQuantities struct {
 
 func (x *ResourceQuantities) Reset() {
 	*x = ResourceQuantities{}
-	mi := &file_cluster_cluster_proto_msgTypes[4]
+	mi := &file_cluster_cluster_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -699,7 +767,7 @@ func (x *ResourceQuantities) String() string {
 func (*ResourceQuantities) ProtoMessage() {}
 
 func (x *ResourceQuantities) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[4]
+	mi := &file_cluster_cluster_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -712,7 +780,7 @@ func (x *ResourceQuantities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceQuantities.ProtoReflect.Descriptor instead.
 func (*ResourceQuantities) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{4}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ResourceQuantities) GetCpu() string {
@@ -754,7 +822,7 @@ type VolumeSpec struct {
 
 func (x *VolumeSpec) Reset() {
 	*x = VolumeSpec{}
-	mi := &file_cluster_cluster_proto_msgTypes[5]
+	mi := &file_cluster_cluster_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -766,7 +834,7 @@ func (x *VolumeSpec) String() string {
 func (*VolumeSpec) ProtoMessage() {}
 
 func (x *VolumeSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[5]
+	mi := &file_cluster_cluster_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -779,7 +847,7 @@ func (x *VolumeSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeSpec.ProtoReflect.Descriptor instead.
 func (*VolumeSpec) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{5}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *VolumeSpec) GetName() string {
@@ -811,7 +879,7 @@ type ContainerState struct {
 
 func (x *ContainerState) Reset() {
 	*x = ContainerState{}
-	mi := &file_cluster_cluster_proto_msgTypes[6]
+	mi := &file_cluster_cluster_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -823,7 +891,7 @@ func (x *ContainerState) String() string {
 func (*ContainerState) ProtoMessage() {}
 
 func (x *ContainerState) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[6]
+	mi := &file_cluster_cluster_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -836,7 +904,7 @@ func (x *ContainerState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerState.ProtoReflect.Descriptor instead.
 func (*ContainerState) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{6}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ContainerState) GetState() isContainerState_State {
@@ -906,7 +974,7 @@ type ContainerStateWaiting struct {
 
 func (x *ContainerStateWaiting) Reset() {
 	*x = ContainerStateWaiting{}
-	mi := &file_cluster_cluster_proto_msgTypes[7]
+	mi := &file_cluster_cluster_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -918,7 +986,7 @@ func (x *ContainerStateWaiting) String() string {
 func (*ContainerStateWaiting) ProtoMessage() {}
 
 func (x *ContainerStateWaiting) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[7]
+	mi := &file_cluster_cluster_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -931,7 +999,7 @@ func (x *ContainerStateWaiting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStateWaiting.ProtoReflect.Descriptor instead.
 func (*ContainerStateWaiting) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{7}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ContainerStateWaiting) GetReason() string {
@@ -958,7 +1026,7 @@ type ContainerStateRunning struct {
 
 func (x *ContainerStateRunning) Reset() {
 	*x = ContainerStateRunning{}
-	mi := &file_cluster_cluster_proto_msgTypes[8]
+	mi := &file_cluster_cluster_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -970,7 +1038,7 @@ func (x *ContainerStateRunning) String() string {
 func (*ContainerStateRunning) ProtoMessage() {}
 
 func (x *ContainerStateRunning) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[8]
+	mi := &file_cluster_cluster_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -983,7 +1051,7 @@ func (x *ContainerStateRunning) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStateRunning.ProtoReflect.Descriptor instead.
 func (*ContainerStateRunning) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{8}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ContainerStateRunning) GetStartedAt() *timestamppb.Timestamp {
@@ -1009,7 +1077,7 @@ type ContainerStateTerminated struct {
 
 func (x *ContainerStateTerminated) Reset() {
 	*x = ContainerStateTerminated{}
-	mi := &file_cluster_cluster_proto_msgTypes[9]
+	mi := &file_cluster_cluster_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1021,7 +1089,7 @@ func (x *ContainerStateTerminated) String() string {
 func (*ContainerStateTerminated) ProtoMessage() {}
 
 func (x *ContainerStateTerminated) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[9]
+	mi := &file_cluster_cluster_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1034,7 +1102,7 @@ func (x *ContainerStateTerminated) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStateTerminated.ProtoReflect.Descriptor instead.
 func (*ContainerStateTerminated) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{9}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ContainerStateTerminated) GetExitCode() int64 {
@@ -1098,7 +1166,7 @@ type NodeCondition struct {
 
 func (x *NodeCondition) Reset() {
 	*x = NodeCondition{}
-	mi := &file_cluster_cluster_proto_msgTypes[10]
+	mi := &file_cluster_cluster_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1110,7 +1178,7 @@ func (x *NodeCondition) String() string {
 func (*NodeCondition) ProtoMessage() {}
 
 func (x *NodeCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[10]
+	mi := &file_cluster_cluster_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1123,7 +1191,7 @@ func (x *NodeCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeCondition.ProtoReflect.Descriptor instead.
 func (*NodeCondition) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{10}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *NodeCondition) GetType() string {
@@ -1167,7 +1235,7 @@ type AllocatableResources struct {
 
 func (x *AllocatableResources) Reset() {
 	*x = AllocatableResources{}
-	mi := &file_cluster_cluster_proto_msgTypes[11]
+	mi := &file_cluster_cluster_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1179,7 +1247,7 @@ func (x *AllocatableResources) String() string {
 func (*AllocatableResources) ProtoMessage() {}
 
 func (x *AllocatableResources) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[11]
+	mi := &file_cluster_cluster_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1192,7 +1260,7 @@ func (x *AllocatableResources) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AllocatableResources.ProtoReflect.Descriptor instead.
 func (*AllocatableResources) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{11}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *AllocatableResources) GetCpu() string {
@@ -1243,7 +1311,7 @@ type ClusterResourceQuotaMetadata struct {
 
 func (x *ClusterResourceQuotaMetadata) Reset() {
 	*x = ClusterResourceQuotaMetadata{}
-	mi := &file_cluster_cluster_proto_msgTypes[12]
+	mi := &file_cluster_cluster_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1255,7 +1323,7 @@ func (x *ClusterResourceQuotaMetadata) String() string {
 func (*ClusterResourceQuotaMetadata) ProtoMessage() {}
 
 func (x *ClusterResourceQuotaMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[12]
+	mi := &file_cluster_cluster_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1268,7 +1336,7 @@ func (x *ClusterResourceQuotaMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClusterResourceQuotaMetadata.ProtoReflect.Descriptor instead.
 func (*ClusterResourceQuotaMetadata) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{12}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ClusterResourceQuotaMetadata) GetName() string {
@@ -1317,7 +1385,7 @@ type NamespaceQuota struct {
 
 func (x *NamespaceQuota) Reset() {
 	*x = NamespaceQuota{}
-	mi := &file_cluster_cluster_proto_msgTypes[13]
+	mi := &file_cluster_cluster_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1329,7 +1397,7 @@ func (x *NamespaceQuota) String() string {
 func (*NamespaceQuota) ProtoMessage() {}
 
 func (x *NamespaceQuota) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[13]
+	mi := &file_cluster_cluster_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1342,7 +1410,7 @@ func (x *NamespaceQuota) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NamespaceQuota.ProtoReflect.Descriptor instead.
 func (*NamespaceQuota) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{13}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *NamespaceQuota) GetNamespace() string {
@@ -1376,7 +1444,7 @@ type QuotaResource struct {
 
 func (x *QuotaResource) Reset() {
 	*x = QuotaResource{}
-	mi := &file_cluster_cluster_proto_msgTypes[14]
+	mi := &file_cluster_cluster_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1388,7 +1456,7 @@ func (x *QuotaResource) String() string {
 func (*QuotaResource) ProtoMessage() {}
 
 func (x *QuotaResource) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[14]
+	mi := &file_cluster_cluster_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1401,7 +1469,7 @@ func (x *QuotaResource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuotaResource.ProtoReflect.Descriptor instead.
 func (*QuotaResource) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{14}
+	return file_cluster_cluster_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *QuotaResource) GetResource() string {
@@ -1426,7 +1494,7 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x1cKubernetesClusterObjectBatch\x12&\n" +
 	"\x06apikey\x18\x01 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
 	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x12:\n" +
-	"\aobjects\x18\x03 \x03(\v2 .cluster.KubernetesClusterObjectR\aobjects\"\xb6\x12\n" +
+	"\aobjects\x18\x03 \x03(\v2 .cluster.KubernetesClusterObjectR\aobjects\"\xf3\x12\n" +
 	"\x17KubernetesClusterObject\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
@@ -1486,7 +1554,10 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\"daemonset_current_number_scheduled\x18- \x01(\x03R\x1fdaemonsetCurrentNumberScheduled\x12K\n" +
 	"\"daemonset_desired_number_scheduled\x18. \x01(\x03R\x1fdaemonsetDesiredNumberScheduled\x12B\n" +
 	"\x1ddaemonset_number_misscheduled\x18/ \x01(\x03R\x1bdaemonsetNumberMisscheduled\x124\n" +
-	"\x16daemonset_number_ready\x180 \x01(\x03R\x14daemonsetNumberReady\x1a9\n" +
+	"\x16daemonset_number_ready\x180 \x01(\x03R\x14daemonsetNumberReady\x12;\n" +
+	"\n" +
+	"enrichment\x18d \x01(\v2\x1b.cluster.EnrichmentMetadataR\n" +
+	"enrichment\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
@@ -1499,7 +1570,12 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
 	"ExtraEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xee\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x86\x01\n" +
+	"\x12EnrichmentMetadata\x12%\n" +
+	"\x0ecloud_provider\x18\x01 \x01(\tR\rcloudProvider\x12\x1f\n" +
+	"\vk8s_version\x18\x02 \x01(\tR\n" +
+	"k8sVersion\x12(\n" +
+	"\x10received_at_unix\x18\x03 \x01(\x03R\x0ereceivedAtUnix\"\xee\x02\n" +
 	"\rContainerSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x129\n" +
@@ -1586,68 +1662,70 @@ func file_cluster_cluster_proto_rawDescGZIP() []byte {
 	return file_cluster_cluster_proto_rawDescData
 }
 
-var file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_cluster_cluster_proto_goTypes = []any{
 	(*KubernetesClusterObjectBatch)(nil), // 0: cluster.KubernetesClusterObjectBatch
 	(*KubernetesClusterObject)(nil),      // 1: cluster.KubernetesClusterObject
-	(*ContainerSpec)(nil),                // 2: cluster.ContainerSpec
-	(*ContainerResources)(nil),           // 3: cluster.ContainerResources
-	(*ResourceQuantities)(nil),           // 4: cluster.ResourceQuantities
-	(*VolumeSpec)(nil),                   // 5: cluster.VolumeSpec
-	(*ContainerState)(nil),               // 6: cluster.ContainerState
-	(*ContainerStateWaiting)(nil),        // 7: cluster.ContainerStateWaiting
-	(*ContainerStateRunning)(nil),        // 8: cluster.ContainerStateRunning
-	(*ContainerStateTerminated)(nil),     // 9: cluster.ContainerStateTerminated
-	(*NodeCondition)(nil),                // 10: cluster.NodeCondition
-	(*AllocatableResources)(nil),         // 11: cluster.AllocatableResources
-	(*ClusterResourceQuotaMetadata)(nil), // 12: cluster.ClusterResourceQuotaMetadata
-	(*NamespaceQuota)(nil),               // 13: cluster.NamespaceQuota
-	(*QuotaResource)(nil),                // 14: cluster.QuotaResource
-	nil,                                  // 15: cluster.KubernetesClusterObject.LabelsEntry
-	nil,                                  // 16: cluster.KubernetesClusterObject.AnnotationsEntry
-	nil,                                  // 17: cluster.KubernetesClusterObject.AffinityEntry
-	nil,                                  // 18: cluster.KubernetesClusterObject.ExtraEntry
-	nil,                                  // 19: cluster.AllocatableResources.OthersEntry
-	(*common.APIKey)(nil),                // 20: common.APIKey
-	(*common.Metadata)(nil),              // 21: common.Metadata
-	(*timestamppb.Timestamp)(nil),        // 22: google.protobuf.Timestamp
+	(*EnrichmentMetadata)(nil),           // 2: cluster.EnrichmentMetadata
+	(*ContainerSpec)(nil),                // 3: cluster.ContainerSpec
+	(*ContainerResources)(nil),           // 4: cluster.ContainerResources
+	(*ResourceQuantities)(nil),           // 5: cluster.ResourceQuantities
+	(*VolumeSpec)(nil),                   // 6: cluster.VolumeSpec
+	(*ContainerState)(nil),               // 7: cluster.ContainerState
+	(*ContainerStateWaiting)(nil),        // 8: cluster.ContainerStateWaiting
+	(*ContainerStateRunning)(nil),        // 9: cluster.ContainerStateRunning
+	(*ContainerStateTerminated)(nil),     // 10: cluster.ContainerStateTerminated
+	(*NodeCondition)(nil),                // 11: cluster.NodeCondition
+	(*AllocatableResources)(nil),         // 12: cluster.AllocatableResources
+	(*ClusterResourceQuotaMetadata)(nil), // 13: cluster.ClusterResourceQuotaMetadata
+	(*NamespaceQuota)(nil),               // 14: cluster.NamespaceQuota
+	(*QuotaResource)(nil),                // 15: cluster.QuotaResource
+	nil,                                  // 16: cluster.KubernetesClusterObject.LabelsEntry
+	nil,                                  // 17: cluster.KubernetesClusterObject.AnnotationsEntry
+	nil,                                  // 18: cluster.KubernetesClusterObject.AffinityEntry
+	nil,                                  // 19: cluster.KubernetesClusterObject.ExtraEntry
+	nil,                                  // 20: cluster.AllocatableResources.OthersEntry
+	(*common.APIKey)(nil),                // 21: common.APIKey
+	(*common.Metadata)(nil),              // 22: common.Metadata
+	(*timestamppb.Timestamp)(nil),        // 23: google.protobuf.Timestamp
 }
 var file_cluster_cluster_proto_depIdxs = []int32{
-	20, // 0: cluster.KubernetesClusterObjectBatch.apikey:type_name -> common.APIKey
-	21, // 1: cluster.KubernetesClusterObjectBatch.metadata:type_name -> common.Metadata
+	21, // 0: cluster.KubernetesClusterObjectBatch.apikey:type_name -> common.APIKey
+	22, // 1: cluster.KubernetesClusterObjectBatch.metadata:type_name -> common.Metadata
 	1,  // 2: cluster.KubernetesClusterObjectBatch.objects:type_name -> cluster.KubernetesClusterObject
-	22, // 3: cluster.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
-	15, // 4: cluster.KubernetesClusterObject.labels:type_name -> cluster.KubernetesClusterObject.LabelsEntry
-	16, // 5: cluster.KubernetesClusterObject.annotations:type_name -> cluster.KubernetesClusterObject.AnnotationsEntry
-	2,  // 6: cluster.KubernetesClusterObject.containers:type_name -> cluster.ContainerSpec
-	5,  // 7: cluster.KubernetesClusterObject.volumes:type_name -> cluster.VolumeSpec
-	17, // 8: cluster.KubernetesClusterObject.affinity:type_name -> cluster.KubernetesClusterObject.AffinityEntry
-	18, // 9: cluster.KubernetesClusterObject.extra:type_name -> cluster.KubernetesClusterObject.ExtraEntry
-	10, // 10: cluster.KubernetesClusterObject.conditions:type_name -> cluster.NodeCondition
-	11, // 11: cluster.KubernetesClusterObject.allocatable:type_name -> cluster.AllocatableResources
-	12, // 12: cluster.KubernetesClusterObject.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
-	3,  // 13: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
-	6,  // 14: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
-	6,  // 15: cluster.ContainerSpec.last_termination_state:type_name -> cluster.ContainerState
-	4,  // 16: cluster.ContainerResources.limits:type_name -> cluster.ResourceQuantities
-	4,  // 17: cluster.ContainerResources.requests:type_name -> cluster.ResourceQuantities
-	7,  // 18: cluster.ContainerState.waiting:type_name -> cluster.ContainerStateWaiting
-	8,  // 19: cluster.ContainerState.running:type_name -> cluster.ContainerStateRunning
-	9,  // 20: cluster.ContainerState.terminated:type_name -> cluster.ContainerStateTerminated
-	22, // 21: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
-	22, // 22: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
-	22, // 23: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
-	19, // 24: cluster.AllocatableResources.others:type_name -> cluster.AllocatableResources.OthersEntry
-	14, // 25: cluster.ClusterResourceQuotaMetadata.total_limits:type_name -> cluster.QuotaResource
-	14, // 26: cluster.ClusterResourceQuotaMetadata.total_usage:type_name -> cluster.QuotaResource
-	13, // 27: cluster.ClusterResourceQuotaMetadata.quotas:type_name -> cluster.NamespaceQuota
-	14, // 28: cluster.NamespaceQuota.limits:type_name -> cluster.QuotaResource
-	14, // 29: cluster.NamespaceQuota.usage:type_name -> cluster.QuotaResource
-	30, // [30:30] is the sub-list for method output_type
-	30, // [30:30] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	23, // 3: cluster.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
+	16, // 4: cluster.KubernetesClusterObject.labels:type_name -> cluster.KubernetesClusterObject.LabelsEntry
+	17, // 5: cluster.KubernetesClusterObject.annotations:type_name -> cluster.KubernetesClusterObject.AnnotationsEntry
+	3,  // 6: cluster.KubernetesClusterObject.containers:type_name -> cluster.ContainerSpec
+	6,  // 7: cluster.KubernetesClusterObject.volumes:type_name -> cluster.VolumeSpec
+	18, // 8: cluster.KubernetesClusterObject.affinity:type_name -> cluster.KubernetesClusterObject.AffinityEntry
+	19, // 9: cluster.KubernetesClusterObject.extra:type_name -> cluster.KubernetesClusterObject.ExtraEntry
+	11, // 10: cluster.KubernetesClusterObject.conditions:type_name -> cluster.NodeCondition
+	12, // 11: cluster.KubernetesClusterObject.allocatable:type_name -> cluster.AllocatableResources
+	13, // 12: cluster.KubernetesClusterObject.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
+	2,  // 13: cluster.KubernetesClusterObject.enrichment:type_name -> cluster.EnrichmentMetadata
+	4,  // 14: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
+	7,  // 15: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
+	7,  // 16: cluster.ContainerSpec.last_termination_state:type_name -> cluster.ContainerState
+	5,  // 17: cluster.ContainerResources.limits:type_name -> cluster.ResourceQuantities
+	5,  // 18: cluster.ContainerResources.requests:type_name -> cluster.ResourceQuantities
+	8,  // 19: cluster.ContainerState.waiting:type_name -> cluster.ContainerStateWaiting
+	9,  // 20: cluster.ContainerState.running:type_name -> cluster.ContainerStateRunning
+	10, // 21: cluster.ContainerState.terminated:type_name -> cluster.ContainerStateTerminated
+	23, // 22: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
+	23, // 23: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
+	23, // 24: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
+	20, // 25: cluster.AllocatableResources.others:type_name -> cluster.AllocatableResources.OthersEntry
+	15, // 26: cluster.ClusterResourceQuotaMetadata.total_limits:type_name -> cluster.QuotaResource
+	15, // 27: cluster.ClusterResourceQuotaMetadata.total_usage:type_name -> cluster.QuotaResource
+	14, // 28: cluster.ClusterResourceQuotaMetadata.quotas:type_name -> cluster.NamespaceQuota
+	15, // 29: cluster.NamespaceQuota.limits:type_name -> cluster.QuotaResource
+	15, // 30: cluster.NamespaceQuota.usage:type_name -> cluster.QuotaResource
+	31, // [31:31] is the sub-list for method output_type
+	31, // [31:31] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_cluster_cluster_proto_init() }
@@ -1655,7 +1733,7 @@ func file_cluster_cluster_proto_init() {
 	if File_cluster_cluster_proto != nil {
 		return
 	}
-	file_cluster_cluster_proto_msgTypes[6].OneofWrappers = []any{
+	file_cluster_cluster_proto_msgTypes[7].OneofWrappers = []any{
 		(*ContainerState_Waiting)(nil),
 		(*ContainerState_Running)(nil),
 		(*ContainerState_Terminated)(nil),
@@ -1666,7 +1744,7 @@ func file_cluster_cluster_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cluster_cluster_proto_rawDesc), len(file_cluster_cluster_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

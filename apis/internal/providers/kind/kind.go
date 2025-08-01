@@ -30,6 +30,7 @@ func (a *KindProvider) FetchClusterMetadata(ctx context.Context, clusterID strin
 		KindMetadata: &models.KindClusterMetadata{
 			Status:           "Available",
 			Version:          "v1.2.3",
+			Region:           "localhost",
 			Endpoint:         "localhost",
 			ClusterCreatedAt: time.Now().UTC(),
 			PlatformVersion:  "platform-v.3.2.1",

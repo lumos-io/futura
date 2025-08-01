@@ -104,6 +104,7 @@ type KubernetesEvent struct {
 	ObjectApiVersion      string                 `protobuf:"bytes,16,opt,name=object_api_version,json=objectApiVersion,proto3" json:"object_api_version,omitempty"`
 	ObjectResourceVersion string                 `protobuf:"bytes,17,opt,name=object_resource_version,json=objectResourceVersion,proto3" json:"object_resource_version,omitempty"`
 	NodeName              string                 `protobuf:"bytes,18,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
+	Enrichment            *EnrichmentMetadata    `protobuf:"bytes,100,opt,name=enrichment,proto3" json:"enrichment,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -264,6 +265,89 @@ func (x *KubernetesEvent) GetNodeName() string {
 	return ""
 }
 
+func (x *KubernetesEvent) GetEnrichment() *EnrichmentMetadata {
+	if x != nil {
+		return x.Enrichment
+	}
+	return nil
+}
+
+type EnrichmentMetadata struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	OrganizationId string                 `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	ClusterName    string                 `protobuf:"bytes,2,opt,name=cluster_name,json=clusterName,proto3" json:"cluster_name,omitempty"`
+	CloudProvider  string                 `protobuf:"bytes,3,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
+	K8SVersion     string                 `protobuf:"bytes,4,opt,name=k8s_version,json=k8sVersion,proto3" json:"k8s_version,omitempty"`
+	ReceivedAtUnix int64                  `protobuf:"varint,5,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EnrichmentMetadata) Reset() {
+	*x = EnrichmentMetadata{}
+	mi := &file_events_events_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EnrichmentMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnrichmentMetadata) ProtoMessage() {}
+
+func (x *EnrichmentMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_events_events_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnrichmentMetadata.ProtoReflect.Descriptor instead.
+func (*EnrichmentMetadata) Descriptor() ([]byte, []int) {
+	return file_events_events_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *EnrichmentMetadata) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *EnrichmentMetadata) GetClusterName() string {
+	if x != nil {
+		return x.ClusterName
+	}
+	return ""
+}
+
+func (x *EnrichmentMetadata) GetCloudProvider() string {
+	if x != nil {
+		return x.CloudProvider
+	}
+	return ""
+}
+
+func (x *EnrichmentMetadata) GetK8SVersion() string {
+	if x != nil {
+		return x.K8SVersion
+	}
+	return ""
+}
+
+func (x *EnrichmentMetadata) GetReceivedAtUnix() int64 {
+	if x != nil {
+		return x.ReceivedAtUnix
+	}
+	return 0
+}
+
 var File_events_events_proto protoreflect.FileDescriptor
 
 const file_events_events_proto_rawDesc = "" +
@@ -272,7 +356,7 @@ const file_events_events_proto_rawDesc = "" +
 	"\x14KubernetesEventBatch\x12&\n" +
 	"\x06apikey\x18\x01 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
 	"\bmetadata\x18\x02 \x01(\v2\x10.common.MetadataR\bmetadata\x12/\n" +
-	"\x06events\x18\x03 \x03(\v2\x17.events.KubernetesEventR\x06events\"\xcb\x05\n" +
+	"\x06events\x18\x03 \x03(\v2\x17.events.KubernetesEventR\x06events\"\x87\x06\n" +
 	"\x0fKubernetesEvent\x12\x1f\n" +
 	"\vobject_kind\x18\x01 \x01(\tR\n" +
 	"objectKind\x12\x1f\n" +
@@ -297,7 +381,17 @@ const file_events_events_proto_rawDesc = "" +
 	"eventCount\x12,\n" +
 	"\x12object_api_version\x18\x10 \x01(\tR\x10objectApiVersion\x126\n" +
 	"\x17object_resource_version\x18\x11 \x01(\tR\x15objectResourceVersion\x12\x1b\n" +
-	"\tnode_name\x18\x12 \x01(\tR\bnodeNameB8Z6github.com/opisvigilant/futura/proto/gen/events;eventsb\x06proto3"
+	"\tnode_name\x18\x12 \x01(\tR\bnodeName\x12:\n" +
+	"\n" +
+	"enrichment\x18d \x01(\v2\x1a.events.EnrichmentMetadataR\n" +
+	"enrichment\"\xd2\x01\n" +
+	"\x12EnrichmentMetadata\x12'\n" +
+	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\x12!\n" +
+	"\fcluster_name\x18\x02 \x01(\tR\vclusterName\x12%\n" +
+	"\x0ecloud_provider\x18\x03 \x01(\tR\rcloudProvider\x12\x1f\n" +
+	"\vk8s_version\x18\x04 \x01(\tR\n" +
+	"k8sVersion\x12(\n" +
+	"\x10received_at_unix\x18\x05 \x01(\x03R\x0ereceivedAtUnixB8Z6github.com/opisvigilant/futura/proto/gen/events;eventsb\x06proto3"
 
 var (
 	file_events_events_proto_rawDescOnce sync.Once
@@ -311,22 +405,24 @@ func file_events_events_proto_rawDescGZIP() []byte {
 	return file_events_events_proto_rawDescData
 }
 
-var file_events_events_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_events_events_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_events_events_proto_goTypes = []any{
 	(*KubernetesEventBatch)(nil), // 0: events.KubernetesEventBatch
 	(*KubernetesEvent)(nil),      // 1: events.KubernetesEvent
-	(*common.APIKey)(nil),        // 2: common.APIKey
-	(*common.Metadata)(nil),      // 3: common.Metadata
+	(*EnrichmentMetadata)(nil),   // 2: events.EnrichmentMetadata
+	(*common.APIKey)(nil),        // 3: common.APIKey
+	(*common.Metadata)(nil),      // 4: common.Metadata
 }
 var file_events_events_proto_depIdxs = []int32{
-	2, // 0: events.KubernetesEventBatch.apikey:type_name -> common.APIKey
-	3, // 1: events.KubernetesEventBatch.metadata:type_name -> common.Metadata
+	3, // 0: events.KubernetesEventBatch.apikey:type_name -> common.APIKey
+	4, // 1: events.KubernetesEventBatch.metadata:type_name -> common.Metadata
 	1, // 2: events.KubernetesEventBatch.events:type_name -> events.KubernetesEvent
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // 3: events.KubernetesEvent.enrichment:type_name -> events.EnrichmentMetadata
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_events_events_proto_init() }
@@ -340,7 +436,7 @@ func file_events_events_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_events_events_proto_rawDesc), len(file_events_events_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

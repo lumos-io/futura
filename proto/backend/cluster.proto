@@ -39,6 +39,7 @@ message EKSClusterMetadata {
   map<string, string> tags = 9;
 
   uint64 cluster_metadata_id = 10;
+  string region = 11;
 }
 
 message KindClusterMetadata {
@@ -51,28 +52,37 @@ message KindClusterMetadata {
   string platform_version = 6;
   map<string, string> tags = 7;
   uint64 cluster_metadata_id = 8;
+  string region = 9;
 }
 
 message GKEClusterMetadata {
   uint64 id = 1;
     
   uint64 cluster_metadata_id = 2;
+  string version = 3;
+  string region = 4;
 }
 
 message AKSClusterMetadata {
   uint64 id = 1;
     
   uint64 cluster_metadata_id = 2;
+  string version = 3;
+  string region = 4;
 }
 
 message DOKSClusterMetadata {
   uint64 id = 1;
     
   uint64 cluster_metadata_id = 2;
+  string version = 3;
+  string region = 4;
 }
 
 message ACKClusterMetadata {
   uint64 id = 1;
     
   uint64 cluster_metadata_id = 2;
+  string version = 3;
+  string region = 4;
 }

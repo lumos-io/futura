@@ -17,6 +17,15 @@ message KubernetesKubeletStats {
 message KubernetesKubeletMetrics {
   NodeStats node = 1;
   repeated PodStats pods = 2;
+ 
+  EnrichmentMetadata enrichment = 100;
+}
+
+message EnrichmentMetadata {
+  string organization_id = 1;
+  string cluster_name = 2;
+  string cloud_provider = 3;  
+  int64 received_at_unix = 4;  // UNIX timestamp
 }
 
 message NodeStats {

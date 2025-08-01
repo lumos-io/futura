@@ -53,12 +53,12 @@ func (v *Validator) Start(ctx context.Context) error {
 		defer v.wg.Done()
 
 		if err := v.stream.Subscribe(ctx, RawEventsTopic, func(msg stream.Message, ack func() error) {
-			var m pbev.KubernetesEvent
-			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
+			var m *pbev.KubernetesEvent
+			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw event message")
 				return
 			}
-			if err := v.ValidateKubernetesEvent(&m); err != nil {
+			if err := v.ValidateKubernetesEvent(m); err != nil {
 				log.Error().Err(err).Msg("failed to validate the raw event message")
 				return
 			}
@@ -76,12 +76,12 @@ func (v *Validator) Start(ctx context.Context) error {
 		defer v.wg.Done()
 
 		if err := v.stream.Subscribe(ctx, RawStatsTopic, func(msg stream.Message, ack func() error) {
-			var m pbst.KubernetesKubeletMetrics
-			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
+			var m *pbst.KubernetesKubeletMetrics
+			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
 			}
-			if err := v.ValidateKubeletMetrics(&m); err != nil {
+			if err := v.ValidateKubeletMetrics(m); err != nil {
 				log.Error().Err(err).Msg("failed to validate the raw stats message")
 				return
 			}
@@ -99,7 +99,19 @@ func (v *Validator) Start(ctx context.Context) error {
 		defer v.wg.Done()
 
 		if err := v.stream.Subscribe(ctx, RawObjectsTopic, func(msg stream.Message, ack func() error) {
-
+			var m *pbcl.KubernetesClusterObject
+			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
+				return
+			}
+			if err := v.ValidateKubernetesClusterObject(m); err != nil {
+				log.Error().Err(err).Msg("failed to validate the raw object message")
+				return
+			}
+			if err := v.stream.Publish(ctx, ValidatedObjectsTopic, msg.Data()); err != nil {
+				log.Error().Err(err).Msg("failed to publish the validated object message to the enrichment topic")
+				return
+			}
 		}); err != nil {
 			log.Error().Err(err).Msgf("failed to subscribe to stream `%s`", RawObjectsTopic)
 		}

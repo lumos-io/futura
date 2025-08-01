@@ -88,6 +88,14 @@ message KubernetesClusterObject {
   int64 daemonset_desired_number_scheduled = 46;
   int64 daemonset_number_misscheduled = 47;
   int64 daemonset_number_ready = 48;
+
+  EnrichmentMetadata enrichment = 100;
+}
+
+message EnrichmentMetadata {  
+  string cloud_provider = 1;
+  string k8s_version = 2;
+  int64 received_at_unix = 3;  // UNIX timestamp
 }
 
 // Represents a container and its resource specs.

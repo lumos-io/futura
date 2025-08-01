@@ -32,5 +32,12 @@ func (a *AzureProvider) FetchClusters(ctx context.Context) ([]string, error) {
 }
 
 func (a *AzureProvider) FetchClusterMetadata(ctx context.Context, clusterID string) (*models.ClusterMetadata, error) {
-	return nil, nil
+	m := &models.AKSClusterMetadata{
+		Version: "v1.33.2",
+		Region:  "us-east-2",
+	}
+	return &models.ClusterMetadata{
+		Name:        clusterID,
+		AKSMetadata: m,
+	}, nil
 }

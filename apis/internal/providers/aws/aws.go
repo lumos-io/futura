@@ -103,6 +103,7 @@ func (a *AWSProvider) FetchClusterMetadata(ctx context.Context, clusterID string
 	m := &models.EKSClusterMetadata{
 		Status:           string(cluster.Status),
 		Version:          aws.ToString(cluster.Version),
+		Region:           a.cfg.Region,
 		Endpoint:         aws.ToString(cluster.Endpoint),
 		Arn:              aws.ToString(cluster.Arn),
 		ClusterCreatedAt: cluster.CreatedAt,

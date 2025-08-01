@@ -16,6 +16,7 @@ import (
 	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
+	pbmt "github.com/opisvigilant/futura/proto/gen/common"
 	"github.com/riverqueue/river"
 )
 
@@ -94,7 +95,7 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 			})
 		}
 
-		ak, err := createAPIKeyEntry(ctx, kvs, job.Args.OrganizationID, metadata.ProviderConnectionID, metadata.ID, job.Args.SecretID, job.Args.ProviderConnection)
+		ak, err := createAPIKeyEntry(ctx, kvs, job.Args.OrganizationID, metadata, job.Args.SecretID, job.Args.ProviderConnection)
 		if err != nil {
 			return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
 				ProviderConnectionID: job.Args.ProviderConnection.Id,
@@ -179,29 +180,22 @@ func updateCloudProviderStatus(dbConfig *config.Database, providerID int64, impo
 	return nil
 }
 
-type apiKeyInfo struct {
-	// FIXME: probably I will need more information so that the
-	// enrichment step in the pipeline will have all the context it needs
-	// for now, I start with these
-	OrganizationID       uint   `json:"organizationId"`
-	ProviderConnectionID uint   `json:"providerConectionId"`
-	ClusterID            uint   `json:"clusterId"`
-	CloudProviderEnum    int32  `json:"cloudProviderId"` // this is used to eventually query the specific cloud provider
-	SecretID             string `json:"secretId"`        // this is a UUID that will be used to query the credentials if needed
-	CreatedAt            string `json:"createdAt"`
-}
-
-func createAPIKeyEntry(ctx context.Context, store kv.KVStore, orgID, providerConnectionID, clusterID uint, secretID string, provider *pb.ProviderConnection) (string, error) {
+func createAPIKeyEntry(ctx context.Context, store kv.KVStore, orgID uint, metadata *models.ClusterMetadata, secretID string, provider *pb.ProviderConnection) (string, error) {
 	// generate the API Key value here
 	apiKey, err := GenerateAPIKey()
 	if err != nil {
 		return "", err
 	}
-	b, err := json.Marshal(apiKeyInfo{
-		OrganizationID:       orgID,
-		ProviderConnectionID: providerConnectionID,
-		ClusterID:            clusterID,
-		SecretID:             secretID,
+	b, err := json.Marshal(pbmt.ApiKeyInfo{
+		OrganizationId:       uint32(orgID),
+		Value:                apiKey,
+		Status:               pbmt.ApiKeyStatus_ACTIVE,
+		ClusterName:          metadata.Name,
+		KubernetesVersion:    metadata.GetKubernetesVersion(),
+		Region:               metadata.GetRegion(),
+		ProviderConnectionId: uint32(metadata.ProviderConnectionID),
+		ClusterId:            uint32(metadata.ID),
+		SecretId:             secretID,
 		CloudProviderEnum:    int32(provider.Provider.Number()),
 		CreatedAt:            time.Now().String(),
 	})
@@ -209,9 +203,9 @@ func createAPIKeyEntry(ctx context.Context, store kv.KVStore, orgID, providerCon
 		return "", nil
 	}
 
-	// namespace: apikeys - key: apikey apikey_info
-	ns := fmt.Sprintf("apikeys:%d", providerConnectionID)
-	if err := store.Put(ctx, ns, apiKey, b); err != nil {
+	// namespace: apikeys:<apikey_value> - key: providerConnectionID apikey_info
+	ns := fmt.Sprintf("apikeys:%s", apiKey)
+	if err := store.Put(ctx, ns, fmt.Sprintf("%d", metadata.ProviderConnectionID), b); err != nil {
 		return "", nil
 	}
 	return apiKey, nil

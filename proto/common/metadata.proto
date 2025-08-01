@@ -8,9 +8,30 @@ message Metadata {
   string idempotency_key = 1;
   string watcher_version = 2;
   string cluster_id = 3;
-  string cloud_provider = 5;  
+  string cloud_provider = 5;
 }
 
 message APIKey {
   string key = 1;
+}
+
+enum ApiKeyStatus {
+  UNDEFINED_STATUS = 0;  // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+  ACTIVE = 1;
+  DISABLED = 2;
+  SUSPENDED = 3;
+}
+
+message ApiKeyInfo {
+  string value = 1;
+  uint32 provider_connection_id = 2;
+  uint32 organization_id = 3;
+  ApiKeyStatus status = 4;
+  string secret_id = 5;
+  uint32 cluster_id = 6;
+  string cluster_name = 7;
+  int32 cloudProvider_enum = 8;
+  string kubernetes_version = 9;
+  string region = 10;
+  string created_at = 11;
 }

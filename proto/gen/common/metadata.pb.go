@@ -21,6 +21,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ApiKeyStatus int32
+
+const (
+	ApiKeyStatus_UNDEFINED_STATUS ApiKeyStatus = 0 // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	ApiKeyStatus_ACTIVE           ApiKeyStatus = 1
+	ApiKeyStatus_DISABLED         ApiKeyStatus = 2
+	ApiKeyStatus_SUSPENDED        ApiKeyStatus = 3
+)
+
+// Enum value maps for ApiKeyStatus.
+var (
+	ApiKeyStatus_name = map[int32]string{
+		0: "UNDEFINED_STATUS",
+		1: "ACTIVE",
+		2: "DISABLED",
+		3: "SUSPENDED",
+	}
+	ApiKeyStatus_value = map[string]int32{
+		"UNDEFINED_STATUS": 0,
+		"ACTIVE":           1,
+		"DISABLED":         2,
+		"SUSPENDED":        3,
+	}
+)
+
+func (x ApiKeyStatus) Enum() *ApiKeyStatus {
+	p := new(ApiKeyStatus)
+	*p = x
+	return p
+}
+
+func (x ApiKeyStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ApiKeyStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_common_metadata_proto_enumTypes[0].Descriptor()
+}
+
+func (ApiKeyStatus) Type() protoreflect.EnumType {
+	return &file_common_metadata_proto_enumTypes[0]
+}
+
+func (x ApiKeyStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ApiKeyStatus.Descriptor instead.
+func (ApiKeyStatus) EnumDescriptor() ([]byte, []int) {
+	return file_common_metadata_proto_rawDescGZIP(), []int{0}
+}
+
 type Metadata struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	IdempotencyKey string                 `protobuf:"bytes,1,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
@@ -133,6 +185,130 @@ func (x *APIKey) GetKey() string {
 	return ""
 }
 
+type ApiKeyInfo struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Value                string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	ProviderConnectionId uint32                 `protobuf:"varint,2,opt,name=provider_connection_id,json=providerConnectionId,proto3" json:"provider_connection_id,omitempty"`
+	OrganizationId       uint32                 `protobuf:"varint,3,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Status               ApiKeyStatus           `protobuf:"varint,4,opt,name=status,proto3,enum=common.ApiKeyStatus" json:"status,omitempty"`
+	SecretId             string                 `protobuf:"bytes,5,opt,name=secret_id,json=secretId,proto3" json:"secret_id,omitempty"`
+	ClusterId            uint32                 `protobuf:"varint,6,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	ClusterName          string                 `protobuf:"bytes,7,opt,name=cluster_name,json=clusterName,proto3" json:"cluster_name,omitempty"`
+	CloudProviderEnum    int32                  `protobuf:"varint,8,opt,name=cloudProvider_enum,json=cloudProviderEnum,proto3" json:"cloudProvider_enum,omitempty"`
+	KubernetesVersion    string                 `protobuf:"bytes,9,opt,name=kubernetes_version,json=kubernetesVersion,proto3" json:"kubernetes_version,omitempty"`
+	Region               string                 `protobuf:"bytes,10,opt,name=region,proto3" json:"region,omitempty"`
+	CreatedAt            string                 `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ApiKeyInfo) Reset() {
+	*x = ApiKeyInfo{}
+	mi := &file_common_metadata_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApiKeyInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApiKeyInfo) ProtoMessage() {}
+
+func (x *ApiKeyInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_common_metadata_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApiKeyInfo.ProtoReflect.Descriptor instead.
+func (*ApiKeyInfo) Descriptor() ([]byte, []int) {
+	return file_common_metadata_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ApiKeyInfo) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *ApiKeyInfo) GetProviderConnectionId() uint32 {
+	if x != nil {
+		return x.ProviderConnectionId
+	}
+	return 0
+}
+
+func (x *ApiKeyInfo) GetOrganizationId() uint32 {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return 0
+}
+
+func (x *ApiKeyInfo) GetStatus() ApiKeyStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ApiKeyStatus_UNDEFINED_STATUS
+}
+
+func (x *ApiKeyInfo) GetSecretId() string {
+	if x != nil {
+		return x.SecretId
+	}
+	return ""
+}
+
+func (x *ApiKeyInfo) GetClusterId() uint32 {
+	if x != nil {
+		return x.ClusterId
+	}
+	return 0
+}
+
+func (x *ApiKeyInfo) GetClusterName() string {
+	if x != nil {
+		return x.ClusterName
+	}
+	return ""
+}
+
+func (x *ApiKeyInfo) GetCloudProviderEnum() int32 {
+	if x != nil {
+		return x.CloudProviderEnum
+	}
+	return 0
+}
+
+func (x *ApiKeyInfo) GetKubernetesVersion() string {
+	if x != nil {
+		return x.KubernetesVersion
+	}
+	return ""
+}
+
+func (x *ApiKeyInfo) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
+func (x *ApiKeyInfo) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
 var File_common_metadata_proto protoreflect.FileDescriptor
 
 const file_common_metadata_proto_rawDesc = "" +
@@ -145,7 +321,29 @@ const file_common_metadata_proto_rawDesc = "" +
 	"cluster_id\x18\x03 \x01(\tR\tclusterId\x12%\n" +
 	"\x0ecloud_provider\x18\x05 \x01(\tR\rcloudProvider\"\x1a\n" +
 	"\x06APIKey\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03keyB8Z6github.com/opisvigilant/futura/proto/gen/common;commonb\x06proto3"
+	"\x03key\x18\x01 \x01(\tR\x03key\"\xa3\x03\n" +
+	"\n" +
+	"ApiKeyInfo\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value\x124\n" +
+	"\x16provider_connection_id\x18\x02 \x01(\rR\x14providerConnectionId\x12'\n" +
+	"\x0forganization_id\x18\x03 \x01(\rR\x0eorganizationId\x12,\n" +
+	"\x06status\x18\x04 \x01(\x0e2\x14.common.ApiKeyStatusR\x06status\x12\x1b\n" +
+	"\tsecret_id\x18\x05 \x01(\tR\bsecretId\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x06 \x01(\rR\tclusterId\x12!\n" +
+	"\fcluster_name\x18\a \x01(\tR\vclusterName\x12-\n" +
+	"\x12cloudProvider_enum\x18\b \x01(\x05R\x11cloudProviderEnum\x12-\n" +
+	"\x12kubernetes_version\x18\t \x01(\tR\x11kubernetesVersion\x12\x16\n" +
+	"\x06region\x18\n" +
+	" \x01(\tR\x06region\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\v \x01(\tR\tcreatedAt*M\n" +
+	"\fApiKeyStatus\x12\x14\n" +
+	"\x10UNDEFINED_STATUS\x10\x00\x12\n" +
+	"\n" +
+	"\x06ACTIVE\x10\x01\x12\f\n" +
+	"\bDISABLED\x10\x02\x12\r\n" +
+	"\tSUSPENDED\x10\x03B8Z6github.com/opisvigilant/futura/proto/gen/common;commonb\x06proto3"
 
 var (
 	file_common_metadata_proto_rawDescOnce sync.Once
@@ -159,17 +357,21 @@ func file_common_metadata_proto_rawDescGZIP() []byte {
 	return file_common_metadata_proto_rawDescData
 }
 
-var file_common_metadata_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_common_metadata_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_common_metadata_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_common_metadata_proto_goTypes = []any{
-	(*Metadata)(nil), // 0: common.Metadata
-	(*APIKey)(nil),   // 1: common.APIKey
+	(ApiKeyStatus)(0),  // 0: common.ApiKeyStatus
+	(*Metadata)(nil),   // 1: common.Metadata
+	(*APIKey)(nil),     // 2: common.APIKey
+	(*ApiKeyInfo)(nil), // 3: common.ApiKeyInfo
 }
 var file_common_metadata_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: common.ApiKeyInfo.status:type_name -> common.ApiKeyStatus
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_common_metadata_proto_init() }
@@ -182,13 +384,14 @@ func file_common_metadata_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_metadata_proto_rawDesc), len(file_common_metadata_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      1,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_common_metadata_proto_goTypes,
 		DependencyIndexes: file_common_metadata_proto_depIdxs,
+		EnumInfos:         file_common_metadata_proto_enumTypes,
 		MessageInfos:      file_common_metadata_proto_msgTypes,
 	}.Build()
 	File_common_metadata_proto = out.File

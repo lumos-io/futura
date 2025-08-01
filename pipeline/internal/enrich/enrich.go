@@ -4,12 +4,30 @@ import (
 	"context"
 	"sync"
 
+	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
+	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
+	pbev "github.com/opisvigilant/futura/proto/gen/events"
+	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+)
+
+const (
+	ValidatedEventsTopic  = "validate.k8s.events"
+	ValidatedStatsTopic   = "validate.k8s.stats"
+	ValidatedObjectsTopic = "validate.k8s.objects"
+
+	EnrichedEventsTopic  = "enrich.k8s.events"
+	EnrichedStatsTopic   = "enrich.k8s.stats"
+	EnrichedObjectsTopic = "enrich.k8s.objects"
 )
 
 type Enricher struct {
 	stream stream.Stream
+	rc     kv.KVStore
 
 	wg sync.WaitGroup
 }
@@ -19,12 +37,112 @@ func New(config *config.Configuration) (*Enricher, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	rc, err := kv.NewRedisKVStore(config.Redis.Servers)
+	if err != nil {
+		return nil, err
+	}
 	return &Enricher{
 		stream: kc,
+		rc:     rc,
 		wg:     sync.WaitGroup{},
 	}, nil
 }
 
 func (e *Enricher) Start(ctx context.Context) error {
+	e.wg.Add(3)
+
+	// Read event messages
+	go func() {
+		defer e.wg.Done()
+
+		if err := e.stream.Subscribe(ctx, ValidatedEventsTopic, func(msg stream.Message, ack func() error) {
+			var m *pbev.KubernetesEvent
+			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+				log.Error().Err(err).Msg("failed to proto-unmarshal the validated event message")
+				return
+			}
+			m = e.EnrichEventMessage(m)
+			b, err := protojson.Marshal(m)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to proto-marshal the enriched event message")
+				return
+			}
+			if err := e.stream.Publish(ctx, EnrichedEventsTopic, b); err != nil {
+				log.Error().Err(err).Msg("failed to publish the enriched event message to the store topic")
+				return
+			}
+		}); err != nil {
+			log.Error().Err(err).Msgf("failed to subscribe to stream `%s`", ValidatedEventsTopic)
+		}
+	}()
+
+	// Read stats messages
+	go func() {
+		defer e.wg.Done()
+
+		if err := e.stream.Subscribe(ctx, ValidatedStatsTopic, func(msg stream.Message, ack func() error) {
+			var m *pbst.KubernetesKubeletMetrics
+			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
+				return
+			}
+			m = e.EnrichStatsMessage(m)
+			b, err := protojson.Marshal(m)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to proto-marshal the enriched stats message")
+				return
+			}
+			if err := e.stream.Publish(ctx, EnrichedStatsTopic, b); err != nil {
+				log.Error().Err(err).Msg("failed to publish the enriched stats message to the store topic")
+				return
+			}
+		}); err != nil {
+			log.Error().Err(err).Msgf("failed to subscribe to stream `%s`", ValidatedStatsTopic)
+		}
+	}()
+
+	// Read object messages
+	go func() {
+		defer e.wg.Done()
+
+		if err := e.stream.Subscribe(ctx, ValidatedObjectsTopic, func(msg stream.Message, ack func() error) {
+			var m *pbcl.KubernetesClusterObject
+			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
+				return
+			}
+			m = e.EnrichObjectMessage(m)
+			b, err := protojson.Marshal(m)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to proto-marshal the enriched object message")
+				return
+			}
+			if err := e.stream.Publish(ctx, EnrichedObjectsTopic, b); err != nil {
+				log.Error().Err(err).Msg("failed to publish the enriched object message to the store topic")
+				return
+			}
+		}); err != nil {
+			log.Error().Err(err).Msgf("failed to subscribe to stream `%s`", ValidatedObjectsTopic)
+		}
+	}()
+
+	e.wg.Wait()
+
+	return nil
+}
+
+func (e *Enricher) EnrichEventMessage(m *pbev.KubernetesEvent) *pbev.KubernetesEvent {
+	e.rc.Get(context.Background(), "apikeys", "")
+
+
+	return nil
+}
+
+func (e *Enricher) EnrichStatsMessage(m *pbst.KubernetesKubeletMetrics) *pbst.KubernetesKubeletMetrics {
+	return nil
+}
+
+func (e *Enricher) EnrichObjectMessage(m *pbcl.KubernetesClusterObject) *pbcl.KubernetesClusterObject {
 	return nil
 }
