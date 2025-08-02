@@ -3,6 +3,7 @@ package enrich
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
@@ -58,18 +59,18 @@ func (e *Enricher) Start(ctx context.Context) error {
 		defer e.wg.Done()
 
 		if err := e.stream.Subscribe(ctx, ValidatedEventsTopic, func(msg stream.Message, ack func() error) {
-			var m *pbev.KubernetesEvent
-			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+			var m pbev.KubernetesEvent
+			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the validated event message")
 				return
 			}
-			m, err := e.EnrichEventMessage(m)
+			enrichedEvent, err := e.EnrichEventMessage(&m)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to enrich the event message")
 				return
 			}
 
-			b, err := protojson.Marshal(m)
+			b, err := protojson.Marshal(enrichedEvent)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched event message")
 				return
@@ -88,18 +89,18 @@ func (e *Enricher) Start(ctx context.Context) error {
 		defer e.wg.Done()
 
 		if err := e.stream.Subscribe(ctx, ValidatedStatsTopic, func(msg stream.Message, ack func() error) {
-			var m *pbst.KubernetesKubeletStats
-			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+			var m pbst.KubernetesKubeletStats
+			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
 			}
-			m, err := e.EnrichStatsMessage(m)
+			enrichedStats, err := e.EnrichStatsMessage(&m)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to enrich the stats message")
 				return
 			}
 
-			b, err := protojson.Marshal(m)
+			b, err := protojson.Marshal(enrichedStats)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched stats message")
 				return
@@ -118,18 +119,18 @@ func (e *Enricher) Start(ctx context.Context) error {
 		defer e.wg.Done()
 
 		if err := e.stream.Subscribe(ctx, ValidatedObjectsTopic, func(msg stream.Message, ack func() error) {
-			var m *pbcl.KubernetesClusterObject
-			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+			var m pbcl.KubernetesClusterObject
+			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
 				return
 			}
-			m, err := e.EnrichObjectMessage(m)
+			enrichedObject, err := e.EnrichObjectMessage(&m)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to enrich the object message")
 				return
 			}
 
-			b, err := protojson.Marshal(m)
+			b, err := protojson.Marshal(enrichedObject)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched object message")
 				return
@@ -153,11 +154,19 @@ func (e *Enricher) EnrichEventMessage(m *pbev.KubernetesEvent) (*pbev.Kubernetes
 	if err != nil {
 		return nil, err
 	}
-	var apiKeyInfo *pbmt.ApiKeyInfo
-	if err := protojson.Unmarshal(b, apiKeyInfo); err != nil {
+	var apiKeyInfo pbmt.ApiKeyInfo
+	if err := protojson.Unmarshal(b, &apiKeyInfo); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	if m.Enrichment == nil {
+		m.Enrichment = &pbev.EnrichmentMetadata{
+			ClusterId:      int64(apiKeyInfo.ClusterId),
+			K8SVersion:     apiKeyInfo.KubernetesVersion,
+			OrganizationId: apiKeyInfo.OrganizationId,
+			ReceivedAtUnix: time.Now().Unix(),
+		}
+	}
+	return m, nil
 }
 
 func (e *Enricher) EnrichStatsMessage(m *pbst.KubernetesKubeletStats) (*pbst.KubernetesKubeletStats, error) {
@@ -165,12 +174,18 @@ func (e *Enricher) EnrichStatsMessage(m *pbst.KubernetesKubeletStats) (*pbst.Kub
 	if err != nil {
 		return nil, err
 	}
-	var apiKeyInfo *pbmt.ApiKeyInfo
-	if err := protojson.Unmarshal(b, apiKeyInfo); err != nil {
+	var apiKeyInfo pbmt.ApiKeyInfo
+	if err := protojson.Unmarshal(b, &apiKeyInfo); err != nil {
 		return nil, err
 	}
-
-	return nil, nil
+	if m.Enrichment == nil {
+		m.Enrichment = &pbst.EnrichmentMetadata{
+			ClusterId:      int64(apiKeyInfo.ClusterId),
+			OrganizationId: apiKeyInfo.OrganizationId,
+			ReceivedAtUnix: time.Now().Unix(),
+		}
+	}
+	return m, nil
 }
 
 func (e *Enricher) EnrichObjectMessage(m *pbcl.KubernetesClusterObject) (*pbcl.KubernetesClusterObject, error) {
@@ -178,10 +193,17 @@ func (e *Enricher) EnrichObjectMessage(m *pbcl.KubernetesClusterObject) (*pbcl.K
 	if err != nil {
 		return nil, err
 	}
-	var apiKeyInfo *pbmt.ApiKeyInfo
-	if err := protojson.Unmarshal(b, apiKeyInfo); err != nil {
+	var apiKeyInfo pbmt.ApiKeyInfo
+	if err := protojson.Unmarshal(b, &apiKeyInfo); err != nil {
 		return nil, err
 	}
-
-	return nil, nil
+	if m.Enrichment == nil {
+		m.Enrichment = &pbcl.EnrichmentMetadata{
+			ClusterId:      int64(apiKeyInfo.ClusterId),
+			OrganizationId: apiKeyInfo.OrganizationId,
+			K8SVersion:     apiKeyInfo.KubernetesVersion,
+			ReceivedAtUnix: time.Now().Unix(),
+		}
+	}
+	return m, nil
 }

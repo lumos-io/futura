@@ -94,9 +94,11 @@ message KubernetesClusterObject {
 }
 
 message EnrichmentMetadata {  
-  string cloud_provider = 1;
-  string k8s_version = 2;
-  int64 received_at_unix = 3;  // UNIX timestamp
+  uint32 organization_id = 1;
+  int64 cluster_id = 2;  
+  string k8s_version = 3;
+  int64 received_at_unix = 4;  // UNIX timestamp
+
 }
 
 // Represents a container and its resource specs.

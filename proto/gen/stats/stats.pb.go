@@ -101,10 +101,9 @@ func (x *KubernetesKubeletStats) GetEnrichment() *EnrichmentMetadata {
 
 type EnrichmentMetadata struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	OrganizationId string                 `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	ClusterName    string                 `protobuf:"bytes,2,opt,name=cluster_name,json=clusterName,proto3" json:"cluster_name,omitempty"`
-	CloudProvider  string                 `protobuf:"bytes,3,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
-	ReceivedAtUnix int64                  `protobuf:"varint,4,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
+	OrganizationId uint32                 `protobuf:"varint,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	ClusterId      int64                  `protobuf:"varint,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	ReceivedAtUnix int64                  `protobuf:"varint,3,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -139,25 +138,18 @@ func (*EnrichmentMetadata) Descriptor() ([]byte, []int) {
 	return file_stats_stats_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *EnrichmentMetadata) GetOrganizationId() string {
+func (x *EnrichmentMetadata) GetOrganizationId() uint32 {
 	if x != nil {
 		return x.OrganizationId
 	}
-	return ""
+	return 0
 }
 
-func (x *EnrichmentMetadata) GetClusterName() string {
+func (x *EnrichmentMetadata) GetClusterId() int64 {
 	if x != nil {
-		return x.ClusterName
+		return x.ClusterId
 	}
-	return ""
-}
-
-func (x *EnrichmentMetadata) GetCloudProvider() string {
-	if x != nil {
-		return x.CloudProvider
-	}
-	return ""
+	return 0
 }
 
 func (x *EnrichmentMetadata) GetReceivedAtUnix() int64 {
@@ -1763,12 +1755,12 @@ const file_stats_stats_proto_rawDesc = "" +
 	"\bmetadata\x18\x04 \x01(\v2\x10.common.MetadataR\bmetadata\x129\n" +
 	"\n" +
 	"enrichment\x18d \x01(\v2\x19.stats.EnrichmentMetadataR\n" +
-	"enrichment\"\xb1\x01\n" +
+	"enrichment\"\x86\x01\n" +
 	"\x12EnrichmentMetadata\x12'\n" +
-	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\x12!\n" +
-	"\fcluster_name\x18\x02 \x01(\tR\vclusterName\x12%\n" +
-	"\x0ecloud_provider\x18\x03 \x01(\tR\rcloudProvider\x12(\n" +
-	"\x10received_at_unix\x18\x04 \x01(\x03R\x0ereceivedAtUnix\"\xe3\x03\n" +
+	"\x0forganization_id\x18\x01 \x01(\rR\x0eorganizationId\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x02 \x01(\x03R\tclusterId\x12(\n" +
+	"\x10received_at_unix\x18\x03 \x01(\x03R\x0ereceivedAtUnix\"\xe3\x03\n" +
 	"\tNodeStats\x12\x1a\n" +
 	"\bnodeName\x18\x01 \x01(\tR\bnodeName\x12A\n" +
 	"\x10systemContainers\x18\x02 \x03(\v2\x15.stats.ContainerStatsR\x10systemContainers\x128\n" +

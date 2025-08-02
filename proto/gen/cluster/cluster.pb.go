@@ -522,9 +522,10 @@ func (x *KubernetesClusterObject) GetEnrichment() *EnrichmentMetadata {
 
 type EnrichmentMetadata struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	CloudProvider  string                 `protobuf:"bytes,1,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
-	K8SVersion     string                 `protobuf:"bytes,2,opt,name=k8s_version,json=k8sVersion,proto3" json:"k8s_version,omitempty"`
-	ReceivedAtUnix int64                  `protobuf:"varint,3,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
+	OrganizationId uint32                 `protobuf:"varint,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	ClusterId      int64                  `protobuf:"varint,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	K8SVersion     string                 `protobuf:"bytes,3,opt,name=k8s_version,json=k8sVersion,proto3" json:"k8s_version,omitempty"`
+	ReceivedAtUnix int64                  `protobuf:"varint,4,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -559,11 +560,18 @@ func (*EnrichmentMetadata) Descriptor() ([]byte, []int) {
 	return file_cluster_cluster_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *EnrichmentMetadata) GetCloudProvider() string {
+func (x *EnrichmentMetadata) GetOrganizationId() uint32 {
 	if x != nil {
-		return x.CloudProvider
+		return x.OrganizationId
 	}
-	return ""
+	return 0
+}
+
+func (x *EnrichmentMetadata) GetClusterId() int64 {
+	if x != nil {
+		return x.ClusterId
+	}
+	return 0
 }
 
 func (x *EnrichmentMetadata) GetK8SVersion() string {
@@ -1570,12 +1578,14 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
 	"ExtraEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x86\x01\n" +
-	"\x12EnrichmentMetadata\x12%\n" +
-	"\x0ecloud_provider\x18\x01 \x01(\tR\rcloudProvider\x12\x1f\n" +
-	"\vk8s_version\x18\x02 \x01(\tR\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa7\x01\n" +
+	"\x12EnrichmentMetadata\x12'\n" +
+	"\x0forganization_id\x18\x01 \x01(\rR\x0eorganizationId\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x02 \x01(\x03R\tclusterId\x12\x1f\n" +
+	"\vk8s_version\x18\x03 \x01(\tR\n" +
 	"k8sVersion\x12(\n" +
-	"\x10received_at_unix\x18\x03 \x01(\x03R\x0ereceivedAtUnix\"\xee\x02\n" +
+	"\x10received_at_unix\x18\x04 \x01(\x03R\x0ereceivedAtUnix\"\xee\x02\n" +
 	"\rContainerSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x129\n" +

@@ -39,12 +39,16 @@ CREATE TABLE
         container_runtime_version String,
         pod_reason String,
         qos_class String,
-        cluster_quota_name String,
-        cluster_quota_uid String,
         daemonset_current_number_scheduled Int64,
         daemonset_desired_number_scheduled Int64,
         daemonset_number_misscheduled Int64,
-        daemonset_number_ready Int64
+        daemonset_number_ready Int64,
+        idempotency_key String,
+        watcher_version String,
+        cluster_id Int64,
+        cloud_provider String,
+        k8s_version String,
+        received_at_unix Int64,
     ) ENGINE = MergeTree
 PARTITION BY
     toYYYYMM (timestamp)

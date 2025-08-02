@@ -39,9 +39,8 @@ message KubernetesEvent {
 }
 
 message EnrichmentMetadata {
-  string organization_id = 1;
-  string cluster_name = 2;
-  string cloud_provider = 3;
-  string k8s_version = 4;
-  int64 received_at_unix = 5;  // UNIX timestamp
+  uint32 organization_id = 1;
+  int64 cluster_id = 2;  
+  string k8s_version = 3;
+  int64 received_at_unix = 4;  // UNIX timestamp
 }
