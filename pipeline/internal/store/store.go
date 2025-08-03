@@ -28,12 +28,6 @@ const (
 	StoreKubernetesAllocatableResourcesTopic = "store.k8s.allocatable.resources"
 	StoreKubernetesClusterQuotasTopic        = "store.k8s.cluster.quotas"
 	StoreKubernetesNamespaceQuotasTopic      = "store.k8s.namespace.quotas"
-	StoreKubernetesEventsTopic               = "store.k8s.events"
-	StoreKubeletNodeMetricsTopic             = "store.kubelet.node.metrics"
-	StoreKubeletPodMetricsTopic              = "store.kubelet.pod.metrics"
-	StoreKubeletContainerMetricsTopic        = "store.kubelet.container.metrics"
-	StoreKubeletNetworkMetricsTopic          = "store.kubelet.network.metrics"
-	StoreKubeletVolumeMetricsTopic           = "store.kubelet.volume.metrics"
 )
 
 type Storer struct {

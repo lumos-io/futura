@@ -1,6 +1,5 @@
--- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 CREATE TABLE
-    kubernetes_events (
+    kubernetes_events_kafka (
         organization_id UInt32,
         cluster_id Int64,
         k8s_version String,
@@ -17,7 +16,7 @@ CREATE TABLE
         event_severity_text String,
         event_reason String,
         event_action String,
-        event_starttime String, -- Consider converting to DateTime64 if needed
+        event_starttime String,
         event_name String,
         event_message String,
         event_uid String,
@@ -25,22 +24,22 @@ CREATE TABLE
         object_api_version String,
         object_resource_version String,
         node_name String
-    ) ENGINE = MergeTree
-PARTITION BY
-    toDate (object_timestamp)
-ORDER BY
-    (
-        organization_id,
-        cluster_id,
-        object_namespace,
-        object_kind,
-        object_name,
-        object_timestamp
-    );
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092', -- needs to be templetized
+    kafka_topic_list = 'store.k8s.events', -- needs to be templetized
+    kafka_group_name = 'clickhouse-kubernetes-consumer', -- needs to be templetized
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1, -- needs to be templetized
+    kafka_thread_per_consumer = 1;
 
--- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+CREATE MATERIALIZED VIEW mv_kubernetes_events TO kubernetes_events AS
+SELECT
+    *
+FROM
+    kubernetes_events_kafka;
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 CREATE TABLE
-    IF NOT EXISTS kubernetes_objects (
+    kubernetes_objects_kafka (
         organization_id UInt32,
         cluster_id Int64,
         k8s_version String,
@@ -93,15 +92,22 @@ CREATE TABLE
         cluster_id Int64,
         cloud_provider String,
         k8s_version String,
-        received_at_unix Int64,
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (kind, namespace, name, timestamp);
+        received_at_unix Int64
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubernetes.objects',
+    kafka_group_name = 'k8s_objects_consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubernetes_objects TO kubernetes_objects AS
+SELECT
+    *
+FROM
+    kubernetes_objects_kafka;
 
 CREATE TABLE
-    IF NOT EXISTS kubernetes_containers (
+    kubernetes_containers_kafka (
         uid String,
         timestamp DateTime64 (3),
         container_name String,
@@ -116,40 +122,61 @@ CREATE TABLE
         memory_limits String,
         cpu_requests String,
         memory_requests String
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (uid, container_name, timestamp);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubernetes.containers',
+    kafka_group_name = 'k8s_containers_consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubernetes_containers TO kubernetes_containers AS
+SELECT
+    *
+FROM
+    kubernetes_containers_kafka;
 
 CREATE TABLE
-    IF NOT EXISTS kubernetes_volumes (
+    kubernetes_volumes_kafka (
         uid String,
         timestamp DateTime64 (3),
         volume_name String,
         volume_type String
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (uid, volume_name);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubernetes.volumes',
+    kafka_group_name = 'k8s_volumes_consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubernetes_volumes TO kubernetes_volumes AS
+SELECT
+    *
+FROM
+    kubernetes_volumes_kafka;
 
 CREATE TABLE
-    IF NOT EXISTS kubernetes_node_conditions (
+    kubernetes_node_conditions_kafka (
         uid String,
         timestamp DateTime64 (3),
         condition_type String,
         condition_status String,
         reason String,
         message String
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (uid, condition_type);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubernetes.node_conditions',
+    kafka_group_name = 'k8s_nodeconditions_consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubernetes_node_conditions TO kubernetes_node_conditions AS
+SELECT
+    *
+FROM
+    kubernetes_node_conditions_kafka;
 
 CREATE TABLE
-    IF NOT EXISTS kubernetes_allocatable_resources (
+    kubernetes_allocatable_resources_kafka (
         uid String,
         timestamp DateTime64 (3),
         cpu String,
@@ -157,54 +184,73 @@ CREATE TABLE
         pods String,
         ephemeral_storage String,
         others Map (String, String)
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    uid;
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubernetes.allocatable_resources',
+    kafka_group_name = 'k8s_allocatable_consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubernetes_allocatable_resources TO kubernetes_allocatable_resources AS
+SELECT
+    *
+FROM
+    kubernetes_allocatable_resources_kafka;
 
 CREATE TABLE
-    IF NOT EXISTS kubernetes_cluster_quotas (
+    kubernetes_cluster_quotas_kafka (
         uid String,
         timestamp DateTime64 (3),
         quota_name String,
         quota_uid String,
         total_limits Array (Tuple (String, Int64)),
         total_usage Array (Tuple (String, Int64))
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (uid, quota_name);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubernetes.cluster_quotas',
+    kafka_group_name = 'k8s_clusterquotas_consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubernetes_cluster_quotas TO kubernetes_cluster_quotas AS
+SELECT
+    *
+FROM
+    kubernetes_cluster_quotas_kafka;
 
 CREATE TABLE
-    IF NOT EXISTS kubernetes_namespace_quotas (
+    kubernetes_namespace_quotas_kafka (
         uid String,
         timestamp DateTime64 (3),
         namespace String,
         limits Array (Tuple (String, Int64)),
         usage Array (Tuple (String, Int64))
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (uid, namespace);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubernetes.namespace_quotas',
+    kafka_group_name = 'k8s_namespacequotas_consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubernetes_namespace_quotas TO kubernetes_namespace_quotas AS
+SELECT
+    *
+FROM
+    kubernetes_namespace_quotas_kafka;
 
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 CREATE TABLE
-    kubelet_node_metrics (
+    kubelet_node_metrics_kafka (
         organization_id UInt32,
         cluster_id Int64,
         received_at_unix Int64,
         timestamp DateTime64 (3),
         node_name String,
         start_time DateTime64 (3),
-        -- CPU
         cpu_usage_nano_cores UInt64,
         cpu_usage_core_nanoseconds UInt64,
         cpu_psi_full_avg10 Float64,
         cpu_psi_some_avg10 Float64,
-        -- Memory
         memory_available_bytes UInt64,
         memory_usage_bytes UInt64,
         memory_working_set_bytes UInt64,
@@ -213,24 +259,28 @@ CREATE TABLE
         memory_major_page_faults UInt64,
         memory_psi_full_avg10 Float64,
         memory_psi_some_avg10 Float64,
-        -- IO
         io_psi_full_avg10 Float64,
         io_psi_some_avg10 Float64,
-        -- FS
         fs_available_bytes UInt64,
         fs_capacity_bytes UInt64,
         fs_used_bytes UInt64,
-        -- Swap
         swap_available_bytes UInt64,
         swap_usage_bytes UInt64
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (node_name, timestamp);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubelet.node.metrics',
+    kafka_group_name = 'clickhouse-kubelet-node-consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubelet_node_metrics TO kubelet_node_metrics AS
+SELECT
+    *
+FROM
+    kubelet_node_metrics_kafka;
 
 CREATE TABLE
-    kubelet_pod_metrics (
+    kubelet_pod_metrics_kafka (
         timestamp DateTime64 (3),
         pod_uid String,
         pod_name String,
@@ -244,14 +294,21 @@ CREATE TABLE
         process_count UInt64,
         swap_available_bytes UInt64,
         swap_usage_bytes UInt64
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (pod_namespace, pod_name, timestamp);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubelet.pod.metrics',
+    kafka_group_name = 'clickhouse-kubelet-pod-consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubelet_pod_metrics TO kubelet_pod_metrics AS
+SELECT
+    *
+FROM
+    kubelet_pod_metrics_kafka;
 
 CREATE TABLE
-    kubelet_container_metrics (
+    kubelet_container_metrics_kafka (
         timestamp DateTime64 (3),
         pod_uid String,
         container_name String,
@@ -263,16 +320,23 @@ CREATE TABLE
         swap_usage_bytes UInt64,
         rootfs_used_bytes UInt64,
         logs_used_bytes UInt64,
-        accelerator JSON, -- or flatten if you have predictable models
+        accelerator JSON,
         user_metrics JSON
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (pod_uid, container_name, timestamp);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubelet.container.metrics',
+    kafka_group_name = 'clickhouse-kubelet-container-consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubelet_container_metrics TO kubelet_container_metrics AS
+SELECT
+    *
+FROM
+    kubelet_container_metrics_kafka;
 
 CREATE TABLE
-    kubelet_network_metrics (
+    kubelet_network_metrics_kafka (
         timestamp DateTime64 (3),
         pod_uid String,
         interface_name String,
@@ -280,14 +344,21 @@ CREATE TABLE
         rx_errors UInt64,
         tx_bytes UInt64,
         tx_errors UInt64
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (pod_uid, interface_name, timestamp);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubelet.network.metrics',
+    kafka_group_name = 'clickhouse-kubelet-network-consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubelet_network_metrics TO kubelet_network_metrics AS
+SELECT
+    *
+FROM
+    kubelet_network_metrics_kafka;
 
 CREATE TABLE
-    kubelet_volume_metrics (
+    kubelet_volume_metrics_kafka (
         timestamp DateTime64 (3),
         pod_uid String,
         volume_name String,
@@ -300,8 +371,15 @@ CREATE TABLE
         inodes_free UInt64,
         inodes UInt64,
         inodes_used UInt64
-    ) ENGINE = MergeTree
-PARTITION BY
-    toYYYYMM (timestamp)
-ORDER BY
-    (pod_uid, volume_name, timestamp);
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
+    kafka_topic_list = 'kubelet.volume.metrics',
+    kafka_group_name = 'clickhouse-kubelet-volume-consumer',
+    kafka_format = 'JSONEachRow',
+    kafka_num_consumers = 1,
+    kafka_thread_per_consumer = 1;
+
+CREATE MATERIALIZED VIEW mv_kubelet_volume_metrics TO kubelet_volume_metrics AS
+SELECT
+    *
+FROM
+    kubelet_volume_metrics_kafka;
