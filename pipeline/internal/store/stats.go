@@ -56,35 +56,40 @@ type flatKubeletNodeMetric struct {
 }
 
 type flatKubeletPodMetric struct {
-	Timestamp             time.Time `json:"timestamp"`
-	PodUID                string    `json:"pod_uid"`
-	PodName               string    `json:"pod_name"`
-	PodNamespace          string    `json:"pod_namespace"`
-	StartTime             time.Time `json:"start_time"`
-	CPUUsageNanoCores     uint64    `json:"cpu_usage_nano_cores"`
-	MemoryUsageBytes      uint64    `json:"memory_usage_bytes"`
-	MemoryWorkingSetBytes uint64    `json:"memory_working_set_bytes"`
-	NetworkRxBytes        uint64    `json:"network_rx_bytes"`
-	NetworkTxBytes        uint64    `json:"network_tx_bytes"`
-	ProcessCount          uint64    `json:"process_count"`
-	SwapAvailableBytes    uint64    `json:"swap_available_bytes"`
-	SwapUsageBytes        uint64    `json:"swap_usage_bytes"`
+	Timestamp               time.Time `json:"timestamp"`
+	PodUID                  string    `json:"pod_uid"`
+	PodName                 string    `json:"pod_name"`
+	PodNamespace            string    `json:"pod_namespace"`
+	StartTime               time.Time `json:"start_time"`
+	CPUUsageNanoCores       uint64    `json:"cpu_usage_nano_cores"`
+	CPUUsageCoreNanoseconds uint64    `json:"cpu_usage_core_nanoseconds"`
+	MemoryAvailableBytes    uint64    `json:"memory_available_bytes"`
+	MemoryUsageBytes        uint64    `json:"memory_usage_bytes"`
+	MemoryWorkingSetBytes   uint64    `json:"memory_working_set_bytes"`
+	NetworkRxBytes          uint64    `json:"network_rx_bytes"`
+	NetworkTxBytes          uint64    `json:"network_tx_bytes"`
+	ProcessCount            uint64    `json:"process_count"`
+	SwapAvailableBytes      uint64    `json:"swap_available_bytes"`
+	SwapUsageBytes          uint64    `json:"swap_usage_bytes"`
 }
 
 type flatKubeletContainerMetric struct {
-	Timestamp             time.Time              `json:"timestamp"`
-	PodUID                string                 `json:"pod_uid"`
-	ContainerName         string                 `json:"container_name"`
-	ContainerStartTime    time.Time              `json:"container_start_time"`
-	CPUUsageNanoCores     uint64                 `json:"cpu_usage_nano_cores"`
-	MemoryUsageBytes      uint64                 `json:"memory_usage_bytes"`
-	MemoryWorkingSetBytes uint64                 `json:"memory_working_set_bytes"`
-	SwapAvailableBytes    uint64                 `json:"swap_available_bytes"`
-	SwapUsageBytes        uint64                 `json:"swap_usage_bytes"`
-	RootFSUsedBytes       uint64                 `json:"rootfs_used_bytes"`
-	LogsUsedBytes         uint64                 `json:"logs_used_bytes"`
-	Accelerator           map[string]interface{} `json:"accelerator"`
-	UserMetrics           map[string]interface{} `json:"user_metrics"`
+	Timestamp               time.Time      `json:"timestamp"`
+	PodUID                  string         `json:"pod_uid"`
+	ContainerName           string         `json:"container_name"`
+	ContainerStartTime      time.Time      `json:"container_start_time"`
+	CPUUsageNanoCores       uint64         `json:"cpu_usage_nano_cores"`
+	CPUUsageCoreNanoseconds uint64         `json:"cpu_usage_core_nanoseconds"`
+	MemoryAvailableBytes    uint64         `json:"memory_available_bytes"`
+	MemoryUsageBytes        uint64         `json:"memory_usage_bytes"`
+	MemoryWorkingSetBytes   uint64         `json:"memory_working_set_bytes"`
+	SwapAvailableBytes      uint64         `json:"swap_available_bytes"`
+	SwapUsageBytes          uint64         `json:"swap_usage_bytes"`
+	RootFSAvailableBytes    uint64         `json:"rootfs_available_bytes"`
+	RootFSUsedBytes         uint64         `json:"rootfs_used_bytes"`
+	LogsUsedBytes           uint64         `json:"logs_used_bytes"`
+	Accelerator             map[string]any `json:"accelerator"`
+	UserMetrics             map[string]any `json:"user_metrics"`
 }
 
 type flatKubeletNetworkMetric struct {
@@ -113,11 +118,12 @@ type flatKubeletVolumeMetric struct {
 }
 
 func (es *StatsSplitter) Split(ctx context.Context, msg *pbst.KubernetesKubeletStats) error {
+	timestamp := time.Now()
 	knm := &flatKubeletNodeMetric{
 		OrganizationID:          msg.Enrichment.OrganizationId,
 		ClusterID:               msg.Enrichment.ClusterId,
 		ReceivedAtUnix:          msg.Enrichment.ReceivedAtUnix,
-		Timestamp:               time.Now(),
+		Timestamp:               timestamp,
 		NodeName:                msg.Node.NodeName,
 		StartTime:               msg.Node.StartTime.AsTime(),
 		CPUUsageNanoCores:       msg.Node.Cpu.UsageNanoCores,
@@ -140,10 +146,84 @@ func (es *StatsSplitter) Split(ctx context.Context, msg *pbst.KubernetesKubeletS
 		SwapAvailableBytes:      msg.Node.Swap.SwapAvailableBytes,
 		SwapUsageBytes:          msg.Node.Swap.SwapUsageBytes,
 	}
-
 	b, err := json.Marshal(knm)
 	if err != nil {
 		return err
 	}
-	return es.kc.Publish(ctx, StoreKubernetesEventsTopic, b)
+	if err := es.kc.Publish(ctx, StoreKubeletNodeMetricsTopic, b); err != nil {
+		return err
+	}
+
+	var kpm *flatKubeletPodMetric
+	var kcm *flatKubeletContainerMetric
+	for _, pod := range msg.Pods {
+
+		for _, container := range pod.Containers {
+			accelerators := map[string]any{}
+			for _, acc := range container.Accelerators {
+				d, err := json.Marshal(acc)
+				if err != nil {
+					return err
+				}
+				accelerators[acc.Id] = string(d)
+			}
+
+			// udf := map[string]any{}
+			// for _, f := range container.UserDefinedMetrics {
+
+			// }
+
+			kcm = &flatKubeletContainerMetric{
+				Timestamp:               timestamp,
+				PodUID:                  pod.PodRef.Uid,
+				ContainerName:           container.Name,
+				ContainerStartTime:      container.StartTime.AsTime(),
+				CPUUsageNanoCores:       container.Cpu.UsageNanoCores,
+				CPUUsageCoreNanoseconds: container.Cpu.UsageCoreNanoSeconds,
+				MemoryAvailableBytes:    container.Memory.AvailableBytes,
+				MemoryUsageBytes:        container.Memory.UsageBytes,
+				MemoryWorkingSetBytes:   container.Memory.WorkingSetBytes,
+				SwapAvailableBytes:      container.Swap.SwapAvailableBytes,
+				SwapUsageBytes:          container.Swap.SwapUsageBytes,
+				RootFSAvailableBytes:    container.Rootfs.AvailableBytes,
+				RootFSUsedBytes:         container.Rootfs.UsedBytes,
+				LogsUsedBytes:           container.Logs.UsedBytes,
+				Accelerator:             accelerators,
+				// UserMetrics:             container.UserDefinedMetrics,
+			}
+			b, err = json.Marshal(kcm)
+			if err != nil {
+				return err
+			}
+			if err := es.kc.Publish(ctx, StoreKubeletContainerMetricsTopic, b); err != nil {
+				return err
+			}
+		}
+
+		kpm = &flatKubeletPodMetric{
+			Timestamp:               timestamp,
+			PodUID:                  pod.PodRef.Uid,
+			PodName:                 pod.PodRef.Name,
+			PodNamespace:            pod.PodRef.Namespace,
+			StartTime:               pod.StartTime.AsTime(),
+			CPUUsageNanoCores:       pod.Cpu.UsageNanoCores,
+			CPUUsageCoreNanoseconds: pod.Cpu.UsageCoreNanoSeconds,
+			MemoryUsageBytes:        pod.Memory.UsageBytes,
+			MemoryWorkingSetBytes:   pod.Memory.WorkingSetBytes,
+			NetworkRxBytes:          pod.Network.InterfaceStats.RxBytes,
+			NetworkTxBytes:          pod.Network.InterfaceStats.TxBytes,
+			ProcessCount:            pod.ProcessStats.ProcessCount,
+			SwapAvailableBytes:      pod.Swap.SwapAvailableBytes,
+			SwapUsageBytes:          pod.Swap.SwapUsageBytes,
+		}
+		b, err = json.Marshal(kpm)
+		if err != nil {
+			return err
+		}
+		if err := es.kc.Publish(ctx, StoreKubeletPodMetricsTopic, b); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
