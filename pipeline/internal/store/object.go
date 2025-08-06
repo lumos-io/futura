@@ -19,28 +19,6 @@ const (
 	StoreKubernetesNamespaceQuotasTopic      = "store.k8s.namespace.quotas"
 )
 
-// Enum for StateType
-type ContainerStateType int8
-
-const (
-	StateWaiting ContainerStateType = iota + 1
-	StateRunning
-	StateTerminated
-)
-
-func (s ContainerStateType) String() string {
-	switch s {
-	case StateWaiting:
-		return "waiting"
-	case StateRunning:
-		return "running"
-	case StateTerminated:
-		return "terminated"
-	default:
-		return "unknown"
-	}
-}
-
 type ObjectSplitter struct {
 	kc stream.Stream
 }
@@ -49,37 +27,6 @@ func NewObjectSplitter(kc stream.Stream) *ObjectSplitter {
 	return &ObjectSplitter{
 		kc: kc,
 	}
-}
-
-func ParseContainerStateType(str string) (ContainerStateType, error) {
-	switch str {
-	case "waiting":
-		return StateWaiting, nil
-	case "running":
-		return StateRunning, nil
-	case "terminated":
-		return StateTerminated, nil
-	default:
-		return 0, fmt.Errorf("invalid state type: %s", str)
-	}
-}
-
-// Custom JSON Marshal & Unmarshal for StateType
-func (s ContainerStateType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.String())
-}
-
-func (s *ContainerStateType) UnmarshalJSON(data []byte) error {
-	var str string
-	if err := json.Unmarshal(data, &str); err != nil {
-		return err
-	}
-	state, err := ParseContainerStateType(str)
-	if err != nil {
-		return err
-	}
-	*s = state
-	return nil
 }
 
 type flatKubernetesObject struct {
@@ -144,7 +91,6 @@ type flatKubernetesContainer struct {
 	RestartsCount  int64     `json:"restarts_count"`
 	Ready          int64     `json:"ready"`
 	StateType      string    `json:"state_type"` // Enum8 stored as String in JSON
-	StateJSON      string    `json:"state_json"`
 	CPULimits      string    `json:"cpu_limits"`
 	MemoryLimits   string    `json:"memory_limits"`
 	CPURequests    string    `json:"cpu_requests"`
@@ -284,13 +230,38 @@ func (os *ObjectSplitter) Split(ctx context.Context, msg *pbcl.KubernetesCluster
 		IdempotencyKey:                  msg.Metadata.IdempotencyKey,
 		WatcherVersion:                  msg.Metadata.IdempotencyKey,
 	}
-
 	b, err := json.Marshal(ko)
 	if err != nil {
 		return err
 	}
 	if err := os.kc.Publish(ctx, StoreKubernetesObjectsTopic, b); err != nil {
 		return err
+	}
+
+	var kc *flatKubernetesContainer
+	for _, container := range msg.Containers {
+		kc = &flatKubernetesContainer{
+			UID:            msg.Uid,
+			Timestamp:      timestamp,
+			ContainerName:  container.Name,
+			Image:          container.Image,
+			ImageTag:       container.ImageTag,
+			ContainerID:    container.ContainerId,
+			RestartsCount:  container.RestartsCount,
+			Ready:          container.Ready,
+			StateType:      container.State.String(),
+			CPULimits:      container.Resources.Limits.Cpu,
+			MemoryLimits:   container.Resources.Limits.Memory,
+			CPURequests:    container.Resources.Requests.Cpu,
+			MemoryRequests: container.Resources.Requests.Memory,
+		}
+		b, err := json.Marshal(kc)
+		if err != nil {
+			return err
+		}
+		if err := os.kc.Publish(ctx, StoreKubernetesContainersTopic, b); err != nil {
+			return err
+		}
 	}
 
 	return nil
