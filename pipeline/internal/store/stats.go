@@ -156,8 +156,8 @@ func (es *StatsSplitter) Split(ctx context.Context, msg *pbst.KubernetesKubeletS
 
 	var kpm *flatKubeletPodMetric
 	var kcm *flatKubeletContainerMetric
+	var kvm *flatKubeletVolumeMetric
 	for _, pod := range msg.Pods {
-
 		for _, container := range pod.Containers {
 			accelerators := map[string]any{}
 			for _, acc := range container.Accelerators {
@@ -168,6 +168,7 @@ func (es *StatsSplitter) Split(ctx context.Context, msg *pbst.KubernetesKubeletS
 				accelerators[acc.Id] = string(d)
 			}
 
+			// TODO: do I need this??
 			// udf := map[string]any{}
 			// for _, f := range container.UserDefinedMetrics {
 
@@ -189,7 +190,7 @@ func (es *StatsSplitter) Split(ctx context.Context, msg *pbst.KubernetesKubeletS
 				RootFSUsedBytes:         container.Rootfs.UsedBytes,
 				LogsUsedBytes:           container.Logs.UsedBytes,
 				Accelerator:             accelerators,
-				// UserMetrics:             container.UserDefinedMetrics,
+				UserMetrics:             map[string]any{}, //container.UserDefinedMetrics,
 			}
 			b, err = json.Marshal(kcm)
 			if err != nil {
@@ -198,6 +199,47 @@ func (es *StatsSplitter) Split(ctx context.Context, msg *pbst.KubernetesKubeletS
 			if err := es.kc.Publish(ctx, StoreKubeletContainerMetricsTopic, b); err != nil {
 				return err
 			}
+		}
+
+		for _, volume := range pod.Volumes {
+			kvm = &flatKubeletVolumeMetric{
+				Timestamp:      timestamp,
+				PodUID:         pod.PodRef.Uid,
+				VolumeName:     kvm.VolumeName,
+				AvailableBytes: volume.FsStats.AvailableBytes,
+				CapacityBytes:  volume.FsStats.CapacityBytes,
+				UsedBytes:      volume.FsStats.UsedBytes,
+				InodesFree:     volume.FsStats.InodesFree,
+				Inodes:         volume.FsStats.Inodes,
+				InodesUsed:     volume.FsStats.InodesUsed,
+				PVCName:        volume.PvcRef.Name,
+				PVCNamespace:   volume.PvcRef.Namespace,
+				Abnormal:       volume.VolumeHealthStats.Abnormal,
+			}
+			b, err = json.Marshal(kvm)
+			if err != nil {
+				return err
+			}
+			if err := es.kc.Publish(ctx, StoreKubeletVolumeMetricsTopic, b); err != nil {
+				return err
+			}
+		}
+
+		knm := &flatKubeletNetworkMetric{
+			Timestamp:     timestamp,
+			PodUID:        pod.PodRef.Uid,
+			InterfaceName: pod.Network.InterfaceStats.Name,
+			RXBytes:       pod.Network.InterfaceStats.RxBytes,
+			RXErrors:      pod.Network.InterfaceStats.RxErrors,
+			TXBytes:       pod.Network.InterfaceStats.TxBytes,
+			TXErrors:      pod.Network.InterfaceStats.TxErrors,
+		}
+		b, err = json.Marshal(knm)
+		if err != nil {
+			return err
+		}
+		if err := es.kc.Publish(ctx, StoreKubeletNetworkMetricsTopic, b); err != nil {
+			return err
 		}
 
 		kpm = &flatKubeletPodMetric{

@@ -22,12 +22,6 @@ const (
 	// here all the kafka topics of the messages that
 	// will be ingested into ClickHouse
 	StoreKubernetesObjectsTopic              = "store.k8s.objects"
-	StoreKubernetesContainersTopic           = "store.k8s.containers"
-	StoreKubernetesVolumesTopic              = "store.k8s.volumes"
-	StoreKubernetesNodeConditionsTopic       = "store.k8s.node.conditions"
-	StoreKubernetesAllocatableResourcesTopic = "store.k8s.allocatable.resources"
-	StoreKubernetesClusterQuotasTopic        = "store.k8s.cluster.quotas"
-	StoreKubernetesNamespaceQuotasTopic      = "store.k8s.namespace.quotas"
 )
 
 type Storer struct {

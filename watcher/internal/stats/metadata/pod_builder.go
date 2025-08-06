@@ -34,7 +34,7 @@ func NewPodStatsBuilder(p stats.PodStats) *pbst.PodStats {
 		ProcessStats:     TransformProcessStats(p.ProcessStats),
 		Swap:             NewSwapStatsBuilder(p.Swap),
 		Containers:       containers,
-		Volume:           volumes,
+		Volumes:          volumes,
 	}
 
 	return psb

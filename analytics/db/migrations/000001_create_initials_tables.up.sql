@@ -90,10 +90,7 @@ CREATE TABLE
         daemonset_number_ready Int64,
         idempotency_key String,
         watcher_version String,
-        cluster_id Int64,
         cloud_provider String,
-        k8s_version String,
-        received_at_unix Int64,
     ) ENGINE = MergeTree
 PARTITION BY
     toYYYYMM (timestamp)

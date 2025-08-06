@@ -57,7 +57,7 @@ message PodStats {
   MemoryStats memory = 5;
   IOStats io = 6;
   NetworkStats network = 7;
-  repeated VolumeStats volume = 8;
+  repeated VolumeStats volumes = 8;
   FsStats ephemeralStorage = 9;
   ProcessStats processStats = 10;
   SwapStats swap = 11;
