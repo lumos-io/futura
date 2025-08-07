@@ -14,6 +14,12 @@ import (
 	pbst "github.com/opisvigilant/futura/proto/gen/stats"
 )
 
+const (
+	RawEventsTopic  = "raw.k8s.events"
+	RawStatsTopic   = "raw.k8s.stats"
+	RawObjectsTopic = "raw.k8s.objects"
+)
+
 type CollectServer struct {
 	pbsvc.UnimplementedCollectServiceServer
 
@@ -53,7 +59,7 @@ func (s *CollectServer) SendEvent(ctx context.Context, req *pbev.KubernetesEvent
 		if err := s.validateAPIKey(ctx, event.Apikey.Key); err != nil {
 			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 		}
-		if err := s.streamClient.Publish(ctx, "raw.k8s.events", []byte(event.String())); err != nil {
+		if err := s.streamClient.Publish(ctx, RawEventsTopic, []byte(event.String())); err != nil {
 			return nil, err
 		}
 	}
@@ -65,7 +71,7 @@ func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.Kubern
 		if err := s.validateAPIKey(ctx, obj.Apikey.Key); err != nil {
 			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 		}
-		if err := s.streamClient.Publish(ctx, "raw.k8s.objects", []byte(obj.String())); err != nil {
+		if err := s.streamClient.Publish(ctx, RawObjectsTopic, []byte(obj.String())); err != nil {
 			return nil, err
 		}
 	}
@@ -76,7 +82,7 @@ func (s *CollectServer) SendKubeletStats(ctx context.Context, req *pbst.Kubernet
 	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
-	if err := s.streamClient.Publish(ctx, "raw.k8s.stats", []byte(req.String())); err != nil {
+	if err := s.streamClient.Publish(ctx, RawStatsTopic, []byte(req.String())); err != nil {
 		return nil, err
 	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "kubelet stats received"}, nil

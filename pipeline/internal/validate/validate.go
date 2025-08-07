@@ -127,7 +127,6 @@ func (v *Validator) ValidateKubernetesEvent(e *pbev.KubernetesEvent) error {
 	if e == nil {
 		return errors.New("event is nil")
 	}
-
 	if e.ObjectKind == "" {
 		return errors.New("object_kind is required")
 	}

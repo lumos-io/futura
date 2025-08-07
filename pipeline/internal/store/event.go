@@ -12,12 +12,12 @@ const (
 	StoreKubernetesEventsTopic = "store.k8s.events"
 )
 
-type EventSplitter struct {
+type EventFlattener struct {
 	kc stream.Stream
 }
 
-func NewEventSplitter(kc stream.Stream) *EventSplitter {
-	return &EventSplitter{
+func NewEventFlattener(kc stream.Stream) *EventFlattener {
+	return &EventFlattener{
 		kc: kc,
 	}
 }
@@ -49,7 +49,7 @@ type flatK8SEvent struct {
 	NodeName              string `json:"node_name,omitempty"`
 }
 
-func (es *EventSplitter) Split(ctx context.Context, msg *pbev.KubernetesEvent) error {
+func (es *EventFlattener) Flatten(ctx context.Context, msg *pbev.KubernetesEvent) error {
 	data := &flatK8SEvent{
 		OrganizationId:        msg.Enrichment.OrganizationId,
 		ClusterId:             msg.Enrichment.ClusterId,

@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/opisvigilant/futura/go-lib/stream"
@@ -11,6 +10,7 @@ import (
 )
 
 const (
+	StoreKubernetesObjectsTopic              = "store.k8s.objects"
 	StoreKubernetesContainersTopic           = "store.k8s.containers"
 	StoreKubernetesVolumesTopic              = "store.k8s.volumes"
 	StoreKubernetesNodeConditionsTopic       = "store.k8s.node.conditions"
@@ -19,12 +19,12 @@ const (
 	StoreKubernetesNamespaceQuotasTopic      = "store.k8s.namespace.quotas"
 )
 
-type ObjectSplitter struct {
+type ObjectFlattener struct {
 	kc stream.Stream
 }
 
-func NewObjectSplitter(kc stream.Stream) *ObjectSplitter {
-	return &ObjectSplitter{
+func NewObjectFlattener(kc stream.Stream) *ObjectFlattener {
+	return &ObjectFlattener{
 		kc: kc,
 	}
 }
@@ -145,39 +145,7 @@ type flatResourceTuple struct {
 	Value    int64  `json:"value"`
 }
 
-// Custom Unmarshal for ResourceTuple
-func (r *flatResourceTuple) UnmarshalJSON(data []byte) error {
-	var temp []any
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-	if len(temp) != 2 {
-		return fmt.Errorf("expected array of 2 elements, got %d", len(temp))
-	}
-
-	// First element should be string
-	resource, ok := temp[0].(string)
-	if !ok {
-		return fmt.Errorf("expected string for resource, got %T", temp[0])
-	}
-
-	// Second element should be number
-	var value int64
-	switch v := temp[1].(type) {
-	case float64:
-		value = int64(v)
-	case int64:
-		value = v
-	default:
-		return fmt.Errorf("expected number for value, got %T", temp[1])
-	}
-
-	r.Resource = resource
-	r.Value = value
-	return nil
-}
-
-func (os *ObjectSplitter) Split(ctx context.Context, msg *pbcl.KubernetesClusterObject) error {
+func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClusterObject) error {
 	timestamp := time.Now()
 	ko := &flatKubernetesObject{
 		OrganizationID:                  msg.Enrichment.OrganizationId,
@@ -260,6 +228,117 @@ func (os *ObjectSplitter) Split(ctx context.Context, msg *pbcl.KubernetesCluster
 			return err
 		}
 		if err := os.kc.Publish(ctx, StoreKubernetesContainersTopic, b); err != nil {
+			return err
+		}
+	}
+
+	var kv *flatKubernetesVolume
+	for _, volume := range msg.Volumes {
+		kv = &flatKubernetesVolume{
+			UID:        msg.Uid,
+			Timestamp:  timestamp,
+			VolumeName: volume.Name,
+			VolumeType: volume.Type,
+		}
+		b, err := json.Marshal(kv)
+		if err != nil {
+			return err
+		}
+		if err := os.kc.Publish(ctx, StoreKubernetesVolumesTopic, b); err != nil {
+			return err
+		}
+	}
+
+	var knc *flatKubernetesNodeCondition
+	for _, condition := range msg.Conditions {
+		knc = &flatKubernetesNodeCondition{
+			UID:             msg.Uid,
+			Timestamp:       timestamp,
+			ConditionType:   condition.Type,
+			ConditionStatus: condition.Status,
+			Reason:          condition.Reason,
+			Message:         condition.Message,
+		}
+		b, err := json.Marshal(knc)
+		if err != nil {
+			return err
+		}
+		if err := os.kc.Publish(ctx, StoreKubernetesNodeConditionsTopic, b); err != nil {
+			return err
+		}
+	}
+
+	kar := &flatKubernetesAllocatableResource{
+		UID:              msg.Uid,
+		Timestamp:        timestamp,
+		CPU:              msg.Allocatable.Cpu,
+		Memory:           msg.Allocatable.Memory,
+		Pods:             msg.Allocatable.Pods,
+		EphemeralStorage: msg.Allocatable.EphemeralStorage,
+		Others:           msg.Allocatable.Others,
+	}
+	b, err = json.Marshal(kar)
+	if err != nil {
+		return err
+	}
+	if err := os.kc.Publish(ctx, StoreKubernetesAllocatableResourcesTopic, b); err != nil {
+		return err
+	}
+
+	kcq := &flatKubernetesClusterQuota{
+		UID:         msg.Uid,
+		Timestamp:   timestamp,
+		QuotaName:   msg.ClusterQuota.Name,
+		QuotaUID:    msg.ClusterQuota.Uid,
+		TotalLimits: make([]flatResourceTuple, len(msg.ClusterQuota.TotalLimits)),
+		TotalUsage:  make([]flatResourceTuple, len(msg.ClusterQuota.TotalUsage)),
+	}
+	for i, limits := range msg.ClusterQuota.TotalLimits {
+		kcq.TotalLimits[i] = flatResourceTuple{
+			Resource: limits.Resource,
+			Value:    limits.Value,
+		}
+	}
+	for i, usage := range msg.ClusterQuota.TotalUsage {
+		kcq.TotalUsage[i] = flatResourceTuple{
+			Resource: usage.Resource,
+			Value:    usage.Value,
+		}
+	}
+	b, err = json.Marshal(kcq)
+	if err != nil {
+		return err
+	}
+	if err := os.kc.Publish(ctx, StoreKubernetesClusterQuotasTopic, b); err != nil {
+		return err
+	}
+
+	var knq *flatKubernetesNamespaceQuota
+	for _, quota := range msg.ClusterQuota.Quotas {
+		knq = &flatKubernetesNamespaceQuota{
+			UID:       msg.Uid,
+			Timestamp: timestamp,
+			Namespace: msg.Namespace,
+			Limits:    make([]flatResourceTuple, len(quota.Limits)),
+			Usage:     make([]flatResourceTuple, len(quota.Usage)),
+		}
+		for i, limit := range quota.Limits {
+			knq.Limits[i] = flatResourceTuple{
+				Resource: limit.Resource,
+				Value:    limit.Value,
+			}
+		}
+		for i, usage := range quota.Usage {
+			knq.Usage[i] = flatResourceTuple{
+				Resource: usage.Resource,
+				Value:    usage.Value,
+			}
+		}
+		b, err := json.Marshal(knq)
+		if err != nil {
+			return err
+		}
+		if err := os.kc.Publish(ctx, StoreKubernetesNamespaceQuotasTopic, b); err != nil {
 			return err
 		}
 	}

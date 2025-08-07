@@ -17,12 +17,12 @@ const (
 	StoreKubeletVolumeMetricsTopic    = "store.kubelet.volume.metrics"
 )
 
-type StatsSplitter struct {
+type StatsFlattener struct {
 	kc stream.Stream
 }
 
-func NewStatsSplitter(kc stream.Stream) *StatsSplitter {
-	return &StatsSplitter{
+func NewStatsFlattener(kc stream.Stream) *StatsFlattener {
+	return &StatsFlattener{
 		kc: kc,
 	}
 }
@@ -117,7 +117,7 @@ type flatKubeletVolumeMetric struct {
 	InodesUsed     uint64    `json:"inodes_used"`
 }
 
-func (es *StatsSplitter) Split(ctx context.Context, msg *pbst.KubernetesKubeletStats) error {
+func (es *StatsFlattener) Flatten(ctx context.Context, msg *pbst.KubernetesKubeletStats) error {
 	timestamp := time.Now()
 	knm := &flatKubeletNodeMetric{
 		OrganizationID:          msg.Enrichment.OrganizationId,
