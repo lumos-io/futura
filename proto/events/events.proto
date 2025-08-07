@@ -8,7 +8,7 @@ import "common/metadata.proto";
 
 // Main batch message
 message KubernetesEventBatch {
-  repeated KubernetesEvent events = 3;
+  repeated KubernetesEvent events = 1;
 }
 
 // Envelope for all possible event types
