@@ -190,7 +190,7 @@ func (v *Validator) ValidateKubernetesClusterObject(obj *pbcl.KubernetesClusterO
 	}
 
 	if obj.RestartCount < 0 {
-		return fmt.Errorf("restart_count must be non-negative")
+		obj.RestartCount = 0
 	}
 
 	// Replica counts must be non-negative
@@ -213,9 +213,9 @@ func (v *Validator) ValidateKubernetesClusterObject(obj *pbcl.KubernetesClusterO
 		"daemonset_number_misscheduled":      obj.DaemonsetNumberMisscheduled,
 		"daemonset_number_ready":             obj.DaemonsetNumberReady,
 	}
-	for field, value := range replicaFields {
+	for _, value := range replicaFields {
 		if value < 0 {
-			return fmt.Errorf("%s must be non-negative", field)
+			value = 0
 		}
 	}
 
@@ -227,7 +227,7 @@ func (v *Validator) ValidateKubernetesClusterObject(obj *pbcl.KubernetesClusterO
 			return fmt.Errorf("containers[%d].image is required", i)
 		}
 		if c.RestartsCount < 0 {
-			return fmt.Errorf("containers[%d].restarts_count is negative", i)
+			c.RestartsCount = 0
 		}
 	}
 
