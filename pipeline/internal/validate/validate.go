@@ -9,6 +9,7 @@ import (
 
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
+	"github.com/opisvigilant/futura/pipeline/internal/dlq"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -30,6 +31,7 @@ const (
 
 type Validator struct {
 	stream stream.Stream
+	dlq    *dlq.DLQHandler
 
 	wg sync.WaitGroup
 }
@@ -39,8 +41,13 @@ func New(config *config.Configuration) (*Validator, error) {
 	if err != nil {
 		return nil, err
 	}
+	c, err := dlq.New(config)
+	if err != nil {
+		return nil, err
+	}
 	return &Validator{
 		stream: kc,
+		dlq:    c,
 		wg:     sync.WaitGroup{},
 	}, nil
 }
@@ -59,7 +66,7 @@ func (v *Validator) Start(ctx context.Context) error {
 				return
 			}
 			if err := v.ValidateKubernetesEvent(m); err != nil {
-				log.Error().Err(err).Msg("failed to validate the raw event message")
+				v.dlq.StoreInvalidEventMessage(msg.Data(), err)
 				return
 			}
 			if err := v.stream.Publish(ctx, ValidatedEventsTopic, msg.Data()); err != nil {
@@ -82,7 +89,7 @@ func (v *Validator) Start(ctx context.Context) error {
 				return
 			}
 			if err := v.ValidateKubeletMetrics(m); err != nil {
-				log.Error().Err(err).Msg("failed to validate the raw stats message")
+				v.dlq.StoreInvalidStatMessage(msg.Data(), err)
 				return
 			}
 			if err := v.stream.Publish(ctx, ValidatedStatsTopic, msg.Data()); err != nil {
@@ -105,7 +112,7 @@ func (v *Validator) Start(ctx context.Context) error {
 				return
 			}
 			if err := v.ValidateKubernetesClusterObject(m); err != nil {
-				log.Error().Err(err).Msg("failed to validate the raw object message")
+				v.dlq.StoreInvalidObjectMessage(msg.Data(), err)
 				return
 			}
 			if err := v.stream.Publish(ctx, ValidatedObjectsTopic, msg.Data()); err != nil {
