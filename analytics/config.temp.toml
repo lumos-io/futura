@@ -1,0 +1,11 @@
+[clickhouse]
+servers = ["localhost:8123"]
+database = "default"
+username = "default"
+password = "password"
+
+[analytics]
+endpoint = "localhost:50052"
+
+[log]
+level = "debug"
