@@ -8,6 +8,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/cluster/collection"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"github.com/opisvigilant/futura/watcher/internal/config"
+	"github.com/opisvigilant/futura/watcher/internal/sender"
 	k8s "github.com/opisvigilant/futura/watcher/pkg/kubernetes"
 	"github.com/rs/zerolog/log"
 )
@@ -46,6 +47,11 @@ func New(config *config.Configuration) (*KubernetesClusterCollector, error) {
 
 func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 	if err := kr.resourceWatcher.initialize(); err != nil {
+		return err
+	}
+
+	sender, err := sender.New(ctx, kr.config)
+	if err != nil {
 		return err
 	}
 
@@ -96,10 +102,9 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 							m.Namespace = event.Namespace
 							m.Extra = event.Metadata
 						}
+						sender.KubernetesClusterObjectChan <- m
 					}
 				}
-				// TODO: Send the data here
-				// ...
 			case <-ctx.Done():
 				return
 			}

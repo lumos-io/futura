@@ -55,12 +55,6 @@ func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
 		KubernetesKubeletStats:      make(chan *pbst.KubernetesKubeletStats),
 	}
 
-	// events are resynced every 60 seconds on kubernetes informers
-	// resourceBatchSize ~ burst size, if more than resourceBatchSize events are sent in a moment, blocking can occur
-	// resync period / event interval = 60 / 5 = 12
-	// 12 * resourceBatchSize = 12 * 1000 = 12000
-	// it can send upto 12k events in 60 seconds
-	// seems safe enough, if not, we can increase the buffer size
 	eventsInterval := 5 * time.Second
 	go s.sendEventsInBatch(s.KubernetesEventChan, eventsInterval)
 	go s.sendObjectsClusterInBatch(s.KubernetesClusterObjectChan, eventsInterval)
@@ -100,15 +94,12 @@ func (s *Sender) sendEventsInBatch(ch chan *pbev.KubernetesEvent, interval time.
 					loop = false
 				}
 			}
-
 			if len(batch) == 0 {
 				return
 			}
-
 			payload := &pbev.KubernetesEventBatch{
 				Events: batch,
 			}
-
 			// Send the batch to the server
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
