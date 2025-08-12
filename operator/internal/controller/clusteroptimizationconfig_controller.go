@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Davide Berdin.
+Copyright 2025.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,29 +24,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	opisvigilantgithubcomv1alpha1 "github.com/opisvigilant/futura/operator/api/v1alpha1"
+	futurav1 "io.lumos/futura/api/v1"
 )
 
-// FuturaReconciler reconciles a Futura object
-type FuturaReconciler struct {
+// ClusterOptimizationConfigReconciler reconciles a ClusterOptimizationConfig object
+type ClusterOptimizationConfigReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=opisvigilant.github.com,resources=futuras,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=opisvigilant.github.com,resources=futuras/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=opisvigilant.github.com,resources=futuras/finalizers,verbs=update
+// +kubebuilder:rbac:groups=futura.io.lumos,resources=clusteroptimizationconfigs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=futura.io.lumos,resources=clusteroptimizationconfigs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=futura.io.lumos,resources=clusteroptimizationconfigs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the Futura object against the actual cluster state, and then
+// the ClusterOptimizationConfig object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
-func (r *FuturaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.4/pkg/reconcile
+func (r *ClusterOptimizationConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
@@ -55,8 +55,9 @@ func (r *FuturaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *FuturaReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ClusterOptimizationConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&opisvigilantgithubcomv1alpha1.Futura{}).
+		For(&futurav1.ClusterOptimizationConfig{}).
+		Named("clusteroptimizationconfig").
 		Complete(r)
 }

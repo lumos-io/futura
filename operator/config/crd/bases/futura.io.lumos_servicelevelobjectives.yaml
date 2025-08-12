@@ -1,0 +1,75 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.0
+  name: servicelevelobjectives.futura.io.lumos
+spec:
+  group: futura.io.lumos
+  names:
+    kind: ServiceLevelObjective
+    listKind: ServiceLevelObjectiveList
+    plural: servicelevelobjectives
+    singular: servicelevelobjective
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              priority:
+                description: 'Priority level: "low", "medium", "high"'
+                type: string
+              serviceName:
+                description: Target service name this SLO applies to
+                type: string
+              targetErrorRate:
+                description: Target error rate (string, e.g., "0.01" for 1%)
+                type: string
+              targetP95Latency:
+                description: Target p95 latency (string, e.g., "250ms" or "0.25s")
+                type: string
+              targetThroughput:
+                description: Target throughput / requests per second (string, e.g.,
+                  "1000")
+                type: string
+            required:
+            - priority
+            - serviceName
+            - targetErrorRate
+            - targetP95Latency
+            - targetThroughput
+            type: object
+          status:
+            description: ServiceLevelObjectiveStatus defines the observed state of
+              ServiceLevelObjective
+            properties:
+              lastSyncTime:
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

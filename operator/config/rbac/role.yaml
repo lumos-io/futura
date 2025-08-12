@@ -5,9 +5,10 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - opisvigilant.github.com
+  - futura.io.lumos
   resources:
-  - futuras
+  - clusteroptimizationconfigs
+  - servicelevelobjectives
   verbs:
   - create
   - delete
@@ -17,15 +18,17 @@ rules:
   - update
   - watch
 - apiGroups:
-  - opisvigilant.github.com
+  - futura.io.lumos
   resources:
-  - futuras/finalizers
+  - clusteroptimizationconfigs/finalizers
+  - servicelevelobjectives/finalizers
   verbs:
   - update
 - apiGroups:
-  - opisvigilant.github.com
+  - futura.io.lumos
   resources:
-  - futuras/status
+  - clusteroptimizationconfigs/status
+  - servicelevelobjectives/status
   verbs:
   - get
   - patch

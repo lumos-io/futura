@@ -1,0 +1,37 @@
+apiVersion: lumos.iov1alpha1
+kind: ClusterOptimizationConfig
+metadata:
+  name: default
+spec:
+  businessMetadata:
+    criticality: High # Low, Medium, High, MissionCritical
+    costSensitivity: High # Low, Medium, High
+    budget:
+      amount: 5000 # Monthly budget in USD
+      currency: USD
+    owner: "platform-team@example.com"
+  
+  cloudProvider:
+    type: AWS # AWS, GCP, Azure -- probably not necessary
+    accountID: "123456789012" # probably not necessary
+    region: eu-west-1 # probably not necessary
+    pricingModelPreference: # Priority order
+      - spot
+      - reserved
+      - on-demand
+    quotas:
+      ec2:
+        maxInstances: 200
+        vCPU: 800
+      ebs:
+        totalStorageGB: 10000
+    spotInstanceConfig:
+      interruptionTolerance: Medium # Low, Medium, High
+
+  optimizationPolicies:
+    scaleDownAggressiveness: Medium
+    preferredInstanceFamilies:
+      - m6i
+      - r6g
+    avoidAZs:
+      - eu-west-1a

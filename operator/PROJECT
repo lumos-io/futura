@@ -2,18 +2,28 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: opisvigilant.github.com
+domain: io.lumos
 layout:
 - go.kubebuilder.io/v4
 projectName: operator
-repo: github.com/opisvigilant/futura/operator
+repo: io.lumos/futura
 resources:
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: opisvigilant.github.com
-  kind: Futura
-  path: github.com/opisvigilant/futura/operator/api/v1alpha1
-  version: v1alpha1
+  domain: io.lumos
+  group: futura
+  kind: ServiceLevelObjective
+  path: io.lumos/futura/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: io.lumos
+  group: futura
+  kind: ClusterOptimizationConfig
+  path: io.lumos/futura/api/v1
+  version: v1
 version: "3"
