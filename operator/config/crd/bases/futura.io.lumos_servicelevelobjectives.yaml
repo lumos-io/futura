@@ -64,9 +64,11 @@ spec:
             description: ServiceLevelObjectiveStatus defines the observed state of
               ServiceLevelObjective
             properties:
-              lastSyncTime:
+              lastUpdated:
                 format: date-time
                 type: string
+              synced:
+                type: boolean
             type: object
         type: object
     served: true

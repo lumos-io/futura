@@ -22,9 +22,8 @@ import (
 
 // ClusterOptimizationConfigSpec defines the desired state of ClusterOptimizationConfig
 type ClusterOptimizationConfigSpec struct {
-	// CloudProvider specifies which cloud provider this cluster runs on.
-	// +kubebuilder:validation:Enum=aws;gcp;azure
-	CloudProvider string `json:"cloudProvider"`
+	// ApiKey specifies which customer/cluster this optimization is for.
+	ApiKey string `json:"apiKey"`
 
 	// CostOptimization settings for budget and instance preferences.
 	CostOptimization CostOptimizationSettings `json:"costOptimization,omitempty"`
@@ -42,9 +41,11 @@ type ClusterOptimizationConfigSpec struct {
 
 // CostOptimizationSettings defines budget and instance preferences
 type CostOptimizationSettings struct {
+	CostSensitivity        string   `json:"costSensitivity,omitempty"`
 	MaxMonthlyBudgetUSD    string   `json:"maxMonthlyBudgetUSD,omitempty"`
 	SpotInstanceAllowed    bool     `json:"spotInstanceAllowed,omitempty"`
 	PreferredInstanceTypes []string `json:"preferredInstanceTypes,omitempty"`
+	MaxSpotPercentage      string   `json:"maxSpotPercentage,omitempty"`
 }
 
 // ScalingPolicies defines whether to enable HPA, VPA, or Karpenter.
@@ -56,7 +57,8 @@ type ScalingPolicies struct {
 
 // ClusterOptimizationConfigStatus defines the observed state of ClusterOptimizationConfig
 type ClusterOptimizationConfigStatus struct {
-	LastSyncTime *metav1.Time `json:"lastSyncTime,omitempty"`
+	LastSynced metav1.Time `json:"lastSynced,omitempty"`
+	Synced     bool        `json:"synced,omitempty"`
 }
 
 //+kubebuilder:object:root=true

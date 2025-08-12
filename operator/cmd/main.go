@@ -19,11 +19,14 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	"google.golang.org/grpc"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -64,6 +67,9 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
+	var grpcAddr string
+
+	flag.StringVar(&grpcAddr, "grpc-server-addr", "localhost:50052", "Address of the backend gRPC server")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -202,13 +208,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.ServiceLevelObjectiveReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ServiceLevelObjective")
-		os.Exit(1)
+	// Dial the gRPC backend server once here
+	grpcConn, err := grpc.NewClient(grpcAddr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(5*time.Second))
+	if err != nil {
+		log.Fatalf("failed to connect to gRPC server at %s: %v", grpcAddr, err)
 	}
+	defer grpcConn.Close()
+
+	// Create SLO reconciler with grpc client and register it
+	sloReconciler := controller.NewSLOReconciler(mgr.GetClient(), grpcConn)
+	if err := sloReconciler.SetupWithManager(mgr); err != nil {
+		log.Fatalf("unable to create controller: %v", err)
+	}
+
 	if err = (&controller.ClusterOptimizationConfigReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),

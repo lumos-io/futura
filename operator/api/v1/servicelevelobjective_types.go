@@ -23,23 +23,20 @@ import (
 type ServiceLevelObjectiveSpec struct {
 	// Target service name this SLO applies to
 	ServiceName string `json:"serviceName"`
-
 	// Target p95 latency (string, e.g., "250ms" or "0.25s")
 	TargetP95Latency string `json:"targetP95Latency"`
-
 	// Target error rate (string, e.g., "0.01" for 1%)
 	TargetErrorRate string `json:"targetErrorRate"`
-
 	// Target throughput / requests per second (string, e.g., "1000")
 	TargetThroughput string `json:"targetThroughput"`
-
 	// Priority level: "low", "medium", "high"
 	Priority string `json:"priority"`
 }
 
 // ServiceLevelObjectiveStatus defines the observed state of ServiceLevelObjective
 type ServiceLevelObjectiveStatus struct {
-	LastSyncTime *metav1.Time `json:"lastSyncTime,omitempty"`
+	LastUpdated metav1.Time `json:"lastUpdated,omitempty"`
+	Synced      bool        `json:"synced,omitempty"` // true if stored in API
 }
 
 // +kubebuilder:object:root=true
