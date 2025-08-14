@@ -36,23 +36,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	futurav1 "io.lumos/futura/api/v1"
+	"io.lumos/futura/internal/poller"
 	"io.lumos/futura/internal/watcher"
 
-	pbop "github.com/opisvigilant/futura/proto/gen/operator"
+	pbeg "github.com/opisvigilant/futura/proto/gen/engine"
 )
 
 // ClusterOptimizationConfigReconciler reconciles a ClusterOptimizationConfig object
 type ClusterOptimizationConfigReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	grpcClient pbop.FuturaOptimizerClient
+	poller     *poller.Poller
+	grpcClient pbeg.FuturaOptimizerClient
 }
 
-func NewClusterOptimizationConfigReconciler(c client.Client, scheme *runtime.Scheme, grpcConn *grpc.ClientConn) *ClusterOptimizationConfigReconciler {
+func NewClusterOptimizationConfigReconciler(c client.Client, scheme *runtime.Scheme, grpcConn *grpc.ClientConn, poller *poller.Poller) *ClusterOptimizationConfigReconciler {
+	go poller.PollOptimizer(c, scheme, context.Background())
+
 	return &ClusterOptimizationConfigReconciler{
 		Client:     c,
 		Scheme:     scheme,
-		grpcClient: pbop.NewFuturaOptimizerClient(grpcConn),
+		poller:     poller,
+		grpcClient: pbeg.NewFuturaOptimizerClient(grpcConn),
 	}
 }
 
@@ -70,8 +75,8 @@ func (r *ClusterOptimizationConfigReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	grpcReq := &pbop.ClusterOptimizationConfigRequest{
-		Config: &pbop.ClusterOptimizationConfig{
+	grpcReq := &pbeg.ClusterOptimizationConfigRequest{
+		Config: &pbeg.ClusterOptimizationConfig{
 			ApiKey:                 config.Spec.ApiKey,
 			CostSensitivity:        config.Spec.CostOptimization.CostSensitivity,
 			MonthlyBudget:          config.Spec.CostOptimization.MaxMonthlyBudgetUSD,

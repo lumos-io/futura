@@ -33,20 +33,20 @@ import (
 
 	futurav1 "io.lumos/futura/api/v1"
 
-	pbop "github.com/opisvigilant/futura/proto/gen/operator"
+	pbeg "github.com/opisvigilant/futura/proto/gen/engine"
 )
 
 // ServiceLevelObjectiveReconciler reconciles a ServiceLevelObjective object
 type ServiceLevelObjectiveReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	grpcClient pbop.FuturaOptimizerClient
+	grpcClient pbeg.FuturaOptimizerClient
 }
 
 func NewSLOReconciler(k8sClient client.Client, grpcConn *grpc.ClientConn) *ServiceLevelObjectiveReconciler {
 	return &ServiceLevelObjectiveReconciler{
 		Client:     k8sClient,
-		grpcClient: pbop.NewFuturaOptimizerClient(grpcConn),
+		grpcClient: pbeg.NewFuturaOptimizerClient(grpcConn),
 	}
 }
 
@@ -80,9 +80,9 @@ func (r *ServiceLevelObjectiveReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, err
 	}
 
-	grpcReq := &pbop.SyncSLORequest{
+	grpcReq := &pbeg.SyncSLORequest{
 		ApiKey: config.Spec.ApiKey,
-		Slo: &pbop.ServiceLevelObjective{
+		Slo: &pbeg.ServiceLevelObjective{
 			ServiceName:      slo.Spec.ServiceName,
 			TargetP95Latency: slo.Spec.TargetP95Latency,
 			TargetErrorRate:  slo.Spec.TargetErrorRate,
