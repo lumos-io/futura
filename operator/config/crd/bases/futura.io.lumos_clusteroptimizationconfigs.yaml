@@ -41,18 +41,18 @@ spec:
             description: ClusterOptimizationConfigSpec defines the desired state of
               ClusterOptimizationConfig
             properties:
-              cloudProvider:
-                description: CloudProvider specifies which cloud provider this cluster
-                  runs on.
-                enum:
-                - aws
-                - gcp
-                - azure
+              apiKey:
+                description: ApiKey specifies which customer/cluster this optimization
+                  is for.
                 type: string
               costOptimization:
                 description: CostOptimization settings for budget and instance preferences.
                 properties:
+                  costSensitivity:
+                    type: string
                   maxMonthlyBudgetUSD:
+                    type: string
+                  maxSpotPercentage:
                     type: string
                   preferredInstanceTypes:
                     items:
@@ -71,13 +71,13 @@ spec:
                 properties:
                   enableHPA:
                     type: boolean
-                  enableKarpenter:
+                  enableNodeHandler:
                     type: boolean
                   enableVPA:
                     type: boolean
                 required:
                 - enableHPA
-                - enableKarpenter
+                - enableNodeHandler
                 - enableVPA
                 type: object
               syncPeriodSeconds:
@@ -86,16 +86,18 @@ spec:
                 minimum: 10
                 type: integer
             required:
-            - cloudProvider
+            - apiKey
             - scalingPolicies
             type: object
           status:
             description: ClusterOptimizationConfigStatus defines the observed state
               of ClusterOptimizationConfig
             properties:
-              lastSyncTime:
+              lastSynced:
                 format: date-time
                 type: string
+              synced:
+                type: boolean
             type: object
         type: object
     served: true

@@ -20,6 +20,10 @@ spec:
       containers:
         - name: watcher
           image: ko://github.com/opisvigilant/futura/watcher
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN", "SYS_RAWIO"]
           resources:
             limits:
               cpu: "1"
@@ -29,6 +33,9 @@ spec:
             - name: configuration
               mountPath: /opt/watcher/config.toml
               subPath: config.toml
+            - name: sysfs
+              mountPath: /sys/fs/cgroup
+              readOnly: true
           env:
             - name: NODE_NAME
               valueFrom:
@@ -38,6 +45,9 @@ spec:
         - name: configuration
           configMap:
             name: watcher-config
+        - name: sysfs
+          hostPath:
+            path: /sys/fs/cgroup
 ---
 apiVersion: v1
 kind: ConfigMap

@@ -83,12 +83,12 @@ func (r *ServiceLevelObjectiveReconciler) Reconcile(ctx context.Context, req ctr
 	grpcReq := &pbeg.SyncSLORequest{
 		ApiKey: config.Spec.ApiKey,
 		Slo: &pbeg.ServiceLevelObjective{
-			ServiceName:      slo.Spec.ServiceName,
-			TargetP95Latency: slo.Spec.TargetP95Latency,
-			TargetErrorRate:  slo.Spec.TargetErrorRate,
-			TargetThroughput: slo.Spec.TargetThroughput,
-			Priority:         slo.Spec.Priority,
-			LastUpdated:      timestamppb.New(slo.Status.LastUpdated.Time),
+			// ServiceName:      slo.Spec.ServiceName,
+			// TargetP95Latency: slo.Spec.TargetP95Latency,
+			// TargetErrorRate:  slo.Spec.TargetErrorRate,
+			// TargetThroughput: slo.Spec.TargetThroughput,
+			// Priority:    slo.Spec.Priority,
+			LastUpdated: timestamppb.New(slo.Status.LastUpdated.Time),
 		},
 	}
 
@@ -106,7 +106,7 @@ func (r *ServiceLevelObjectiveReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, err
 	}
 
-	logger.Info("SLO synced successfully via gRPC", "service", slo.Spec.ServiceName)
+	logger.Info("SLO synced successfully via gRPC", "service", slo.Spec.ScaleTargetRef.Name)
 	return ctrl.Result{}, nil
 }
 
