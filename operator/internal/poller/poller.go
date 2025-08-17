@@ -43,6 +43,8 @@ func (p *Poller) PollOptimizer(c client.Client, scheme *runtime.Scheme, ctx cont
 	}
 }
 
+// fetchAndApplyDecisions gets the recommendations from the server and initiate the action that will
+// be applied to the target pod.
 func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, scheme *runtime.Scheme) {
 	logger := log.FromContext(ctx)
 
@@ -76,13 +78,13 @@ func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, sc
 			if err := p.applyHPAScale(ctx, c, resp.Target, action.GetHpaScale().Replicas); err != nil {
 				logger.Error(err, "Failed to apply HPA scale action")
 			}
-		case "KARPENTER_PROVISION":
-			if err := p.applyKarpenterProvision(ctx, c, action.GetKarpenterProvision()); err != nil {
-				logger.Error(err, "Failed to apply Karpenter provision action")
-			}
 		case "VPA_RECOMMEND":
 			if err := p.applyVPARecommendation(ctx, c, resp.Target, action.GetVpaRecommend()); err != nil {
 				logger.Error(err, "Failed to apply VPA recommendation")
+			}
+		case "KARPENTER_PROVISION":
+			if err := p.applyKarpenterProvision(ctx, c, action.GetKarpenterProvision()); err != nil {
+				logger.Error(err, "Failed to apply Karpenter provision action")
 			}
 		default:
 			logger.Info("Unknown action type, skipping", "type", action.Type)
@@ -103,13 +105,6 @@ func (p *Poller) applyHPAScale(ctx context.Context, c client.Client, target *pbe
 	}
 	patch := client.Apply
 	return c.Patch(ctx, &dep, patch, client.ForceOwnership, client.FieldOwner("futura-optimizer"))
-}
-
-func (p *Poller) applyKarpenterProvision(ctx context.Context, c client.Client, provision *pbeg.KarpenterProvisionAction) error {
-	// This would create/update a Karpenter Provisioner CR
-	// For simplicity, just log
-	fmt.Printf("Would provision %d nodes of types %v (%s)\n", provision.Count, provision.InstanceTypes, provision.CapacityType)
-	return nil
 }
 
 func (p *Poller) applyVPARecommendation(ctx context.Context, c client.Client, target *pbeg.TargetRef, vpa *pbeg.VpaRecommendAction) error {
@@ -148,4 +143,11 @@ func (p *Poller) applyVPARecommendation(ctx context.Context, c client.Client, ta
 		},
 	}
 	return c.Patch(ctx, &dep, client.Apply, client.ForceOwnership, client.FieldOwner("futura-optimizer"))
+}
+
+func (p *Poller) applyKarpenterProvision(ctx context.Context, c client.Client, provision *pbeg.KarpenterProvisionAction) error {
+	// This would create/update a Karpenter Provisioner CR
+	// For simplicity, just log
+	fmt.Printf("Would provision %d nodes of types %v (%s)\n", provision.Count, provision.InstanceTypes, provision.CapacityType)
+	return nil
 }

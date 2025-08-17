@@ -1,33 +1,38 @@
-# build stage
-FROM golang:1.20 as builder
+# ----------- builder stage -----------
+FROM ghcr.io/hemslo/docker-bpf:latest AS builder
 
+WORKDIR /app
+
+# Install Go (docker-bpf has clang/llvm/libbpf already, but not Go)
+ENV GO_VERSION=1.24.1
+RUN curl -sSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz \
+    | tar -C /usr/local -xz && \
+    ln -s /usr/local/go/bin/go /usr/local/bin/go
+
+ENV PATH="/usr/local/go/bin:${PATH}"
 ENV GO111MODULE=on
 
-WORKDIR /app
-
-RUN apt-get update && \
-    apt-get install -y bzr
-
-COPY go.mod .
-COPY go.sum .
-
+# Download Go modules
+COPY go.mod go.sum ./
 RUN go mod download
 
+# Copy source
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/watcher
+# Build BPF objects (via Makefile or bpf2go)
+RUN make build-bpf build-go
 
-# final stage
-FROM alpine:3.16
-COPY --from=builder /app /app
-
-RUN apk update && \
-    apk add ca-certificates && \
-    rm -rf /var/cache/apk/*
+# ----------- final stage -----------
+FROM alpine:3.18
 
 WORKDIR /app
 
-# PPROF port
-EXPOSE 6060 
+COPY --from=builder /app/bin/collector /app/bin/collector
+COPY --from=builder /app/internal/ebpf/bpf/*.o /app/internal/ebpf/bpf/
 
-ENTRYPOINT ["/app/bin/watcher"]
+RUN apk add --no-cache ca-certificates && \
+    rm -rf /var/cache/apk/*
+
+EXPOSE 6060
+
+ENTRYPOINT ["/app/bin/collector"]

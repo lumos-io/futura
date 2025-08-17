@@ -48,11 +48,11 @@ type CostOptimizationSettings struct {
 	MaxSpotPercentage      string   `json:"maxSpotPercentage,omitempty"`
 }
 
-// ScalingPolicies defines whether to enable HPA, VPA, or Karpenter.
+// ScalingPolicies defines whether to enable HPA, VPA, or NodeHandler.
 type ScalingPolicies struct {
-	EnableHPA       bool `json:"enableHPA"`
-	EnableVPA       bool `json:"enableVPA"`
-	EnableKarpenter bool `json:"enableKarpenter"`
+	EnableHPA         bool `json:"enableHPA"`
+	EnableVPA         bool `json:"enableVPA"`
+	EnableNodeHandler bool `json:"enableNodeHandler"`
 }
 
 // ClusterOptimizationConfigStatus defines the observed state of ClusterOptimizationConfig

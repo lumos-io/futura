@@ -2,13 +2,18 @@ module github.com/opisvigilant/futura/watcher
 
 go 1.24.1
 
+toolchain go1.24.4
+
+// toolchain go1.24.4
+
 require (
+	github.com/cilium/ebpf v0.19.0
 	github.com/distribution/reference v0.6.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/uuid v1.6.0
 	github.com/openshift/api v0.0.0-20250620092249-a8cbc218cd2c
 	github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277
-	github.com/opisvigilant/futura/proto v0.0.0-20250711091313-7e8cc766d8a6
+	github.com/opisvigilant/futura/proto v0.0.0-20250814144254-c906f07adc67
 	github.com/spf13/cobra v1.9.1
 	go.opentelemetry.io/otel v1.37.0
 	google.golang.org/grpc v1.74.2
@@ -51,7 +56,6 @@ require (
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
