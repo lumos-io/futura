@@ -28,7 +28,7 @@ func NewEbpfCollector() *EbpfCollector {
 }
 
 func (e *EbpfCollector) Start() error {
-	objPath := "bpf/tcp_monitor.o"
+	objPath := "bpf/tcp_monitor_bpf.o"
 
 	spec, err := ebpf.LoadCollectionSpec(objPath)
 	if err != nil {
