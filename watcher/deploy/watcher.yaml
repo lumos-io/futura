@@ -23,7 +23,16 @@ spec:
           securityContext:
             privileged: true
             capabilities:
-              add: ["SYS_ADMIN", "SYS_RAWIO"]
+              add:
+                [
+                  "SYS_ADMIN",
+                  "SYS_RAWIO",
+                  "SYS_RESOURCE",
+                  "SYS_PTRACE",
+                  "BPF",
+                  "PERFMON",
+                ]
+          hostPID: true
           resources:
             limits:
               cpu: "1"
@@ -35,6 +44,12 @@ spec:
               subPath: config.toml
             - name: sysfs
               mountPath: /sys/fs/cgroup
+              readOnly: true
+            - name: sys
+              mountPath: /sys
+              readOnly: true
+            - name: proc
+              mountPath: /proc
               readOnly: true
           env:
             - name: NODE_NAME
@@ -48,6 +63,12 @@ spec:
         - name: sysfs
           hostPath:
             path: /sys/fs/cgroup
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: proc
+          hostPath:
+            path: /proc
 ---
 apiVersion: v1
 kind: ConfigMap

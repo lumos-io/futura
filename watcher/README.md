@@ -19,3 +19,11 @@ $: limactl start --name=watcher ./lima-ubuntu-vm.yaml
 Select the option `Proceed with the current configuration` and once it is all done, run `limactl shell watcher` to ssh into the VM. Go to the folder `/tmp/code/futura` and then run `make dev-env` to prepare the go workspace. Remember to run `export PATH="/usr/local/go/bin:${PATH}"` in the shell otherwise you cannot run `go`.
 
 To run the code, you need `sudo` since the eBPF requires elevated priviliges. So, `sudo go run main.go` and that's it. For your convenience, there is a Make rule that can help (`run`). You can run `sudo make run` for simplicity. Happy Coding!
+
+### Linux Kernel headers
+
+To generate them, run the following command within the Lima VM
+
+```shell
+bpftool btf dump file /sys/kernel/btf/vmlinux format c > internal/ebpf/bpf/vmlinux.h
+```

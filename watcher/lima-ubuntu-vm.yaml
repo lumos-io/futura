@@ -10,15 +10,15 @@ cpus: 2
 disk: "30GiB"
 
 mounts:
-  - location: "/Users/davideberdin/Documents/github/opisvigilant/futura/watcher"
+  - location: "~/Documents/github/opisvigilant/futura/watcher"
     mountPoint: "/tmp/code/futura/watcher"
     writable: true
 
 ssh:
   # You can choose any port or omit this. Specifying a value ensures same port bindings after restarts
   # Forwarded to port 22 of the guest.
-  localPort: 2222
-  user: root
+  localPort: 2223
+
 
 containerd:
   system: false
