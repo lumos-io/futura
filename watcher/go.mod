@@ -7,7 +7,6 @@ toolchain go1.24.4
 // toolchain go1.24.4
 
 require (
-	github.com/cilium/ebpf v0.19.0
 	github.com/distribution/reference v0.6.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/uuid v1.6.0
