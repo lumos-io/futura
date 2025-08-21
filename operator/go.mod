@@ -13,6 +13,7 @@ require (
 	google.golang.org/protobuf v1.36.7
 	k8s.io/api v0.33.2
 	k8s.io/apimachinery v0.33.2
+	k8s.io/autoscaler/vertical-pod-autoscaler v1.4.1
 	k8s.io/client-go v0.33.2
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	sigs.k8s.io/controller-runtime v0.19.4
@@ -91,7 +92,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.31.0 // indirect
 	k8s.io/apiserver v0.33.2 // indirect
-	k8s.io/autoscaler/vertical-pod-autoscaler v1.4.1 // indirect
 	k8s.io/component-base v0.33.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect

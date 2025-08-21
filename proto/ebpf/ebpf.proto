@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package ebpf;
+
+option go_package = "github.com/opisvigilant/futura/proto/gen/ebpf;ebpf";
+
+// ======================================================
+// L4 FLOW TELEMETRY
+// ======================================================
+message L4FlowKey {
+  uint32 saddr = 1;   // source IP (IPv4 for now)
+  uint32 daddr = 2;   // dest IP
+  uint32 sport = 3;   // source port
+  uint32 dport = 4;   // dest port
+  uint32 netns = 5;   // network namespace
+  uint32 pid   = 6;   // process ID
+}
+
+message L4Flow {
+  uint64 ts_start_ns = 1;
+  uint64 ts_estab_ns = 2;
+  uint64 bytes_sent  = 3;
+  uint64 bytes_recv  = 4;
+  uint32 last_rtt_us = 5;
+  L4FlowKey key      = 6;
+}
+
+// ======================================================
+// L7 TELEMETRY
+// ======================================================
+message L7RecvCtx {
+  uint64 sk_cookie = 1;
+  uint64 ts_ns     = 2;
+  uint32 len       = 3;
+  uint32 flags     = 4;
+}
+
+// If you later classify HTTP/gRPC, we can extend this with parsed metadata
+message L7Event {
+  L7RecvCtx ctx = 1;
+
+  // Optional parsed info
+  string protocol   = 2; // "http", "grpc", etc.
+  string method     = 3; // GET, POST, gRPC method
+  uint32 status     = 4; // HTTP/gRPC status code
+  uint64 latency_ns = 5;
+  bool   error      = 6;
+}
+
+// ======================================================
+// BATCHES
+// ======================================================
+message TelemetryBatch {
+  repeated L4Flow l4_flows = 1;
+  repeated L7Event l7_events = 2;
+}

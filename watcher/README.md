@@ -8,6 +8,10 @@ You can use `ko` to run the project in Kubernetes. After running `docker login` 
 KO_DOCKER_REPO=docker.io/davideberdin ko apply -f deploy/watcher.yaml
 ```
 
+## eBPF
+
+Still not sure how to do that but below there is the setup to work with it and generate the go bindings.
+
 ### Lima VM
 
 We are using `Lima VM` for it. Validate that it is installed by running `lima --version`. If not, run `brew install lima` to install it. After that, start the VM with the below since we need to use it for the eBPF.
