@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	FuturaOptimizer_SyncClusterOptimizationConfig_FullMethodName = "/engine.FuturaOptimizer/SyncClusterOptimizationConfig"
-	FuturaOptimizer_SyncServiceLevelObjective_FullMethodName     = "/engine.FuturaOptimizer/SyncServiceLevelObjective"
-	FuturaOptimizer_GetOptimizationDecision_FullMethodName       = "/engine.FuturaOptimizer/GetOptimizationDecision"
+	FuturaOptimizer_SyncClusterOptimizationConfig_FullMethodName = "/engine.v1.FuturaOptimizer/SyncClusterOptimizationConfig"
+	FuturaOptimizer_SyncServiceLevelObjective_FullMethodName     = "/engine.v1.FuturaOptimizer/SyncServiceLevelObjective"
+	FuturaOptimizer_GetOptimizationDecision_FullMethodName       = "/engine.v1.FuturaOptimizer/GetOptimizationDecision"
 )
 
 // FuturaOptimizerClient is the client API for FuturaOptimizer service.
@@ -162,7 +162,7 @@ func _FuturaOptimizer_GetOptimizationDecision_Handler(srv interface{}, ctx conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var FuturaOptimizer_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "engine.FuturaOptimizer",
+	ServiceName: "engine.v1.FuturaOptimizer",
 	HandlerType: (*FuturaOptimizerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

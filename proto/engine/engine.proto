@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package engine;
+package engine.v1;
 
 option go_package = "github.com/opisvigilant/futura/proto/gen/engine;engine";
 
