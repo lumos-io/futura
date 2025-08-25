@@ -4,8 +4,15 @@ database = "default"
 username = "default"
 password = "password"
 
-[analytics]
-endpoint = "localhost:50053"
-
 [log]
 level = "debug"
+
+[recommender]
+# some flags in the recommender are not exposed on porpuse
+endpoint = "localhost:50053"
+metricsFetcherInterval = "60" # in seconds 
+checkpointsGCInterval = "600" # in seconds 
+storage = "checkpoint"
+historyLength = "8" # in days
+historyResolution = "1" # in hours
+queryTimeout = "5" # in minutes
