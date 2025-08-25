@@ -1,4 +1,4 @@
-package analytics
+package engine
 
 import (
 	"fmt"
@@ -8,17 +8,17 @@ import (
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/opisvigilant/futura/analytics/internal/config"
-	"github.com/opisvigilant/futura/analytics/internal/server"
+	"github.com/opisvigilant/futura/engine/recommender/internal/config"
+	"github.com/opisvigilant/futura/engine/recommender/internal/server"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	pb "github.com/opisvigilant/futura/proto/gen/analytics"
+	pb "github.com/opisvigilant/futura/proto/gen/engine"
 )
 
-var analyticsCfg *config.Configuration
+var recommenderCfg *config.Configuration
 
 func main() {
 	if err := setupConfiguration(); err != nil {
@@ -28,7 +28,7 @@ func main() {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
-	lis, err := net.Listen("tcp", analyticsCfg.Analytics.Endpoint)
+	lis, err := net.Listen("tcp", recommenderCfg.Recommender.Endpoint)
 	if err != nil {
 		log.Logger.Fatal().Err(err).Msg("failed to listen")
 		os.Exit(1)
@@ -36,9 +36,9 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	cs, err := server.NewAnalyticsServer(analyticsCfg)
+	cs, err := server.NewRecommenderServer(recommenderCfg)
 	if err != nil {
-		log.Logger.Fatal().Err(err).Msg("failed to create the analytics server")
+		log.Logger.Fatal().Err(err).Msg("failed to create the recommender server")
 		os.Exit(1)
 	}
 
@@ -51,10 +51,10 @@ func main() {
 		}
 		grpcServer.GracefulStop()
 
-		log.Logger.Info().Msg("Shutting down collector stage...")
+		log.Logger.Info().Msg("Shutting down recommender...")
 	}()
 
-	pb.RegisterAnalyticsServiceServer(grpcServer, cs)
+	pb.RegisterRecommendationServiceServer(grpcServer, cs)
 
 	log.Logger.Info().Msg("🚀 gRPC server listening on :50052")
 	if err := grpcServer.Serve(lis); err != nil {
@@ -67,7 +67,7 @@ func setupConfiguration() error {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("/opt/analytics")
+	viper.AddConfigPath("/opt/recommender")
 	if err := viper.ReadInConfig(); err != nil {
 		if e, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; ignore error if desired
@@ -85,8 +85,8 @@ func setupConfiguration() error {
 	viper.WatchConfig()
 
 	// fetch and validate configuration file
-	analyticsCfg = config.Fetch()
-	if err := analyticsCfg.Validate(); err != nil {
+	recommenderCfg = config.Fetch()
+	if err := recommenderCfg.Validate(); err != nil {
 		panic(err.Error())
 	}
 
@@ -94,8 +94,8 @@ func setupConfiguration() error {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	if analyticsCfg.Log != nil {
-		switch analyticsCfg.Log.Level {
+	if recommenderCfg.Log != nil {
+		switch recommenderCfg.Log.Level {
 		case "debug":
 			zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		case "warn":
