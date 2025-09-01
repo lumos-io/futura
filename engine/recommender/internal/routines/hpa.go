@@ -3,23 +3,22 @@ package routines
 import (
 	"github.com/opisvigilant/futura/engine/recommender/internal/clickhouse"
 	"github.com/opisvigilant/futura/engine/recommender/internal/config"
-	pbeng "github.com/opisvigilant/futura/proto/gen/engine"
 )
 
-type VPARecommender struct {
+type HPARecommender struct {
 	client *clickhouse.Client
 }
 
-func NewVPARecommender(config *config.Configuration) (*VPARecommender, error) {
+func NewHPARecommender(config *config.Configuration) (*HPARecommender, error) {
 	client, err := clickhouse.New(config.Clickhouse)
 	if err != nil {
 		return nil, err
 	}
-	return &VPARecommender{
+	return &HPARecommender{
 		client: client,
 	}, nil
 }
 
-func (r *VPARecommender) CalculateContainersPatch() ([]*pbeng.ContainerPatch, error) {
-	return nil, nil
+func (r *HPARecommender) CalculateTargetReplicas() (int32, error) {
+	return 1, nil
 }
