@@ -88,10 +88,19 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 				// orgConnects.GET("/delete", ssec.DeleteClustersResultHandler)
 			}
 
+			clusterController, err := controllers.NewClusterController(config)
+			if err != nil {
+				return nil, err
+			}
 			orgClusters := orgConnects.Group("/:connect_id/clusters")
 			{
-				orgClusters.GET("/", controllers.GetClusters)
-				orgClusters.DELETE("/:cluster_id", controllers.DeleteCluster)
+				orgClusters.GET("/", clusterController.GetClusters)
+				orgClusters.DELETE("/:cluster_id", clusterController.DeleteCluster)
+
+				cluster := orgClusters.Group("/:cluster_id/")
+				{
+					cluster.GET("/events", clusterController.GetEvents)
+				}
 			}
 		}
 	}

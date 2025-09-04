@@ -5,11 +5,29 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/models"
+	"github.com/opisvigilant/futura/apis/pkg/analytics"
 	"github.com/opisvigilant/futura/apis/utils"
+
+	pban "github.com/opisvigilant/futura/proto/gen/analytics"
 )
 
-func GetClusters(c *gin.Context) {
+type ClusterController struct {
+	AnalyticsClient *analytics.Client
+}
+
+func NewClusterController(config *config.Configuration) (*ClusterController, error) {
+	ac, err := analytics.New(config)
+	if err != nil {
+		return nil, err
+	}
+	return &ClusterController{
+		AnalyticsClient: ac,
+	}, nil
+}
+
+func (cc *ClusterController) GetClusters(c *gin.Context) {
 	orgID, err := parseOrgID(c)
 	if err != nil {
 		return
@@ -60,7 +78,7 @@ func GetClusters(c *gin.Context) {
 	utils.RespondOK(c, models.ConvertToProtoClusterMetadataList(clusters))
 }
 
-func DeleteCluster(c *gin.Context) {
+func (cc *ClusterController) DeleteCluster(c *gin.Context) {
 	orgID, err := parseOrgID(c)
 	if err != nil {
 		return
@@ -83,6 +101,32 @@ func DeleteCluster(c *gin.Context) {
 		return
 	}
 	utils.RespondOK(c, nil)
+}
+
+func (cc *ClusterController) GetEvents(c *gin.Context) {
+	orgID, err := parseOrgID(c)
+	if err != nil {
+		return
+	}
+
+	clusterID, err := strconv.Atoi(c.Param("cluster_id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id")
+		return
+	}
+
+	events, err := cc.AnalyticsClient.GetEvents(&pban.GetEventsByClusterIdRequest{
+		OrganizationId: uint32(orgID),
+		ClusterId:      int64(clusterID),
+		Limit:          100,
+		Cursor:         0,
+		Reverse:        false,
+	})
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_ANALYTICS_OPERATION", "Failed to get cluster events")
+		return
+	}
+	utils.RespondOK(c, events)
 }
 
 // helper to extract connect ID

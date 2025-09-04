@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 
 	pban "github.com/opisvigilant/futura/proto/gen/analytics"
+	pbev "github.com/opisvigilant/futura/proto/gen/events"
 )
 
 type Client struct {
@@ -23,12 +24,13 @@ func New(config *config.Configuration) (*Client, error) {
 	return &Client{client}, nil
 }
 
-func (c *Client) GetEvents() {
-	resp, err := c.AnalyticsServiceClient.GetEvents(context.Background(), &pban.GetEventsByClusterIdRequest{})
+func (c *Client) GetEvents(req *pban.GetEventsByClusterIdRequest) ([]*pbev.KubernetesEvent, error) {
+	resp, err := c.AnalyticsServiceClient.GetEvents(context.Background(), req)
 	if err != nil {
-
+		return nil, err
 	}
-	resp.GetEvents()
+	events := resp.GetEvents()
+	return events, nil
 }
 
 func (c *Client) Close() error {
