@@ -1,5 +1,8 @@
 environment = "development"
 
+[analytics]
+endpoint = "localhost:50052"
+
 [database]
 host = "localhost"
 port = "5432"

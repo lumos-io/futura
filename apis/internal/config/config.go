@@ -7,13 +7,18 @@ import (
 )
 
 type Configuration struct {
-	Environment string    `toml:"environment"`
-	Database    *Database `toml:"database"`
-	OAuth       *OAuth    `toml:"oauth"`
-	Secrets     *Secrets  `toml:"secrets"`
-	Frontend    *Frontend `toml:"frontend"`
-	Redis       *Redis    `toml:"redis"`
-	Unleash     *Unleash  `toml:"unleash"`
+	Environment string     `toml:"environment"`
+	Analytics   *Analytics `toml:"analytics"`
+	Database    *Database  `toml:"database"`
+	OAuth       *OAuth     `toml:"oauth"`
+	Secrets     *Secrets   `toml:"secrets"`
+	Frontend    *Frontend  `toml:"frontend"`
+	Redis       *Redis     `toml:"redis"`
+	Unleash     *Unleash   `toml:"unleash"`
+}
+
+type Analytics struct {
+	Endpoint string `toml:"endpoint"`
 }
 
 type Database struct {
@@ -60,6 +65,9 @@ type Unleash struct {
 func Fetch() *Configuration {
 	return &Configuration{
 		Environment: getStringOrDefault("environment", "development"),
+		Analytics: &Analytics{
+			Endpoint: viper.GetString("analytics.endpoint"),
+		},
 		Database: &Database{
 			Host:     viper.GetString("database.host"),
 			Port:     viper.GetString("database.port"),
@@ -101,6 +109,12 @@ func Fetch() *Configuration {
 }
 
 func (c *Configuration) Validate() error {
+	if c.Analytics == nil {
+		return errors.New("[analytics] entry is missing from the configuration")
+	}
+	if c.Analytics.Endpoint == "" {
+		return errors.New("[analytics] entries are incorrect because some are empty")
+	}
 	if c.Database == nil {
 		return errors.New("[database] entry is missing from the configuration")
 	}
