@@ -1,5 +1,5 @@
 CREATE TABLE
-    kubernetes_events_kafka (
+    IF NOT EXISTS kubernetes_events_kafka (
         organization_id UInt32,
         cluster_id Int64,
         k8s_version String,
@@ -31,7 +31,7 @@ CREATE TABLE
     kafka_num_consumers = 1, -- needs to be templetized
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubernetes_events TO kubernetes_events AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubernetes_events TO kubernetes_events AS
 SELECT
     *
 FROM
@@ -39,10 +39,12 @@ FROM
 
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 CREATE TABLE
-    kubernetes_objects_kafka (
+    IF NOT EXISTS kubernetes_objects_kafka (
         organization_id UInt32,
         cluster_id Int64,
+        cloud_provider String,
         k8s_version String,
+        idempotency_key String,
         received_at_unix Int64,
         timestamp DateTime64 (3),
         type String,
@@ -87,12 +89,6 @@ CREATE TABLE
         daemonset_desired_number_scheduled Int64,
         daemonset_number_misscheduled Int64,
         daemonset_number_ready Int64,
-        idempotency_key String,
-        watcher_version String,
-        cluster_id Int64,
-        cloud_provider String,
-        k8s_version String,
-        received_at_unix Int64
     ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
     kafka_topic_list = 'kubernetes.objects',
     kafka_group_name = 'k8s_objects_consumer',
@@ -100,14 +96,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubernetes_objects TO kubernetes_objects AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubernetes_objects TO kubernetes_objects AS
 SELECT
     *
 FROM
     kubernetes_objects_kafka;
 
 CREATE TABLE
-    kubernetes_containers_kafka (
+    IF NOT EXISTS kubernetes_containers_kafka (
         uid String,
         timestamp DateTime64 (3),
         container_name String,
@@ -129,14 +125,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubernetes_containers TO kubernetes_containers AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubernetes_containers TO kubernetes_containers AS
 SELECT
     *
 FROM
     kubernetes_containers_kafka;
 
 CREATE TABLE
-    kubernetes_volumes_kafka (
+    IF NOT EXISTS kubernetes_volumes_kafka (
         uid String,
         timestamp DateTime64 (3),
         volume_name String,
@@ -148,14 +144,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubernetes_volumes TO kubernetes_volumes AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubernetes_volumes TO kubernetes_volumes AS
 SELECT
     *
 FROM
     kubernetes_volumes_kafka;
 
 CREATE TABLE
-    kubernetes_node_conditions_kafka (
+    IF NOT EXISTS kubernetes_node_conditions_kafka (
         uid String,
         timestamp DateTime64 (3),
         condition_type String,
@@ -169,14 +165,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubernetes_node_conditions TO kubernetes_node_conditions AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubernetes_node_conditions TO kubernetes_node_conditions AS
 SELECT
     *
 FROM
     kubernetes_node_conditions_kafka;
 
 CREATE TABLE
-    kubernetes_allocatable_resources_kafka (
+    IF NOT EXISTS kubernetes_allocatable_resources_kafka (
         uid String,
         timestamp DateTime64 (3),
         cpu String,
@@ -191,14 +187,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubernetes_allocatable_resources TO kubernetes_allocatable_resources AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubernetes_allocatable_resources TO kubernetes_allocatable_resources AS
 SELECT
     *
 FROM
     kubernetes_allocatable_resources_kafka;
 
 CREATE TABLE
-    kubernetes_cluster_quotas_kafka (
+    IF NOT EXISTS kubernetes_cluster_quotas_kafka (
         uid String,
         timestamp DateTime64 (3),
         quota_name String,
@@ -212,14 +208,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubernetes_cluster_quotas TO kubernetes_cluster_quotas AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubernetes_cluster_quotas TO kubernetes_cluster_quotas AS
 SELECT
     *
 FROM
     kubernetes_cluster_quotas_kafka;
 
 CREATE TABLE
-    kubernetes_namespace_quotas_kafka (
+    IF NOT EXISTS kubernetes_namespace_quotas_kafka (
         uid String,
         timestamp DateTime64 (3),
         namespace String,
@@ -232,7 +228,7 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubernetes_namespace_quotas TO kubernetes_namespace_quotas AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubernetes_namespace_quotas TO kubernetes_namespace_quotas AS
 SELECT
     *
 FROM
@@ -240,7 +236,7 @@ FROM
 
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 CREATE TABLE
-    kubelet_node_metrics_kafka (
+    IF NOT EXISTS kubelet_node_metrics_kafka (
         organization_id UInt32,
         cluster_id Int64,
         received_at_unix Int64,
@@ -273,14 +269,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubelet_node_metrics TO kubelet_node_metrics AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubelet_node_metrics TO kubelet_node_metrics AS
 SELECT
     *
 FROM
     kubelet_node_metrics_kafka;
 
 CREATE TABLE
-    kubelet_pod_metrics_kafka (
+    IF NOT EXISTS kubelet_pod_metrics_kafka (
         timestamp DateTime64 (3),
         pod_uid String,
         pod_name String,
@@ -301,14 +297,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubelet_pod_metrics TO kubelet_pod_metrics AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubelet_pod_metrics TO kubelet_pod_metrics AS
 SELECT
     *
 FROM
     kubelet_pod_metrics_kafka;
 
 CREATE TABLE
-    kubelet_container_metrics_kafka (
+    IF NOT EXISTS kubelet_container_metrics_kafka (
         timestamp DateTime64 (3),
         pod_uid String,
         container_name String,
@@ -329,14 +325,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubelet_container_metrics TO kubelet_container_metrics AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubelet_container_metrics TO kubelet_container_metrics AS
 SELECT
     *
 FROM
     kubelet_container_metrics_kafka;
 
 CREATE TABLE
-    kubelet_network_metrics_kafka (
+    IF NOT EXISTS kubelet_network_metrics_kafka (
         timestamp DateTime64 (3),
         pod_uid String,
         interface_name String,
@@ -351,14 +347,14 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubelet_network_metrics TO kubelet_network_metrics AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubelet_network_metrics TO kubelet_network_metrics AS
 SELECT
     *
 FROM
     kubelet_network_metrics_kafka;
 
 CREATE TABLE
-    kubelet_volume_metrics_kafka (
+    IF NOT EXISTS kubelet_volume_metrics_kafka (
         timestamp DateTime64 (3),
         pod_uid String,
         volume_name String,
@@ -378,7 +374,7 @@ CREATE TABLE
     kafka_num_consumers = 1,
     kafka_thread_per_consumer = 1;
 
-CREATE MATERIALIZED VIEW mv_kubelet_volume_metrics TO kubelet_volume_metrics AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_kubelet_volume_metrics TO kubelet_volume_metrics AS
 SELECT
     *
 FROM

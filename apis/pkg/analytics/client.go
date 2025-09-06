@@ -5,6 +5,7 @@ import (
 
 	"github.com/opisvigilant/futura/apis/internal/config"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	pban "github.com/opisvigilant/futura/proto/gen/analytics"
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
@@ -15,8 +16,7 @@ type Client struct {
 }
 
 func New(config *config.Configuration) (*Client, error) {
-	var opts []grpc.DialOption
-	conn, err := grpc.NewClient(config.Analytics.Endpoint, opts...)
+	conn, err := grpc.NewClient(config.Analytics.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}

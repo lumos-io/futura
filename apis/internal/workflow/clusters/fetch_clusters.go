@@ -81,12 +81,9 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 				Error:                err.Error(),
 			})
 		}
-
-		// enrich the object
-		metadata.ProviderConnectionID = uint(job.Args.ProviderConnection.Id)
-		metadata.OrganizationID = job.Args.OrganizationID
-
-		if err := storeClusterMetadata(job.Args.Config.Database, metadata); err != nil {
+		// generate api key
+		ak, err := createAPIKeyEntry(ctx, kvs, job.Args.OrganizationID, metadata, job.Args.SecretID, job.Args.ProviderConnection)
+		if err != nil {
 			return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
 				ProviderConnectionID: job.Args.ProviderConnection.Id,
 				OrganizationID:       job.Args.OrganizationID,
@@ -95,8 +92,12 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 			})
 		}
 
-		ak, err := createAPIKeyEntry(ctx, kvs, job.Args.OrganizationID, metadata, job.Args.SecretID, job.Args.ProviderConnection)
-		if err != nil {
+		// enrich the object
+		metadata.ProviderConnectionID = uint(job.Args.ProviderConnection.Id)
+		metadata.OrganizationID = job.Args.OrganizationID
+		metadata.APIKey = ak
+
+		if err := storeClusterMetadata(job.Args.Config.Database, metadata); err != nil {
 			return publishResult(ctx, js, workflowsignals.WorkflowFetchClustersStatusSignal{
 				ProviderConnectionID: job.Args.ProviderConnection.Id,
 				OrganizationID:       job.Args.OrganizationID,

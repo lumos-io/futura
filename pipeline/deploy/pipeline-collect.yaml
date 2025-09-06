@@ -70,7 +70,7 @@ data:
     brokers = ["host.docker.internal:9092"]
 
     [collect]
-    endpoint = "localhost:50051"
+    endpoint = ":50051"
 
     [log]
     level = "debug"

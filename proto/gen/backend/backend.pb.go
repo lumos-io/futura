@@ -23,15 +23,17 @@ const (
 type CloudProvider int32
 
 const (
-	CloudProvider_UNDEFINED_PROVIDER CloudProvider = 0 // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
-	CloudProvider_AWS                CloudProvider = 1
-	CloudProvider_AZURE              CloudProvider = 2
-	CloudProvider_ALIBABA            CloudProvider = 3
-	CloudProvider_DIGITALOCEAN       CloudProvider = 4
-	CloudProvider_GCP                CloudProvider = 5
-	// ATTENTION: this parameter will be available in the proto but in the Frontend/APIs
-	// only when the services are in `development` mode and the feature-flag `kind.cluster` is
-	// enabled in the specific environment -- DO NOT USE IT ANYWHERE ELSE
+	CloudProvider_UNDEFINED_PROVIDER CloudProvider = 0 // needed for avoid this bug:
+	// https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	CloudProvider_AWS          CloudProvider = 1
+	CloudProvider_AZURE        CloudProvider = 2
+	CloudProvider_ALIBABA      CloudProvider = 3
+	CloudProvider_DIGITALOCEAN CloudProvider = 4
+	CloudProvider_GCP          CloudProvider = 5
+	// ATTENTION: this parameter will be available in the proto but in the
+	// Frontend/APIs only when the services are in `development` mode and the
+	// feature-flag `kind.cluster` is enabled in the specific environment -- DO
+	// NOT USE IT ANYWHERE ELSE
 	CloudProvider_KIND CloudProvider = 6
 )
 
@@ -87,12 +89,13 @@ func (CloudProvider) EnumDescriptor() ([]byte, []int) {
 type ActivationStatus int32
 
 const (
-	ActivationStatus_UNDEFINED_STATUS ActivationStatus = 0 // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
-	ActivationStatus_ACTIVE           ActivationStatus = 1
-	ActivationStatus_IN_PROGRESS      ActivationStatus = 2
-	ActivationStatus_PENDING          ActivationStatus = 3
-	ActivationStatus_SUSPENDED        ActivationStatus = 4
-	ActivationStatus_FAILED           ActivationStatus = 5
+	ActivationStatus_UNDEFINED_STATUS ActivationStatus = 0 // needed for avoid this bug:
+	// https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	ActivationStatus_ACTIVE      ActivationStatus = 1
+	ActivationStatus_IN_PROGRESS ActivationStatus = 2
+	ActivationStatus_PENDING     ActivationStatus = 3
+	ActivationStatus_SUSPENDED   ActivationStatus = 4
+	ActivationStatus_FAILED      ActivationStatus = 5
 )
 
 // Enum value maps for ActivationStatus.
@@ -145,7 +148,8 @@ func (ActivationStatus) EnumDescriptor() ([]byte, []int) {
 type SecretName int32
 
 const (
-	SecretName_UNDEFINED_SECRET   SecretName = 0 // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	SecretName_UNDEFINED_SECRET SecretName = 0 // needed for avoid this bug:
+	// https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
 	SecretName_ACCESS_CREDENTIALS SecretName = 1
 )
 

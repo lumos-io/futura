@@ -1,4 +1,4 @@
-package analytics
+package main
 
 import (
 	"fmt"
@@ -51,12 +51,12 @@ func main() {
 		}
 		grpcServer.GracefulStop()
 
-		log.Logger.Info().Msg("Shutting down collector stage...")
+		log.Logger.Info().Msg("Shutting down analytics service...")
 	}()
 
 	pb.RegisterAnalyticsServiceServer(grpcServer, cs)
 
-	log.Logger.Info().Msg("🚀 gRPC server listening on :50052")
+	log.Logger.Info().Msg("🚀 gRPC server listening on :50061")
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Logger.Fatal().Err(err).Msg("failed to serve")
 		os.Exit(1)

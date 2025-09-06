@@ -1,6 +1,6 @@
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 CREATE TABLE
-    kubernetes_events (
+    IF NOT EXISTS kubernetes_events (
         organization_id UInt32,
         cluster_id Int64,
         k8s_version String,

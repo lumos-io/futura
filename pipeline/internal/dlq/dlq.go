@@ -8,6 +8,7 @@ import (
 
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -40,6 +41,7 @@ func New(config *config.Configuration) (*DLQHandler, error) {
 }
 
 func (d *DLQHandler) StoreInvalidEventMessage(msg []byte, err error) {
+	log.Error().Err(err)
 	b, _ := json.Marshal(invalidEvent{
 		RawMessage: string(msg),
 		Error:      err.Error(),
@@ -49,6 +51,7 @@ func (d *DLQHandler) StoreInvalidEventMessage(msg []byte, err error) {
 }
 
 func (d *DLQHandler) StoreInvalidStatMessage(msg []byte, err error) {
+	log.Error().Err(err)
 	b, _ := json.Marshal(invalidEvent{
 		RawMessage: string(msg),
 		Error:      err.Error(),
@@ -58,6 +61,7 @@ func (d *DLQHandler) StoreInvalidStatMessage(msg []byte, err error) {
 }
 
 func (d *DLQHandler) StoreInvalidObjectMessage(msg []byte, err error) {
+	log.Error().Err(err)
 	b, _ := json.Marshal(invalidEvent{
 		RawMessage: string(msg),
 		Error:      err.Error(),

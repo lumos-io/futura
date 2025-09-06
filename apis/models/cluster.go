@@ -125,6 +125,7 @@ func ConvertToProtoClusterMetadataList(models []ClusterMetadata) []*pb.ClusterMe
 		proto := &pb.ClusterMetadata{
 			Id:              uint64(model.ID),
 			Name:            model.Name,
+			ApiKey:          model.APIKey,
 			CloudProviderId: uint64(model.ProviderConnectionID),
 			OrganizationId:  uint64(model.OrganizationID),
 		}

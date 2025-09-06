@@ -1,7 +1,7 @@
 [clickhouse]
 servers = ["localhost:8123"]
-database = "default"
-username = "default"
+database = "events"
+username = "user"
 password = "password"
 
 [log]

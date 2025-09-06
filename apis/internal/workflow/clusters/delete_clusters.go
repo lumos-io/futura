@@ -41,7 +41,7 @@ func (w *WorkflowDeleteClustersWorker) Work(ctx context.Context, job *river.Job[
 	// delete clusters
 	var clusters []models.ClusterMetadata
 	if err := models.GetDB().
-		Where("organization_id = ? AND cloud_provider_id = ?", job.Args.OrganizationID, job.Args.ConnectionID).
+		Where("organization_id = ? AND provider_connection_id = ?", job.Args.OrganizationID, job.Args.ConnectionID).
 		Find(&clusters).Error; err != nil {
 		return err
 	}

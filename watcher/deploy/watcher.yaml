@@ -81,8 +81,8 @@ data:
   config.toml: |
     # Configuration file running Watcher locally
     [collect]
-    endpoint = "pipeline.default.cluster.local:50051"
-    apiKey = ""
+    endpoint = "pipeline-collect.default:50051"
+    apiKey = "cluster_cc6VdWcwbdl5PNkHV2LEzxNZhXzQ246P"
 
     [kubernetes]
     namespaces = []

@@ -34,7 +34,6 @@ type Sender struct {
 	KubernetesKubeletStats      chan *pbst.KubernetesKubeletStats
 }
 
-// Init prepares Webhook configuration
 func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
 	// TODO: deal with TLS in gRPC and if in development environment switch to Insecure
 	conn, err := grpc.NewClient(config.Collect.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -52,7 +51,7 @@ func New(ctx context.Context, config *config.Configuration) (*Sender, error) {
 		pbc:                         client,
 		KubernetesEventChan:         make(chan *pbev.KubernetesEvent, 5*resourceChanSize),
 		KubernetesClusterObjectChan: make(chan *pbcl.KubernetesClusterObject, 5*resourceChanSize),
-		KubernetesKubeletStats:      make(chan *pbst.KubernetesKubeletStats),
+		KubernetesKubeletStats:      make(chan *pbst.KubernetesKubeletStats, 5*resourceChanSize),
 	}
 
 	eventsInterval := 5 * time.Second

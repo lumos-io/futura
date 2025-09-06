@@ -8,9 +8,10 @@ import "google/protobuf/timestamp.proto";
 
 message ClusterMetadata {
   uint64 id = 1;
-  
+
   string name = 2;
-  uint64 cloud_provider_id = 3;  
+  uint64 cloud_provider_id = 3;
+  string api_key = 4;
   uint64 organization_id = 5;
 
   EKSClusterMetadata eks_metadata = 7;
@@ -27,8 +28,8 @@ message ClusterMetadata {
 }
 
 message EKSClusterMetadata {
-  uint64 id = 1;  
-  
+  uint64 id = 1;
+
   string status = 2;
   string version = 3;
   string endpoint = 4;
@@ -43,8 +44,8 @@ message EKSClusterMetadata {
 }
 
 message KindClusterMetadata {
-  uint64 id = 1;  
-  
+  uint64 id = 1;
+
   string status = 2;
   string version = 3;
   string endpoint = 4;
@@ -57,7 +58,7 @@ message KindClusterMetadata {
 
 message GKEClusterMetadata {
   uint64 id = 1;
-    
+
   uint64 cluster_metadata_id = 2;
   string version = 3;
   string region = 4;
@@ -65,7 +66,7 @@ message GKEClusterMetadata {
 
 message AKSClusterMetadata {
   uint64 id = 1;
-    
+
   uint64 cluster_metadata_id = 2;
   string version = 3;
   string region = 4;
@@ -73,7 +74,7 @@ message AKSClusterMetadata {
 
 message DOKSClusterMetadata {
   uint64 id = 1;
-    
+
   uint64 cluster_metadata_id = 2;
   string version = 3;
   string region = 4;
@@ -81,7 +82,7 @@ message DOKSClusterMetadata {
 
 message ACKClusterMetadata {
   uint64 id = 1;
-    
+
   uint64 cluster_metadata_id = 2;
   string version = 3;
   string region = 4;

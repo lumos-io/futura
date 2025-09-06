@@ -31,13 +31,13 @@ type Log struct {
 func Fetch() *Configuration {
 	return &Configuration{
 		Clickhouse: &Clickhouse{
-			Servers:  viper.GetStringSlice("clickhosue.servers"),
-			Database: viper.GetString("clickhosue.database"),
-			Username: viper.GetString("clickhosue.username"),
-			Password: viper.GetString("clickhosue.password"),
+			Servers:  viper.GetStringSlice("clickhouse.servers"),
+			Database: viper.GetString("clickhouse.database"),
+			Username: viper.GetString("clickhouse.username"),
+			Password: viper.GetString("clickhouse.password"),
 		},
 		Analytics: &Analytics{
-			Endpoint: getStringOrDefault("analytics.endpoint", "localhost:50052"),
+			Endpoint: getStringOrDefault("analytics.endpoint", "localhost:50061"),
 		},
 		Log: &Log{
 			Level: getStringOrDefault("log.level", "info"),

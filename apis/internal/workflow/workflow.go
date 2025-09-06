@@ -49,6 +49,7 @@ func New(config *config.Configuration) (*WorkflowManager, error) {
 	workers := river.NewWorkers()
 	// add other workers here
 	river.AddWorker(workers, &workflowclusters.WorkflowFetchClustersWorker{})
+	river.AddWorker(workers, &workflowclusters.WorkflowDeleteClustersWorker{})
 
 	riverClient, err := river.NewClient(riverpgxv5.New(dbPool), &river.Config{
 		Queues: map[string]river.QueueConfig{
@@ -86,7 +87,7 @@ func (c *WorkflowManager) ExecuteDeleteClustersWorkflow(input *workflowclusters.
 	_, err := c.riverClient.Insert(context.Background(), workflowclusters.WorkflowDeleteClustersInput{
 		Config:         input.Config,
 		OrganizationID: input.OrganizationID,
-		ConnectionID:   input.ConnectionID,		
+		ConnectionID:   input.ConnectionID,
 	}, nil)
 	return err
 }

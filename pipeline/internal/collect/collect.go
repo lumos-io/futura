@@ -12,6 +12,7 @@ import (
 	pbev "github.com/opisvigilant/futura/proto/gen/events"
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
 	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -54,12 +55,16 @@ func (s *CollectServer) Close() error {
 	return nil
 }
 
-func (s *CollectServer) SendEvent(ctx context.Context, req *pbev.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
+func (s *CollectServer) SendEvents(ctx context.Context, req *pbev.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
+	log.Info().Msgf("received the following request: %v", req)
+
 	for _, event := range req.Events {
 		if err := s.validateAPIKey(ctx, event.Apikey.Key); err != nil {
+			log.Error().Err(err)
 			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 		}
 		if err := s.streamClient.Publish(ctx, RawEventsTopic, []byte(event.String())); err != nil {
+			log.Error().Err(err)
 			return nil, err
 		}
 	}
@@ -67,22 +72,30 @@ func (s *CollectServer) SendEvent(ctx context.Context, req *pbev.KubernetesEvent
 }
 
 func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.KubernetesClusterObjectBatch) (*pbsvc.CollectAck, error) {
+	log.Info().Msgf("received the following request: %v", req)
+
 	for _, obj := range req.Objects {
 		if err := s.validateAPIKey(ctx, obj.Apikey.Key); err != nil {
+			log.Error().Err(err)
 			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 		}
 		if err := s.streamClient.Publish(ctx, RawObjectsTopic, []byte(obj.String())); err != nil {
+			log.Error().Err(err)
 			return nil, err
 		}
 	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "cluster objects received"}, nil
 }
 
-func (s *CollectServer) SendKubeletStats(ctx context.Context, req *pbst.KubernetesKubeletStats) (*pbsvc.CollectAck, error) {
+func (s *CollectServer) SendKubeletMetrics(ctx context.Context, req *pbst.KubernetesKubeletStats) (*pbsvc.CollectAck, error) {
+	log.Info().Msgf("received the following request: %v", req)
+
 	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
+		log.Error().Err(err)
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
 	if err := s.streamClient.Publish(ctx, RawStatsTopic, []byte(req.String())); err != nil {
+		log.Error().Err(err)
 		return nil, err
 	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "kubelet stats received"}, nil

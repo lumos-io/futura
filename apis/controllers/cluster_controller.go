@@ -70,7 +70,7 @@ func (cc *ClusterController) GetClusters(c *gin.Context) {
 
 	var clusters []models.ClusterMetadata
 	if err := db.
-		Where("organization_id = ? AND cloud_provider_id = ?", orgID, connectID).
+		Where("organization_id = ? AND provider_connection_id = ?", orgID, connectID).
 		Find(&clusters).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_CLUSTER_OPERATION", "Failed to fetch clusters metadata")
 		return

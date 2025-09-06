@@ -5,30 +5,37 @@ package backend;
 option go_package = "github.com/opisvigilant/futura/proto/gen/backend;backend";
 
 enum CloudProvider {
-  UNDEFINED_PROVIDER = 0; // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+  UNDEFINED_PROVIDER =
+      0; // needed for avoid this bug:
+         // https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
   AWS = 1;
   AZURE = 2;
   ALIBABA = 3;
   DIGITALOCEAN = 4;
   GCP = 5;
-  // ATTENTION: this parameter will be available in the proto but in the Frontend/APIs
-  // only when the services are in `development` mode and the feature-flag `kind.cluster` is
-  // enabled in the specific environment -- DO NOT USE IT ANYWHERE ELSE
+  // ATTENTION: this parameter will be available in the proto but in the
+  // Frontend/APIs only when the services are in `development` mode and the
+  // feature-flag `kind.cluster` is enabled in the specific environment -- DO
+  // NOT USE IT ANYWHERE ELSE
   KIND = 6;
 }
 
 enum ActivationStatus {
-  UNDEFINED_STATUS = 0;  // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+  UNDEFINED_STATUS =
+      0; // needed for avoid this bug:
+         // https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
   ACTIVE = 1;
-	IN_PROGRESS = 2;
-	PENDING = 3;
-	SUSPENDED = 4;
-	FAILED = 5;
+  IN_PROGRESS = 2;
+  PENDING = 3;
+  SUSPENDED = 4;
+  FAILED = 5;
 }
 
 enum SecretName {
-  UNDEFINED_SECRET = 0;  // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
-	ACCESS_CREDENTIALS = 1;
+  UNDEFINED_SECRET =
+      0; // needed for avoid this bug:
+         // https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+  ACCESS_CREDENTIALS = 1;
 }
 
 message ProviderConnection {
@@ -38,7 +45,7 @@ message ProviderConnection {
   string created_at = 4;
   string secret_id = 5;
   string connection_name = 6;
-  uint64 imported_clusters = 7;
+  uint64 imported_clusters = 7;  
 }
 
 message GetAllProviderConnectionResponse {
@@ -48,6 +55,6 @@ message GetAllProviderConnectionResponse {
 message CreateProviderConnectionRequest {
   CloudProvider provider = 1;
   SecretName secret_name = 2;
-  map<string,string> credentials = 3;
+  map<string, string> credentials = 3;
   string connection_name = 4;
 }

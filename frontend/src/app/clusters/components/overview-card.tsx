@@ -1,5 +1,11 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { formatProtoOrDate } from "@/lib/utils";
 import { CloudProviderConnection } from "@/models/cloud-provider";
 import { Cluster } from "@/models/kubernetes";
@@ -125,6 +131,7 @@ const OverviewClusterCard: React.FC<{
     <Card key={props.cluster.id}>
       <CardHeader>
         <CardTitle>{props.provider ? props.cluster.name : ""}</CardTitle>
+        <CardDescription>Api Key: {props.cluster.api_key}</CardDescription>
       </CardHeader>
       {renderClusterCardContent({
         provider: props.provider,

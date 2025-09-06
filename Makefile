@@ -196,8 +196,14 @@ pipeline-deploy:
 pipeline-run:
 	$(MAKE) -C pipeline run
 
+##@ Analytics
+.PHONY: analytics-run
+analytics-run:
+	$(MAKE) -C analytics run
 
 ##@ APIs
 .PHONY: apis-run
 apis-run: frontend-build
-	$(MAKE) -C apis run
+	$(MAKE) -C analytics run & \
+	$(MAKE) -C apis run & \
+	wait
