@@ -1,8 +1,8 @@
 package routines
 
 import (
-	"github.com/opisvigilant/futura/engine/recommender/internal/clickhouse"
 	"github.com/opisvigilant/futura/engine/recommender/internal/config"
+	"github.com/opisvigilant/futura/go-lib/clickhouse"
 )
 
 type HPARecommender struct {
@@ -10,7 +10,8 @@ type HPARecommender struct {
 }
 
 func NewHPARecommender(config *config.Configuration) (*HPARecommender, error) {
-	client, err := clickhouse.New(config.Clickhouse)
+	client, err := clickhouse.New(config.Clickhouse.Servers, config.Clickhouse.Username,
+		config.Clickhouse.Password, config.Clickhouse.Database, true)
 	if err != nil {
 		return nil, err
 	}

@@ -1,8 +1,8 @@
 package routines
 
 import (
-	"github.com/opisvigilant/futura/engine/recommender/internal/clickhouse"
 	"github.com/opisvigilant/futura/engine/recommender/internal/config"
+	"github.com/opisvigilant/futura/go-lib/clickhouse"
 	pbeng "github.com/opisvigilant/futura/proto/gen/engine"
 )
 
@@ -11,7 +11,8 @@ type VPARecommender struct {
 }
 
 func NewVPARecommender(config *config.Configuration) (*VPARecommender, error) {
-	client, err := clickhouse.New(config.Clickhouse)
+	client, err := clickhouse.New(config.Clickhouse.Servers, config.Clickhouse.Username,
+		config.Clickhouse.Password, config.Clickhouse.Database, true)
 	if err != nil {
 		return nil, err
 	}
