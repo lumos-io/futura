@@ -108,13 +108,11 @@ func (cc *ClusterController) GetEvents(c *gin.Context) {
 	if err != nil {
 		return
 	}
-
 	clusterID, err := strconv.Atoi(c.Param("cluster_id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id")
 		return
 	}
-
 	events, err := cc.AnalyticsClient.GetEvents(&pban.GetEventsByClusterIdRequest{
 		OrganizationId: uint32(orgID),
 		ClusterId:      int64(clusterID),

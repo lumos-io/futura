@@ -39,3 +39,4 @@ data/
 public
 
 node_modules
+.venv

@@ -2,7 +2,9 @@ PROTO_DIR=proto
 OUT_DIR=proto/gen
 
 PROTO_BACKEND_DIR=proto/backend
+PROTO_ENGINE_DIR=proto/engine
 OUT_BACKEND_DIR=proto/gen/backend
+OUT_ENGINE_DIR=proto/gen/engine
 
 PROTOC_GEN_GO=$(shell which protoc-gen-go)
 PROTOC_GEN_GO_GRPC=$(shell which protoc-gen-go-grpc)
@@ -10,6 +12,7 @@ PROTOC_GEN_TS_PROTO=$(shell which protoc-gen-ts_proto)
 
 PROTO_FILES := $(shell find $(PROTO_DIR) -name '*.proto')
 PROTO_BACKEND_FILES := $(shell find $(PROTO_BACKEND_DIR) -name '*.proto')
+PROTO_ENGINE_FILES := $(shell find $(PROTO_ENGINE_DIR) -name '*.proto')
 
 GO_WORK_FILE=./go.work
 
@@ -27,7 +30,7 @@ endif
 
 ##@ Proto 
 .PHONY: proto-files
-proto-files: proto-clean proto-go proto-ts
+proto-files: proto-clean proto-go proto-ts proto-py
 
 .PHONY: proto-go
 proto-go:
@@ -51,6 +54,34 @@ proto-ts:
 		--ts_opt=snakeToCamel=false,esModuleInterop=true,useExactTypes=true,stringEnums=true,outputJsonMethods=true,paths=source_relative \
 		--proto_path=$(PROTO_BACKEND_DIR) \
 		$(PROTO_BACKEND_FILES)
+
+.PHONY: proto-py
+proto-py: ensure-proto-deps
+	@echo "Generating Python protos..."
+	@find $(PROTO_ENGINE_DIR) -name "*.proto"
+	mkdir -p $(OUT_ENGINE_DIR)
+	uv run -m grpc_tools.protoc -I=$(PROTO_ENGINE_DIR) \
+		--python_out=$(OUT_ENGINE_DIR) \
+		--pyi_out=$(OUT_ENGINE_DIR) \
+		--grpc_python_out=$(OUT_ENGINE_DIR) \
+		$(PROTO_ENGINE_FILES)
+
+.PHONY: ensure-proto-deps
+ensure-proto-deps:
+	@echo "Checking Python deps for proto generation (inside proto/.venv)..."
+	uv venv && \
+	if ! uv pip show protobuf >/dev/null 2>&1; then \
+		echo "Installing protobuf..."; \
+		uv pip install protobuf; \
+	fi && \
+	if ! uv pip show grpcio >/dev/null 2>&1; then \
+		echo "Installing grpcio..."; \
+		uv pip install grpcio; \
+	fi && \
+	if ! uv pip show grpcio-tools >/dev/null 2>&1; then \
+		echo "Installing grpcio-tools..."; \
+		uv pip install grpcio-tools; \
+	fi
 
 .PHONY: proto-clean
 proto-clean:
