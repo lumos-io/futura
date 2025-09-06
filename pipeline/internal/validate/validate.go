@@ -30,23 +30,19 @@ const (
 )
 
 type Validator struct {
-	stream stream.Stream
+	config *config.Configuration
 	dlq    *dlq.DLQHandler
 
 	wg sync.WaitGroup
 }
 
 func New(config *config.Configuration) (*Validator, error) {
-	kc, err := stream.NewKafkaClient(config.Kafka.Brokers, "validation_group")
-	if err != nil {
-		return nil, err
-	}
 	c, err := dlq.New(config)
 	if err != nil {
 		return nil, err
 	}
 	return &Validator{
-		stream: kc,
+		config: config,
 		dlq:    c,
 		wg:     sync.WaitGroup{},
 	}, nil
@@ -59,8 +55,13 @@ func (v *Validator) Start(ctx context.Context) error {
 	go func() {
 		defer v.wg.Done()
 
-		if err := v.stream.Subscribe(ctx, RawEventsTopic, func(msg stream.Message, ack func() error) {
-			var m *pbev.KubernetesEvent
+		kc, err := stream.NewKafkaClient(v.config.Kafka.Brokers, "validation_group_events")
+		if err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Start consuming Kubernete Events...")
+		if err := kc.Subscribe(ctx, RawEventsTopic, func(msg stream.Message, ack func() error) {
+			m := &pbev.KubernetesEvent{}
 			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw event message")
 				return
@@ -69,7 +70,7 @@ func (v *Validator) Start(ctx context.Context) error {
 				v.dlq.StoreInvalidEventMessage(msg.Data(), err)
 				return
 			}
-			if err := v.stream.Publish(ctx, ValidatedEventsTopic, msg.Data()); err != nil {
+			if err := kc.Publish(ctx, ValidatedEventsTopic, msg.Data()); err != nil {
 				log.Error().Err(err).Msg("failed to publish the validated event message to the enrichment topic")
 				return
 			}
@@ -82,8 +83,13 @@ func (v *Validator) Start(ctx context.Context) error {
 	go func() {
 		defer v.wg.Done()
 
-		if err := v.stream.Subscribe(ctx, RawStatsTopic, func(msg stream.Message, ack func() error) {
-			var m *pbst.KubernetesKubeletStats
+		kc, err := stream.NewKafkaClient(v.config.Kafka.Brokers, "validation_group_stats")
+		if err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Start consuming Kubernete Kubelet Stats...")
+		if err := kc.Subscribe(ctx, RawStatsTopic, func(msg stream.Message, ack func() error) {
+			m := &pbst.KubernetesKubeletStats{}
 			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
@@ -92,7 +98,7 @@ func (v *Validator) Start(ctx context.Context) error {
 				v.dlq.StoreInvalidStatMessage(msg.Data(), err)
 				return
 			}
-			if err := v.stream.Publish(ctx, ValidatedStatsTopic, msg.Data()); err != nil {
+			if err := kc.Publish(ctx, ValidatedStatsTopic, msg.Data()); err != nil {
 				log.Error().Err(err).Msg("failed to publish the validated stats message to the enrichment topic")
 				return
 			}
@@ -105,8 +111,13 @@ func (v *Validator) Start(ctx context.Context) error {
 	go func() {
 		defer v.wg.Done()
 
-		if err := v.stream.Subscribe(ctx, RawObjectsTopic, func(msg stream.Message, ack func() error) {
-			var m *pbcl.KubernetesClusterObject
+		kc, err := stream.NewKafkaClient(v.config.Kafka.Brokers, "validation_group_objects")
+		if err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Start consuming Kubernete Cluster Object...")
+		if err := kc.Subscribe(ctx, RawObjectsTopic, func(msg stream.Message, ack func() error) {
+			m := &pbcl.KubernetesClusterObject{}
 			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
 				return
@@ -115,7 +126,7 @@ func (v *Validator) Start(ctx context.Context) error {
 				v.dlq.StoreInvalidObjectMessage(msg.Data(), err)
 				return
 			}
-			if err := v.stream.Publish(ctx, ValidatedObjectsTopic, msg.Data()); err != nil {
+			if err := kc.Publish(ctx, ValidatedObjectsTopic, msg.Data()); err != nil {
 				log.Error().Err(err).Msg("failed to publish the validated object message to the enrichment topic")
 				return
 			}
@@ -125,6 +136,8 @@ func (v *Validator) Start(ctx context.Context) error {
 	}()
 
 	v.wg.Wait()
+
+	log.Info().Msg("Ready to say goodbye...")
 
 	return nil
 }

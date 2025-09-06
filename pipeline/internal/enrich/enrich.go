@@ -29,7 +29,7 @@ const (
 )
 
 type Enricher struct {
-	stream stream.Stream
+	config *config.Configuration
 	rc     kv.KVStore
 	dlq    *dlq.DLQHandler
 
@@ -37,10 +37,6 @@ type Enricher struct {
 }
 
 func New(config *config.Configuration) (*Enricher, error) {
-	kc, err := stream.NewKafkaClient(config.Kafka.Brokers, "enrichment_group")
-	if err != nil {
-		return nil, err
-	}
 	rc, err := kv.NewRedisKVStore(config.Redis.Servers)
 	if err != nil {
 		return nil, err
@@ -50,7 +46,7 @@ func New(config *config.Configuration) (*Enricher, error) {
 		return nil, err
 	}
 	return &Enricher{
-		stream: kc,
+		config: config,
 		rc:     rc,
 		dlq:    c,
 		wg:     sync.WaitGroup{},
@@ -64,7 +60,12 @@ func (e *Enricher) Start(ctx context.Context) error {
 	go func() {
 		defer e.wg.Done()
 
-		if err := e.stream.Subscribe(ctx, ValidatedEventsTopic, func(msg stream.Message, ack func() error) {
+		kc, err := stream.NewKafkaClient(e.config.Kafka.Brokers, "enrichment_group_events")
+		if err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Start consuming Validated Kubernete Events...")
+		if err := kc.Subscribe(ctx, ValidatedEventsTopic, func(msg stream.Message, ack func() error) {
 			var m pbev.KubernetesEvent
 			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the validated event message")
@@ -80,7 +81,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched event message")
 				return
 			}
-			if err := e.stream.Publish(ctx, EnrichedEventsTopic, b); err != nil {
+			if err := kc.Publish(ctx, EnrichedEventsTopic, b); err != nil {
 				log.Error().Err(err).Msg("failed to publish the enriched event message to the store topic")
 				return
 			}
@@ -93,7 +94,12 @@ func (e *Enricher) Start(ctx context.Context) error {
 	go func() {
 		defer e.wg.Done()
 
-		if err := e.stream.Subscribe(ctx, ValidatedStatsTopic, func(msg stream.Message, ack func() error) {
+		kc, err := stream.NewKafkaClient(e.config.Kafka.Brokers, "enrichment_group_stats")
+		if err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Start consuming Validated Kubernete Kubelet Stats...")
+		if err := kc.Subscribe(ctx, ValidatedStatsTopic, func(msg stream.Message, ack func() error) {
 			var m pbst.KubernetesKubeletStats
 			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
@@ -110,7 +116,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched stats message")
 				return
 			}
-			if err := e.stream.Publish(ctx, EnrichedStatsTopic, b); err != nil {
+			if err := kc.Publish(ctx, EnrichedStatsTopic, b); err != nil {
 				log.Error().Err(err).Msg("failed to publish the enriched stats message to the store topic")
 				return
 			}
@@ -123,7 +129,12 @@ func (e *Enricher) Start(ctx context.Context) error {
 	go func() {
 		defer e.wg.Done()
 
-		if err := e.stream.Subscribe(ctx, ValidatedObjectsTopic, func(msg stream.Message, ack func() error) {
+		kc, err := stream.NewKafkaClient(e.config.Kafka.Brokers, "enrichment_group_objects")
+		if err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Start consuming Validated Kubernete Cluster Object...")
+		if err := kc.Subscribe(ctx, ValidatedObjectsTopic, func(msg stream.Message, ack func() error) {
 			var m pbcl.KubernetesClusterObject
 			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
@@ -139,7 +150,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched object message")
 				return
 			}
-			if err := e.stream.Publish(ctx, EnrichedObjectsTopic, b); err != nil {
+			if err := kc.Publish(ctx, EnrichedObjectsTopic, b); err != nil {
 				log.Error().Err(err).Msg("failed to publish the enriched object message to the store topic")
 				return
 			}
@@ -149,6 +160,8 @@ func (e *Enricher) Start(ctx context.Context) error {
 	}()
 
 	e.wg.Wait()
+
+	log.Info().Msg("Ready to say goodbye...")
 
 	return nil
 }

@@ -126,3 +126,8 @@ services:
 
 volumes:
   db:
+
+networks:
+  default:
+    name: kind
+    external: true

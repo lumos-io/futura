@@ -32,7 +32,6 @@ spec:
                   "BPF",
                   "PERFMON",
                 ]
-          hostPID: true
           resources:
             limits:
               cpu: "1"
@@ -82,8 +81,8 @@ data:
   config.toml: |
     # Configuration file running Watcher locally
     [collect]
-    endpoint = "localhost:50051"
-    apiKey = "df9166bbacd761c74aecc50bb7a902342dd61a1de84551e253f7133154947d88"
+    endpoint = "pipeline.default.cluster.local:50051"
+    apiKey = ""
 
     [kubernetes]
     namespaces = []

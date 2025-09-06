@@ -2,23 +2,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pipeline
+  name: pipeline-collect
   namespace: default
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: pipeline
-      app.kubernetes.io/instance: pipeline
+      app.kubernetes.io/name: pipeline-collect
+      app.kubernetes.io/instance: pipeline-collect
   replicas: 1
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: pipeline
-        app.kubernetes.io/instance: pipeline
+        app.kubernetes.io/name: pipeline-collect
+        app.kubernetes.io/instance: pipeline-collect
     spec:
       restartPolicy: Always
       containers:
-        - name: pipeline
+        - name: pipeline-collect
           image: ko://github.com/opisvigilant/futura/pipeline
           args: ["collect"]
           ports:
@@ -40,12 +40,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: pipeline
+  name: pipeline-collect
   namespace: default
 spec:
   selector:
-    app.kubernetes.io/name: pipeline
-    app.kubernetes.io/instance: pipeline
+    app.kubernetes.io/name: pipeline-collect
+    app.kubernetes.io/instance: pipeline-collect
   ports:
     - protocol: TCP
       port: 50051 # Service port
@@ -62,15 +62,15 @@ metadata:
     app.kubernetes.io/instance: pipeline
 data:
   config.toml: |
-    # Configuration file running Pipeline locally
+    [redis]
+    servers = ["host.docker.internal:6379"]
+    namespace = "api_keys"
 
-    title = "Configuration for Pipeline"
-
-    debug = true
-
-    [nats]
-    servers = ["nats://nats.default:4222"]
+    [kafka]
+    brokers = ["host.docker.internal:9092"]
 
     [collect]
-    host = "0.0.0.0"
-    port = "50051"
+    endpoint = "localhost:50051"
+
+    [log]
+    level = "debug"

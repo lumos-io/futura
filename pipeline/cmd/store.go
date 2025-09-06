@@ -4,11 +4,13 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/opisvigilant/futura/pipeline/internal/store"
 	"github.com/spf13/cobra"
 )
 
@@ -25,12 +27,17 @@ var storeCmd = &cobra.Command{
 		signalCh := make(chan os.Signal, 1)
 		signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
-		// address := fmt.Sprintf("%s:%s", pipelineCfg.Collect.Host, pipelineCfg.Collect.Port)
-		// lis, err := net.Listen("tcp", address)
-		// if err != nil {
-		// 	log.Fatalf("failed to listen: %v", err)
-		// 	os.Exit(1)
-		// }
+		s, err := store.New(pipelineCfg)
+		if err != nil {
+			panic(err)
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		if err := s.Start(ctx); err != nil {
+			panic(err)
+		}
 
 		// start shutdown goroutine
 		go func() {

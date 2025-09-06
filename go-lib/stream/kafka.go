@@ -71,7 +71,9 @@ func (kc *kafkaClient) Subscribe(ctx context.Context, topic string, handler Hand
 	config := sarama.NewConfig()
 	config.Version = sarama.V4_0_0_0
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
-	config.Consumer.Group.Rebalance.GroupStrategies = append(config.Consumer.Group.Rebalance.GroupStrategies, sarama.NewBalanceStrategyRange())
+	config.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{
+		sarama.NewBalanceStrategyRange(),
+	}
 
 	client, err := sarama.NewConsumerGroup(kc.brokers, kc.groupID, config)
 	if err != nil {
@@ -81,10 +83,11 @@ func (kc *kafkaClient) Subscribe(ctx context.Context, topic string, handler Hand
 	consumer := &consumerGroupHandler{
 		handler: handler,
 		ctx:     ctx,
-		// ready:   make(chan bool),
 	}
 
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		defer client.Close()
 
 		sigchan := make(chan os.Signal, 1)
@@ -99,7 +102,6 @@ func (kc *kafkaClient) Subscribe(ctx context.Context, topic string, handler Hand
 			if ctx.Err() != nil {
 				return
 			}
-			// consumer.ready = make(chan bool)
 			select {
 			case <-sigchan:
 				return
@@ -108,7 +110,7 @@ func (kc *kafkaClient) Subscribe(ctx context.Context, topic string, handler Hand
 		}
 	}()
 
-	// <-consumer.ready // Await till the consumer has been set up
+	<-done
 
 	return nil
 }
