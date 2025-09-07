@@ -1,6 +1,6 @@
 [redis]
 servers = ["localhost:6379"]
-namespace = "api_keys"
+namespace = "apikeys"
 
 [kafka]
 brokers = ["localhost:9092"]

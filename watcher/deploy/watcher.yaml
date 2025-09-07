@@ -81,7 +81,7 @@ data:
   config.toml: |
     # Configuration file running Watcher locally
     [collect]
-    endpoint = "pipeline-collect.default:50051"
+    endpoint = "host.docker.internal:50051"
     apiKey = "cluster_cc6VdWcwbdl5PNkHV2LEzxNZhXzQ246P"
 
     [kubernetes]

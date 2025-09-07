@@ -7,11 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
 	"github.com/opisvigilant/futura/pipeline/internal/dlq"
 	"github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/encoding/protojson"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
@@ -62,7 +63,7 @@ func (v *Validator) Start(ctx context.Context) error {
 		log.Info().Msg("Start consuming Kubernete Events...")
 		if err := kc.Subscribe(ctx, RawEventsTopic, func(msg stream.Message, ack func() error) {
 			m := &pbev.KubernetesEvent{}
-			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+			if err := proto.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw event message")
 				return
 			}
@@ -90,7 +91,7 @@ func (v *Validator) Start(ctx context.Context) error {
 		log.Info().Msg("Start consuming Kubernete Kubelet Stats...")
 		if err := kc.Subscribe(ctx, RawStatsTopic, func(msg stream.Message, ack func() error) {
 			m := &pbst.KubernetesKubeletStats{}
-			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+			if err := proto.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
 			}
@@ -118,7 +119,7 @@ func (v *Validator) Start(ctx context.Context) error {
 		log.Info().Msg("Start consuming Kubernete Cluster Object...")
 		if err := kc.Subscribe(ctx, RawObjectsTopic, func(msg stream.Message, ack func() error) {
 			m := &pbcl.KubernetesClusterObject{}
-			if err := protojson.Unmarshal(msg.Data(), m); err != nil {
+			if err := proto.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
 				return
 			}

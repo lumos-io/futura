@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
@@ -67,7 +68,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 		log.Info().Msg("Start consuming Validated Kubernete Events...")
 		if err := kc.Subscribe(ctx, ValidatedEventsTopic, func(msg stream.Message, ack func() error) {
 			var m pbev.KubernetesEvent
-			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
+			if err := proto.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the validated event message")
 				return
 			}
@@ -76,7 +77,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 				e.dlq.StoreInvalidEventMessage(msg.Data(), err)
 				return
 			}
-			b, err := protojson.Marshal(enrichedEvent)
+			b, err := proto.Marshal(enrichedEvent)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched event message")
 				return
@@ -101,7 +102,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 		log.Info().Msg("Start consuming Validated Kubernete Kubelet Stats...")
 		if err := kc.Subscribe(ctx, ValidatedStatsTopic, func(msg stream.Message, ack func() error) {
 			var m pbst.KubernetesKubeletStats
-			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
+			if err := proto.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
 			}
@@ -111,7 +112,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 				return
 			}
 
-			b, err := protojson.Marshal(enrichedStats)
+			b, err := proto.Marshal(enrichedStats)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched stats message")
 				return
@@ -136,7 +137,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 		log.Info().Msg("Start consuming Validated Kubernete Cluster Object...")
 		if err := kc.Subscribe(ctx, ValidatedObjectsTopic, func(msg stream.Message, ack func() error) {
 			var m pbcl.KubernetesClusterObject
-			if err := protojson.Unmarshal(msg.Data(), &m); err != nil {
+			if err := proto.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
 				return
 			}
@@ -145,7 +146,7 @@ func (e *Enricher) Start(ctx context.Context) error {
 				e.dlq.StoreInvalidObjectMessage(msg.Data(), err)
 				return
 			}
-			b, err := protojson.Marshal(enrichedObject)
+			b, err := proto.Marshal(enrichedObject)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to proto-marshal the enriched object message")
 				return

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
@@ -56,14 +57,18 @@ func (s *CollectServer) Close() error {
 }
 
 func (s *CollectServer) SendEvents(ctx context.Context, req *pbev.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
-	log.Info().Msgf("received the following request: %v", req)
+	log.Info().Msg("received events...")
 
 	for _, event := range req.Events {
 		if err := s.validateAPIKey(ctx, event.Apikey.Key); err != nil {
 			log.Error().Err(err)
 			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 		}
-		if err := s.streamClient.Publish(ctx, RawEventsTopic, []byte(event.String())); err != nil {
+		bytes, err := proto.Marshal(event)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal kubelet stats: %w", err)
+		}
+		if err := s.streamClient.Publish(ctx, RawEventsTopic, bytes); err != nil {
 			log.Error().Err(err)
 			return nil, err
 		}
@@ -72,14 +77,18 @@ func (s *CollectServer) SendEvents(ctx context.Context, req *pbev.KubernetesEven
 }
 
 func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.KubernetesClusterObjectBatch) (*pbsvc.CollectAck, error) {
-	log.Info().Msgf("received the following request: %v", req)
+	log.Info().Msg("received cluster objects...")
 
 	for _, obj := range req.Objects {
 		if err := s.validateAPIKey(ctx, obj.Apikey.Key); err != nil {
 			log.Error().Err(err)
 			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 		}
-		if err := s.streamClient.Publish(ctx, RawObjectsTopic, []byte(obj.String())); err != nil {
+		bytes, err := proto.Marshal(obj)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal kubelet stats: %w", err)
+		}
+		if err := s.streamClient.Publish(ctx, RawObjectsTopic, bytes); err != nil {
 			log.Error().Err(err)
 			return nil, err
 		}
@@ -88,13 +97,17 @@ func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.Kubern
 }
 
 func (s *CollectServer) SendKubeletMetrics(ctx context.Context, req *pbst.KubernetesKubeletStats) (*pbsvc.CollectAck, error) {
-	log.Info().Msgf("received the following request: %v", req)
+	log.Info().Msg("received kubelet metrics...")
 
 	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
 		log.Error().Err(err)
 		return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
 	}
-	if err := s.streamClient.Publish(ctx, RawStatsTopic, []byte(req.String())); err != nil {
+	bytes, err := proto.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal kubelet stats: %w", err)
+	}
+	if err := s.streamClient.Publish(ctx, RawStatsTopic, bytes); err != nil {
 		log.Error().Err(err)
 		return nil, err
 	}

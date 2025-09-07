@@ -162,23 +162,25 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbcl.KubernetesClusterObject
 }
 
 func (s *Sender) sendKubeletStats(ch chan *pbst.KubernetesKubeletStats) {
-	select {
-	case ev := <-ch:
-		ev.Apikey = &pbcm.APIKey{
-			Key: s.apiKey,
-		}
-		ev.Metadata = &pbcm.Metadata{
-			IdempotencyKey: uuid.NewString(),
-			WatcherVersion: utils.WatcherVersion,
-		}
-		// Send the batch to the server
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
+	for {
+		select {
+		case ev := <-ch:
+			ev.Apikey = &pbcm.APIKey{
+				Key: s.apiKey,
+			}
+			ev.Metadata = &pbcm.Metadata{
+				IdempotencyKey: uuid.NewString(),
+				WatcherVersion: utils.WatcherVersion,
+			}
 
-		if _, err := s.pbc.SendKubeletMetrics(ctx, ev); err != nil {
-			log.Logger.Error().Msgf("SendEvent failed: %v", err)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if _, err := s.pbc.SendKubeletMetrics(ctx, ev); err != nil {
+				log.Logger.Error().Msgf("SendKubeletMetrics failed: %v", err)
+			}
+			cancel()
+		case <-s.ctx.Done():
+			log.Logger.Info().Msg("stopping sending kubelet stast objects to backend")
+			return
 		}
-	case <-s.ctx.Done():
-		log.Logger.Info().Msg("stopping sending kubelet stast objects to backend")
 	}
 }

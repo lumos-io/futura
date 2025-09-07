@@ -3,7 +3,8 @@
   "workspaces": {
     "": {
       "dependencies": {
-        "@bufbuild/protobuf": "^2.6.0"
+        "@bufbuild/protobuf": "^2.6.0",
+        "ts-proto": "^2.7.7"
       }
     }
   },
@@ -13,6 +14,56 @@
       "",
       {},
       "sha512-6cuonJVNOIL7lTj5zgo/Rc2bKAo4/GvN+rKCrUj7GdEHRzCk8zKOfFwUsL9nAVk5rSIsRmlgcpLzTRysopEeeg=="
+    ],
+
+    "case-anything": [
+      "case-anything@2.1.13",
+      "",
+      {},
+      "sha512-zlOQ80VrQ2Ue+ymH5OuM/DlDq64mEm+B9UTdHULv5osUMD6HalNTblf2b1u/m6QecjsnOkBpqVZ+XPwIVsy7Ng=="
+    ],
+
+    "detect-libc": [
+      "detect-libc@1.0.3",
+      "",
+      { "bin": { "detect-libc": "./bin/detect-libc.js" } },
+      "sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg=="
+    ],
+
+    "dprint-node": [
+      "dprint-node@1.0.8",
+      "",
+      { "dependencies": { "detect-libc": "^1.0.3" } },
+      "sha512-iVKnUtYfGrYcW1ZAlfR/F59cUVL8QIhWoBJoSjkkdua/dkWIgjZfiLMeTjiB06X0ZLkQ0M2C1VbUj/CxkIf1zg=="
+    ],
+
+    "ts-poet": [
+      "ts-poet@6.12.0",
+      "",
+      { "dependencies": { "dprint-node": "^1.0.8" } },
+      "sha512-xo+iRNMWqyvXpFTaOAvLPA5QAWO6TZrSUs5s4Odaya3epqofBu/fMLHEWl8jPmjhA0s9sgj9sNvF1BmaQlmQkA=="
+    ],
+
+    "ts-proto": [
+      "ts-proto@2.7.7",
+      "",
+      {
+        "dependencies": {
+          "@bufbuild/protobuf": "^2.0.0",
+          "case-anything": "^2.1.13",
+          "ts-poet": "^6.12.0",
+          "ts-proto-descriptors": "2.0.0"
+        },
+        "bin": { "protoc-gen-ts_proto": "protoc-gen-ts_proto" }
+      },
+      "sha512-/OfN9/Yriji2bbpOysZ/Jzc96isOKz+eBTJEcKaIZ0PR6x1TNgVm4Lz0zfbo+J0jwFO7fJjJyssefBPQ0o1V9A=="
+    ],
+
+    "ts-proto-descriptors": [
+      "ts-proto-descriptors@2.0.0",
+      "",
+      { "dependencies": { "@bufbuild/protobuf": "^2.0.0" } },
+      "sha512-wHcTH3xIv11jxgkX5OyCSFfw27agpInAd6yh89hKG6zqIXnjW9SYqSER2CVQxdPj4czeOhGagNvZBEbJPy7qkw=="
     ]
   }
 }

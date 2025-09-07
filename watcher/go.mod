@@ -13,7 +13,6 @@ require (
 	github.com/openshift/api v0.0.0-20250620092249-a8cbc218cd2c
 	github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277
 	github.com/opisvigilant/futura/proto v0.0.0-20250814144254-c906f07adc67
-	github.com/spf13/cobra v1.9.1
 	go.opentelemetry.io/otel v1.37.0
 	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.7
@@ -75,7 +74,6 @@ require (
 )
 
 require (
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/rs/zerolog v1.34.0

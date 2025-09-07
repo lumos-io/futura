@@ -7,11 +7,10 @@ option go_package = "github.com/opisvigilant/futura/proto/gen/stats;stats";
 import "common/metadata.proto";
 import "google/protobuf/timestamp.proto";
 
-
 message KubernetesKubeletStats {
   NodeStats node = 1;
   repeated PodStats pods = 2;
- 
+
   common.APIKey apikey = 3;
   common.Metadata metadata = 4;
 
@@ -20,8 +19,8 @@ message KubernetesKubeletStats {
 
 message EnrichmentMetadata {
   uint32 organization_id = 1;
-  int64 cluster_id = 2;  
-  int64 received_at_unix = 3;  // UNIX timestamp
+  int64 cluster_id = 2;
+  int64 received_at_unix = 3; // UNIX timestamp
 }
 
 message NodeStats {
@@ -63,9 +62,7 @@ message PodStats {
   SwapStats swap = 11;
 }
 
-message ProcessStats {
-  uint64 processCount = 1;
-}
+message ProcessStats { uint64 processCount = 1; }
 
 message ContainerStats {
   string name = 1;
@@ -157,9 +154,7 @@ message VolumeStats {
   VolumeHealthStats volumeHealthStats = 4;
 }
 
-message VolumeHealthStats {
-  bool abnormal = 1;
-}
+message VolumeHealthStats { bool abnormal = 1; }
 
 message PVCReference {
   string name = 1;

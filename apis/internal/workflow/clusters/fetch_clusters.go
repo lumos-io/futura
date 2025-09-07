@@ -204,9 +204,8 @@ func createAPIKeyEntry(ctx context.Context, store kv.KVStore, orgID uint, metada
 		return "", nil
 	}
 
-	// namespace: apikeys:<apikey_value> - key: providerConnectionID apikey_info
-	ns := fmt.Sprintf("apikeys:%s", apiKey)
-	if err := store.Put(ctx, ns, fmt.Sprintf("%d", metadata.ProviderConnectionID), b); err != nil {
+	// namespace: apikeys - key: <apikey_value> apikey_info
+	if err := store.Put(ctx, "apikeys", apiKey, b); err != nil {
 		return "", nil
 	}
 	return apiKey, nil
