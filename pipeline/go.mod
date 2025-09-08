@@ -3,14 +3,15 @@ module github.com/opisvigilant/futura/pipeline
 go 1.24.4
 
 require (
-	github.com/fsnotify/fsnotify v1.9.0
-	github.com/opisvigilant/futura/go-lib v0.0.0-20250806191321-8b654fa4791a
-	github.com/opisvigilant/futura/proto v0.0.0-20250806191321-8b654fa4791a
+	github.com/fsnotify/fsnotify v1.9.0	
+	github.com/opisvigilant/futura/go-lib v0.0.0-20250908181247-6318dde452f3
+	github.com/opisvigilant/futura/proto v0.0.0-20250908181247-6318dde452f3
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/grpc v1.74.2
+	google.golang.org/grpc v1.75.0
+	google.golang.org/protobuf v1.36.8
 )
 
 require (
@@ -33,8 +34,8 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/redis/go-redis/v9 v9.12.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
+	go.opentelemetry.io/otel/metric v1.37.0 // indirect
+	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
 )
 

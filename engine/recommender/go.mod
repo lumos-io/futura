@@ -6,7 +6,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/uuid v1.6.0
 	github.com/opisvigilant/futura/go-lib v0.0.0-20250906171735-d2a836c1454c
-	github.com/opisvigilant/futura/proto v0.0.0-20250814144254-c906f07adc67
+	github.com/opisvigilant/futura/proto v0.0.0-20250908181247-6318dde452f3
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.20.1
 	google.golang.org/grpc v1.75.0

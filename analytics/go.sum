@@ -34,6 +34,8 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/opisvigilant/futura/proto v0.0.0-20250906191117-618ed5df4c37 h1:piPX6VwgP/bSeXJeUJd40x2g623IdQ1d9WMUx/ZxDao=
 github.com/opisvigilant/futura/proto v0.0.0-20250906191117-618ed5df4c37/go.mod h1:n5Uvn6ltHnGdcnb+ML6x4t3Dww0wGSpfKqRrAeGALUM=
+github.com/opisvigilant/futura/proto v0.0.0-20250908181247-6318dde452f3 h1:5YKwV+siu5HfKJBmNZkbZNBHEt3S2Qi8fkIcmVHj2Q0=
+github.com/opisvigilant/futura/proto v0.0.0-20250908181247-6318dde452f3/go.mod h1:n5Uvn6ltHnGdcnb+ML6x4t3Dww0wGSpfKqRrAeGALUM=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
 github.com/pelletier/go-toml/v2 v2.2.4/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

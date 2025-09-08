@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
+	"google.golang.org/protobuf/proto"
 
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
 	pb "github.com/opisvigilant/futura/proto/gen/telemetry"

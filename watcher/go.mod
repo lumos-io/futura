@@ -1,8 +1,6 @@
 module github.com/opisvigilant/futura/watcher
 
-go 1.24.1
-
-toolchain go1.24.4
+go 1.24.4
 
 // toolchain go1.24.4
 
@@ -12,10 +10,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/openshift/api v0.0.0-20250620092249-a8cbc218cd2c
 	github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277
-	github.com/opisvigilant/futura/proto v0.0.0-20250814144254-c906f07adc67
+	github.com/opisvigilant/futura/proto v0.0.0-20250908181247-6318dde452f3
 	go.opentelemetry.io/otel v1.37.0
-	google.golang.org/grpc v1.74.2
-	google.golang.org/protobuf v1.36.7
+	google.golang.org/grpc v1.75.0
+	google.golang.org/protobuf v1.36.8
 	k8s.io/api v0.33.2
 	k8s.io/apimachinery v0.33.2
 	k8s.io/client-go v0.33.2

@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 
 	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
