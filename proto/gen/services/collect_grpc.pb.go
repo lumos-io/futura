@@ -8,9 +8,7 @@ package collect
 
 import (
 	context "context"
-	cluster "github.com/opisvigilant/futura/proto/gen/cluster"
-	events "github.com/opisvigilant/futura/proto/gen/events"
-	stats "github.com/opisvigilant/futura/proto/gen/stats"
+	telemetry "github.com/opisvigilant/futura/proto/gen/telemetry"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -31,9 +29,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CollectServiceClient interface {
-	SendEvents(ctx context.Context, in *events.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error)
-	SendClusterObjects(ctx context.Context, in *cluster.KubernetesClusterObjectBatch, opts ...grpc.CallOption) (*CollectAck, error)
-	SendKubeletMetrics(ctx context.Context, in *stats.KubernetesKubeletStats, opts ...grpc.CallOption) (*CollectAck, error)
+	SendEvents(ctx context.Context, in *telemetry.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error)
+	SendClusterObjects(ctx context.Context, in *telemetry.KubernetesClusterObjectBatch, opts ...grpc.CallOption) (*CollectAck, error)
+	SendKubeletMetrics(ctx context.Context, in *telemetry.KubernetesKubeletStats, opts ...grpc.CallOption) (*CollectAck, error)
 }
 
 type collectServiceClient struct {
@@ -44,7 +42,7 @@ func NewCollectServiceClient(cc grpc.ClientConnInterface) CollectServiceClient {
 	return &collectServiceClient{cc}
 }
 
-func (c *collectServiceClient) SendEvents(ctx context.Context, in *events.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error) {
+func (c *collectServiceClient) SendEvents(ctx context.Context, in *telemetry.KubernetesEventBatch, opts ...grpc.CallOption) (*CollectAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CollectAck)
 	err := c.cc.Invoke(ctx, CollectService_SendEvents_FullMethodName, in, out, cOpts...)
@@ -54,7 +52,7 @@ func (c *collectServiceClient) SendEvents(ctx context.Context, in *events.Kubern
 	return out, nil
 }
 
-func (c *collectServiceClient) SendClusterObjects(ctx context.Context, in *cluster.KubernetesClusterObjectBatch, opts ...grpc.CallOption) (*CollectAck, error) {
+func (c *collectServiceClient) SendClusterObjects(ctx context.Context, in *telemetry.KubernetesClusterObjectBatch, opts ...grpc.CallOption) (*CollectAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CollectAck)
 	err := c.cc.Invoke(ctx, CollectService_SendClusterObjects_FullMethodName, in, out, cOpts...)
@@ -64,7 +62,7 @@ func (c *collectServiceClient) SendClusterObjects(ctx context.Context, in *clust
 	return out, nil
 }
 
-func (c *collectServiceClient) SendKubeletMetrics(ctx context.Context, in *stats.KubernetesKubeletStats, opts ...grpc.CallOption) (*CollectAck, error) {
+func (c *collectServiceClient) SendKubeletMetrics(ctx context.Context, in *telemetry.KubernetesKubeletStats, opts ...grpc.CallOption) (*CollectAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CollectAck)
 	err := c.cc.Invoke(ctx, CollectService_SendKubeletMetrics_FullMethodName, in, out, cOpts...)
@@ -78,9 +76,9 @@ func (c *collectServiceClient) SendKubeletMetrics(ctx context.Context, in *stats
 // All implementations must embed UnimplementedCollectServiceServer
 // for forward compatibility.
 type CollectServiceServer interface {
-	SendEvents(context.Context, *events.KubernetesEventBatch) (*CollectAck, error)
-	SendClusterObjects(context.Context, *cluster.KubernetesClusterObjectBatch) (*CollectAck, error)
-	SendKubeletMetrics(context.Context, *stats.KubernetesKubeletStats) (*CollectAck, error)
+	SendEvents(context.Context, *telemetry.KubernetesEventBatch) (*CollectAck, error)
+	SendClusterObjects(context.Context, *telemetry.KubernetesClusterObjectBatch) (*CollectAck, error)
+	SendKubeletMetrics(context.Context, *telemetry.KubernetesKubeletStats) (*CollectAck, error)
 	mustEmbedUnimplementedCollectServiceServer()
 }
 
@@ -91,13 +89,13 @@ type CollectServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCollectServiceServer struct{}
 
-func (UnimplementedCollectServiceServer) SendEvents(context.Context, *events.KubernetesEventBatch) (*CollectAck, error) {
+func (UnimplementedCollectServiceServer) SendEvents(context.Context, *telemetry.KubernetesEventBatch) (*CollectAck, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendEvents not implemented")
 }
-func (UnimplementedCollectServiceServer) SendClusterObjects(context.Context, *cluster.KubernetesClusterObjectBatch) (*CollectAck, error) {
+func (UnimplementedCollectServiceServer) SendClusterObjects(context.Context, *telemetry.KubernetesClusterObjectBatch) (*CollectAck, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendClusterObjects not implemented")
 }
-func (UnimplementedCollectServiceServer) SendKubeletMetrics(context.Context, *stats.KubernetesKubeletStats) (*CollectAck, error) {
+func (UnimplementedCollectServiceServer) SendKubeletMetrics(context.Context, *telemetry.KubernetesKubeletStats) (*CollectAck, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendKubeletMetrics not implemented")
 }
 func (UnimplementedCollectServiceServer) mustEmbedUnimplementedCollectServiceServer() {}
@@ -122,7 +120,7 @@ func RegisterCollectServiceServer(s grpc.ServiceRegistrar, srv CollectServiceSer
 }
 
 func _CollectService_SendEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(events.KubernetesEventBatch)
+	in := new(telemetry.KubernetesEventBatch)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -134,13 +132,13 @@ func _CollectService_SendEvents_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: CollectService_SendEvents_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CollectServiceServer).SendEvents(ctx, req.(*events.KubernetesEventBatch))
+		return srv.(CollectServiceServer).SendEvents(ctx, req.(*telemetry.KubernetesEventBatch))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _CollectService_SendClusterObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(cluster.KubernetesClusterObjectBatch)
+	in := new(telemetry.KubernetesClusterObjectBatch)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -152,13 +150,13 @@ func _CollectService_SendClusterObjects_Handler(srv interface{}, ctx context.Con
 		FullMethod: CollectService_SendClusterObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CollectServiceServer).SendClusterObjects(ctx, req.(*cluster.KubernetesClusterObjectBatch))
+		return srv.(CollectServiceServer).SendClusterObjects(ctx, req.(*telemetry.KubernetesClusterObjectBatch))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _CollectService_SendKubeletMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(stats.KubernetesKubeletStats)
+	in := new(telemetry.KubernetesKubeletStats)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -170,7 +168,7 @@ func _CollectService_SendKubeletMetrics_Handler(srv interface{}, ctx context.Con
 		FullMethod: CollectService_SendKubeletMetrics_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CollectServiceServer).SendKubeletMetrics(ctx, req.(*stats.KubernetesKubeletStats))
+		return srv.(CollectServiceServer).SendKubeletMetrics(ctx, req.(*telemetry.KubernetesKubeletStats))
 	}
 	return interceptor(ctx, in, info, handler)
 }

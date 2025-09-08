@@ -2,12 +2,11 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.31.1
-// source: events/events.proto
+// source: telemetry/events.proto
 
-package events
+package telemetry
 
 import (
-	common "github.com/opisvigilant/futura/proto/gen/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -32,7 +31,7 @@ type KubernetesEventBatch struct {
 
 func (x *KubernetesEventBatch) Reset() {
 	*x = KubernetesEventBatch{}
-	mi := &file_events_events_proto_msgTypes[0]
+	mi := &file_telemetry_events_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +43,7 @@ func (x *KubernetesEventBatch) String() string {
 func (*KubernetesEventBatch) ProtoMessage() {}
 
 func (x *KubernetesEventBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_events_events_proto_msgTypes[0]
+	mi := &file_telemetry_events_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +56,7 @@ func (x *KubernetesEventBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KubernetesEventBatch.ProtoReflect.Descriptor instead.
 func (*KubernetesEventBatch) Descriptor() ([]byte, []int) {
-	return file_events_events_proto_rawDescGZIP(), []int{0}
+	return file_telemetry_events_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *KubernetesEventBatch) GetEvents() []*KubernetesEvent {
@@ -88,8 +87,8 @@ type KubernetesEvent struct {
 	ObjectApiVersion      string                 `protobuf:"bytes,16,opt,name=object_api_version,json=objectApiVersion,proto3" json:"object_api_version,omitempty"`
 	ObjectResourceVersion string                 `protobuf:"bytes,17,opt,name=object_resource_version,json=objectResourceVersion,proto3" json:"object_resource_version,omitempty"`
 	NodeName              string                 `protobuf:"bytes,18,opt,name=node_name,json=nodeName,proto3" json:"node_name,omitempty"`
-	Apikey                *common.APIKey         `protobuf:"bytes,19,opt,name=apikey,proto3" json:"apikey,omitempty"`
-	Metadata              *common.Metadata       `protobuf:"bytes,20,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Apikey                *APIKey                `protobuf:"bytes,19,opt,name=apikey,proto3" json:"apikey,omitempty"`
+	Metadata              *Metadata              `protobuf:"bytes,20,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Enrichment            *EnrichmentMetadata    `protobuf:"bytes,100,opt,name=enrichment,proto3" json:"enrichment,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
@@ -97,7 +96,7 @@ type KubernetesEvent struct {
 
 func (x *KubernetesEvent) Reset() {
 	*x = KubernetesEvent{}
-	mi := &file_events_events_proto_msgTypes[1]
+	mi := &file_telemetry_events_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -109,7 +108,7 @@ func (x *KubernetesEvent) String() string {
 func (*KubernetesEvent) ProtoMessage() {}
 
 func (x *KubernetesEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_events_events_proto_msgTypes[1]
+	mi := &file_telemetry_events_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +121,7 @@ func (x *KubernetesEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KubernetesEvent.ProtoReflect.Descriptor instead.
 func (*KubernetesEvent) Descriptor() ([]byte, []int) {
-	return file_events_events_proto_rawDescGZIP(), []int{1}
+	return file_telemetry_events_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *KubernetesEvent) GetObjectKind() string {
@@ -251,14 +250,14 @@ func (x *KubernetesEvent) GetNodeName() string {
 	return ""
 }
 
-func (x *KubernetesEvent) GetApikey() *common.APIKey {
+func (x *KubernetesEvent) GetApikey() *APIKey {
 	if x != nil {
 		return x.Apikey
 	}
 	return nil
 }
 
-func (x *KubernetesEvent) GetMetadata() *common.Metadata {
+func (x *KubernetesEvent) GetMetadata() *Metadata {
 	if x != nil {
 		return x.Metadata
 	}
@@ -272,81 +271,13 @@ func (x *KubernetesEvent) GetEnrichment() *EnrichmentMetadata {
 	return nil
 }
 
-type EnrichmentMetadata struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	OrganizationId uint32                 `protobuf:"varint,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	ClusterId      int64                  `protobuf:"varint,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
-	K8SVersion     string                 `protobuf:"bytes,3,opt,name=k8s_version,json=k8sVersion,proto3" json:"k8s_version,omitempty"`
-	ReceivedAtUnix int64                  `protobuf:"varint,4,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
+var File_telemetry_events_proto protoreflect.FileDescriptor
 
-func (x *EnrichmentMetadata) Reset() {
-	*x = EnrichmentMetadata{}
-	mi := &file_events_events_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EnrichmentMetadata) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EnrichmentMetadata) ProtoMessage() {}
-
-func (x *EnrichmentMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_events_events_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EnrichmentMetadata.ProtoReflect.Descriptor instead.
-func (*EnrichmentMetadata) Descriptor() ([]byte, []int) {
-	return file_events_events_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *EnrichmentMetadata) GetOrganizationId() uint32 {
-	if x != nil {
-		return x.OrganizationId
-	}
-	return 0
-}
-
-func (x *EnrichmentMetadata) GetClusterId() int64 {
-	if x != nil {
-		return x.ClusterId
-	}
-	return 0
-}
-
-func (x *EnrichmentMetadata) GetK8SVersion() string {
-	if x != nil {
-		return x.K8SVersion
-	}
-	return ""
-}
-
-func (x *EnrichmentMetadata) GetReceivedAtUnix() int64 {
-	if x != nil {
-		return x.ReceivedAtUnix
-	}
-	return 0
-}
-
-var File_events_events_proto protoreflect.FileDescriptor
-
-const file_events_events_proto_rawDesc = "" +
+const file_telemetry_events_proto_rawDesc = "" +
 	"\n" +
-	"\x13events/events.proto\x12\x06events\x1a\x15common/metadata.proto\"G\n" +
-	"\x14KubernetesEventBatch\x12/\n" +
-	"\x06events\x18\x01 \x03(\v2\x17.events.KubernetesEventR\x06events\"\xdd\x06\n" +
+	"\x16telemetry/events.proto\x12\ttelemetry\x1a\x18telemetry/metadata.proto\"J\n" +
+	"\x14KubernetesEventBatch\x122\n" +
+	"\x06events\x18\x01 \x03(\v2\x1a.telemetry.KubernetesEventR\x06events\"\xe6\x06\n" +
 	"\x0fKubernetesEvent\x12\x1f\n" +
 	"\vobject_kind\x18\x01 \x01(\tR\n" +
 	"objectKind\x12\x1f\n" +
@@ -371,45 +302,38 @@ const file_events_events_proto_rawDesc = "" +
 	"eventCount\x12,\n" +
 	"\x12object_api_version\x18\x10 \x01(\tR\x10objectApiVersion\x126\n" +
 	"\x17object_resource_version\x18\x11 \x01(\tR\x15objectResourceVersion\x12\x1b\n" +
-	"\tnode_name\x18\x12 \x01(\tR\bnodeName\x12&\n" +
-	"\x06apikey\x18\x13 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
-	"\bmetadata\x18\x14 \x01(\v2\x10.common.MetadataR\bmetadata\x12:\n" +
+	"\tnode_name\x18\x12 \x01(\tR\bnodeName\x12)\n" +
+	"\x06apikey\x18\x13 \x01(\v2\x11.telemetry.APIKeyR\x06apikey\x12/\n" +
+	"\bmetadata\x18\x14 \x01(\v2\x13.telemetry.MetadataR\bmetadata\x12=\n" +
 	"\n" +
-	"enrichment\x18d \x01(\v2\x1a.events.EnrichmentMetadataR\n" +
-	"enrichment\"\xa7\x01\n" +
-	"\x12EnrichmentMetadata\x12'\n" +
-	"\x0forganization_id\x18\x01 \x01(\rR\x0eorganizationId\x12\x1d\n" +
-	"\n" +
-	"cluster_id\x18\x02 \x01(\x03R\tclusterId\x12\x1f\n" +
-	"\vk8s_version\x18\x03 \x01(\tR\n" +
-	"k8sVersion\x12(\n" +
-	"\x10received_at_unix\x18\x04 \x01(\x03R\x0ereceivedAtUnixB8Z6github.com/opisvigilant/futura/proto/gen/events;eventsb\x06proto3"
+	"enrichment\x18d \x01(\v2\x1d.telemetry.EnrichmentMetadataR\n" +
+	"enrichmentB>Z<github.com/opisvigilant/futura/proto/gen/telemetry;telemetryb\x06proto3"
 
 var (
-	file_events_events_proto_rawDescOnce sync.Once
-	file_events_events_proto_rawDescData []byte
+	file_telemetry_events_proto_rawDescOnce sync.Once
+	file_telemetry_events_proto_rawDescData []byte
 )
 
-func file_events_events_proto_rawDescGZIP() []byte {
-	file_events_events_proto_rawDescOnce.Do(func() {
-		file_events_events_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_events_events_proto_rawDesc), len(file_events_events_proto_rawDesc)))
+func file_telemetry_events_proto_rawDescGZIP() []byte {
+	file_telemetry_events_proto_rawDescOnce.Do(func() {
+		file_telemetry_events_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_telemetry_events_proto_rawDesc), len(file_telemetry_events_proto_rawDesc)))
 	})
-	return file_events_events_proto_rawDescData
+	return file_telemetry_events_proto_rawDescData
 }
 
-var file_events_events_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_events_events_proto_goTypes = []any{
-	(*KubernetesEventBatch)(nil), // 0: events.KubernetesEventBatch
-	(*KubernetesEvent)(nil),      // 1: events.KubernetesEvent
-	(*EnrichmentMetadata)(nil),   // 2: events.EnrichmentMetadata
-	(*common.APIKey)(nil),        // 3: common.APIKey
-	(*common.Metadata)(nil),      // 4: common.Metadata
+var file_telemetry_events_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_telemetry_events_proto_goTypes = []any{
+	(*KubernetesEventBatch)(nil), // 0: telemetry.KubernetesEventBatch
+	(*KubernetesEvent)(nil),      // 1: telemetry.KubernetesEvent
+	(*APIKey)(nil),               // 2: telemetry.APIKey
+	(*Metadata)(nil),             // 3: telemetry.Metadata
+	(*EnrichmentMetadata)(nil),   // 4: telemetry.EnrichmentMetadata
 }
-var file_events_events_proto_depIdxs = []int32{
-	1, // 0: events.KubernetesEventBatch.events:type_name -> events.KubernetesEvent
-	3, // 1: events.KubernetesEvent.apikey:type_name -> common.APIKey
-	4, // 2: events.KubernetesEvent.metadata:type_name -> common.Metadata
-	2, // 3: events.KubernetesEvent.enrichment:type_name -> events.EnrichmentMetadata
+var file_telemetry_events_proto_depIdxs = []int32{
+	1, // 0: telemetry.KubernetesEventBatch.events:type_name -> telemetry.KubernetesEvent
+	2, // 1: telemetry.KubernetesEvent.apikey:type_name -> telemetry.APIKey
+	3, // 2: telemetry.KubernetesEvent.metadata:type_name -> telemetry.Metadata
+	4, // 3: telemetry.KubernetesEvent.enrichment:type_name -> telemetry.EnrichmentMetadata
 	4, // [4:4] is the sub-list for method output_type
 	4, // [4:4] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
@@ -417,26 +341,27 @@ var file_events_events_proto_depIdxs = []int32{
 	0, // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_events_events_proto_init() }
-func file_events_events_proto_init() {
-	if File_events_events_proto != nil {
+func init() { file_telemetry_events_proto_init() }
+func file_telemetry_events_proto_init() {
+	if File_telemetry_events_proto != nil {
 		return
 	}
+	file_telemetry_metadata_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_events_events_proto_rawDesc), len(file_events_events_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_telemetry_events_proto_rawDesc), len(file_telemetry_events_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_events_events_proto_goTypes,
-		DependencyIndexes: file_events_events_proto_depIdxs,
-		MessageInfos:      file_events_events_proto_msgTypes,
+		GoTypes:           file_telemetry_events_proto_goTypes,
+		DependencyIndexes: file_telemetry_events_proto_depIdxs,
+		MessageInfos:      file_telemetry_events_proto_msgTypes,
 	}.Build()
-	File_events_events_proto = out.File
-	file_events_events_proto_goTypes = nil
-	file_events_events_proto_depIdxs = nil
+	File_telemetry_events_proto = out.File
+	file_telemetry_events_proto_goTypes = nil
+	file_telemetry_events_proto_depIdxs = nil
 }

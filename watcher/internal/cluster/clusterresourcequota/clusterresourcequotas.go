@@ -9,24 +9,24 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
-func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp: timestamppb.New(ts),
 		Name:      crq.Name,
 		Uid:       string(crq.UID),
 	}
 
-	clusterQuota := &pbcluster.ClusterResourceQuotaMetadata{
+	clusterQuota := &pb.ClusterResourceQuotaMetadata{
 		Name: crq.Name,
 		Uid:  string(crq.UID),
 	}
 
 	for k, v := range crq.Status.Total.Hard {
 		val := extractValue(k, v)
-		clusterQuota.TotalLimits = append(clusterQuota.TotalLimits, &pbcluster.QuotaResource{
+		clusterQuota.TotalLimits = append(clusterQuota.TotalLimits, &pb.QuotaResource{
 			Resource: string(k),
 			Value:    val,
 		})
@@ -34,20 +34,20 @@ func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) *pbcluster.K
 
 	for k, v := range crq.Status.Total.Used {
 		val := extractValue(k, v)
-		clusterQuota.TotalUsage = append(clusterQuota.TotalUsage, &pbcluster.QuotaResource{
+		clusterQuota.TotalUsage = append(clusterQuota.TotalUsage, &pb.QuotaResource{
 			Resource: string(k),
 			Value:    val,
 		})
 	}
 
 	for _, ns := range crq.Status.Namespaces {
-		nsQuota := &pbcluster.NamespaceQuota{
+		nsQuota := &pb.NamespaceQuota{
 			Namespace: ns.Namespace,
 		}
 
 		for k, v := range ns.Status.Hard {
 			val := extractValue(k, v)
-			nsQuota.Limits = append(nsQuota.Limits, &pbcluster.QuotaResource{
+			nsQuota.Limits = append(nsQuota.Limits, &pb.QuotaResource{
 				Resource: string(k),
 				Value:    val,
 			})
@@ -55,7 +55,7 @@ func RecordMetrics(crq *quotav1.ClusterResourceQuota, ts time.Time) *pbcluster.K
 
 		for k, v := range ns.Status.Used {
 			val := extractValue(k, v)
-			nsQuota.Usage = append(nsQuota.Usage, &pbcluster.QuotaResource{
+			nsQuota.Usage = append(nsQuota.Usage, &pb.QuotaResource{
 				Resource: string(k),
 				Value:    val,
 			})

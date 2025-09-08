@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/opisvigilant/futura/go-lib/stream"
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
 const (
@@ -117,7 +117,7 @@ type flatKubeletVolumeMetric struct {
 	InodesUsed     uint64    `json:"inodes_used"`
 }
 
-func (es *StatsFlattener) Flatten(ctx context.Context, msg *pbst.KubernetesKubeletStats) error {
+func (es *StatsFlattener) Flatten(ctx context.Context, msg *pb.KubernetesKubeletStats) error {
 	timestamp := time.Now()
 	knm := &flatKubeletNodeMetric{
 		OrganizationID:          msg.Enrichment.OrganizationId,

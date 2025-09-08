@@ -6,12 +6,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 )
 
-func RecordMetrics(hpa *autoscalingv2.HorizontalPodAutoscaler, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(hpa *autoscalingv2.HorizontalPodAutoscaler, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp:         timestamppb.New(ts),
 		ReadyReplicas:     int64(hpa.Status.CurrentReplicas),
 		Replicas:          int64(hpa.Status.DesiredReplicas),

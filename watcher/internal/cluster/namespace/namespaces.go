@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
@@ -16,8 +16,8 @@ const (
 	k8sNamespacePhase        = "k8s.namespace.phase"
 )
 
-func RecordMetrics(ns *corev1.Namespace, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(ns *corev1.Namespace, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp:    timestamppb.New(ts),
 		Uid:          string(ns.UID),
 		Name:         ns.Name,

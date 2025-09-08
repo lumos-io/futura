@@ -3,7 +3,7 @@ package replicaset
 import (
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -24,8 +24,8 @@ func Transform(rs *appsv1.ReplicaSet) *appsv1.ReplicaSet {
 	}
 }
 
-func RecordMetrics(rs *appsv1.ReplicaSet, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(rs *appsv1.ReplicaSet, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp: timestamppb.New(ts),
 		Namespace: rs.Namespace,
 		Name:      rs.Name,

@@ -9,16 +9,14 @@ import (
 
 	"github.com/google/uuid"
 
-	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
-func StreamKubeletEvents(ctx context.Context, wg *sync.WaitGroup, nodeName string, pods []*pbst.PodStats, eventsChn chan<- *pbev.KubernetesEvent, clusterObjCh chan<- *pbcl.KubernetesClusterObject) {
+func StreamKubeletEvents(ctx context.Context, wg *sync.WaitGroup, nodeName string, pods []*pb.PodStats, eventsChn chan<- *pb.KubernetesEvent, clusterObjCh chan<- *pb.KubernetesClusterObject) {
 	defer wg.Done()
 
 	// Keep a copy of last seen pods to detect changes
-	lastPods := make(map[string]*pbst.PodStats)
+	lastPods := make(map[string]*pb.PodStats)
 	for _, p := range pods {
 		lastPods[p.PodRef.Uid] = p
 	}
@@ -36,7 +34,7 @@ func StreamKubeletEvents(ctx context.Context, wg *sync.WaitGroup, nodeName strin
 				pods = append(pods[:idx], pods[idx+1:]...)
 				delete(lastPods, removed.PodRef.Uid)
 
-				eventsChn <- &pbev.KubernetesEvent{
+				eventsChn <- &pb.KubernetesEvent{
 					ObjectKind:        "Pod",
 					ObjectName:        removed.PodRef.Name,
 					ObjectNamespace:   removed.PodRef.Namespace,
@@ -52,7 +50,7 @@ func StreamKubeletEvents(ctx context.Context, wg *sync.WaitGroup, nodeName strin
 					EventCount:        1,
 					NodeName:          nodeName,
 					ObjectApiVersion:  "v1",
-					Enrichment: &pbev.EnrichmentMetadata{
+					Enrichment: &pb.EnrichmentMetadata{
 						OrganizationId: 42,
 						ClusterId:      12345,
 						ReceivedAtUnix: time.Now().Unix(),
@@ -67,7 +65,7 @@ func StreamKubeletEvents(ctx context.Context, wg *sync.WaitGroup, nodeName strin
 				pods = append(pods, newPod)
 				lastPods[newPod.PodRef.Uid] = newPod
 
-				eventsChn <- &pbev.KubernetesEvent{
+				eventsChn <- &pb.KubernetesEvent{
 					ObjectKind:        "Pod",
 					ObjectName:        newPod.PodRef.Name,
 					ObjectNamespace:   newPod.PodRef.Namespace,
@@ -83,7 +81,7 @@ func StreamKubeletEvents(ctx context.Context, wg *sync.WaitGroup, nodeName strin
 					EventCount:        1,
 					NodeName:          nodeName,
 					ObjectApiVersion:  "v1",
-					Enrichment: &pbev.EnrichmentMetadata{
+					Enrichment: &pb.EnrichmentMetadata{
 						OrganizationId: 42,
 						ClusterId:      12345,
 						ReceivedAtUnix: time.Now().Unix(),
@@ -95,7 +93,7 @@ func StreamKubeletEvents(ctx context.Context, wg *sync.WaitGroup, nodeName strin
 			// Random status change event for an existing pod
 			if len(pods) > 0 && rand.Intn(5) == 0 {
 				target := pods[rand.Intn(len(pods))]
-				eventsChn <- &pbev.KubernetesEvent{
+				eventsChn <- &pb.KubernetesEvent{
 					ObjectKind:        "Pod",
 					ObjectName:        target.PodRef.Name,
 					ObjectNamespace:   target.PodRef.Namespace,
@@ -111,7 +109,7 @@ func StreamKubeletEvents(ctx context.Context, wg *sync.WaitGroup, nodeName strin
 					EventCount:        int64(rand.Intn(5) + 1),
 					NodeName:          nodeName,
 					ObjectApiVersion:  "v1",
-					Enrichment: &pbev.EnrichmentMetadata{
+					Enrichment: &pb.EnrichmentMetadata{
 						OrganizationId: 42,
 						ClusterId:      12345,
 						ReceivedAtUnix: time.Now().Unix(),

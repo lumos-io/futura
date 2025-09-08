@@ -1,13 +1,13 @@
 package metadata
 
 import (
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"github.com/opisvigilant/futura/watcher/utils"
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
-func NewCPUStatsBuilder(c *stats.CPUStats) *pbst.CPUStats {
-	return &pbst.CPUStats{
+func NewCPUStatsBuilder(c *stats.CPUStats) *pb.CPUStats {
+	return &pb.CPUStats{
 		Time:                 toProtoTime(c.Time.Time),
 		UsageNanoCores:       utils.PointerToUint64(c.UsageNanoCores),
 		UsageCoreNanoSeconds: utils.PointerToUint64(c.UsageCoreNanoSeconds),
@@ -15,11 +15,11 @@ func NewCPUStatsBuilder(c *stats.CPUStats) *pbst.CPUStats {
 	}
 }
 
-func NewMemoryStatsBuilder(m *stats.MemoryStats) *pbst.MemoryStats {
+func NewMemoryStatsBuilder(m *stats.MemoryStats) *pb.MemoryStats {
 	if m == nil {
-		return &pbst.MemoryStats{}
+		return &pb.MemoryStats{}
 	}
-	return &pbst.MemoryStats{
+	return &pb.MemoryStats{
 		Time:            toProtoTime(m.Time.Time),
 		AvailableBytes:  utils.PointerToUint64(m.AvailableBytes),
 		UsageBytes:      utils.PointerToUint64(m.UsageBytes),
@@ -31,26 +31,26 @@ func NewMemoryStatsBuilder(m *stats.MemoryStats) *pbst.MemoryStats {
 	}
 }
 
-func NewIOStatsBuilder(m *stats.IOStats) *pbst.IOStats {
+func NewIOStatsBuilder(m *stats.IOStats) *pb.IOStats {
 	if m == nil {
-		return &pbst.IOStats{}
+		return &pb.IOStats{}
 	}
-	return &pbst.IOStats{
+	return &pb.IOStats{
 		Time: toProtoTime(m.Time.Time),
 		Psi:  NewPSIStatsBuilder(m.PSI),
 	}
 }
 
-func NewNetworkStatsBuilder(m *stats.NetworkStats) *pbst.NetworkStats {
+func NewNetworkStatsBuilder(m *stats.NetworkStats) *pb.NetworkStats {
 	if m == nil {
-		return &pbst.NetworkStats{}
+		return &pb.NetworkStats{}
 	}
-	nb := &pbst.NetworkStats{
+	nb := &pb.NetworkStats{
 		Time:           toProtoTime(m.Time.Time),
 		InterfaceStats: NewInterfaceStatsBuilder(m.InterfaceStats),
 	}
 	if len(m.Interfaces) > 0 {
-		nb.Interfaces = make([]*pbst.InterfaceStats, len(m.Interfaces))
+		nb.Interfaces = make([]*pb.InterfaceStats, len(m.Interfaces))
 		for j, i := range m.Interfaces {
 			nb.Interfaces[j] = NewInterfaceStatsBuilder(i)
 		}
@@ -58,8 +58,8 @@ func NewNetworkStatsBuilder(m *stats.NetworkStats) *pbst.NetworkStats {
 	return nb
 }
 
-func NewInterfaceStatsBuilder(m stats.InterfaceStats) *pbst.InterfaceStats {
-	return &pbst.InterfaceStats{
+func NewInterfaceStatsBuilder(m stats.InterfaceStats) *pb.InterfaceStats {
+	return &pb.InterfaceStats{
 		Name:     m.Name,
 		RxBytes:  utils.PointerToUint64(m.RxBytes),
 		RxErrors: utils.PointerToUint64(m.RxErrors),
@@ -68,11 +68,11 @@ func NewInterfaceStatsBuilder(m stats.InterfaceStats) *pbst.InterfaceStats {
 	}
 }
 
-func NewFsStatsBuilder(m *stats.FsStats) *pbst.FsStats {
+func NewFsStatsBuilder(m *stats.FsStats) *pb.FsStats {
 	if m == nil {
-		return &pbst.FsStats{}
+		return &pb.FsStats{}
 	}
-	return &pbst.FsStats{
+	return &pb.FsStats{
 		Time:           toProtoTime(m.Time.Time),
 		AvailableBytes: utils.PointerToUint64(m.AvailableBytes),
 		CapacityBytes:  utils.PointerToUint64(m.CapacityBytes),
@@ -83,51 +83,51 @@ func NewFsStatsBuilder(m *stats.FsStats) *pbst.FsStats {
 	}
 }
 
-func NewRuntimeStatsBuilder(m *stats.RuntimeStats) *pbst.RuntimeStats {
+func NewRuntimeStatsBuilder(m *stats.RuntimeStats) *pb.RuntimeStats {
 	if m == nil {
-		return &pbst.RuntimeStats{}
+		return &pb.RuntimeStats{}
 	}
-	return &pbst.RuntimeStats{
+	return &pb.RuntimeStats{
 		ImageFs:     NewFsStatsBuilder(m.ImageFs),
 		ContainerFs: NewFsStatsBuilder(m.ContainerFs),
 	}
 }
 
-func NewRlimitStatsBuilder(m *stats.RlimitStats) *pbst.RlimitStats {
+func NewRlimitStatsBuilder(m *stats.RlimitStats) *pb.RlimitStats {
 	if m == nil {
-		return &pbst.RlimitStats{}
+		return &pb.RlimitStats{}
 	}
-	return &pbst.RlimitStats{
+	return &pb.RlimitStats{
 		Time:                  toProtoTime(m.Time.Time),
 		Maxpid:                utils.PointerToInt64(m.MaxPID),
 		NumOfRunningProcesses: utils.PointerToInt64(m.NumOfRunningProcesses),
 	}
 }
 
-func NewSwapStatsBuilder(m *stats.SwapStats) *pbst.SwapStats {
+func NewSwapStatsBuilder(m *stats.SwapStats) *pb.SwapStats {
 	if m == nil {
-		return &pbst.SwapStats{}
+		return &pb.SwapStats{}
 	}
-	return &pbst.SwapStats{
+	return &pb.SwapStats{
 		Time:               toProtoTime(m.Time.Time),
 		SwapAvailableBytes: utils.PointerToUint64(m.SwapAvailableBytes),
 		SwapUsageBytes:     utils.PointerToUint64(m.SwapUsageBytes),
 	}
 }
 
-func NewPSIStatsBuilder(m *stats.PSIStats) *pbst.PSIStats {
+func NewPSIStatsBuilder(m *stats.PSIStats) *pb.PSIStats {
 	if m == nil {
-		return &pbst.PSIStats{}
+		return &pb.PSIStats{}
 	}
 
-	return &pbst.PSIStats{
+	return &pb.PSIStats{
 		Full: NewPSIDataBuilder(m.Full),
 		Some: NewPSIDataBuilder(m.Some),
 	}
 }
 
-func NewPSIDataBuilder(m stats.PSIData) *pbst.PSIData {
-	return &pbst.PSIData{
+func NewPSIDataBuilder(m stats.PSIData) *pb.PSIData {
+	return &pb.PSIData{
 		Total:  m.Total,
 		Avg10:  m.Avg10,
 		Avg60:  m.Avg60,
@@ -135,33 +135,33 @@ func NewPSIDataBuilder(m stats.PSIData) *pbst.PSIData {
 	}
 }
 
-func TransformVolumeStats(m *stats.VolumeStats) *pbst.VolumeStats {
+func TransformVolumeStats(m *stats.VolumeStats) *pb.VolumeStats {
 	if m == nil {
-		return &pbst.VolumeStats{}
+		return &pb.VolumeStats{}
 	}
-	vsb := &pbst.VolumeStats{
+	vsb := &pb.VolumeStats{
 		FsStats: NewFsStatsBuilder(&m.FsStats),
 		Name:    m.Name,
 	}
 	if m.PVCRef != nil {
-		vsb.PvcRef = &pbst.PVCReference{
+		vsb.PvcRef = &pb.PVCReference{
 			Name:      m.PVCRef.Name,
 			Namespace: m.PVCRef.Namespace,
 		}
 	}
 	if m.VolumeHealthStats != nil {
-		vsb.VolumeHealthStats = &pbst.VolumeHealthStats{
+		vsb.VolumeHealthStats = &pb.VolumeHealthStats{
 			Abnormal: m.VolumeHealthStats.Abnormal,
 		}
 	}
 	return vsb
 }
 
-func TransformProcessStats(m *stats.ProcessStats) *pbst.ProcessStats {
+func TransformProcessStats(m *stats.ProcessStats) *pb.ProcessStats {
 	if m == nil {
-		return &pbst.ProcessStats{}
+		return &pb.ProcessStats{}
 	}
-	return &pbst.ProcessStats{
+	return &pb.ProcessStats{
 		ProcessCount: utils.PointerToUint64(m.ProcessCount),
 	}
 

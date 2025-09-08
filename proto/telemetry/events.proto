@@ -1,23 +1,21 @@
 syntax = "proto3";
 
-package events;
+package telemetry;
 
-option go_package = "github.com/opisvigilant/futura/proto/gen/events;events";
+option go_package = "github.com/opisvigilant/futura/proto/gen/telemetry;telemetry";
 
-import "common/metadata.proto";
+import "telemetry/metadata.proto";
 
 // Main batch message
-message KubernetesEventBatch {
-  repeated KubernetesEvent events = 1;
-}
+message KubernetesEventBatch { repeated KubernetesEvent events = 1; }
 
 // Envelope for all possible event types
-message KubernetesEvent {  
+message KubernetesEvent {
   string object_kind = 1;
   string object_name = 2;
-  string object_uid = 3;  
+  string object_uid = 3;
   string object_fieldpath = 4;
-  int64 object_timestamp = 5;  // UNIX timestamp
+  int64 object_timestamp = 5; // UNIX timestamp
   string object_namespace = 6;
   int64 event_severity_number = 7;
   string event_severity_text = 8;
@@ -32,15 +30,8 @@ message KubernetesEvent {
   string object_resource_version = 17;
   string node_name = 18;
 
-  common.APIKey apikey = 19;
-  common.Metadata metadata = 20;
+  APIKey apikey = 19;
+  Metadata metadata = 20;
 
   EnrichmentMetadata enrichment = 100;
-}
-
-message EnrichmentMetadata {
-  uint32 organization_id = 1;
-  int64 cluster_id = 2;  
-  string k8s_version = 3;
-  int64 received_at_unix = 4;  // UNIX timestamp
 }

@@ -19,7 +19,7 @@ import (
 	"github.com/opisvigilant/futura/watcher/internal/cluster/resourcequota"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/statefulset"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 
 	quotav1 "github.com/openshift/api/quota/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,8 +40,8 @@ func NewDataCollector(ms *metadata.Store) *DataCollector {
 	}
 }
 
-func (dc *DataCollector) CollectMetricData(ts time.Time) []*pbcluster.KubernetesClusterObject {
-	result := []*pbcluster.KubernetesClusterObject{}
+func (dc *DataCollector) CollectMetricData(ts time.Time) []*pb.KubernetesClusterObject {
+	result := []*pb.KubernetesClusterObject{}
 	dc.metadataStore.ForEach(gvk.Pod, func(o any) {
 		result = append(result, pod.RecordMetrics(o.(*corev1.Pod), ts))
 	})

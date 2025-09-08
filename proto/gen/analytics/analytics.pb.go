@@ -7,9 +7,7 @@
 package analytics
 
 import (
-	_ "github.com/opisvigilant/futura/proto/gen/cluster"
-	events "github.com/opisvigilant/futura/proto/gen/events"
-	_ "github.com/opisvigilant/futura/proto/gen/stats"
+	telemetry "github.com/opisvigilant/futura/proto/gen/telemetry"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -101,10 +99,10 @@ func (x *GetEventsByClusterIdRequest) GetReverse() bool {
 }
 
 type GetEventsResponse struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	Events        []*events.KubernetesEvent `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
-	NextCursor    int64                     `protobuf:"varint,2,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"` // Timestamp to pass for next page
-	PrevCursor    int64                     `protobuf:"varint,3,opt,name=prev_cursor,json=prevCursor,proto3" json:"prev_cursor,omitempty"` // Optional: for reverse pagination
+	state         protoimpl.MessageState       `protogen:"open.v1"`
+	Events        []*telemetry.KubernetesEvent `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	NextCursor    int64                        `protobuf:"varint,2,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"` // Timestamp to pass for next page
+	PrevCursor    int64                        `protobuf:"varint,3,opt,name=prev_cursor,json=prevCursor,proto3" json:"prev_cursor,omitempty"` // Optional: for reverse pagination
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -139,7 +137,7 @@ func (*GetEventsResponse) Descriptor() ([]byte, []int) {
 	return file_analytics_analytics_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetEventsResponse) GetEvents() []*events.KubernetesEvent {
+func (x *GetEventsResponse) GetEvents() []*telemetry.KubernetesEvent {
 	if x != nil {
 		return x.Events
 	}
@@ -164,16 +162,16 @@ var File_analytics_analytics_proto protoreflect.FileDescriptor
 
 const file_analytics_analytics_proto_rawDesc = "" +
 	"\n" +
-	"\x19analytics/analytics.proto\x12\tanalytics\x1a\x13events/events.proto\x1a\x15cluster/cluster.proto\x1a\x11stats/stats.proto\"\xad\x01\n" +
+	"\x19analytics/analytics.proto\x12\tanalytics\x1a\x16telemetry/events.proto\x1a\x17telemetry/cluster.proto\x1a\x15telemetry/stats.proto\"\xad\x01\n" +
 	"\x1bGetEventsByClusterIdRequest\x12'\n" +
 	"\x0forganization_id\x18\x01 \x01(\rR\x0eorganizationId\x12\x1d\n" +
 	"\n" +
 	"cluster_id\x18\x02 \x01(\x03R\tclusterId\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06cursor\x18\x04 \x01(\x03R\x06cursor\x12\x18\n" +
-	"\areverse\x18\x05 \x01(\bR\areverse\"\x86\x01\n" +
-	"\x11GetEventsResponse\x12/\n" +
-	"\x06events\x18\x01 \x03(\v2\x17.events.KubernetesEventR\x06events\x12\x1f\n" +
+	"\areverse\x18\x05 \x01(\bR\areverse\"\x89\x01\n" +
+	"\x11GetEventsResponse\x122\n" +
+	"\x06events\x18\x01 \x03(\v2\x1a.telemetry.KubernetesEventR\x06events\x12\x1f\n" +
 	"\vnext_cursor\x18\x02 \x01(\x03R\n" +
 	"nextCursor\x12\x1f\n" +
 	"\vprev_cursor\x18\x03 \x01(\x03R\n" +
@@ -197,10 +195,10 @@ var file_analytics_analytics_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_analytics_analytics_proto_goTypes = []any{
 	(*GetEventsByClusterIdRequest)(nil), // 0: analytics.GetEventsByClusterIdRequest
 	(*GetEventsResponse)(nil),           // 1: analytics.GetEventsResponse
-	(*events.KubernetesEvent)(nil),      // 2: events.KubernetesEvent
+	(*telemetry.KubernetesEvent)(nil),   // 2: telemetry.KubernetesEvent
 }
 var file_analytics_analytics_proto_depIdxs = []int32{
-	2, // 0: analytics.GetEventsResponse.events:type_name -> events.KubernetesEvent
+	2, // 0: analytics.GetEventsResponse.events:type_name -> telemetry.KubernetesEvent
 	0, // 1: analytics.AnalyticsService.GetEvents:input_type -> analytics.GetEventsByClusterIdRequest
 	1, // 2: analytics.AnalyticsService.GetEvents:output_type -> analytics.GetEventsResponse
 	2, // [2:3] is the sub-list for method output_type

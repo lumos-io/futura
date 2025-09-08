@@ -3,7 +3,7 @@ package daemonset
 import (
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -24,8 +24,8 @@ func Transform(ds *appsv1.DaemonSet) *appsv1.DaemonSet {
 	}
 }
 
-func RecordMetrics(ds *appsv1.DaemonSet, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(ds *appsv1.DaemonSet, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp:                       timestamppb.New(ts),
 		Namespace:                       ds.Namespace,
 		Name:                            ds.Name,

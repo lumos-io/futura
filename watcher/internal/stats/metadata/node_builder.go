@@ -1,12 +1,12 @@
 package metadata
 
 import (
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
-func NewNodeStatsBuilder(s stats.NodeStats) *pbst.NodeStats {
-	nb := &pbst.NodeStats{
+func NewNodeStatsBuilder(s stats.NodeStats) *pb.NodeStats {
+	nb := &pb.NodeStats{
 		NodeName:  s.NodeName,
 		StartTime: toProtoTime(s.StartTime.Time),
 		Cpu:       NewCPUStatsBuilder(s.CPU),
@@ -19,7 +19,7 @@ func NewNodeStatsBuilder(s stats.NodeStats) *pbst.NodeStats {
 		Swap:      NewSwapStatsBuilder(s.Swap),
 	}
 	if len(s.SystemContainers) > 0 {
-		nb.SystemContainers = make([]*pbst.ContainerStats, len(s.SystemContainers))
+		nb.SystemContainers = make([]*pb.ContainerStats, len(s.SystemContainers))
 		for i, c := range s.SystemContainers {
 			nb.SystemContainers[i] = NewContainerStatsBuilder(c)
 		}

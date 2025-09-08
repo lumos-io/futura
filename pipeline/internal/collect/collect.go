@@ -9,10 +9,9 @@ import (
 	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
-	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
+
 	pbsvc "github.com/opisvigilant/futura/proto/gen/services"
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"github.com/rs/zerolog/log"
 )
 
@@ -56,7 +55,7 @@ func (s *CollectServer) Close() error {
 	return nil
 }
 
-func (s *CollectServer) SendEvents(ctx context.Context, req *pbev.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
+func (s *CollectServer) SendEvents(ctx context.Context, req *pb.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
 	log.Info().Msg("received events...")
 
 	for _, event := range req.Events {
@@ -76,7 +75,7 @@ func (s *CollectServer) SendEvents(ctx context.Context, req *pbev.KubernetesEven
 	return &pbsvc.CollectAck{Status: "ok", Message: "event received"}, nil
 }
 
-func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.KubernetesClusterObjectBatch) (*pbsvc.CollectAck, error) {
+func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pb.KubernetesClusterObjectBatch) (*pbsvc.CollectAck, error) {
 	log.Info().Msg("received cluster objects...")
 
 	for _, obj := range req.Objects {
@@ -96,7 +95,7 @@ func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pbcl.Kubern
 	return &pbsvc.CollectAck{Status: "ok", Message: "cluster objects received"}, nil
 }
 
-func (s *CollectServer) SendKubeletMetrics(ctx context.Context, req *pbst.KubernetesKubeletStats) (*pbsvc.CollectAck, error) {
+func (s *CollectServer) SendKubeletMetrics(ctx context.Context, req *pb.KubernetesKubeletStats) (*pbsvc.CollectAck, error) {
 	log.Info().Msg("received kubelet metrics...")
 
 	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {

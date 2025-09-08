@@ -9,9 +9,7 @@ import (
 	"sync"
 	"time"
 
-	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"github.com/opisvigilant/futura/simulator/simulator"
 )
 
@@ -22,9 +20,9 @@ func main() {
 	wg := &sync.WaitGroup{}
 
 	numNodes := 10
-	metricsCh := make(chan *pbst.KubernetesKubeletStats, 1000)
-	eventsCh := make(chan *pbev.KubernetesEvent, 1000)
-	clusterObjCh := make(chan *pbcl.KubernetesClusterObject, 1000)
+	metricsCh := make(chan *pb.KubernetesKubeletStats, 1000)
+	eventsCh := make(chan *pb.KubernetesEvent, 1000)
+	clusterObjCh := make(chan *pb.KubernetesClusterObject, 1000)
 
 	// Launch one goroutine per node
 	for i := 1; i <= numNodes; i++ {

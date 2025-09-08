@@ -3,7 +3,7 @@ package cronjob
 import (
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -16,8 +16,8 @@ const (
 	cronJobKeyConcurrencyPolicy = "concurrency_policy"
 )
 
-func RecordMetrics(cj *batchv1.CronJob, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(cj *batchv1.CronJob, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp: timestamppb.New(ts),
 		Kind:      cj.Kind,
 		Namespace: cj.Namespace,

@@ -9,9 +9,7 @@ import (
 	"github.com/opisvigilant/futura/pipeline/internal/config"
 	"github.com/rs/zerolog/log"
 
-	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
 const (
@@ -47,7 +45,7 @@ func (e *Storer) Start(ctx context.Context) error {
 		splitter := NewEventFlattener(kc)
 		log.Info().Msg("Start consuming Enriched Kubernete Events...")
 		if err := kc.Subscribe(ctx, EnrichedEventsTopic, func(msg stream.Message, ack func() error) {
-			var m pbev.KubernetesEvent
+			var m pb.KubernetesEvent
 			if err := proto.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the validated event message")
 				return
@@ -72,7 +70,7 @@ func (e *Storer) Start(ctx context.Context) error {
 		splitter := NewStatsFlattener(kc)
 		log.Info().Msg("Start consuming Enriched Kubernete Kubelet Stats...")
 		if err := kc.Subscribe(ctx, EnrichedStatsTopic, func(msg stream.Message, ack func() error) {
-			var m pbst.KubernetesKubeletStats
+			var m pb.KubernetesKubeletStats
 			if err := proto.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
@@ -97,7 +95,7 @@ func (e *Storer) Start(ctx context.Context) error {
 		splitter := NewObjectFlattener(kc)
 		log.Info().Msg("Start consuming Enriched Kubernete Cluster Object...")
 		if err := kc.Subscribe(ctx, EnrichedObjectsTopic, func(msg stream.Message, ack func() error) {
-			var m pbcl.KubernetesClusterObject
+			var m pb.KubernetesClusterObject
 			if err := proto.Unmarshal(msg.Data(), &m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
 				return

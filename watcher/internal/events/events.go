@@ -16,7 +16,7 @@ import (
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
 type KubernetesEventsCollector struct {
@@ -114,7 +114,7 @@ var severityMap = map[string]int{
 func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *sender.Sender) {
 	if kec.allowEvent(ev) {
 		// extract event
-		kev := &pbev.KubernetesEvent{
+		kev := &pb.KubernetesEvent{
 			ObjectKind:            ev.InvolvedObject.Kind,
 			ObjectName:            ev.InvolvedObject.Name,
 			ObjectUid:             string(ev.InvolvedObject.UID),

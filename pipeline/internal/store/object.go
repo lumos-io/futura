@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/opisvigilant/futura/go-lib/stream"
-	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
+	pbcl "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
 const (

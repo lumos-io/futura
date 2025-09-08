@@ -3,7 +3,7 @@ package deployment
 import (
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	conventions "go.opentelemetry.io/otel/semconv/v1.6.1"
@@ -25,8 +25,8 @@ func Transform(deployment *appsv1.Deployment) *appsv1.Deployment {
 	}
 }
 
-func RecordMetrics(dep *appsv1.Deployment, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(dep *appsv1.Deployment, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp:         timestamppb.New(ts),
 		Namespace:         dep.Namespace,
 		Name:              dep.Name,

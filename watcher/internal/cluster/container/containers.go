@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"github.com/rs/zerolog/log"
 	conventions "go.opentelemetry.io/otel/semconv/v1.6.1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,13 +31,13 @@ const (
 
 // RecordSpecMetrics metricizes values from the container spec.
 // This includes values like resource requests and limits.
-func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbcluster.ContainerSpec {
-	containerSpec := &pbcluster.ContainerSpec{
-		Resources: &pbcluster.ContainerResources{
-			Requests: &pbcluster.ResourceQuantities{},
-			Limits:   &pbcluster.ResourceQuantities{},
+func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pb.ContainerSpec {
+	containerSpec := &pb.ContainerSpec{
+		Resources: &pb.ContainerResources{
+			Requests: &pb.ResourceQuantities{},
+			Limits:   &pb.ResourceQuantities{},
 		},
-		LastTerminationState: &pbcluster.ContainerState{},
+		LastTerminationState: &pb.ContainerState{},
 	}
 	for k, r := range c.Resources.Requests {
 		//exhaustive:ignore
@@ -80,8 +80,8 @@ func RecordSpecMetrics(c corev1.Container, pod *corev1.Pod, ts time.Time) *pbclu
 			containerSpec.RestartsCount = int64(cs.RestartCount)
 			containerSpec.Ready = boolToInt64(cs.Ready)
 			if cs.LastTerminationState.Terminated != nil {
-				containerSpec.LastTerminationState.State = &pbcluster.ContainerState_Terminated{
-					Terminated: &pbcluster.ContainerStateTerminated{
+				containerSpec.LastTerminationState.State = &pb.ContainerState_Terminated{
+					Terminated: &pb.ContainerStateTerminated{
 						Reason: cs.LastTerminationState.Terminated.Reason,
 					},
 				}

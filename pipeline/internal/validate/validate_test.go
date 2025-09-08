@@ -8,13 +8,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/opisvigilant/futura/pipeline/internal/validate"
-	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
 func TestValidateKubernetesEvent(t *testing.T) {
-	valid := &pbev.KubernetesEvent{
+	valid := &pb.KubernetesEvent{
 		ObjectKind:          "Pod",
 		ObjectName:          "nginx",
 		ObjectUid:           "uid123",
@@ -81,23 +79,23 @@ func TestValidateKubernetesEvent(t *testing.T) {
 
 func TestValidateKubernetesClusterObject(t *testing.T) {
 	now := time.Now()
-	valid := &pbcl.KubernetesClusterObject{
+	valid := &pb.KubernetesClusterObject{
 		Timestamp: timestamppb.New(now),
 		Type:      "Deployment",
 		Kind:      "Pod",
 		Name:      "my-pod",
 		Uid:       "uid456",
 		Replicas:  3,
-		Containers: []*pbcl.ContainerSpec{
+		Containers: []*pb.ContainerSpec{
 			{Name: "c1", Image: "nginx", RestartsCount: 0},
 		},
-		Volumes: []*pbcl.VolumeSpec{
+		Volumes: []*pb.VolumeSpec{
 			{Name: "vol1", Type: "PersistentVolume"},
 		},
-		Conditions: []*pbcl.NodeCondition{
+		Conditions: []*pb.NodeCondition{
 			{Type: "Ready", Status: "True"},
 		},
-		ClusterQuota: &pbcl.ClusterResourceQuotaMetadata{
+		ClusterQuota: &pb.ClusterResourceQuotaMetadata{
 			Name: "quota1", Uid: "quota-uid",
 		},
 	}
@@ -122,7 +120,7 @@ func TestValidateKubernetesClusterObject(t *testing.T) {
 
 	t.Run("invalid container", func(t *testing.T) {
 		obj := *valid
-		obj.Containers = []*pbcl.ContainerSpec{
+		obj.Containers = []*pb.ContainerSpec{
 			{Name: "", Image: "nginx"},
 		}
 		require.ErrorContains(t, v.ValidateKubernetesClusterObject(&obj), "containers[0].name is required")
@@ -130,7 +128,7 @@ func TestValidateKubernetesClusterObject(t *testing.T) {
 
 	t.Run("invalid volume", func(t *testing.T) {
 		obj := *valid
-		obj.Volumes = []*pbcl.VolumeSpec{
+		obj.Volumes = []*pb.VolumeSpec{
 			{Name: "", Type: ""},
 		}
 		require.ErrorContains(t, v.ValidateKubernetesClusterObject(&obj), "volumes[0].name is required")
@@ -160,7 +158,7 @@ func TestValidateKubernetesClusterObject(t *testing.T) {
 
 	t.Run("missing cluster_quota.name", func(t *testing.T) {
 		obj := *valid
-		obj.ClusterQuota = &pbcl.ClusterResourceQuotaMetadata{
+		obj.ClusterQuota = &pb.ClusterResourceQuotaMetadata{
 			Name: "",
 			Uid:  "some-uid",
 		}
@@ -169,7 +167,7 @@ func TestValidateKubernetesClusterObject(t *testing.T) {
 
 	t.Run("missing cluster_quota.uid", func(t *testing.T) {
 		obj := *valid
-		obj.ClusterQuota = &pbcl.ClusterResourceQuotaMetadata{
+		obj.ClusterQuota = &pb.ClusterResourceQuotaMetadata{
 			Name: "quota-name",
 			Uid:  "",
 		}
@@ -185,19 +183,19 @@ func TestValidateKubernetesClusterObject(t *testing.T) {
 
 func TestValidateKubeletMetrics(t *testing.T) {
 	now := time.Now()
-	valid := &pbst.KubernetesKubeletStats{
-		Node: &pbst.NodeStats{
+	valid := &pb.KubernetesKubeletStats{
+		Node: &pb.NodeStats{
 			NodeName:  "node1",
 			StartTime: timestamppb.New(now),
-			SystemContainers: []*pbst.ContainerStats{
+			SystemContainers: []*pb.ContainerStats{
 				{Name: "kubelet", StartTime: timestamppb.New(now)},
 			},
 		},
-		Pods: []*pbst.PodStats{
+		Pods: []*pb.PodStats{
 			{
-				PodRef:    &pbst.PodReference{Uid: "pod-uid"},
+				PodRef:    &pb.PodReference{Uid: "pod-uid"},
 				StartTime: timestamppb.New(now),
-				Containers: []*pbst.ContainerStats{
+				Containers: []*pb.ContainerStats{
 					{Name: "app", StartTime: timestamppb.New(now)},
 				},
 			},
@@ -226,8 +224,8 @@ func TestValidateKubeletMetrics(t *testing.T) {
 
 	t.Run("pod missing uid", func(t *testing.T) {
 		m := *valid
-		m.Pods = []*pbst.PodStats{
-			{PodRef: &pbst.PodReference{Uid: ""}},
+		m.Pods = []*pb.PodStats{
+			{PodRef: &pb.PodReference{Uid: ""}},
 		}
 		require.ErrorContains(t, v.ValidateKubeletMetrics(&m), "pods[0]: missing podRef.uid")
 	})

@@ -3,7 +3,7 @@ package statefulset
 import (
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	constants "github.com/opisvigilant/futura/watcher/internal/cluster/constants"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -32,12 +32,12 @@ func Transform(statefulset *appsv1.StatefulSet) *appsv1.StatefulSet {
 	}
 }
 
-func RecordMetrics(ss *appsv1.StatefulSet, ts time.Time) *pbcluster.KubernetesClusterObject {
+func RecordMetrics(ss *appsv1.StatefulSet, ts time.Time) *pb.KubernetesClusterObject {
 	if ss.Spec.Replicas == nil {
 		return nil
 	}
 
-	obj := &pbcluster.KubernetesClusterObject{
+	obj := &pb.KubernetesClusterObject{
 		Timestamp:       timestamppb.New(ts),
 		Replicas:        int64(*ss.Spec.Replicas),
 		ReadyReplicas:   int64(ss.Status.ReadyReplicas),

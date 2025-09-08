@@ -14,7 +14,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 
 	conventions "go.opentelemetry.io/otel/semconv/v1.6.1"
 
@@ -72,8 +72,8 @@ func Transform(pod *corev1.Pod) *corev1.Pod {
 	return newPod
 }
 
-func RecordMetrics(pod *corev1.Pod, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(pod *corev1.Pod, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp:  timestamppb.New(ts),
 		Status:     string(pod.Status.Phase),
 		PodReason:  string(pod.Status.Reason),
@@ -82,7 +82,7 @@ func RecordMetrics(pod *corev1.Pod, ts time.Time) *pbcluster.KubernetesClusterOb
 		Name:       pod.Name,
 		Uid:        string(pod.UID),
 		QosClass:   string(pod.Status.QOSClass),
-		Containers: make([]*pbcluster.ContainerSpec, 1),
+		Containers: make([]*pb.ContainerSpec, 1),
 	}
 
 	for _, c := range pod.Spec.Containers {

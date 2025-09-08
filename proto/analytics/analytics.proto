@@ -1,29 +1,29 @@
 syntax = "proto3";
 
-import "events/events.proto";
-import "cluster/cluster.proto";
-import "stats/stats.proto";
+import "telemetry/events.proto";
+import "telemetry/cluster.proto";
+import "telemetry/stats.proto";
 
 package analytics;
 
 option go_package = "github.com/opisvigilant/futura/proto/gen/analytics;analytics";
 
 message GetEventsByClusterIdRequest {
-    uint32 organization_id = 1;
-    int64 cluster_id = 2;
-    
-    int32 limit = 3; // Number of events to return
-    int64 cursor = 4; // Use object_timestamp as the cursor
-    bool reverse = 5; // If true, move backward in time (older events)
+  uint32 organization_id = 1;
+  int64 cluster_id = 2;
+
+  int32 limit = 3;  // Number of events to return
+  int64 cursor = 4; // Use object_timestamp as the cursor
+  bool reverse = 5; // If true, move backward in time (older events)
 }
 
 message GetEventsResponse {
-    repeated events.KubernetesEvent events = 1;
-    
-    int64 next_cursor = 2; // Timestamp to pass for next page
-    int64 prev_cursor = 3; // Optional: for reverse pagination
+  repeated telemetry.KubernetesEvent events = 1;
+
+  int64 next_cursor = 2; // Timestamp to pass for next page
+  int64 prev_cursor = 3; // Optional: for reverse pagination
 }
 
 service AnalyticsService {
-    rpc GetEvents(GetEventsByClusterIdRequest) returns (GetEventsResponse);
+  rpc GetEvents(GetEventsByClusterIdRequest) returns (GetEventsResponse);
 }

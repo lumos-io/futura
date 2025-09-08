@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"github.com/opisvigilant/futura/watcher/internal/cluster/metadata"
 	"github.com/opisvigilant/futura/watcher/pkg/strcase"
 	"github.com/opisvigilant/futura/watcher/utils"
@@ -45,8 +45,8 @@ func Transform(node *corev1.Node) *corev1.Node {
 	return newNode
 }
 
-func RecordMetrics(node *corev1.Node, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(node *corev1.Node, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp:   timestamppb.New(ts),
 		Uid:         string(node.UID),
 		Name:        node.Name,
@@ -66,7 +66,7 @@ func RecordMetrics(node *corev1.Node, ts time.Time) *pbcluster.KubernetesCluster
 
 	// Node Conditions
 	for _, cond := range node.Status.Conditions {
-		obj.Conditions = append(obj.Conditions, &pbcluster.NodeCondition{
+		obj.Conditions = append(obj.Conditions, &pb.NodeCondition{
 			Type:    string(cond.Type),
 			Status:  string(cond.Status),
 			Reason:  cond.Reason,
@@ -75,7 +75,7 @@ func RecordMetrics(node *corev1.Node, ts time.Time) *pbcluster.KubernetesCluster
 	}
 
 	// Allocatable Resources
-	alloc := &pbcluster.AllocatableResources{
+	alloc := &pb.AllocatableResources{
 		Others: make(map[string]string),
 	}
 	for res, quantity := range node.Status.Allocatable {

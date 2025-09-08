@@ -16,7 +16,7 @@ import (
 	"github.com/opisvigilant/futura/go-lib/kv"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
-	pbmt "github.com/opisvigilant/futura/proto/gen/common"
+	pbtl "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"github.com/riverqueue/river"
 )
 
@@ -187,10 +187,10 @@ func createAPIKeyEntry(ctx context.Context, store kv.KVStore, orgID uint, metada
 	if err != nil {
 		return "", err
 	}
-	b, err := json.Marshal(pbmt.ApiKeyInfo{
+	b, err := json.Marshal(pbtl.ApiKeyInfo{
 		OrganizationId:       uint32(orgID),
 		Value:                apiKey,
-		Status:               pbmt.ApiKeyStatus_ACTIVE,
+		Status:               pbtl.ApiKeyStatus_ACTIVE,
 		ClusterName:          metadata.Name,
 		KubernetesVersion:    metadata.GetKubernetesVersion(),
 		Region:               metadata.GetRegion(),

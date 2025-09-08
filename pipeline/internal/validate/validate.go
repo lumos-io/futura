@@ -15,9 +15,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pbcl "github.com/opisvigilant/futura/proto/gen/cluster"
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
-	pbst "github.com/opisvigilant/futura/proto/gen/stats"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
 const (
@@ -62,7 +60,7 @@ func (v *Validator) Start(ctx context.Context) error {
 		}
 		log.Info().Msg("Start consuming Kubernete Events...")
 		if err := kc.Subscribe(ctx, RawEventsTopic, func(msg stream.Message, ack func() error) {
-			m := &pbev.KubernetesEvent{}
+			m := &pb.KubernetesEvent{}
 			if err := proto.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw event message")
 				return
@@ -90,7 +88,7 @@ func (v *Validator) Start(ctx context.Context) error {
 		}
 		log.Info().Msg("Start consuming Kubernete Kubelet Stats...")
 		if err := kc.Subscribe(ctx, RawStatsTopic, func(msg stream.Message, ack func() error) {
-			m := &pbst.KubernetesKubeletStats{}
+			m := &pb.KubernetesKubeletStats{}
 			if err := proto.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw stats message")
 				return
@@ -118,7 +116,7 @@ func (v *Validator) Start(ctx context.Context) error {
 		}
 		log.Info().Msg("Start consuming Kubernete Cluster Object...")
 		if err := kc.Subscribe(ctx, RawObjectsTopic, func(msg stream.Message, ack func() error) {
-			m := &pbcl.KubernetesClusterObject{}
+			m := &pb.KubernetesClusterObject{}
 			if err := proto.Unmarshal(msg.Data(), m); err != nil {
 				log.Error().Err(err).Msg("failed to proto-unmarshal the raw object message")
 				return
@@ -144,7 +142,7 @@ func (v *Validator) Start(ctx context.Context) error {
 }
 
 // ValidateKubernetesEvents perform sanity checks on KubernetesEvents messages
-func (v *Validator) ValidateKubernetesEvent(e *pbev.KubernetesEvent) error {
+func (v *Validator) ValidateKubernetesEvent(e *pb.KubernetesEvent) error {
 	if e == nil {
 		return errors.New("event is nil")
 	}
@@ -189,7 +187,7 @@ func (v *Validator) ValidateKubernetesEvent(e *pbev.KubernetesEvent) error {
 }
 
 // ValidateKubernetesClusterObject performs checks on KubernetesClusterObject
-func (v *Validator) ValidateKubernetesClusterObject(obj *pbcl.KubernetesClusterObject) error {
+func (v *Validator) ValidateKubernetesClusterObject(obj *pb.KubernetesClusterObject) error {
 	if obj == nil {
 		return errors.New("cluster object is nil")
 	}
@@ -295,7 +293,7 @@ func (v *Validator) validateTimestampPB(ts *timestamppb.Timestamp, field string)
 }
 
 // ValidateKubeletMetrics performs sanity checks on KubernetesKubeletStats
-func (v *Validator) ValidateKubeletMetrics(m *pbst.KubernetesKubeletStats) error {
+func (v *Validator) ValidateKubeletMetrics(m *pb.KubernetesKubeletStats) error {
 	if m == nil {
 		return errors.New("metrics message is nil")
 	}
@@ -335,7 +333,7 @@ func (v *Validator) ValidateKubeletMetrics(m *pbst.KubernetesKubeletStats) error
 	return nil
 }
 
-func (v *Validator) validateContainerStats(c *pbst.ContainerStats, path string) error {
+func (v *Validator) validateContainerStats(c *pb.ContainerStats, path string) error {
 	if c.Name == "" {
 		return fmt.Errorf("%s.name is required", path)
 	}

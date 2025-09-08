@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/opisvigilant/futura/go-lib/stream"
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
 const (
@@ -49,7 +49,7 @@ type flatK8SEvent struct {
 	NodeName              string `json:"node_name,omitempty"`
 }
 
-func (es *EventFlattener) Flatten(ctx context.Context, msg *pbev.KubernetesEvent) error {
+func (es *EventFlattener) Flatten(ctx context.Context, msg *pb.KubernetesEvent) error {
 	data := &flatK8SEvent{
 		OrganizationId:        msg.Enrichment.OrganizationId,
 		ClusterId:             msg.Enrichment.ClusterId,

@@ -51,8 +51,7 @@
             if [ -z "$SKIP_KIND" ]; then
               echo "⏩ Skipping setup-kind.sh and setup-kv.sh because SKIP_KIND is set"
             else
-              ./scripts/setup-kind.sh
-              ./scripts/setup-kv.sh
+              ./scripts/setup-kind.sh              
             fi
 
             echo "🚀 Development environment ready!"

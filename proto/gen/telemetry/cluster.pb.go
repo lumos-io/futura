@@ -2,12 +2,11 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.31.1
-// source: cluster/cluster.proto
+// source: telemetry/cluster.proto
 
-package cluster
+package telemetry
 
 import (
-	common "github.com/opisvigilant/futura/proto/gen/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -33,7 +32,7 @@ type KubernetesClusterObjectBatch struct {
 
 func (x *KubernetesClusterObjectBatch) Reset() {
 	*x = KubernetesClusterObjectBatch{}
-	mi := &file_cluster_cluster_proto_msgTypes[0]
+	mi := &file_telemetry_cluster_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +44,7 @@ func (x *KubernetesClusterObjectBatch) String() string {
 func (*KubernetesClusterObjectBatch) ProtoMessage() {}
 
 func (x *KubernetesClusterObjectBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[0]
+	mi := &file_telemetry_cluster_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +57,7 @@ func (x *KubernetesClusterObjectBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KubernetesClusterObjectBatch.ProtoReflect.Descriptor instead.
 func (*KubernetesClusterObjectBatch) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{0}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *KubernetesClusterObjectBatch) GetObjects() []*KubernetesClusterObject {
@@ -126,8 +125,8 @@ type KubernetesClusterObject struct {
 	DaemonsetDesiredNumberScheduled int64               `protobuf:"varint,46,opt,name=daemonset_desired_number_scheduled,json=daemonsetDesiredNumberScheduled,proto3" json:"daemonset_desired_number_scheduled,omitempty"`
 	DaemonsetNumberMisscheduled     int64               `protobuf:"varint,47,opt,name=daemonset_number_misscheduled,json=daemonsetNumberMisscheduled,proto3" json:"daemonset_number_misscheduled,omitempty"`
 	DaemonsetNumberReady            int64               `protobuf:"varint,48,opt,name=daemonset_number_ready,json=daemonsetNumberReady,proto3" json:"daemonset_number_ready,omitempty"`
-	Apikey                          *common.APIKey      `protobuf:"bytes,49,opt,name=apikey,proto3" json:"apikey,omitempty"`
-	Metadata                        *common.Metadata    `protobuf:"bytes,50,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Apikey                          *APIKey             `protobuf:"bytes,49,opt,name=apikey,proto3" json:"apikey,omitempty"`
+	Metadata                        *Metadata           `protobuf:"bytes,50,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Enrichment                      *EnrichmentMetadata `protobuf:"bytes,100,opt,name=enrichment,proto3" json:"enrichment,omitempty"`
 	unknownFields                   protoimpl.UnknownFields
 	sizeCache                       protoimpl.SizeCache
@@ -135,7 +134,7 @@ type KubernetesClusterObject struct {
 
 func (x *KubernetesClusterObject) Reset() {
 	*x = KubernetesClusterObject{}
-	mi := &file_cluster_cluster_proto_msgTypes[1]
+	mi := &file_telemetry_cluster_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +146,7 @@ func (x *KubernetesClusterObject) String() string {
 func (*KubernetesClusterObject) ProtoMessage() {}
 
 func (x *KubernetesClusterObject) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[1]
+	mi := &file_telemetry_cluster_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +159,7 @@ func (x *KubernetesClusterObject) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KubernetesClusterObject.ProtoReflect.Descriptor instead.
 func (*KubernetesClusterObject) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{1}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *KubernetesClusterObject) GetTimestamp() *timestamppb.Timestamp {
@@ -499,14 +498,14 @@ func (x *KubernetesClusterObject) GetDaemonsetNumberReady() int64 {
 	return 0
 }
 
-func (x *KubernetesClusterObject) GetApikey() *common.APIKey {
+func (x *KubernetesClusterObject) GetApikey() *APIKey {
 	if x != nil {
 		return x.Apikey
 	}
 	return nil
 }
 
-func (x *KubernetesClusterObject) GetMetadata() *common.Metadata {
+func (x *KubernetesClusterObject) GetMetadata() *Metadata {
 	if x != nil {
 		return x.Metadata
 	}
@@ -518,74 +517,6 @@ func (x *KubernetesClusterObject) GetEnrichment() *EnrichmentMetadata {
 		return x.Enrichment
 	}
 	return nil
-}
-
-type EnrichmentMetadata struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	OrganizationId uint32                 `protobuf:"varint,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	ClusterId      int64                  `protobuf:"varint,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
-	K8SVersion     string                 `protobuf:"bytes,3,opt,name=k8s_version,json=k8sVersion,proto3" json:"k8s_version,omitempty"`
-	ReceivedAtUnix int64                  `protobuf:"varint,4,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *EnrichmentMetadata) Reset() {
-	*x = EnrichmentMetadata{}
-	mi := &file_cluster_cluster_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EnrichmentMetadata) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EnrichmentMetadata) ProtoMessage() {}
-
-func (x *EnrichmentMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EnrichmentMetadata.ProtoReflect.Descriptor instead.
-func (*EnrichmentMetadata) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *EnrichmentMetadata) GetOrganizationId() uint32 {
-	if x != nil {
-		return x.OrganizationId
-	}
-	return 0
-}
-
-func (x *EnrichmentMetadata) GetClusterId() int64 {
-	if x != nil {
-		return x.ClusterId
-	}
-	return 0
-}
-
-func (x *EnrichmentMetadata) GetK8SVersion() string {
-	if x != nil {
-		return x.K8SVersion
-	}
-	return ""
-}
-
-func (x *EnrichmentMetadata) GetReceivedAtUnix() int64 {
-	if x != nil {
-		return x.ReceivedAtUnix
-	}
-	return 0
 }
 
 // Represents a container and its resource specs.
@@ -606,7 +537,7 @@ type ContainerSpec struct {
 
 func (x *ContainerSpec) Reset() {
 	*x = ContainerSpec{}
-	mi := &file_cluster_cluster_proto_msgTypes[3]
+	mi := &file_telemetry_cluster_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -618,7 +549,7 @@ func (x *ContainerSpec) String() string {
 func (*ContainerSpec) ProtoMessage() {}
 
 func (x *ContainerSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[3]
+	mi := &file_telemetry_cluster_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -631,7 +562,7 @@ func (x *ContainerSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerSpec.ProtoReflect.Descriptor instead.
 func (*ContainerSpec) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{3}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ContainerSpec) GetName() string {
@@ -708,7 +639,7 @@ type ContainerResources struct {
 
 func (x *ContainerResources) Reset() {
 	*x = ContainerResources{}
-	mi := &file_cluster_cluster_proto_msgTypes[4]
+	mi := &file_telemetry_cluster_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -720,7 +651,7 @@ func (x *ContainerResources) String() string {
 func (*ContainerResources) ProtoMessage() {}
 
 func (x *ContainerResources) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[4]
+	mi := &file_telemetry_cluster_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -733,7 +664,7 @@ func (x *ContainerResources) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerResources.ProtoReflect.Descriptor instead.
 func (*ContainerResources) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{4}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ContainerResources) GetLimits() *ResourceQuantities {
@@ -763,7 +694,7 @@ type ResourceQuantities struct {
 
 func (x *ResourceQuantities) Reset() {
 	*x = ResourceQuantities{}
-	mi := &file_cluster_cluster_proto_msgTypes[5]
+	mi := &file_telemetry_cluster_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -775,7 +706,7 @@ func (x *ResourceQuantities) String() string {
 func (*ResourceQuantities) ProtoMessage() {}
 
 func (x *ResourceQuantities) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[5]
+	mi := &file_telemetry_cluster_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -788,7 +719,7 @@ func (x *ResourceQuantities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceQuantities.ProtoReflect.Descriptor instead.
 func (*ResourceQuantities) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{5}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ResourceQuantities) GetCpu() string {
@@ -830,7 +761,7 @@ type VolumeSpec struct {
 
 func (x *VolumeSpec) Reset() {
 	*x = VolumeSpec{}
-	mi := &file_cluster_cluster_proto_msgTypes[6]
+	mi := &file_telemetry_cluster_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -842,7 +773,7 @@ func (x *VolumeSpec) String() string {
 func (*VolumeSpec) ProtoMessage() {}
 
 func (x *VolumeSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[6]
+	mi := &file_telemetry_cluster_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +786,7 @@ func (x *VolumeSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeSpec.ProtoReflect.Descriptor instead.
 func (*VolumeSpec) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{6}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *VolumeSpec) GetName() string {
@@ -872,7 +803,8 @@ func (x *VolumeSpec) GetType() string {
 	return ""
 }
 
-// Represents the state of a container: only one of waiting, running, or terminated may be set.
+// Represents the state of a container: only one of waiting, running, or
+// terminated may be set.
 type ContainerState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to State:
@@ -887,7 +819,7 @@ type ContainerState struct {
 
 func (x *ContainerState) Reset() {
 	*x = ContainerState{}
-	mi := &file_cluster_cluster_proto_msgTypes[7]
+	mi := &file_telemetry_cluster_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -899,7 +831,7 @@ func (x *ContainerState) String() string {
 func (*ContainerState) ProtoMessage() {}
 
 func (x *ContainerState) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[7]
+	mi := &file_telemetry_cluster_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -912,7 +844,7 @@ func (x *ContainerState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerState.ProtoReflect.Descriptor instead.
 func (*ContainerState) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{7}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ContainerState) GetState() isContainerState_State {
@@ -982,7 +914,7 @@ type ContainerStateWaiting struct {
 
 func (x *ContainerStateWaiting) Reset() {
 	*x = ContainerStateWaiting{}
-	mi := &file_cluster_cluster_proto_msgTypes[8]
+	mi := &file_telemetry_cluster_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -994,7 +926,7 @@ func (x *ContainerStateWaiting) String() string {
 func (*ContainerStateWaiting) ProtoMessage() {}
 
 func (x *ContainerStateWaiting) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[8]
+	mi := &file_telemetry_cluster_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1007,7 +939,7 @@ func (x *ContainerStateWaiting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStateWaiting.ProtoReflect.Descriptor instead.
 func (*ContainerStateWaiting) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{8}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ContainerStateWaiting) GetReason() string {
@@ -1034,7 +966,7 @@ type ContainerStateRunning struct {
 
 func (x *ContainerStateRunning) Reset() {
 	*x = ContainerStateRunning{}
-	mi := &file_cluster_cluster_proto_msgTypes[9]
+	mi := &file_telemetry_cluster_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1046,7 +978,7 @@ func (x *ContainerStateRunning) String() string {
 func (*ContainerStateRunning) ProtoMessage() {}
 
 func (x *ContainerStateRunning) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[9]
+	mi := &file_telemetry_cluster_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1059,7 +991,7 @@ func (x *ContainerStateRunning) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStateRunning.ProtoReflect.Descriptor instead.
 func (*ContainerStateRunning) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{9}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ContainerStateRunning) GetStartedAt() *timestamppb.Timestamp {
@@ -1085,7 +1017,7 @@ type ContainerStateTerminated struct {
 
 func (x *ContainerStateTerminated) Reset() {
 	*x = ContainerStateTerminated{}
-	mi := &file_cluster_cluster_proto_msgTypes[10]
+	mi := &file_telemetry_cluster_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1097,7 +1029,7 @@ func (x *ContainerStateTerminated) String() string {
 func (*ContainerStateTerminated) ProtoMessage() {}
 
 func (x *ContainerStateTerminated) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[10]
+	mi := &file_telemetry_cluster_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1110,7 +1042,7 @@ func (x *ContainerStateTerminated) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStateTerminated.ProtoReflect.Descriptor instead.
 func (*ContainerStateTerminated) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{10}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ContainerStateTerminated) GetExitCode() int64 {
@@ -1174,7 +1106,7 @@ type NodeCondition struct {
 
 func (x *NodeCondition) Reset() {
 	*x = NodeCondition{}
-	mi := &file_cluster_cluster_proto_msgTypes[11]
+	mi := &file_telemetry_cluster_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1186,7 +1118,7 @@ func (x *NodeCondition) String() string {
 func (*NodeCondition) ProtoMessage() {}
 
 func (x *NodeCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[11]
+	mi := &file_telemetry_cluster_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1199,7 +1131,7 @@ func (x *NodeCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeCondition.ProtoReflect.Descriptor instead.
 func (*NodeCondition) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{11}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *NodeCondition) GetType() string {
@@ -1243,7 +1175,7 @@ type AllocatableResources struct {
 
 func (x *AllocatableResources) Reset() {
 	*x = AllocatableResources{}
-	mi := &file_cluster_cluster_proto_msgTypes[12]
+	mi := &file_telemetry_cluster_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1255,7 +1187,7 @@ func (x *AllocatableResources) String() string {
 func (*AllocatableResources) ProtoMessage() {}
 
 func (x *AllocatableResources) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[12]
+	mi := &file_telemetry_cluster_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1268,7 +1200,7 @@ func (x *AllocatableResources) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AllocatableResources.ProtoReflect.Descriptor instead.
 func (*AllocatableResources) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{12}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AllocatableResources) GetCpu() string {
@@ -1319,7 +1251,7 @@ type ClusterResourceQuotaMetadata struct {
 
 func (x *ClusterResourceQuotaMetadata) Reset() {
 	*x = ClusterResourceQuotaMetadata{}
-	mi := &file_cluster_cluster_proto_msgTypes[13]
+	mi := &file_telemetry_cluster_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1331,7 +1263,7 @@ func (x *ClusterResourceQuotaMetadata) String() string {
 func (*ClusterResourceQuotaMetadata) ProtoMessage() {}
 
 func (x *ClusterResourceQuotaMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[13]
+	mi := &file_telemetry_cluster_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1344,7 +1276,7 @@ func (x *ClusterResourceQuotaMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClusterResourceQuotaMetadata.ProtoReflect.Descriptor instead.
 func (*ClusterResourceQuotaMetadata) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{13}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ClusterResourceQuotaMetadata) GetName() string {
@@ -1393,7 +1325,7 @@ type NamespaceQuota struct {
 
 func (x *NamespaceQuota) Reset() {
 	*x = NamespaceQuota{}
-	mi := &file_cluster_cluster_proto_msgTypes[14]
+	mi := &file_telemetry_cluster_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1405,7 +1337,7 @@ func (x *NamespaceQuota) String() string {
 func (*NamespaceQuota) ProtoMessage() {}
 
 func (x *NamespaceQuota) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[14]
+	mi := &file_telemetry_cluster_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1418,7 +1350,7 @@ func (x *NamespaceQuota) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NamespaceQuota.ProtoReflect.Descriptor instead.
 func (*NamespaceQuota) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{14}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *NamespaceQuota) GetNamespace() string {
@@ -1452,7 +1384,7 @@ type QuotaResource struct {
 
 func (x *QuotaResource) Reset() {
 	*x = QuotaResource{}
-	mi := &file_cluster_cluster_proto_msgTypes[15]
+	mi := &file_telemetry_cluster_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1464,7 +1396,7 @@ func (x *QuotaResource) String() string {
 func (*QuotaResource) ProtoMessage() {}
 
 func (x *QuotaResource) ProtoReflect() protoreflect.Message {
-	mi := &file_cluster_cluster_proto_msgTypes[15]
+	mi := &file_telemetry_cluster_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1477,7 +1409,7 @@ func (x *QuotaResource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuotaResource.ProtoReflect.Descriptor instead.
 func (*QuotaResource) Descriptor() ([]byte, []int) {
-	return file_cluster_cluster_proto_rawDescGZIP(), []int{15}
+	return file_telemetry_cluster_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *QuotaResource) GetResource() string {
@@ -1494,22 +1426,22 @@ func (x *QuotaResource) GetValue() int64 {
 	return 0
 }
 
-var File_cluster_cluster_proto protoreflect.FileDescriptor
+var File_telemetry_cluster_proto protoreflect.FileDescriptor
 
-const file_cluster_cluster_proto_rawDesc = "" +
+const file_telemetry_cluster_proto_rawDesc = "" +
 	"\n" +
-	"\x15cluster/cluster.proto\x12\acluster\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15common/metadata.proto\"Z\n" +
-	"\x1cKubernetesClusterObjectBatch\x12:\n" +
-	"\aobjects\x18\x03 \x03(\v2 .cluster.KubernetesClusterObjectR\aobjects\"\xc9\x13\n" +
+	"\x17telemetry/cluster.proto\x12\ttelemetry\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18telemetry/metadata.proto\"\\\n" +
+	"\x1cKubernetesClusterObjectBatch\x12<\n" +
+	"\aobjects\x18\x03 \x03(\v2\".telemetry.KubernetesClusterObjectR\aobjects\"\xe3\x13\n" +
 	"\x17KubernetesClusterObject\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
 	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x1c\n" +
 	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12\x12\n" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12\x10\n" +
-	"\x03uid\x18\x06 \x01(\tR\x03uid\x12D\n" +
-	"\x06labels\x18\a \x03(\v2,.cluster.KubernetesClusterObject.LabelsEntryR\x06labels\x12S\n" +
-	"\vannotations\x18\b \x03(\v21.cluster.KubernetesClusterObject.AnnotationsEntryR\vannotations\x12\x1b\n" +
+	"\x03uid\x18\x06 \x01(\tR\x03uid\x12F\n" +
+	"\x06labels\x18\a \x03(\v2..telemetry.KubernetesClusterObject.LabelsEntryR\x06labels\x12U\n" +
+	"\vannotations\x18\b \x03(\v23.telemetry.KubernetesClusterObject.AnnotationsEntryR\vannotations\x12\x1b\n" +
 	"\tnode_name\x18\t \x01(\tR\bnodeName\x12\x16\n" +
 	"\x06status\x18\n" +
 	" \x01(\tR\x06status\x12\x14\n" +
@@ -1523,14 +1455,14 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x0eready_replicas\x18\x10 \x01(\x03R\rreadyReplicas\x12-\n" +
 	"\x12available_replicas\x18\x11 \x01(\x03R\x11availableReplicas\x12)\n" +
 	"\x10updated_replicas\x18\x12 \x01(\x03R\x0fupdatedReplicas\x12)\n" +
-	"\x10current_replicas\x18+ \x01(\x03R\x0fcurrentReplicas\x126\n" +
+	"\x10current_replicas\x18+ \x01(\x03R\x0fcurrentReplicas\x128\n" +
 	"\n" +
-	"containers\x18\x13 \x03(\v2\x16.cluster.ContainerSpecR\n" +
-	"containers\x12-\n" +
-	"\avolumes\x18\x14 \x03(\v2\x13.cluster.VolumeSpecR\avolumes\x12 \n" +
-	"\vtolerations\x18\x15 \x03(\tR\vtolerations\x12J\n" +
-	"\baffinity\x18\x16 \x03(\v2..cluster.KubernetesClusterObject.AffinityEntryR\baffinity\x12A\n" +
-	"\x05extra\x18\x17 \x03(\v2+.cluster.KubernetesClusterObject.ExtraEntryR\x05extra\x12\x1f\n" +
+	"containers\x18\x13 \x03(\v2\x18.telemetry.ContainerSpecR\n" +
+	"containers\x12/\n" +
+	"\avolumes\x18\x14 \x03(\v2\x15.telemetry.VolumeSpecR\avolumes\x12 \n" +
+	"\vtolerations\x18\x15 \x03(\tR\vtolerations\x12L\n" +
+	"\baffinity\x18\x16 \x03(\v20.telemetry.KubernetesClusterObject.AffinityEntryR\baffinity\x12C\n" +
+	"\x05extra\x18\x17 \x03(\v2-.telemetry.KubernetesClusterObject.ExtraEntryR\x05extra\x12\x1f\n" +
 	"\vapi_version\x18\x18 \x01(\tR\n" +
 	"apiVersion\x12(\n" +
 	"\x10hpa_max_replicas\x18\x19 \x01(\x03R\x0ehpaMaxReplicas\x12(\n" +
@@ -1548,23 +1480,23 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\aos_type\x18# \x01(\tR\x06osType\x12\x19\n" +
 	"\bos_image\x18$ \x01(\tR\aosImage\x12+\n" +
 	"\x11container_runtime\x18% \x01(\tR\x10containerRuntime\x12:\n" +
-	"\x19container_runtime_version\x18& \x01(\tR\x17containerRuntimeVersion\x126\n" +
+	"\x19container_runtime_version\x18& \x01(\tR\x17containerRuntimeVersion\x128\n" +
 	"\n" +
-	"conditions\x18' \x03(\v2\x16.cluster.NodeConditionR\n" +
-	"conditions\x12?\n" +
-	"\vallocatable\x18( \x01(\v2\x1d.cluster.AllocatableResourcesR\vallocatable\x12\x1d\n" +
+	"conditions\x18' \x03(\v2\x18.telemetry.NodeConditionR\n" +
+	"conditions\x12A\n" +
+	"\vallocatable\x18( \x01(\v2\x1f.telemetry.AllocatableResourcesR\vallocatable\x12\x1d\n" +
 	"\n" +
 	"pod_reason\x18) \x01(\tR\tpodReason\x12\x1b\n" +
-	"\tqos_class\x18* \x01(\tR\bqosClass\x12J\n" +
-	"\rcluster_quota\x18, \x01(\v2%.cluster.ClusterResourceQuotaMetadataR\fclusterQuota\x12K\n" +
+	"\tqos_class\x18* \x01(\tR\bqosClass\x12L\n" +
+	"\rcluster_quota\x18, \x01(\v2'.telemetry.ClusterResourceQuotaMetadataR\fclusterQuota\x12K\n" +
 	"\"daemonset_current_number_scheduled\x18- \x01(\x03R\x1fdaemonsetCurrentNumberScheduled\x12K\n" +
 	"\"daemonset_desired_number_scheduled\x18. \x01(\x03R\x1fdaemonsetDesiredNumberScheduled\x12B\n" +
 	"\x1ddaemonset_number_misscheduled\x18/ \x01(\x03R\x1bdaemonsetNumberMisscheduled\x124\n" +
-	"\x16daemonset_number_ready\x180 \x01(\x03R\x14daemonsetNumberReady\x12&\n" +
-	"\x06apikey\x181 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
-	"\bmetadata\x182 \x01(\v2\x10.common.MetadataR\bmetadata\x12;\n" +
+	"\x16daemonset_number_ready\x180 \x01(\x03R\x14daemonsetNumberReady\x12)\n" +
+	"\x06apikey\x181 \x01(\v2\x11.telemetry.APIKeyR\x06apikey\x12/\n" +
+	"\bmetadata\x182 \x01(\v2\x13.telemetry.MetadataR\bmetadata\x12=\n" +
 	"\n" +
-	"enrichment\x18d \x01(\v2\x1b.cluster.EnrichmentMetadataR\n" +
+	"enrichment\x18d \x01(\v2\x1d.telemetry.EnrichmentMetadataR\n" +
 	"enrichment\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -1578,27 +1510,20 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
 	"ExtraEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa7\x01\n" +
-	"\x12EnrichmentMetadata\x12'\n" +
-	"\x0forganization_id\x18\x01 \x01(\rR\x0eorganizationId\x12\x1d\n" +
-	"\n" +
-	"cluster_id\x18\x02 \x01(\x03R\tclusterId\x12\x1f\n" +
-	"\vk8s_version\x18\x03 \x01(\tR\n" +
-	"k8sVersion\x12(\n" +
-	"\x10received_at_unix\x18\x04 \x01(\x03R\x0ereceivedAtUnix\"\xee\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf4\x02\n" +
 	"\rContainerSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05image\x18\x02 \x01(\tR\x05image\x129\n" +
-	"\tresources\x18\x03 \x01(\v2\x1b.cluster.ContainerResourcesR\tresources\x12 \n" +
+	"\x05image\x18\x02 \x01(\tR\x05image\x12;\n" +
+	"\tresources\x18\x03 \x01(\v2\x1d.telemetry.ContainerResourcesR\tresources\x12 \n" +
 	"\vcontainerId\x18\x04 \x01(\tR\vcontainerId\x12%\n" +
 	"\x0erestarts_count\x18\x05 \x01(\x03R\rrestartsCount\x12\x14\n" +
-	"\x05ready\x18\x06 \x01(\x03R\x05ready\x12-\n" +
-	"\x05state\x18\a \x01(\v2\x17.cluster.ContainerStateR\x05state\x12M\n" +
-	"\x16last_termination_state\x18\b \x01(\v2\x17.cluster.ContainerStateR\x14lastTerminationState\x12\x1b\n" +
-	"\timage_tag\x18\t \x01(\tR\bimageTag\"\x82\x01\n" +
-	"\x12ContainerResources\x123\n" +
-	"\x06limits\x18\x01 \x01(\v2\x1b.cluster.ResourceQuantitiesR\x06limits\x127\n" +
-	"\brequests\x18\x02 \x01(\v2\x1b.cluster.ResourceQuantitiesR\brequests\"\x85\x01\n" +
+	"\x05ready\x18\x06 \x01(\x03R\x05ready\x12/\n" +
+	"\x05state\x18\a \x01(\v2\x19.telemetry.ContainerStateR\x05state\x12O\n" +
+	"\x16last_termination_state\x18\b \x01(\v2\x19.telemetry.ContainerStateR\x14lastTerminationState\x12\x1b\n" +
+	"\timage_tag\x18\t \x01(\tR\bimageTag\"\x86\x01\n" +
+	"\x12ContainerResources\x125\n" +
+	"\x06limits\x18\x01 \x01(\v2\x1d.telemetry.ResourceQuantitiesR\x06limits\x129\n" +
+	"\brequests\x18\x02 \x01(\v2\x1d.telemetry.ResourceQuantitiesR\brequests\"\x85\x01\n" +
 	"\x12ResourceQuantities\x12\x10\n" +
 	"\x03cpu\x18\x01 \x01(\tR\x03cpu\x12\x16\n" +
 	"\x06memory\x18\x02 \x01(\tR\x06memory\x12\x18\n" +
@@ -1607,12 +1532,12 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\n" +
 	"VolumeSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
-	"\x04type\x18\x02 \x01(\tR\x04type\"\xd6\x01\n" +
-	"\x0eContainerState\x12:\n" +
-	"\awaiting\x18\x01 \x01(\v2\x1e.cluster.ContainerStateWaitingH\x00R\awaiting\x12:\n" +
-	"\arunning\x18\x02 \x01(\v2\x1e.cluster.ContainerStateRunningH\x00R\arunning\x12C\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\"\xdc\x01\n" +
+	"\x0eContainerState\x12<\n" +
+	"\awaiting\x18\x01 \x01(\v2 .telemetry.ContainerStateWaitingH\x00R\awaiting\x12<\n" +
+	"\arunning\x18\x02 \x01(\v2 .telemetry.ContainerStateRunningH\x00R\arunning\x12E\n" +
 	"\n" +
-	"terminated\x18\x03 \x01(\v2!.cluster.ContainerStateTerminatedH\x00R\n" +
+	"terminated\x18\x03 \x01(\v2#.telemetry.ContainerStateTerminatedH\x00R\n" +
 	"terminatedB\a\n" +
 	"\x05state\"I\n" +
 	"\x15ContainerStateWaiting\x12\x16\n" +
@@ -1635,102 +1560,102 @@ const file_cluster_cluster_proto_rawDesc = "" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x18\n" +
-	"\amessage\x18\x04 \x01(\tR\amessage\"\xff\x01\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\"\x81\x02\n" +
 	"\x14AllocatableResources\x12\x10\n" +
 	"\x03cpu\x18\x01 \x01(\tR\x03cpu\x12\x16\n" +
 	"\x06memory\x18\x02 \x01(\tR\x06memory\x12\x12\n" +
 	"\x04pods\x18\x03 \x01(\tR\x04pods\x12+\n" +
-	"\x11ephemeral_storage\x18\x04 \x01(\tR\x10ephemeralStorage\x12A\n" +
-	"\x06others\x18\x05 \x03(\v2).cluster.AllocatableResources.OthersEntryR\x06others\x1a9\n" +
+	"\x11ephemeral_storage\x18\x04 \x01(\tR\x10ephemeralStorage\x12C\n" +
+	"\x06others\x18\x05 \x03(\v2+.telemetry.AllocatableResources.OthersEntryR\x06others\x1a9\n" +
 	"\vOthersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe9\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xef\x01\n" +
 	"\x1cClusterResourceQuotaMetadata\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
-	"\x03uid\x18\x02 \x01(\tR\x03uid\x129\n" +
-	"\ftotal_limits\x18\x03 \x03(\v2\x16.cluster.QuotaResourceR\vtotalLimits\x127\n" +
-	"\vtotal_usage\x18\x04 \x03(\v2\x16.cluster.QuotaResourceR\n" +
-	"totalUsage\x12/\n" +
-	"\x06quotas\x18\x05 \x03(\v2\x17.cluster.NamespaceQuotaR\x06quotas\"\x8c\x01\n" +
+	"\x03uid\x18\x02 \x01(\tR\x03uid\x12;\n" +
+	"\ftotal_limits\x18\x03 \x03(\v2\x18.telemetry.QuotaResourceR\vtotalLimits\x129\n" +
+	"\vtotal_usage\x18\x04 \x03(\v2\x18.telemetry.QuotaResourceR\n" +
+	"totalUsage\x121\n" +
+	"\x06quotas\x18\x05 \x03(\v2\x19.telemetry.NamespaceQuotaR\x06quotas\"\x90\x01\n" +
 	"\x0eNamespaceQuota\x12\x1c\n" +
-	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12.\n" +
-	"\x06limits\x18\x02 \x03(\v2\x16.cluster.QuotaResourceR\x06limits\x12,\n" +
-	"\x05usage\x18\x03 \x03(\v2\x16.cluster.QuotaResourceR\x05usage\"A\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x120\n" +
+	"\x06limits\x18\x02 \x03(\v2\x18.telemetry.QuotaResourceR\x06limits\x12.\n" +
+	"\x05usage\x18\x03 \x03(\v2\x18.telemetry.QuotaResourceR\x05usage\"A\n" +
 	"\rQuotaResource\x12\x1a\n" +
 	"\bresource\x18\x01 \x01(\tR\bresource\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05valueB:Z8github.com/opisvigilant/futura/proto/gen/cluster;clusterb\x06proto3"
+	"\x05value\x18\x02 \x01(\x03R\x05valueB>Z<github.com/opisvigilant/futura/proto/gen/telemetry;telemetryb\x06proto3"
 
 var (
-	file_cluster_cluster_proto_rawDescOnce sync.Once
-	file_cluster_cluster_proto_rawDescData []byte
+	file_telemetry_cluster_proto_rawDescOnce sync.Once
+	file_telemetry_cluster_proto_rawDescData []byte
 )
 
-func file_cluster_cluster_proto_rawDescGZIP() []byte {
-	file_cluster_cluster_proto_rawDescOnce.Do(func() {
-		file_cluster_cluster_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_cluster_cluster_proto_rawDesc), len(file_cluster_cluster_proto_rawDesc)))
+func file_telemetry_cluster_proto_rawDescGZIP() []byte {
+	file_telemetry_cluster_proto_rawDescOnce.Do(func() {
+		file_telemetry_cluster_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_telemetry_cluster_proto_rawDesc), len(file_telemetry_cluster_proto_rawDesc)))
 	})
-	return file_cluster_cluster_proto_rawDescData
+	return file_telemetry_cluster_proto_rawDescData
 }
 
-var file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
-var file_cluster_cluster_proto_goTypes = []any{
-	(*KubernetesClusterObjectBatch)(nil), // 0: cluster.KubernetesClusterObjectBatch
-	(*KubernetesClusterObject)(nil),      // 1: cluster.KubernetesClusterObject
-	(*EnrichmentMetadata)(nil),           // 2: cluster.EnrichmentMetadata
-	(*ContainerSpec)(nil),                // 3: cluster.ContainerSpec
-	(*ContainerResources)(nil),           // 4: cluster.ContainerResources
-	(*ResourceQuantities)(nil),           // 5: cluster.ResourceQuantities
-	(*VolumeSpec)(nil),                   // 6: cluster.VolumeSpec
-	(*ContainerState)(nil),               // 7: cluster.ContainerState
-	(*ContainerStateWaiting)(nil),        // 8: cluster.ContainerStateWaiting
-	(*ContainerStateRunning)(nil),        // 9: cluster.ContainerStateRunning
-	(*ContainerStateTerminated)(nil),     // 10: cluster.ContainerStateTerminated
-	(*NodeCondition)(nil),                // 11: cluster.NodeCondition
-	(*AllocatableResources)(nil),         // 12: cluster.AllocatableResources
-	(*ClusterResourceQuotaMetadata)(nil), // 13: cluster.ClusterResourceQuotaMetadata
-	(*NamespaceQuota)(nil),               // 14: cluster.NamespaceQuota
-	(*QuotaResource)(nil),                // 15: cluster.QuotaResource
-	nil,                                  // 16: cluster.KubernetesClusterObject.LabelsEntry
-	nil,                                  // 17: cluster.KubernetesClusterObject.AnnotationsEntry
-	nil,                                  // 18: cluster.KubernetesClusterObject.AffinityEntry
-	nil,                                  // 19: cluster.KubernetesClusterObject.ExtraEntry
-	nil,                                  // 20: cluster.AllocatableResources.OthersEntry
-	(*timestamppb.Timestamp)(nil),        // 21: google.protobuf.Timestamp
-	(*common.APIKey)(nil),                // 22: common.APIKey
-	(*common.Metadata)(nil),              // 23: common.Metadata
+var file_telemetry_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_telemetry_cluster_proto_goTypes = []any{
+	(*KubernetesClusterObjectBatch)(nil), // 0: telemetry.KubernetesClusterObjectBatch
+	(*KubernetesClusterObject)(nil),      // 1: telemetry.KubernetesClusterObject
+	(*ContainerSpec)(nil),                // 2: telemetry.ContainerSpec
+	(*ContainerResources)(nil),           // 3: telemetry.ContainerResources
+	(*ResourceQuantities)(nil),           // 4: telemetry.ResourceQuantities
+	(*VolumeSpec)(nil),                   // 5: telemetry.VolumeSpec
+	(*ContainerState)(nil),               // 6: telemetry.ContainerState
+	(*ContainerStateWaiting)(nil),        // 7: telemetry.ContainerStateWaiting
+	(*ContainerStateRunning)(nil),        // 8: telemetry.ContainerStateRunning
+	(*ContainerStateTerminated)(nil),     // 9: telemetry.ContainerStateTerminated
+	(*NodeCondition)(nil),                // 10: telemetry.NodeCondition
+	(*AllocatableResources)(nil),         // 11: telemetry.AllocatableResources
+	(*ClusterResourceQuotaMetadata)(nil), // 12: telemetry.ClusterResourceQuotaMetadata
+	(*NamespaceQuota)(nil),               // 13: telemetry.NamespaceQuota
+	(*QuotaResource)(nil),                // 14: telemetry.QuotaResource
+	nil,                                  // 15: telemetry.KubernetesClusterObject.LabelsEntry
+	nil,                                  // 16: telemetry.KubernetesClusterObject.AnnotationsEntry
+	nil,                                  // 17: telemetry.KubernetesClusterObject.AffinityEntry
+	nil,                                  // 18: telemetry.KubernetesClusterObject.ExtraEntry
+	nil,                                  // 19: telemetry.AllocatableResources.OthersEntry
+	(*timestamppb.Timestamp)(nil),        // 20: google.protobuf.Timestamp
+	(*APIKey)(nil),                       // 21: telemetry.APIKey
+	(*Metadata)(nil),                     // 22: telemetry.Metadata
+	(*EnrichmentMetadata)(nil),           // 23: telemetry.EnrichmentMetadata
 }
-var file_cluster_cluster_proto_depIdxs = []int32{
-	1,  // 0: cluster.KubernetesClusterObjectBatch.objects:type_name -> cluster.KubernetesClusterObject
-	21, // 1: cluster.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
-	16, // 2: cluster.KubernetesClusterObject.labels:type_name -> cluster.KubernetesClusterObject.LabelsEntry
-	17, // 3: cluster.KubernetesClusterObject.annotations:type_name -> cluster.KubernetesClusterObject.AnnotationsEntry
-	3,  // 4: cluster.KubernetesClusterObject.containers:type_name -> cluster.ContainerSpec
-	6,  // 5: cluster.KubernetesClusterObject.volumes:type_name -> cluster.VolumeSpec
-	18, // 6: cluster.KubernetesClusterObject.affinity:type_name -> cluster.KubernetesClusterObject.AffinityEntry
-	19, // 7: cluster.KubernetesClusterObject.extra:type_name -> cluster.KubernetesClusterObject.ExtraEntry
-	11, // 8: cluster.KubernetesClusterObject.conditions:type_name -> cluster.NodeCondition
-	12, // 9: cluster.KubernetesClusterObject.allocatable:type_name -> cluster.AllocatableResources
-	13, // 10: cluster.KubernetesClusterObject.cluster_quota:type_name -> cluster.ClusterResourceQuotaMetadata
-	22, // 11: cluster.KubernetesClusterObject.apikey:type_name -> common.APIKey
-	23, // 12: cluster.KubernetesClusterObject.metadata:type_name -> common.Metadata
-	2,  // 13: cluster.KubernetesClusterObject.enrichment:type_name -> cluster.EnrichmentMetadata
-	4,  // 14: cluster.ContainerSpec.resources:type_name -> cluster.ContainerResources
-	7,  // 15: cluster.ContainerSpec.state:type_name -> cluster.ContainerState
-	7,  // 16: cluster.ContainerSpec.last_termination_state:type_name -> cluster.ContainerState
-	5,  // 17: cluster.ContainerResources.limits:type_name -> cluster.ResourceQuantities
-	5,  // 18: cluster.ContainerResources.requests:type_name -> cluster.ResourceQuantities
-	8,  // 19: cluster.ContainerState.waiting:type_name -> cluster.ContainerStateWaiting
-	9,  // 20: cluster.ContainerState.running:type_name -> cluster.ContainerStateRunning
-	10, // 21: cluster.ContainerState.terminated:type_name -> cluster.ContainerStateTerminated
-	21, // 22: cluster.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
-	21, // 23: cluster.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
-	21, // 24: cluster.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
-	20, // 25: cluster.AllocatableResources.others:type_name -> cluster.AllocatableResources.OthersEntry
-	15, // 26: cluster.ClusterResourceQuotaMetadata.total_limits:type_name -> cluster.QuotaResource
-	15, // 27: cluster.ClusterResourceQuotaMetadata.total_usage:type_name -> cluster.QuotaResource
-	14, // 28: cluster.ClusterResourceQuotaMetadata.quotas:type_name -> cluster.NamespaceQuota
-	15, // 29: cluster.NamespaceQuota.limits:type_name -> cluster.QuotaResource
-	15, // 30: cluster.NamespaceQuota.usage:type_name -> cluster.QuotaResource
+var file_telemetry_cluster_proto_depIdxs = []int32{
+	1,  // 0: telemetry.KubernetesClusterObjectBatch.objects:type_name -> telemetry.KubernetesClusterObject
+	20, // 1: telemetry.KubernetesClusterObject.timestamp:type_name -> google.protobuf.Timestamp
+	15, // 2: telemetry.KubernetesClusterObject.labels:type_name -> telemetry.KubernetesClusterObject.LabelsEntry
+	16, // 3: telemetry.KubernetesClusterObject.annotations:type_name -> telemetry.KubernetesClusterObject.AnnotationsEntry
+	2,  // 4: telemetry.KubernetesClusterObject.containers:type_name -> telemetry.ContainerSpec
+	5,  // 5: telemetry.KubernetesClusterObject.volumes:type_name -> telemetry.VolumeSpec
+	17, // 6: telemetry.KubernetesClusterObject.affinity:type_name -> telemetry.KubernetesClusterObject.AffinityEntry
+	18, // 7: telemetry.KubernetesClusterObject.extra:type_name -> telemetry.KubernetesClusterObject.ExtraEntry
+	10, // 8: telemetry.KubernetesClusterObject.conditions:type_name -> telemetry.NodeCondition
+	11, // 9: telemetry.KubernetesClusterObject.allocatable:type_name -> telemetry.AllocatableResources
+	12, // 10: telemetry.KubernetesClusterObject.cluster_quota:type_name -> telemetry.ClusterResourceQuotaMetadata
+	21, // 11: telemetry.KubernetesClusterObject.apikey:type_name -> telemetry.APIKey
+	22, // 12: telemetry.KubernetesClusterObject.metadata:type_name -> telemetry.Metadata
+	23, // 13: telemetry.KubernetesClusterObject.enrichment:type_name -> telemetry.EnrichmentMetadata
+	3,  // 14: telemetry.ContainerSpec.resources:type_name -> telemetry.ContainerResources
+	6,  // 15: telemetry.ContainerSpec.state:type_name -> telemetry.ContainerState
+	6,  // 16: telemetry.ContainerSpec.last_termination_state:type_name -> telemetry.ContainerState
+	4,  // 17: telemetry.ContainerResources.limits:type_name -> telemetry.ResourceQuantities
+	4,  // 18: telemetry.ContainerResources.requests:type_name -> telemetry.ResourceQuantities
+	7,  // 19: telemetry.ContainerState.waiting:type_name -> telemetry.ContainerStateWaiting
+	8,  // 20: telemetry.ContainerState.running:type_name -> telemetry.ContainerStateRunning
+	9,  // 21: telemetry.ContainerState.terminated:type_name -> telemetry.ContainerStateTerminated
+	20, // 22: telemetry.ContainerStateRunning.started_at:type_name -> google.protobuf.Timestamp
+	20, // 23: telemetry.ContainerStateTerminated.started_at:type_name -> google.protobuf.Timestamp
+	20, // 24: telemetry.ContainerStateTerminated.finished_at:type_name -> google.protobuf.Timestamp
+	19, // 25: telemetry.AllocatableResources.others:type_name -> telemetry.AllocatableResources.OthersEntry
+	14, // 26: telemetry.ClusterResourceQuotaMetadata.total_limits:type_name -> telemetry.QuotaResource
+	14, // 27: telemetry.ClusterResourceQuotaMetadata.total_usage:type_name -> telemetry.QuotaResource
+	13, // 28: telemetry.ClusterResourceQuotaMetadata.quotas:type_name -> telemetry.NamespaceQuota
+	14, // 29: telemetry.NamespaceQuota.limits:type_name -> telemetry.QuotaResource
+	14, // 30: telemetry.NamespaceQuota.usage:type_name -> telemetry.QuotaResource
 	31, // [31:31] is the sub-list for method output_type
 	31, // [31:31] is the sub-list for method input_type
 	31, // [31:31] is the sub-list for extension type_name
@@ -1738,12 +1663,13 @@ var file_cluster_cluster_proto_depIdxs = []int32{
 	0,  // [0:31] is the sub-list for field type_name
 }
 
-func init() { file_cluster_cluster_proto_init() }
-func file_cluster_cluster_proto_init() {
-	if File_cluster_cluster_proto != nil {
+func init() { file_telemetry_cluster_proto_init() }
+func file_telemetry_cluster_proto_init() {
+	if File_telemetry_cluster_proto != nil {
 		return
 	}
-	file_cluster_cluster_proto_msgTypes[7].OneofWrappers = []any{
+	file_telemetry_metadata_proto_init()
+	file_telemetry_cluster_proto_msgTypes[6].OneofWrappers = []any{
 		(*ContainerState_Waiting)(nil),
 		(*ContainerState_Running)(nil),
 		(*ContainerState_Terminated)(nil),
@@ -1752,17 +1678,17 @@ func file_cluster_cluster_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cluster_cluster_proto_rawDesc), len(file_cluster_cluster_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_telemetry_cluster_proto_rawDesc), len(file_telemetry_cluster_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_cluster_cluster_proto_goTypes,
-		DependencyIndexes: file_cluster_cluster_proto_depIdxs,
-		MessageInfos:      file_cluster_cluster_proto_msgTypes,
+		GoTypes:           file_telemetry_cluster_proto_goTypes,
+		DependencyIndexes: file_telemetry_cluster_proto_depIdxs,
+		MessageInfos:      file_telemetry_cluster_proto_msgTypes,
 	}.Build()
-	File_cluster_cluster_proto = out.File
-	file_cluster_cluster_proto_goTypes = nil
-	file_cluster_cluster_proto_depIdxs = nil
+	File_telemetry_cluster_proto = out.File
+	file_telemetry_cluster_proto_goTypes = nil
+	file_telemetry_cluster_proto_depIdxs = nil
 }

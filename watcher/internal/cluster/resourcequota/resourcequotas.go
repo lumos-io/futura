@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	pbcluster "github.com/opisvigilant/futura/proto/gen/cluster"
+	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func RecordMetrics(rq *corev1.ResourceQuota, ts time.Time) *pbcluster.KubernetesClusterObject {
-	obj := &pbcluster.KubernetesClusterObject{
+func RecordMetrics(rq *corev1.ResourceQuota, ts time.Time) *pb.KubernetesClusterObject {
+	obj := &pb.KubernetesClusterObject{
 		Timestamp: timestamppb.New(ts),
 		Namespace: rq.Namespace,
 		Name:      rq.Name,

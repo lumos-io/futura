@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.31.1
-// source: common/metadata.proto
+// source: telemetry/metadata.proto
 
-package common
+package telemetry
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -24,10 +24,11 @@ const (
 type ApiKeyStatus int32
 
 const (
-	ApiKeyStatus_UNDEFINED_STATUS ApiKeyStatus = 0 // needed for avoid this bug: https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
-	ApiKeyStatus_ACTIVE           ApiKeyStatus = 1
-	ApiKeyStatus_DISABLED         ApiKeyStatus = 2
-	ApiKeyStatus_SUSPENDED        ApiKeyStatus = 3
+	ApiKeyStatus_UNDEFINED_STATUS ApiKeyStatus = 0 // needed for avoid this bug:
+	// https://github.com/stephenh/ts-proto/issues/643#issuecomment-2629353789
+	ApiKeyStatus_ACTIVE    ApiKeyStatus = 1
+	ApiKeyStatus_DISABLED  ApiKeyStatus = 2
+	ApiKeyStatus_SUSPENDED ApiKeyStatus = 3
 )
 
 // Enum value maps for ApiKeyStatus.
@@ -57,11 +58,11 @@ func (x ApiKeyStatus) String() string {
 }
 
 func (ApiKeyStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_common_metadata_proto_enumTypes[0].Descriptor()
+	return file_telemetry_metadata_proto_enumTypes[0].Descriptor()
 }
 
 func (ApiKeyStatus) Type() protoreflect.EnumType {
-	return &file_common_metadata_proto_enumTypes[0]
+	return &file_telemetry_metadata_proto_enumTypes[0]
 }
 
 func (x ApiKeyStatus) Number() protoreflect.EnumNumber {
@@ -70,7 +71,7 @@ func (x ApiKeyStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ApiKeyStatus.Descriptor instead.
 func (ApiKeyStatus) EnumDescriptor() ([]byte, []int) {
-	return file_common_metadata_proto_rawDescGZIP(), []int{0}
+	return file_telemetry_metadata_proto_rawDescGZIP(), []int{0}
 }
 
 type Metadata struct {
@@ -83,7 +84,7 @@ type Metadata struct {
 
 func (x *Metadata) Reset() {
 	*x = Metadata{}
-	mi := &file_common_metadata_proto_msgTypes[0]
+	mi := &file_telemetry_metadata_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -95,7 +96,7 @@ func (x *Metadata) String() string {
 func (*Metadata) ProtoMessage() {}
 
 func (x *Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_common_metadata_proto_msgTypes[0]
+	mi := &file_telemetry_metadata_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -108,7 +109,7 @@ func (x *Metadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metadata.ProtoReflect.Descriptor instead.
 func (*Metadata) Descriptor() ([]byte, []int) {
-	return file_common_metadata_proto_rawDescGZIP(), []int{0}
+	return file_telemetry_metadata_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Metadata) GetIdempotencyKey() string {
@@ -134,7 +135,7 @@ type APIKey struct {
 
 func (x *APIKey) Reset() {
 	*x = APIKey{}
-	mi := &file_common_metadata_proto_msgTypes[1]
+	mi := &file_telemetry_metadata_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -146,7 +147,7 @@ func (x *APIKey) String() string {
 func (*APIKey) ProtoMessage() {}
 
 func (x *APIKey) ProtoReflect() protoreflect.Message {
-	mi := &file_common_metadata_proto_msgTypes[1]
+	mi := &file_telemetry_metadata_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -159,7 +160,7 @@ func (x *APIKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use APIKey.ProtoReflect.Descriptor instead.
 func (*APIKey) Descriptor() ([]byte, []int) {
-	return file_common_metadata_proto_rawDescGZIP(), []int{1}
+	return file_telemetry_metadata_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *APIKey) GetKey() string {
@@ -174,7 +175,7 @@ type ApiKeyInfo struct {
 	Value                string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	ProviderConnectionId uint32                 `protobuf:"varint,2,opt,name=provider_connection_id,json=providerConnectionId,proto3" json:"provider_connection_id,omitempty"`
 	OrganizationId       uint32                 `protobuf:"varint,3,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	Status               ApiKeyStatus           `protobuf:"varint,4,opt,name=status,proto3,enum=common.ApiKeyStatus" json:"status,omitempty"`
+	Status               ApiKeyStatus           `protobuf:"varint,4,opt,name=status,proto3,enum=telemetry.ApiKeyStatus" json:"status,omitempty"`
 	SecretId             string                 `protobuf:"bytes,5,opt,name=secret_id,json=secretId,proto3" json:"secret_id,omitempty"`
 	ClusterId            uint32                 `protobuf:"varint,6,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
 	ClusterName          string                 `protobuf:"bytes,7,opt,name=cluster_name,json=clusterName,proto3" json:"cluster_name,omitempty"`
@@ -188,7 +189,7 @@ type ApiKeyInfo struct {
 
 func (x *ApiKeyInfo) Reset() {
 	*x = ApiKeyInfo{}
-	mi := &file_common_metadata_proto_msgTypes[2]
+	mi := &file_telemetry_metadata_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -200,7 +201,7 @@ func (x *ApiKeyInfo) String() string {
 func (*ApiKeyInfo) ProtoMessage() {}
 
 func (x *ApiKeyInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_common_metadata_proto_msgTypes[2]
+	mi := &file_telemetry_metadata_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -213,7 +214,7 @@ func (x *ApiKeyInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApiKeyInfo.ProtoReflect.Descriptor instead.
 func (*ApiKeyInfo) Descriptor() ([]byte, []int) {
-	return file_common_metadata_proto_rawDescGZIP(), []int{2}
+	return file_telemetry_metadata_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ApiKeyInfo) GetValue() string {
@@ -293,22 +294,90 @@ func (x *ApiKeyInfo) GetCreatedAt() string {
 	return ""
 }
 
-var File_common_metadata_proto protoreflect.FileDescriptor
+type EnrichmentMetadata struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	OrganizationId uint32                 `protobuf:"varint,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	ClusterId      int64                  `protobuf:"varint,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	K8SVersion     string                 `protobuf:"bytes,3,opt,name=k8s_version,json=k8sVersion,proto3" json:"k8s_version,omitempty"`
+	ReceivedAtUnix int64                  `protobuf:"varint,4,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
 
-const file_common_metadata_proto_rawDesc = "" +
+func (x *EnrichmentMetadata) Reset() {
+	*x = EnrichmentMetadata{}
+	mi := &file_telemetry_metadata_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EnrichmentMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnrichmentMetadata) ProtoMessage() {}
+
+func (x *EnrichmentMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_metadata_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnrichmentMetadata.ProtoReflect.Descriptor instead.
+func (*EnrichmentMetadata) Descriptor() ([]byte, []int) {
+	return file_telemetry_metadata_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *EnrichmentMetadata) GetOrganizationId() uint32 {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return 0
+}
+
+func (x *EnrichmentMetadata) GetClusterId() int64 {
+	if x != nil {
+		return x.ClusterId
+	}
+	return 0
+}
+
+func (x *EnrichmentMetadata) GetK8SVersion() string {
+	if x != nil {
+		return x.K8SVersion
+	}
+	return ""
+}
+
+func (x *EnrichmentMetadata) GetReceivedAtUnix() int64 {
+	if x != nil {
+		return x.ReceivedAtUnix
+	}
+	return 0
+}
+
+var File_telemetry_metadata_proto protoreflect.FileDescriptor
+
+const file_telemetry_metadata_proto_rawDesc = "" +
 	"\n" +
-	"\x15common/metadata.proto\x12\x06common\"\\\n" +
+	"\x18telemetry/metadata.proto\x12\ttelemetry\"\\\n" +
 	"\bMetadata\x12'\n" +
 	"\x0fidempotency_key\x18\x01 \x01(\tR\x0eidempotencyKey\x12'\n" +
 	"\x0fwatcher_version\x18\x02 \x01(\tR\x0ewatcherVersion\"\x1a\n" +
 	"\x06APIKey\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\"\xa3\x03\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\"\xa6\x03\n" +
 	"\n" +
 	"ApiKeyInfo\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\x124\n" +
 	"\x16provider_connection_id\x18\x02 \x01(\rR\x14providerConnectionId\x12'\n" +
-	"\x0forganization_id\x18\x03 \x01(\rR\x0eorganizationId\x12,\n" +
-	"\x06status\x18\x04 \x01(\x0e2\x14.common.ApiKeyStatusR\x06status\x12\x1b\n" +
+	"\x0forganization_id\x18\x03 \x01(\rR\x0eorganizationId\x12/\n" +
+	"\x06status\x18\x04 \x01(\x0e2\x17.telemetry.ApiKeyStatusR\x06status\x12\x1b\n" +
 	"\tsecret_id\x18\x05 \x01(\tR\bsecretId\x12\x1d\n" +
 	"\n" +
 	"cluster_id\x18\x06 \x01(\rR\tclusterId\x12!\n" +
@@ -318,36 +387,44 @@ const file_common_metadata_proto_rawDesc = "" +
 	"\x06region\x18\n" +
 	" \x01(\tR\x06region\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\v \x01(\tR\tcreatedAt*M\n" +
+	"created_at\x18\v \x01(\tR\tcreatedAt\"\xa7\x01\n" +
+	"\x12EnrichmentMetadata\x12'\n" +
+	"\x0forganization_id\x18\x01 \x01(\rR\x0eorganizationId\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x02 \x01(\x03R\tclusterId\x12\x1f\n" +
+	"\vk8s_version\x18\x03 \x01(\tR\n" +
+	"k8sVersion\x12(\n" +
+	"\x10received_at_unix\x18\x04 \x01(\x03R\x0ereceivedAtUnix*M\n" +
 	"\fApiKeyStatus\x12\x14\n" +
 	"\x10UNDEFINED_STATUS\x10\x00\x12\n" +
 	"\n" +
 	"\x06ACTIVE\x10\x01\x12\f\n" +
 	"\bDISABLED\x10\x02\x12\r\n" +
-	"\tSUSPENDED\x10\x03B8Z6github.com/opisvigilant/futura/proto/gen/common;commonb\x06proto3"
+	"\tSUSPENDED\x10\x03B>Z<github.com/opisvigilant/futura/proto/gen/telemetry;telemetryb\x06proto3"
 
 var (
-	file_common_metadata_proto_rawDescOnce sync.Once
-	file_common_metadata_proto_rawDescData []byte
+	file_telemetry_metadata_proto_rawDescOnce sync.Once
+	file_telemetry_metadata_proto_rawDescData []byte
 )
 
-func file_common_metadata_proto_rawDescGZIP() []byte {
-	file_common_metadata_proto_rawDescOnce.Do(func() {
-		file_common_metadata_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_common_metadata_proto_rawDesc), len(file_common_metadata_proto_rawDesc)))
+func file_telemetry_metadata_proto_rawDescGZIP() []byte {
+	file_telemetry_metadata_proto_rawDescOnce.Do(func() {
+		file_telemetry_metadata_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_telemetry_metadata_proto_rawDesc), len(file_telemetry_metadata_proto_rawDesc)))
 	})
-	return file_common_metadata_proto_rawDescData
+	return file_telemetry_metadata_proto_rawDescData
 }
 
-var file_common_metadata_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_common_metadata_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_common_metadata_proto_goTypes = []any{
-	(ApiKeyStatus)(0),  // 0: common.ApiKeyStatus
-	(*Metadata)(nil),   // 1: common.Metadata
-	(*APIKey)(nil),     // 2: common.APIKey
-	(*ApiKeyInfo)(nil), // 3: common.ApiKeyInfo
+var file_telemetry_metadata_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_telemetry_metadata_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_telemetry_metadata_proto_goTypes = []any{
+	(ApiKeyStatus)(0),          // 0: telemetry.ApiKeyStatus
+	(*Metadata)(nil),           // 1: telemetry.Metadata
+	(*APIKey)(nil),             // 2: telemetry.APIKey
+	(*ApiKeyInfo)(nil),         // 3: telemetry.ApiKeyInfo
+	(*EnrichmentMetadata)(nil), // 4: telemetry.EnrichmentMetadata
 }
-var file_common_metadata_proto_depIdxs = []int32{
-	0, // 0: common.ApiKeyInfo.status:type_name -> common.ApiKeyStatus
+var file_telemetry_metadata_proto_depIdxs = []int32{
+	0, // 0: telemetry.ApiKeyInfo.status:type_name -> telemetry.ApiKeyStatus
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -355,27 +432,27 @@ var file_common_metadata_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_common_metadata_proto_init() }
-func file_common_metadata_proto_init() {
-	if File_common_metadata_proto != nil {
+func init() { file_telemetry_metadata_proto_init() }
+func file_telemetry_metadata_proto_init() {
+	if File_telemetry_metadata_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_metadata_proto_rawDesc), len(file_common_metadata_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_telemetry_metadata_proto_rawDesc), len(file_telemetry_metadata_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_common_metadata_proto_goTypes,
-		DependencyIndexes: file_common_metadata_proto_depIdxs,
-		EnumInfos:         file_common_metadata_proto_enumTypes,
-		MessageInfos:      file_common_metadata_proto_msgTypes,
+		GoTypes:           file_telemetry_metadata_proto_goTypes,
+		DependencyIndexes: file_telemetry_metadata_proto_depIdxs,
+		EnumInfos:         file_telemetry_metadata_proto_enumTypes,
+		MessageInfos:      file_telemetry_metadata_proto_msgTypes,
 	}.Build()
-	File_common_metadata_proto = out.File
-	file_common_metadata_proto_goTypes = nil
-	file_common_metadata_proto_depIdxs = nil
+	File_telemetry_metadata_proto = out.File
+	file_telemetry_metadata_proto_goTypes = nil
+	file_telemetry_metadata_proto_depIdxs = nil
 }

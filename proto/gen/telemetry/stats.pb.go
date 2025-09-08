@@ -2,12 +2,11 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.31.1
-// source: stats/stats.proto
+// source: telemetry/stats.proto
 
-package stats
+package telemetry
 
 import (
-	common "github.com/opisvigilant/futura/proto/gen/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -27,8 +26,8 @@ type KubernetesKubeletStats struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Node          *NodeStats             `protobuf:"bytes,1,opt,name=node,proto3" json:"node,omitempty"`
 	Pods          []*PodStats            `protobuf:"bytes,2,rep,name=pods,proto3" json:"pods,omitempty"`
-	Apikey        *common.APIKey         `protobuf:"bytes,3,opt,name=apikey,proto3" json:"apikey,omitempty"`
-	Metadata      *common.Metadata       `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Apikey        *APIKey                `protobuf:"bytes,3,opt,name=apikey,proto3" json:"apikey,omitempty"`
+	Metadata      *Metadata              `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Enrichment    *EnrichmentMetadata    `protobuf:"bytes,100,opt,name=enrichment,proto3" json:"enrichment,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -36,7 +35,7 @@ type KubernetesKubeletStats struct {
 
 func (x *KubernetesKubeletStats) Reset() {
 	*x = KubernetesKubeletStats{}
-	mi := &file_stats_stats_proto_msgTypes[0]
+	mi := &file_telemetry_stats_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +47,7 @@ func (x *KubernetesKubeletStats) String() string {
 func (*KubernetesKubeletStats) ProtoMessage() {}
 
 func (x *KubernetesKubeletStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[0]
+	mi := &file_telemetry_stats_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +60,7 @@ func (x *KubernetesKubeletStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KubernetesKubeletStats.ProtoReflect.Descriptor instead.
 func (*KubernetesKubeletStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{0}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *KubernetesKubeletStats) GetNode() *NodeStats {
@@ -78,14 +77,14 @@ func (x *KubernetesKubeletStats) GetPods() []*PodStats {
 	return nil
 }
 
-func (x *KubernetesKubeletStats) GetApikey() *common.APIKey {
+func (x *KubernetesKubeletStats) GetApikey() *APIKey {
 	if x != nil {
 		return x.Apikey
 	}
 	return nil
 }
 
-func (x *KubernetesKubeletStats) GetMetadata() *common.Metadata {
+func (x *KubernetesKubeletStats) GetMetadata() *Metadata {
 	if x != nil {
 		return x.Metadata
 	}
@@ -97,66 +96,6 @@ func (x *KubernetesKubeletStats) GetEnrichment() *EnrichmentMetadata {
 		return x.Enrichment
 	}
 	return nil
-}
-
-type EnrichmentMetadata struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	OrganizationId uint32                 `protobuf:"varint,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	ClusterId      int64                  `protobuf:"varint,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
-	ReceivedAtUnix int64                  `protobuf:"varint,3,opt,name=received_at_unix,json=receivedAtUnix,proto3" json:"received_at_unix,omitempty"` // UNIX timestamp
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *EnrichmentMetadata) Reset() {
-	*x = EnrichmentMetadata{}
-	mi := &file_stats_stats_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EnrichmentMetadata) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EnrichmentMetadata) ProtoMessage() {}
-
-func (x *EnrichmentMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EnrichmentMetadata.ProtoReflect.Descriptor instead.
-func (*EnrichmentMetadata) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *EnrichmentMetadata) GetOrganizationId() uint32 {
-	if x != nil {
-		return x.OrganizationId
-	}
-	return 0
-}
-
-func (x *EnrichmentMetadata) GetClusterId() int64 {
-	if x != nil {
-		return x.ClusterId
-	}
-	return 0
-}
-
-func (x *EnrichmentMetadata) GetReceivedAtUnix() int64 {
-	if x != nil {
-		return x.ReceivedAtUnix
-	}
-	return 0
 }
 
 type NodeStats struct {
@@ -178,7 +117,7 @@ type NodeStats struct {
 
 func (x *NodeStats) Reset() {
 	*x = NodeStats{}
-	mi := &file_stats_stats_proto_msgTypes[2]
+	mi := &file_telemetry_stats_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -190,7 +129,7 @@ func (x *NodeStats) String() string {
 func (*NodeStats) ProtoMessage() {}
 
 func (x *NodeStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[2]
+	mi := &file_telemetry_stats_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -203,7 +142,7 @@ func (x *NodeStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeStats.ProtoReflect.Descriptor instead.
 func (*NodeStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{2}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *NodeStats) GetNodeName() string {
@@ -294,7 +233,7 @@ type RlimitStats struct {
 
 func (x *RlimitStats) Reset() {
 	*x = RlimitStats{}
-	mi := &file_stats_stats_proto_msgTypes[3]
+	mi := &file_telemetry_stats_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -306,7 +245,7 @@ func (x *RlimitStats) String() string {
 func (*RlimitStats) ProtoMessage() {}
 
 func (x *RlimitStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[3]
+	mi := &file_telemetry_stats_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +258,7 @@ func (x *RlimitStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RlimitStats.ProtoReflect.Descriptor instead.
 func (*RlimitStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{3}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RlimitStats) GetTime() *timestamppb.Timestamp {
@@ -353,7 +292,7 @@ type RuntimeStats struct {
 
 func (x *RuntimeStats) Reset() {
 	*x = RuntimeStats{}
-	mi := &file_stats_stats_proto_msgTypes[4]
+	mi := &file_telemetry_stats_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -365,7 +304,7 @@ func (x *RuntimeStats) String() string {
 func (*RuntimeStats) ProtoMessage() {}
 
 func (x *RuntimeStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[4]
+	mi := &file_telemetry_stats_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -378,7 +317,7 @@ func (x *RuntimeStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuntimeStats.ProtoReflect.Descriptor instead.
 func (*RuntimeStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{4}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RuntimeStats) GetImageFs() *FsStats {
@@ -414,7 +353,7 @@ type PodStats struct {
 
 func (x *PodStats) Reset() {
 	*x = PodStats{}
-	mi := &file_stats_stats_proto_msgTypes[5]
+	mi := &file_telemetry_stats_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -426,7 +365,7 @@ func (x *PodStats) String() string {
 func (*PodStats) ProtoMessage() {}
 
 func (x *PodStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[5]
+	mi := &file_telemetry_stats_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -439,7 +378,7 @@ func (x *PodStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PodStats.ProtoReflect.Descriptor instead.
 func (*PodStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{5}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PodStats) GetPodRef() *PodReference {
@@ -528,7 +467,7 @@ type ProcessStats struct {
 
 func (x *ProcessStats) Reset() {
 	*x = ProcessStats{}
-	mi := &file_stats_stats_proto_msgTypes[6]
+	mi := &file_telemetry_stats_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -540,7 +479,7 @@ func (x *ProcessStats) String() string {
 func (*ProcessStats) ProtoMessage() {}
 
 func (x *ProcessStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[6]
+	mi := &file_telemetry_stats_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -553,7 +492,7 @@ func (x *ProcessStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProcessStats.ProtoReflect.Descriptor instead.
 func (*ProcessStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{6}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ProcessStats) GetProcessCount() uint64 {
@@ -581,7 +520,7 @@ type ContainerStats struct {
 
 func (x *ContainerStats) Reset() {
 	*x = ContainerStats{}
-	mi := &file_stats_stats_proto_msgTypes[7]
+	mi := &file_telemetry_stats_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -593,7 +532,7 @@ func (x *ContainerStats) String() string {
 func (*ContainerStats) ProtoMessage() {}
 
 func (x *ContainerStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[7]
+	mi := &file_telemetry_stats_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -606,7 +545,7 @@ func (x *ContainerStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStats.ProtoReflect.Descriptor instead.
 func (*ContainerStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{7}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ContainerStats) GetName() string {
@@ -690,7 +629,7 @@ type PodReference struct {
 
 func (x *PodReference) Reset() {
 	*x = PodReference{}
-	mi := &file_stats_stats_proto_msgTypes[8]
+	mi := &file_telemetry_stats_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -702,7 +641,7 @@ func (x *PodReference) String() string {
 func (*PodReference) ProtoMessage() {}
 
 func (x *PodReference) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[8]
+	mi := &file_telemetry_stats_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -715,7 +654,7 @@ func (x *PodReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PodReference.ProtoReflect.Descriptor instead.
 func (*PodReference) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{8}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PodReference) GetName() string {
@@ -752,7 +691,7 @@ type InterfaceStats struct {
 
 func (x *InterfaceStats) Reset() {
 	*x = InterfaceStats{}
-	mi := &file_stats_stats_proto_msgTypes[9]
+	mi := &file_telemetry_stats_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -764,7 +703,7 @@ func (x *InterfaceStats) String() string {
 func (*InterfaceStats) ProtoMessage() {}
 
 func (x *InterfaceStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[9]
+	mi := &file_telemetry_stats_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -777,7 +716,7 @@ func (x *InterfaceStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InterfaceStats.ProtoReflect.Descriptor instead.
 func (*InterfaceStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{9}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *InterfaceStats) GetName() string {
@@ -826,7 +765,7 @@ type NetworkStats struct {
 
 func (x *NetworkStats) Reset() {
 	*x = NetworkStats{}
-	mi := &file_stats_stats_proto_msgTypes[10]
+	mi := &file_telemetry_stats_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -838,7 +777,7 @@ func (x *NetworkStats) String() string {
 func (*NetworkStats) ProtoMessage() {}
 
 func (x *NetworkStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[10]
+	mi := &file_telemetry_stats_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -851,7 +790,7 @@ func (x *NetworkStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkStats.ProtoReflect.Descriptor instead.
 func (*NetworkStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{10}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *NetworkStats) GetTime() *timestamppb.Timestamp {
@@ -887,7 +826,7 @@ type CPUStats struct {
 
 func (x *CPUStats) Reset() {
 	*x = CPUStats{}
-	mi := &file_stats_stats_proto_msgTypes[11]
+	mi := &file_telemetry_stats_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -899,7 +838,7 @@ func (x *CPUStats) String() string {
 func (*CPUStats) ProtoMessage() {}
 
 func (x *CPUStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[11]
+	mi := &file_telemetry_stats_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -912,7 +851,7 @@ func (x *CPUStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CPUStats.ProtoReflect.Descriptor instead.
 func (*CPUStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{11}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CPUStats) GetTime() *timestamppb.Timestamp {
@@ -959,7 +898,7 @@ type MemoryStats struct {
 
 func (x *MemoryStats) Reset() {
 	*x = MemoryStats{}
-	mi := &file_stats_stats_proto_msgTypes[12]
+	mi := &file_telemetry_stats_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -971,7 +910,7 @@ func (x *MemoryStats) String() string {
 func (*MemoryStats) ProtoMessage() {}
 
 func (x *MemoryStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[12]
+	mi := &file_telemetry_stats_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -984,7 +923,7 @@ func (x *MemoryStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MemoryStats.ProtoReflect.Descriptor instead.
 func (*MemoryStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{12}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *MemoryStats) GetTime() *timestamppb.Timestamp {
@@ -1053,7 +992,7 @@ type IOStats struct {
 
 func (x *IOStats) Reset() {
 	*x = IOStats{}
-	mi := &file_stats_stats_proto_msgTypes[13]
+	mi := &file_telemetry_stats_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1065,7 +1004,7 @@ func (x *IOStats) String() string {
 func (*IOStats) ProtoMessage() {}
 
 func (x *IOStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[13]
+	mi := &file_telemetry_stats_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1078,7 +1017,7 @@ func (x *IOStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IOStats.ProtoReflect.Descriptor instead.
 func (*IOStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{13}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *IOStats) GetTime() *timestamppb.Timestamp {
@@ -1105,7 +1044,7 @@ type PSIStats struct {
 
 func (x *PSIStats) Reset() {
 	*x = PSIStats{}
-	mi := &file_stats_stats_proto_msgTypes[14]
+	mi := &file_telemetry_stats_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1117,7 +1056,7 @@ func (x *PSIStats) String() string {
 func (*PSIStats) ProtoMessage() {}
 
 func (x *PSIStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[14]
+	mi := &file_telemetry_stats_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1130,7 +1069,7 @@ func (x *PSIStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PSIStats.ProtoReflect.Descriptor instead.
 func (*PSIStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{14}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PSIStats) GetFull() *PSIData {
@@ -1159,7 +1098,7 @@ type PSIData struct {
 
 func (x *PSIData) Reset() {
 	*x = PSIData{}
-	mi := &file_stats_stats_proto_msgTypes[15]
+	mi := &file_telemetry_stats_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1171,7 +1110,7 @@ func (x *PSIData) String() string {
 func (*PSIData) ProtoMessage() {}
 
 func (x *PSIData) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[15]
+	mi := &file_telemetry_stats_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1184,7 +1123,7 @@ func (x *PSIData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PSIData.ProtoReflect.Descriptor instead.
 func (*PSIData) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{15}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *PSIData) GetTotal() uint64 {
@@ -1226,7 +1165,7 @@ type SwapStats struct {
 
 func (x *SwapStats) Reset() {
 	*x = SwapStats{}
-	mi := &file_stats_stats_proto_msgTypes[16]
+	mi := &file_telemetry_stats_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1238,7 +1177,7 @@ func (x *SwapStats) String() string {
 func (*SwapStats) ProtoMessage() {}
 
 func (x *SwapStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[16]
+	mi := &file_telemetry_stats_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1251,7 +1190,7 @@ func (x *SwapStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SwapStats.ProtoReflect.Descriptor instead.
 func (*SwapStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{16}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SwapStats) GetTime() *timestamppb.Timestamp {
@@ -1289,7 +1228,7 @@ type AcceleratorStats struct {
 
 func (x *AcceleratorStats) Reset() {
 	*x = AcceleratorStats{}
-	mi := &file_stats_stats_proto_msgTypes[17]
+	mi := &file_telemetry_stats_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1301,7 +1240,7 @@ func (x *AcceleratorStats) String() string {
 func (*AcceleratorStats) ProtoMessage() {}
 
 func (x *AcceleratorStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[17]
+	mi := &file_telemetry_stats_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1314,7 +1253,7 @@ func (x *AcceleratorStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcceleratorStats.ProtoReflect.Descriptor instead.
 func (*AcceleratorStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{17}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *AcceleratorStats) GetMake() string {
@@ -1371,7 +1310,7 @@ type VolumeStats struct {
 
 func (x *VolumeStats) Reset() {
 	*x = VolumeStats{}
-	mi := &file_stats_stats_proto_msgTypes[18]
+	mi := &file_telemetry_stats_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1383,7 +1322,7 @@ func (x *VolumeStats) String() string {
 func (*VolumeStats) ProtoMessage() {}
 
 func (x *VolumeStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[18]
+	mi := &file_telemetry_stats_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1396,7 +1335,7 @@ func (x *VolumeStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeStats.ProtoReflect.Descriptor instead.
 func (*VolumeStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{18}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *VolumeStats) GetFsStats() *FsStats {
@@ -1436,7 +1375,7 @@ type VolumeHealthStats struct {
 
 func (x *VolumeHealthStats) Reset() {
 	*x = VolumeHealthStats{}
-	mi := &file_stats_stats_proto_msgTypes[19]
+	mi := &file_telemetry_stats_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1448,7 +1387,7 @@ func (x *VolumeHealthStats) String() string {
 func (*VolumeHealthStats) ProtoMessage() {}
 
 func (x *VolumeHealthStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[19]
+	mi := &file_telemetry_stats_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1461,7 +1400,7 @@ func (x *VolumeHealthStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeHealthStats.ProtoReflect.Descriptor instead.
 func (*VolumeHealthStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{19}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *VolumeHealthStats) GetAbnormal() bool {
@@ -1481,7 +1420,7 @@ type PVCReference struct {
 
 func (x *PVCReference) Reset() {
 	*x = PVCReference{}
-	mi := &file_stats_stats_proto_msgTypes[20]
+	mi := &file_telemetry_stats_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1493,7 +1432,7 @@ func (x *PVCReference) String() string {
 func (*PVCReference) ProtoMessage() {}
 
 func (x *PVCReference) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[20]
+	mi := &file_telemetry_stats_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1506,7 +1445,7 @@ func (x *PVCReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PVCReference.ProtoReflect.Descriptor instead.
 func (*PVCReference) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{20}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *PVCReference) GetName() string {
@@ -1538,7 +1477,7 @@ type FsStats struct {
 
 func (x *FsStats) Reset() {
 	*x = FsStats{}
-	mi := &file_stats_stats_proto_msgTypes[21]
+	mi := &file_telemetry_stats_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1550,7 +1489,7 @@ func (x *FsStats) String() string {
 func (*FsStats) ProtoMessage() {}
 
 func (x *FsStats) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[21]
+	mi := &file_telemetry_stats_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1563,7 +1502,7 @@ func (x *FsStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FsStats.ProtoReflect.Descriptor instead.
 func (*FsStats) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{21}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *FsStats) GetTime() *timestamppb.Timestamp {
@@ -1627,7 +1566,7 @@ type UserDefinedMetricDescriptor struct {
 
 func (x *UserDefinedMetricDescriptor) Reset() {
 	*x = UserDefinedMetricDescriptor{}
-	mi := &file_stats_stats_proto_msgTypes[22]
+	mi := &file_telemetry_stats_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1639,7 +1578,7 @@ func (x *UserDefinedMetricDescriptor) String() string {
 func (*UserDefinedMetricDescriptor) ProtoMessage() {}
 
 func (x *UserDefinedMetricDescriptor) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[22]
+	mi := &file_telemetry_stats_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1652,7 +1591,7 @@ func (x *UserDefinedMetricDescriptor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserDefinedMetricDescriptor.ProtoReflect.Descriptor instead.
 func (*UserDefinedMetricDescriptor) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{22}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *UserDefinedMetricDescriptor) GetName() string {
@@ -1694,7 +1633,7 @@ type UserDefinedMetric struct {
 
 func (x *UserDefinedMetric) Reset() {
 	*x = UserDefinedMetric{}
-	mi := &file_stats_stats_proto_msgTypes[23]
+	mi := &file_telemetry_stats_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1706,7 +1645,7 @@ func (x *UserDefinedMetric) String() string {
 func (*UserDefinedMetric) ProtoMessage() {}
 
 func (x *UserDefinedMetric) ProtoReflect() protoreflect.Message {
-	mi := &file_stats_stats_proto_msgTypes[23]
+	mi := &file_telemetry_stats_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1719,7 +1658,7 @@ func (x *UserDefinedMetric) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserDefinedMetric.ProtoReflect.Descriptor instead.
 func (*UserDefinedMetric) Descriptor() ([]byte, []int) {
-	return file_stats_stats_proto_rawDescGZIP(), []int{23}
+	return file_telemetry_stats_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *UserDefinedMetric) GetDescriptor_() *UserDefinedMetricDescriptor {
@@ -1743,73 +1682,68 @@ func (x *UserDefinedMetric) GetValue() float64 {
 	return 0
 }
 
-var File_stats_stats_proto protoreflect.FileDescriptor
+var File_telemetry_stats_proto protoreflect.FileDescriptor
 
-const file_stats_stats_proto_rawDesc = "" +
+const file_telemetry_stats_proto_rawDesc = "" +
 	"\n" +
-	"\x11stats/stats.proto\x12\x05stats\x1a\x15common/metadata.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf4\x01\n" +
-	"\x16KubernetesKubeletStats\x12$\n" +
-	"\x04node\x18\x01 \x01(\v2\x10.stats.NodeStatsR\x04node\x12#\n" +
-	"\x04pods\x18\x02 \x03(\v2\x0f.stats.PodStatsR\x04pods\x12&\n" +
-	"\x06apikey\x18\x03 \x01(\v2\x0e.common.APIKeyR\x06apikey\x12,\n" +
-	"\bmetadata\x18\x04 \x01(\v2\x10.common.MetadataR\bmetadata\x129\n" +
+	"\x15telemetry/stats.proto\x12\ttelemetry\x1a\x18telemetry/metadata.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x86\x02\n" +
+	"\x16KubernetesKubeletStats\x12(\n" +
+	"\x04node\x18\x01 \x01(\v2\x14.telemetry.NodeStatsR\x04node\x12'\n" +
+	"\x04pods\x18\x02 \x03(\v2\x13.telemetry.PodStatsR\x04pods\x12)\n" +
+	"\x06apikey\x18\x03 \x01(\v2\x11.telemetry.APIKeyR\x06apikey\x12/\n" +
+	"\bmetadata\x18\x04 \x01(\v2\x13.telemetry.MetadataR\bmetadata\x12=\n" +
 	"\n" +
-	"enrichment\x18d \x01(\v2\x19.stats.EnrichmentMetadataR\n" +
-	"enrichment\"\x86\x01\n" +
-	"\x12EnrichmentMetadata\x12'\n" +
-	"\x0forganization_id\x18\x01 \x01(\rR\x0eorganizationId\x12\x1d\n" +
-	"\n" +
-	"cluster_id\x18\x02 \x01(\x03R\tclusterId\x12(\n" +
-	"\x10received_at_unix\x18\x03 \x01(\x03R\x0ereceivedAtUnix\"\xe3\x03\n" +
+	"enrichment\x18d \x01(\v2\x1d.telemetry.EnrichmentMetadataR\n" +
+	"enrichment\"\x87\x04\n" +
 	"\tNodeStats\x12\x1a\n" +
-	"\bnodeName\x18\x01 \x01(\tR\bnodeName\x12A\n" +
-	"\x10systemContainers\x18\x02 \x03(\v2\x15.stats.ContainerStatsR\x10systemContainers\x128\n" +
-	"\tstartTime\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12!\n" +
-	"\x03cpu\x18\x04 \x01(\v2\x0f.stats.CPUStatsR\x03cpu\x12*\n" +
-	"\x06memory\x18\x05 \x01(\v2\x12.stats.MemoryStatsR\x06memory\x12\x1e\n" +
-	"\x02io\x18\x06 \x01(\v2\x0e.stats.IOStatsR\x02io\x12-\n" +
-	"\anetwork\x18\a \x01(\v2\x13.stats.NetworkStatsR\anetwork\x12\x1e\n" +
-	"\x02fs\x18\b \x01(\v2\x0e.stats.FsStatsR\x02fs\x12-\n" +
-	"\aruntime\x18\t \x01(\v2\x13.stats.RuntimeStatsR\aruntime\x12*\n" +
+	"\bnodeName\x18\x01 \x01(\tR\bnodeName\x12E\n" +
+	"\x10systemContainers\x18\x02 \x03(\v2\x19.telemetry.ContainerStatsR\x10systemContainers\x128\n" +
+	"\tstartTime\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12%\n" +
+	"\x03cpu\x18\x04 \x01(\v2\x13.telemetry.CPUStatsR\x03cpu\x12.\n" +
+	"\x06memory\x18\x05 \x01(\v2\x16.telemetry.MemoryStatsR\x06memory\x12\"\n" +
+	"\x02io\x18\x06 \x01(\v2\x12.telemetry.IOStatsR\x02io\x121\n" +
+	"\anetwork\x18\a \x01(\v2\x17.telemetry.NetworkStatsR\anetwork\x12\"\n" +
+	"\x02fs\x18\b \x01(\v2\x12.telemetry.FsStatsR\x02fs\x121\n" +
+	"\aruntime\x18\t \x01(\v2\x17.telemetry.RuntimeStatsR\aruntime\x12.\n" +
 	"\x06rlimit\x18\n" +
-	" \x01(\v2\x12.stats.RlimitStatsR\x06rlimit\x12$\n" +
-	"\x04swap\x18\v \x01(\v2\x10.stats.SwapStatsR\x04swap\"\x8b\x01\n" +
+	" \x01(\v2\x16.telemetry.RlimitStatsR\x06rlimit\x12(\n" +
+	"\x04swap\x18\v \x01(\v2\x14.telemetry.SwapStatsR\x04swap\"\x8b\x01\n" +
 	"\vRlimitStats\x12.\n" +
 	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12\x16\n" +
 	"\x06maxpid\x18\x02 \x01(\x03R\x06maxpid\x124\n" +
-	"\x15numOfRunningProcesses\x18\x03 \x01(\x03R\x15numOfRunningProcesses\"j\n" +
-	"\fRuntimeStats\x12(\n" +
-	"\aimageFs\x18\x01 \x01(\v2\x0e.stats.FsStatsR\aimageFs\x120\n" +
-	"\vcontainerFs\x18\x02 \x01(\v2\x0e.stats.FsStatsR\vcontainerFs\"\x8f\x04\n" +
-	"\bPodStats\x12+\n" +
-	"\x06podRef\x18\x01 \x01(\v2\x13.stats.PodReferenceR\x06podRef\x128\n" +
-	"\tstartTime\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
+	"\x15numOfRunningProcesses\x18\x03 \x01(\x03R\x15numOfRunningProcesses\"r\n" +
+	"\fRuntimeStats\x12,\n" +
+	"\aimageFs\x18\x01 \x01(\v2\x12.telemetry.FsStatsR\aimageFs\x124\n" +
+	"\vcontainerFs\x18\x02 \x01(\v2\x12.telemetry.FsStatsR\vcontainerFs\"\xb7\x04\n" +
+	"\bPodStats\x12/\n" +
+	"\x06podRef\x18\x01 \x01(\v2\x17.telemetry.PodReferenceR\x06podRef\x128\n" +
+	"\tstartTime\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x129\n" +
 	"\n" +
-	"containers\x18\x03 \x03(\v2\x15.stats.ContainerStatsR\n" +
-	"containers\x12!\n" +
-	"\x03cpu\x18\x04 \x01(\v2\x0f.stats.CPUStatsR\x03cpu\x12*\n" +
-	"\x06memory\x18\x05 \x01(\v2\x12.stats.MemoryStatsR\x06memory\x12\x1e\n" +
-	"\x02io\x18\x06 \x01(\v2\x0e.stats.IOStatsR\x02io\x12-\n" +
-	"\anetwork\x18\a \x01(\v2\x13.stats.NetworkStatsR\anetwork\x12,\n" +
-	"\avolumes\x18\b \x03(\v2\x12.stats.VolumeStatsR\avolumes\x12:\n" +
-	"\x10ephemeralStorage\x18\t \x01(\v2\x0e.stats.FsStatsR\x10ephemeralStorage\x127\n" +
+	"containers\x18\x03 \x03(\v2\x19.telemetry.ContainerStatsR\n" +
+	"containers\x12%\n" +
+	"\x03cpu\x18\x04 \x01(\v2\x13.telemetry.CPUStatsR\x03cpu\x12.\n" +
+	"\x06memory\x18\x05 \x01(\v2\x16.telemetry.MemoryStatsR\x06memory\x12\"\n" +
+	"\x02io\x18\x06 \x01(\v2\x12.telemetry.IOStatsR\x02io\x121\n" +
+	"\anetwork\x18\a \x01(\v2\x17.telemetry.NetworkStatsR\anetwork\x120\n" +
+	"\avolumes\x18\b \x03(\v2\x16.telemetry.VolumeStatsR\avolumes\x12>\n" +
+	"\x10ephemeralStorage\x18\t \x01(\v2\x12.telemetry.FsStatsR\x10ephemeralStorage\x12;\n" +
 	"\fprocessStats\x18\n" +
-	" \x01(\v2\x13.stats.ProcessStatsR\fprocessStats\x12$\n" +
-	"\x04swap\x18\v \x01(\v2\x10.stats.SwapStatsR\x04swap\"2\n" +
+	" \x01(\v2\x17.telemetry.ProcessStatsR\fprocessStats\x12(\n" +
+	"\x04swap\x18\v \x01(\v2\x14.telemetry.SwapStatsR\x04swap\"2\n" +
 	"\fProcessStats\x12\"\n" +
-	"\fprocessCount\x18\x01 \x01(\x04R\fprocessCount\"\xc6\x03\n" +
+	"\fprocessCount\x18\x01 \x01(\x04R\fprocessCount\"\xe6\x03\n" +
 	"\x0eContainerStats\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x128\n" +
-	"\tstartTime\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12!\n" +
-	"\x03cpu\x18\x03 \x01(\v2\x0f.stats.CPUStatsR\x03cpu\x12*\n" +
-	"\x06memory\x18\x04 \x01(\v2\x12.stats.MemoryStatsR\x06memory\x12\x1e\n" +
-	"\x02io\x18\x05 \x01(\v2\x0e.stats.IOStatsR\x02io\x12;\n" +
-	"\faccelerators\x18\x06 \x03(\v2\x17.stats.AcceleratorStatsR\faccelerators\x12&\n" +
-	"\x06rootfs\x18\a \x01(\v2\x0e.stats.FsStatsR\x06rootfs\x12\"\n" +
-	"\x04logs\x18\b \x01(\v2\x0e.stats.FsStatsR\x04logs\x12H\n" +
-	"\x12userDefinedMetrics\x18\t \x03(\v2\x18.stats.UserDefinedMetricR\x12userDefinedMetrics\x12$\n" +
+	"\tstartTime\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12%\n" +
+	"\x03cpu\x18\x03 \x01(\v2\x13.telemetry.CPUStatsR\x03cpu\x12.\n" +
+	"\x06memory\x18\x04 \x01(\v2\x16.telemetry.MemoryStatsR\x06memory\x12\"\n" +
+	"\x02io\x18\x05 \x01(\v2\x12.telemetry.IOStatsR\x02io\x12?\n" +
+	"\faccelerators\x18\x06 \x03(\v2\x1b.telemetry.AcceleratorStatsR\faccelerators\x12*\n" +
+	"\x06rootfs\x18\a \x01(\v2\x12.telemetry.FsStatsR\x06rootfs\x12&\n" +
+	"\x04logs\x18\b \x01(\v2\x12.telemetry.FsStatsR\x04logs\x12L\n" +
+	"\x12userDefinedMetrics\x18\t \x03(\v2\x1c.telemetry.UserDefinedMetricR\x12userDefinedMetrics\x12(\n" +
 	"\x04swap\x18\n" +
-	" \x01(\v2\x10.stats.SwapStatsR\x04swap\"R\n" +
+	" \x01(\v2\x14.telemetry.SwapStatsR\x04swap\"R\n" +
 	"\fPodReference\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x10\n" +
@@ -1819,18 +1753,18 @@ const file_stats_stats_proto_rawDesc = "" +
 	"\arxBytes\x18\x02 \x01(\x04R\arxBytes\x12\x1a\n" +
 	"\brxErrors\x18\x03 \x01(\x04R\brxErrors\x12\x18\n" +
 	"\atxBytes\x18\x04 \x01(\x04R\atxBytes\x12\x1a\n" +
-	"\btxErrors\x18\x05 \x01(\x04R\btxErrors\"\xb4\x01\n" +
+	"\btxErrors\x18\x05 \x01(\x04R\btxErrors\"\xbc\x01\n" +
 	"\fNetworkStats\x12.\n" +
-	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12=\n" +
-	"\x0einterfaceStats\x18\x02 \x01(\v2\x15.stats.InterfaceStatsR\x0einterfaceStats\x125\n" +
+	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12A\n" +
+	"\x0einterfaceStats\x18\x02 \x01(\v2\x19.telemetry.InterfaceStatsR\x0einterfaceStats\x129\n" +
 	"\n" +
-	"interfaces\x18\x03 \x03(\v2\x15.stats.InterfaceStatsR\n" +
-	"interfaces\"\xb9\x01\n" +
+	"interfaces\x18\x03 \x03(\v2\x19.telemetry.InterfaceStatsR\n" +
+	"interfaces\"\xbd\x01\n" +
 	"\bCPUStats\x12.\n" +
 	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12&\n" +
 	"\x0eusageNanoCores\x18\x02 \x01(\x04R\x0eusageNanoCores\x122\n" +
-	"\x14usageCoreNanoSeconds\x18\x03 \x01(\x04R\x14usageCoreNanoSeconds\x12!\n" +
-	"\x03psi\x18\x04 \x01(\v2\x0f.stats.PSIStatsR\x03psi\"\xb8\x02\n" +
+	"\x14usageCoreNanoSeconds\x18\x03 \x01(\x04R\x14usageCoreNanoSeconds\x12%\n" +
+	"\x03psi\x18\x04 \x01(\v2\x13.telemetry.PSIStatsR\x03psi\"\xbc\x02\n" +
 	"\vMemoryStats\x12.\n" +
 	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12&\n" +
 	"\x0eavailableBytes\x18\x02 \x01(\x04R\x0eavailableBytes\x12\x1e\n" +
@@ -1842,14 +1776,14 @@ const file_stats_stats_proto_rawDesc = "" +
 	"\n" +
 	"pageFaults\x18\x06 \x01(\x04R\n" +
 	"pageFaults\x12(\n" +
-	"\x0fmajorPageFaults\x18\a \x01(\x04R\x0fmajorPageFaults\x12!\n" +
-	"\x03psi\x18\b \x01(\v2\x0f.stats.PSIStatsR\x03psi\"\\\n" +
+	"\x0fmajorPageFaults\x18\a \x01(\x04R\x0fmajorPageFaults\x12%\n" +
+	"\x03psi\x18\b \x01(\v2\x13.telemetry.PSIStatsR\x03psi\"`\n" +
 	"\aIOStats\x12.\n" +
-	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12!\n" +
-	"\x03psi\x18\x02 \x01(\v2\x0f.stats.PSIStatsR\x03psi\"R\n" +
-	"\bPSIStats\x12\"\n" +
-	"\x04full\x18\x01 \x01(\v2\x0e.stats.PSIDataR\x04full\x12\"\n" +
-	"\x04some\x18\x02 \x01(\v2\x0e.stats.PSIDataR\x04some\"c\n" +
+	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12%\n" +
+	"\x03psi\x18\x02 \x01(\v2\x13.telemetry.PSIStatsR\x03psi\"Z\n" +
+	"\bPSIStats\x12&\n" +
+	"\x04full\x18\x01 \x01(\v2\x12.telemetry.PSIDataR\x04full\x12&\n" +
+	"\x04some\x18\x02 \x01(\v2\x12.telemetry.PSIDataR\x04some\"c\n" +
 	"\aPSIData\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x04R\x05total\x12\x14\n" +
 	"\x05avg10\x18\x02 \x01(\x01R\x05avg10\x12\x14\n" +
@@ -1867,12 +1801,12 @@ const file_stats_stats_proto_rawDesc = "" +
 	"\n" +
 	"memoryUsed\x18\x05 \x01(\x04R\n" +
 	"memoryUsed\x12\x1c\n" +
-	"\tdutyCycle\x18\x06 \x01(\x04R\tdutyCycle\"\xc0\x01\n" +
-	"\vVolumeStats\x12(\n" +
-	"\afsStats\x18\x01 \x01(\v2\x0e.stats.FsStatsR\afsStats\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12+\n" +
-	"\x06pvcRef\x18\x03 \x01(\v2\x13.stats.PVCReferenceR\x06pvcRef\x12F\n" +
-	"\x11volumeHealthStats\x18\x04 \x01(\v2\x18.stats.VolumeHealthStatsR\x11volumeHealthStats\"/\n" +
+	"\tdutyCycle\x18\x06 \x01(\x04R\tdutyCycle\"\xcc\x01\n" +
+	"\vVolumeStats\x12,\n" +
+	"\afsStats\x18\x01 \x01(\v2\x12.telemetry.FsStatsR\afsStats\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +
+	"\x06pvcRef\x18\x03 \x01(\v2\x17.telemetry.PVCReferenceR\x06pvcRef\x12J\n" +
+	"\x11volumeHealthStats\x18\x04 \x01(\v2\x1c.telemetry.VolumeHealthStatsR\x11volumeHealthStats\"/\n" +
 	"\x11VolumeHealthStats\x12\x1a\n" +
 	"\babnormal\x18\x01 \x01(\bR\babnormal\"@\n" +
 	"\fPVCReference\x12\x12\n" +
@@ -1889,123 +1823,123 @@ const file_stats_stats_proto_rawDesc = "" +
 	"\x06inodes\x18\x06 \x01(\x04R\x06inodes\x12\x1e\n" +
 	"\n" +
 	"inodesUsed\x18\a \x01(\x04R\n" +
-	"inodesUsed\"\xde\x01\n" +
+	"inodesUsed\"\xe2\x01\n" +
 	"\x1bUserDefinedMetricDescriptor\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x14\n" +
-	"\x05units\x18\x03 \x01(\tR\x05units\x12F\n" +
-	"\x06labels\x18\x04 \x03(\v2..stats.UserDefinedMetricDescriptor.LabelsEntryR\x06labels\x1a9\n" +
+	"\x05units\x18\x03 \x01(\tR\x05units\x12J\n" +
+	"\x06labels\x18\x04 \x03(\v22.telemetry.UserDefinedMetricDescriptor.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9d\x01\n" +
-	"\x11UserDefinedMetric\x12B\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa1\x01\n" +
+	"\x11UserDefinedMetric\x12F\n" +
 	"\n" +
-	"descriptor\x18\x01 \x01(\v2\".stats.UserDefinedMetricDescriptorR\n" +
+	"descriptor\x18\x01 \x01(\v2&.telemetry.UserDefinedMetricDescriptorR\n" +
 	"descriptor\x12.\n" +
 	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\x01R\x05valueB6Z4github.com/opisvigilant/futura/proto/gen/stats;statsb\x06proto3"
+	"\x05value\x18\x03 \x01(\x01R\x05valueB>Z<github.com/opisvigilant/futura/proto/gen/telemetry;telemetryb\x06proto3"
 
 var (
-	file_stats_stats_proto_rawDescOnce sync.Once
-	file_stats_stats_proto_rawDescData []byte
+	file_telemetry_stats_proto_rawDescOnce sync.Once
+	file_telemetry_stats_proto_rawDescData []byte
 )
 
-func file_stats_stats_proto_rawDescGZIP() []byte {
-	file_stats_stats_proto_rawDescOnce.Do(func() {
-		file_stats_stats_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_stats_stats_proto_rawDesc), len(file_stats_stats_proto_rawDesc)))
+func file_telemetry_stats_proto_rawDescGZIP() []byte {
+	file_telemetry_stats_proto_rawDescOnce.Do(func() {
+		file_telemetry_stats_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_telemetry_stats_proto_rawDesc), len(file_telemetry_stats_proto_rawDesc)))
 	})
-	return file_stats_stats_proto_rawDescData
+	return file_telemetry_stats_proto_rawDescData
 }
 
-var file_stats_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
-var file_stats_stats_proto_goTypes = []any{
-	(*KubernetesKubeletStats)(nil),      // 0: stats.KubernetesKubeletStats
-	(*EnrichmentMetadata)(nil),          // 1: stats.EnrichmentMetadata
-	(*NodeStats)(nil),                   // 2: stats.NodeStats
-	(*RlimitStats)(nil),                 // 3: stats.RlimitStats
-	(*RuntimeStats)(nil),                // 4: stats.RuntimeStats
-	(*PodStats)(nil),                    // 5: stats.PodStats
-	(*ProcessStats)(nil),                // 6: stats.ProcessStats
-	(*ContainerStats)(nil),              // 7: stats.ContainerStats
-	(*PodReference)(nil),                // 8: stats.PodReference
-	(*InterfaceStats)(nil),              // 9: stats.InterfaceStats
-	(*NetworkStats)(nil),                // 10: stats.NetworkStats
-	(*CPUStats)(nil),                    // 11: stats.CPUStats
-	(*MemoryStats)(nil),                 // 12: stats.MemoryStats
-	(*IOStats)(nil),                     // 13: stats.IOStats
-	(*PSIStats)(nil),                    // 14: stats.PSIStats
-	(*PSIData)(nil),                     // 15: stats.PSIData
-	(*SwapStats)(nil),                   // 16: stats.SwapStats
-	(*AcceleratorStats)(nil),            // 17: stats.AcceleratorStats
-	(*VolumeStats)(nil),                 // 18: stats.VolumeStats
-	(*VolumeHealthStats)(nil),           // 19: stats.VolumeHealthStats
-	(*PVCReference)(nil),                // 20: stats.PVCReference
-	(*FsStats)(nil),                     // 21: stats.FsStats
-	(*UserDefinedMetricDescriptor)(nil), // 22: stats.UserDefinedMetricDescriptor
-	(*UserDefinedMetric)(nil),           // 23: stats.UserDefinedMetric
-	nil,                                 // 24: stats.UserDefinedMetricDescriptor.LabelsEntry
-	(*common.APIKey)(nil),               // 25: common.APIKey
-	(*common.Metadata)(nil),             // 26: common.Metadata
+var file_telemetry_stats_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_telemetry_stats_proto_goTypes = []any{
+	(*KubernetesKubeletStats)(nil),      // 0: telemetry.KubernetesKubeletStats
+	(*NodeStats)(nil),                   // 1: telemetry.NodeStats
+	(*RlimitStats)(nil),                 // 2: telemetry.RlimitStats
+	(*RuntimeStats)(nil),                // 3: telemetry.RuntimeStats
+	(*PodStats)(nil),                    // 4: telemetry.PodStats
+	(*ProcessStats)(nil),                // 5: telemetry.ProcessStats
+	(*ContainerStats)(nil),              // 6: telemetry.ContainerStats
+	(*PodReference)(nil),                // 7: telemetry.PodReference
+	(*InterfaceStats)(nil),              // 8: telemetry.InterfaceStats
+	(*NetworkStats)(nil),                // 9: telemetry.NetworkStats
+	(*CPUStats)(nil),                    // 10: telemetry.CPUStats
+	(*MemoryStats)(nil),                 // 11: telemetry.MemoryStats
+	(*IOStats)(nil),                     // 12: telemetry.IOStats
+	(*PSIStats)(nil),                    // 13: telemetry.PSIStats
+	(*PSIData)(nil),                     // 14: telemetry.PSIData
+	(*SwapStats)(nil),                   // 15: telemetry.SwapStats
+	(*AcceleratorStats)(nil),            // 16: telemetry.AcceleratorStats
+	(*VolumeStats)(nil),                 // 17: telemetry.VolumeStats
+	(*VolumeHealthStats)(nil),           // 18: telemetry.VolumeHealthStats
+	(*PVCReference)(nil),                // 19: telemetry.PVCReference
+	(*FsStats)(nil),                     // 20: telemetry.FsStats
+	(*UserDefinedMetricDescriptor)(nil), // 21: telemetry.UserDefinedMetricDescriptor
+	(*UserDefinedMetric)(nil),           // 22: telemetry.UserDefinedMetric
+	nil,                                 // 23: telemetry.UserDefinedMetricDescriptor.LabelsEntry
+	(*APIKey)(nil),                      // 24: telemetry.APIKey
+	(*Metadata)(nil),                    // 25: telemetry.Metadata
+	(*EnrichmentMetadata)(nil),          // 26: telemetry.EnrichmentMetadata
 	(*timestamppb.Timestamp)(nil),       // 27: google.protobuf.Timestamp
 }
-var file_stats_stats_proto_depIdxs = []int32{
-	2,  // 0: stats.KubernetesKubeletStats.node:type_name -> stats.NodeStats
-	5,  // 1: stats.KubernetesKubeletStats.pods:type_name -> stats.PodStats
-	25, // 2: stats.KubernetesKubeletStats.apikey:type_name -> common.APIKey
-	26, // 3: stats.KubernetesKubeletStats.metadata:type_name -> common.Metadata
-	1,  // 4: stats.KubernetesKubeletStats.enrichment:type_name -> stats.EnrichmentMetadata
-	7,  // 5: stats.NodeStats.systemContainers:type_name -> stats.ContainerStats
-	27, // 6: stats.NodeStats.startTime:type_name -> google.protobuf.Timestamp
-	11, // 7: stats.NodeStats.cpu:type_name -> stats.CPUStats
-	12, // 8: stats.NodeStats.memory:type_name -> stats.MemoryStats
-	13, // 9: stats.NodeStats.io:type_name -> stats.IOStats
-	10, // 10: stats.NodeStats.network:type_name -> stats.NetworkStats
-	21, // 11: stats.NodeStats.fs:type_name -> stats.FsStats
-	4,  // 12: stats.NodeStats.runtime:type_name -> stats.RuntimeStats
-	3,  // 13: stats.NodeStats.rlimit:type_name -> stats.RlimitStats
-	16, // 14: stats.NodeStats.swap:type_name -> stats.SwapStats
-	27, // 15: stats.RlimitStats.time:type_name -> google.protobuf.Timestamp
-	21, // 16: stats.RuntimeStats.imageFs:type_name -> stats.FsStats
-	21, // 17: stats.RuntimeStats.containerFs:type_name -> stats.FsStats
-	8,  // 18: stats.PodStats.podRef:type_name -> stats.PodReference
-	27, // 19: stats.PodStats.startTime:type_name -> google.protobuf.Timestamp
-	7,  // 20: stats.PodStats.containers:type_name -> stats.ContainerStats
-	11, // 21: stats.PodStats.cpu:type_name -> stats.CPUStats
-	12, // 22: stats.PodStats.memory:type_name -> stats.MemoryStats
-	13, // 23: stats.PodStats.io:type_name -> stats.IOStats
-	10, // 24: stats.PodStats.network:type_name -> stats.NetworkStats
-	18, // 25: stats.PodStats.volumes:type_name -> stats.VolumeStats
-	21, // 26: stats.PodStats.ephemeralStorage:type_name -> stats.FsStats
-	6,  // 27: stats.PodStats.processStats:type_name -> stats.ProcessStats
-	16, // 28: stats.PodStats.swap:type_name -> stats.SwapStats
-	27, // 29: stats.ContainerStats.startTime:type_name -> google.protobuf.Timestamp
-	11, // 30: stats.ContainerStats.cpu:type_name -> stats.CPUStats
-	12, // 31: stats.ContainerStats.memory:type_name -> stats.MemoryStats
-	13, // 32: stats.ContainerStats.io:type_name -> stats.IOStats
-	17, // 33: stats.ContainerStats.accelerators:type_name -> stats.AcceleratorStats
-	21, // 34: stats.ContainerStats.rootfs:type_name -> stats.FsStats
-	21, // 35: stats.ContainerStats.logs:type_name -> stats.FsStats
-	23, // 36: stats.ContainerStats.userDefinedMetrics:type_name -> stats.UserDefinedMetric
-	16, // 37: stats.ContainerStats.swap:type_name -> stats.SwapStats
-	27, // 38: stats.NetworkStats.time:type_name -> google.protobuf.Timestamp
-	9,  // 39: stats.NetworkStats.interfaceStats:type_name -> stats.InterfaceStats
-	9,  // 40: stats.NetworkStats.interfaces:type_name -> stats.InterfaceStats
-	27, // 41: stats.CPUStats.time:type_name -> google.protobuf.Timestamp
-	14, // 42: stats.CPUStats.psi:type_name -> stats.PSIStats
-	27, // 43: stats.MemoryStats.time:type_name -> google.protobuf.Timestamp
-	14, // 44: stats.MemoryStats.psi:type_name -> stats.PSIStats
-	27, // 45: stats.IOStats.time:type_name -> google.protobuf.Timestamp
-	14, // 46: stats.IOStats.psi:type_name -> stats.PSIStats
-	15, // 47: stats.PSIStats.full:type_name -> stats.PSIData
-	15, // 48: stats.PSIStats.some:type_name -> stats.PSIData
-	27, // 49: stats.SwapStats.time:type_name -> google.protobuf.Timestamp
-	21, // 50: stats.VolumeStats.fsStats:type_name -> stats.FsStats
-	20, // 51: stats.VolumeStats.pvcRef:type_name -> stats.PVCReference
-	19, // 52: stats.VolumeStats.volumeHealthStats:type_name -> stats.VolumeHealthStats
-	27, // 53: stats.FsStats.time:type_name -> google.protobuf.Timestamp
-	24, // 54: stats.UserDefinedMetricDescriptor.labels:type_name -> stats.UserDefinedMetricDescriptor.LabelsEntry
-	22, // 55: stats.UserDefinedMetric.descriptor:type_name -> stats.UserDefinedMetricDescriptor
-	27, // 56: stats.UserDefinedMetric.time:type_name -> google.protobuf.Timestamp
+var file_telemetry_stats_proto_depIdxs = []int32{
+	1,  // 0: telemetry.KubernetesKubeletStats.node:type_name -> telemetry.NodeStats
+	4,  // 1: telemetry.KubernetesKubeletStats.pods:type_name -> telemetry.PodStats
+	24, // 2: telemetry.KubernetesKubeletStats.apikey:type_name -> telemetry.APIKey
+	25, // 3: telemetry.KubernetesKubeletStats.metadata:type_name -> telemetry.Metadata
+	26, // 4: telemetry.KubernetesKubeletStats.enrichment:type_name -> telemetry.EnrichmentMetadata
+	6,  // 5: telemetry.NodeStats.systemContainers:type_name -> telemetry.ContainerStats
+	27, // 6: telemetry.NodeStats.startTime:type_name -> google.protobuf.Timestamp
+	10, // 7: telemetry.NodeStats.cpu:type_name -> telemetry.CPUStats
+	11, // 8: telemetry.NodeStats.memory:type_name -> telemetry.MemoryStats
+	12, // 9: telemetry.NodeStats.io:type_name -> telemetry.IOStats
+	9,  // 10: telemetry.NodeStats.network:type_name -> telemetry.NetworkStats
+	20, // 11: telemetry.NodeStats.fs:type_name -> telemetry.FsStats
+	3,  // 12: telemetry.NodeStats.runtime:type_name -> telemetry.RuntimeStats
+	2,  // 13: telemetry.NodeStats.rlimit:type_name -> telemetry.RlimitStats
+	15, // 14: telemetry.NodeStats.swap:type_name -> telemetry.SwapStats
+	27, // 15: telemetry.RlimitStats.time:type_name -> google.protobuf.Timestamp
+	20, // 16: telemetry.RuntimeStats.imageFs:type_name -> telemetry.FsStats
+	20, // 17: telemetry.RuntimeStats.containerFs:type_name -> telemetry.FsStats
+	7,  // 18: telemetry.PodStats.podRef:type_name -> telemetry.PodReference
+	27, // 19: telemetry.PodStats.startTime:type_name -> google.protobuf.Timestamp
+	6,  // 20: telemetry.PodStats.containers:type_name -> telemetry.ContainerStats
+	10, // 21: telemetry.PodStats.cpu:type_name -> telemetry.CPUStats
+	11, // 22: telemetry.PodStats.memory:type_name -> telemetry.MemoryStats
+	12, // 23: telemetry.PodStats.io:type_name -> telemetry.IOStats
+	9,  // 24: telemetry.PodStats.network:type_name -> telemetry.NetworkStats
+	17, // 25: telemetry.PodStats.volumes:type_name -> telemetry.VolumeStats
+	20, // 26: telemetry.PodStats.ephemeralStorage:type_name -> telemetry.FsStats
+	5,  // 27: telemetry.PodStats.processStats:type_name -> telemetry.ProcessStats
+	15, // 28: telemetry.PodStats.swap:type_name -> telemetry.SwapStats
+	27, // 29: telemetry.ContainerStats.startTime:type_name -> google.protobuf.Timestamp
+	10, // 30: telemetry.ContainerStats.cpu:type_name -> telemetry.CPUStats
+	11, // 31: telemetry.ContainerStats.memory:type_name -> telemetry.MemoryStats
+	12, // 32: telemetry.ContainerStats.io:type_name -> telemetry.IOStats
+	16, // 33: telemetry.ContainerStats.accelerators:type_name -> telemetry.AcceleratorStats
+	20, // 34: telemetry.ContainerStats.rootfs:type_name -> telemetry.FsStats
+	20, // 35: telemetry.ContainerStats.logs:type_name -> telemetry.FsStats
+	22, // 36: telemetry.ContainerStats.userDefinedMetrics:type_name -> telemetry.UserDefinedMetric
+	15, // 37: telemetry.ContainerStats.swap:type_name -> telemetry.SwapStats
+	27, // 38: telemetry.NetworkStats.time:type_name -> google.protobuf.Timestamp
+	8,  // 39: telemetry.NetworkStats.interfaceStats:type_name -> telemetry.InterfaceStats
+	8,  // 40: telemetry.NetworkStats.interfaces:type_name -> telemetry.InterfaceStats
+	27, // 41: telemetry.CPUStats.time:type_name -> google.protobuf.Timestamp
+	13, // 42: telemetry.CPUStats.psi:type_name -> telemetry.PSIStats
+	27, // 43: telemetry.MemoryStats.time:type_name -> google.protobuf.Timestamp
+	13, // 44: telemetry.MemoryStats.psi:type_name -> telemetry.PSIStats
+	27, // 45: telemetry.IOStats.time:type_name -> google.protobuf.Timestamp
+	13, // 46: telemetry.IOStats.psi:type_name -> telemetry.PSIStats
+	14, // 47: telemetry.PSIStats.full:type_name -> telemetry.PSIData
+	14, // 48: telemetry.PSIStats.some:type_name -> telemetry.PSIData
+	27, // 49: telemetry.SwapStats.time:type_name -> google.protobuf.Timestamp
+	20, // 50: telemetry.VolumeStats.fsStats:type_name -> telemetry.FsStats
+	19, // 51: telemetry.VolumeStats.pvcRef:type_name -> telemetry.PVCReference
+	18, // 52: telemetry.VolumeStats.volumeHealthStats:type_name -> telemetry.VolumeHealthStats
+	27, // 53: telemetry.FsStats.time:type_name -> google.protobuf.Timestamp
+	23, // 54: telemetry.UserDefinedMetricDescriptor.labels:type_name -> telemetry.UserDefinedMetricDescriptor.LabelsEntry
+	21, // 55: telemetry.UserDefinedMetric.descriptor:type_name -> telemetry.UserDefinedMetricDescriptor
+	27, // 56: telemetry.UserDefinedMetric.time:type_name -> google.protobuf.Timestamp
 	57, // [57:57] is the sub-list for method output_type
 	57, // [57:57] is the sub-list for method input_type
 	57, // [57:57] is the sub-list for extension type_name
@@ -2013,26 +1947,27 @@ var file_stats_stats_proto_depIdxs = []int32{
 	0,  // [0:57] is the sub-list for field type_name
 }
 
-func init() { file_stats_stats_proto_init() }
-func file_stats_stats_proto_init() {
-	if File_stats_stats_proto != nil {
+func init() { file_telemetry_stats_proto_init() }
+func file_telemetry_stats_proto_init() {
+	if File_telemetry_stats_proto != nil {
 		return
 	}
+	file_telemetry_metadata_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stats_stats_proto_rawDesc), len(file_stats_stats_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_telemetry_stats_proto_rawDesc), len(file_telemetry_stats_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_stats_stats_proto_goTypes,
-		DependencyIndexes: file_stats_stats_proto_depIdxs,
-		MessageInfos:      file_stats_stats_proto_msgTypes,
+		GoTypes:           file_telemetry_stats_proto_goTypes,
+		DependencyIndexes: file_telemetry_stats_proto_depIdxs,
+		MessageInfos:      file_telemetry_stats_proto_msgTypes,
 	}.Build()
-	File_stats_stats_proto = out.File
-	file_stats_stats_proto_goTypes = nil
-	file_stats_stats_proto_depIdxs = nil
+	File_telemetry_stats_proto = out.File
+	file_telemetry_stats_proto_goTypes = nil
+	file_telemetry_stats_proto_depIdxs = nil
 }

@@ -1,14 +1,14 @@
 syntax = "proto3";
 
-package cluster;
+package telemetry;
 
-option go_package = "github.com/opisvigilant/futura/proto/gen/cluster;cluster";
+option go_package = "github.com/opisvigilant/futura/proto/gen/telemetry;telemetry";
 
 import "google/protobuf/timestamp.proto";
-import "common/metadata.proto";
+import "telemetry/metadata.proto";
 
 // Main batch message
-message KubernetesClusterObjectBatch {  
+message KubernetesClusterObjectBatch {
   repeated KubernetesClusterObject objects = 3;
 }
 
@@ -87,18 +87,10 @@ message KubernetesClusterObject {
   int64 daemonset_number_misscheduled = 47;
   int64 daemonset_number_ready = 48;
 
-  common.APIKey apikey = 49;
-  common.Metadata metadata = 50;
+  APIKey apikey = 49;
+  Metadata metadata = 50;
 
   EnrichmentMetadata enrichment = 100;
-}
-
-message EnrichmentMetadata {  
-  uint32 organization_id = 1;
-  int64 cluster_id = 2;  
-  string k8s_version = 3;
-  int64 received_at_unix = 4;  // UNIX timestamp
-
 }
 
 // Represents a container and its resource specs.
@@ -124,7 +116,7 @@ message ContainerResources {
 message ResourceQuantities {
   string cpu = 1;
   string memory = 2;
-  string storage = 3;  
+  string storage = 3;
   string ephemeral_storage = 4;
 }
 
@@ -134,7 +126,8 @@ message VolumeSpec {
   string type = 2; // EmptyDir, PVC, ConfigMap, etc.
 }
 
-// Represents the state of a container: only one of waiting, running, or terminated may be set.
+// Represents the state of a container: only one of waiting, running, or
+// terminated may be set.
 message ContainerState {
   oneof state {
     ContainerStateWaiting waiting = 1;
@@ -150,9 +143,7 @@ message ContainerStateWaiting {
 }
 
 // A running state of a container (currently executing)
-message ContainerStateRunning {
-  google.protobuf.Timestamp started_at = 1;
-}
+message ContainerStateRunning { google.protobuf.Timestamp started_at = 1; }
 
 // A terminated state of a container (exited or killed)
 message ContainerStateTerminated {
@@ -166,8 +157,8 @@ message ContainerStateTerminated {
 }
 
 message NodeCondition {
-  string type = 1;    // e.g. "Ready"
-  string status = 2;  // "True", "False", "Unknown"
+  string type = 1;   // e.g. "Ready"
+  string status = 2; // "True", "False", "Unknown"
   string reason = 3;
   string message = 4;
 }
@@ -198,5 +189,5 @@ message NamespaceQuota {
 
 message QuotaResource {
   string resource = 1; // e.g. "cpu", "memory", "count/pods"
-  int64 value = 2;    // raw string, like "500m" or "2Gi"
+  int64 value = 2;     // raw string, like "500m" or "2Gi"
 }

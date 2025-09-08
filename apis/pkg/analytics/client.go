@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	pban "github.com/opisvigilant/futura/proto/gen/analytics"
-	pbev "github.com/opisvigilant/futura/proto/gen/events"
+	pbtl "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
 
 type Client struct {
@@ -24,7 +24,7 @@ func New(config *config.Configuration) (*Client, error) {
 	return &Client{client}, nil
 }
 
-func (c *Client) GetEvents(req *pban.GetEventsByClusterIdRequest) ([]*pbev.KubernetesEvent, error) {
+func (c *Client) GetEvents(req *pban.GetEventsByClusterIdRequest) ([]*pbtl.KubernetesEvent, error) {
 	resp, err := c.AnalyticsServiceClient.GetEvents(context.Background(), req)
 	if err != nil {
 		return nil, err
