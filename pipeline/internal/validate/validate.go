@@ -7,13 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/protobuf/proto"
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
 	"github.com/opisvigilant/futura/pipeline/internal/dlq"
 	"github.com/rs/zerolog/log"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/proto"
 
 	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
 )
@@ -191,10 +189,6 @@ func (v *Validator) ValidateKubernetesClusterObject(obj *pb.KubernetesClusterObj
 	if obj == nil {
 		return errors.New("cluster object is nil")
 	}
-
-	if err := v.validateTimestampPB(obj.Timestamp, "timestamp"); err != nil {
-		return err
-	}
 	if obj.Type == "" {
 		return errors.New("type is required")
 	}
@@ -280,18 +274,6 @@ func (v *Validator) ValidateKubernetesClusterObject(obj *pb.KubernetesClusterObj
 	return nil
 }
 
-func (v *Validator) validateTimestampPB(ts *timestamppb.Timestamp, field string) error {
-	if ts == nil {
-		return fmt.Errorf("%s is nil", field)
-	}
-	t := ts.AsTime()
-	now := time.Now()
-	if t.Before(now.Add(-24*time.Hour)) || t.After(now.Add(24*time.Hour)) {
-		return fmt.Errorf("%s timestamp out of range: %s", field, t)
-	}
-	return nil
-}
-
 // ValidateKubeletMetrics performs sanity checks on KubernetesKubeletStats
 func (v *Validator) ValidateKubeletMetrics(m *pb.KubernetesKubeletStats) error {
 	if m == nil {
@@ -306,10 +288,6 @@ func (v *Validator) ValidateKubeletMetrics(m *pb.KubernetesKubeletStats) error {
 		return errors.New("node name is required")
 	}
 
-	if err := v.validateTimestampPB(m.Node.StartTime, "node.startTime"); err != nil {
-		return err
-	}
-
 	for i, c := range m.Node.SystemContainers {
 		if err := v.validateContainerStats(c, fmt.Sprintf("systemContainers[%d]", i)); err != nil {
 			return err
@@ -319,9 +297,6 @@ func (v *Validator) ValidateKubeletMetrics(m *pb.KubernetesKubeletStats) error {
 	for i, pod := range m.Pods {
 		if pod.PodRef == nil || pod.PodRef.Uid == "" {
 			return fmt.Errorf("pods[%d]: missing podRef.uid", i)
-		}
-		if err := v.validateTimestampPB(pod.StartTime, fmt.Sprintf("pods[%d].startTime", i)); err != nil {
-			return err
 		}
 		for j, c := range pod.Containers {
 			if err := v.validateContainerStats(c, fmt.Sprintf("pods[%d].containers[%d]", i, j)); err != nil {
@@ -336,9 +311,6 @@ func (v *Validator) ValidateKubeletMetrics(m *pb.KubernetesKubeletStats) error {
 func (v *Validator) validateContainerStats(c *pb.ContainerStats, path string) error {
 	if c.Name == "" {
 		return fmt.Errorf("%s.name is required", path)
-	}
-	if err := v.validateTimestampPB(c.StartTime, path+".startTime"); err != nil {
-		return err
 	}
 	return nil
 }
