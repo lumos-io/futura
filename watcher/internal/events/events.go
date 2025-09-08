@@ -44,12 +44,10 @@ func (kec *KubernetesEventsCollector) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	s, err := sender.New(ctx, kec.config)
 	if err != nil {
 		return err
 	}
-
 	log.Logger.Info().Msg("starting to watch namespaces for the events.")
 	if len(kec.config.Kubernetes.Namespaces) == 0 {
 		kec.startWatch(corev1.NamespaceAll, k8sClient, s)
@@ -61,7 +59,7 @@ func (kec *KubernetesEventsCollector) Start(ctx context.Context) error {
 	return nil
 }
 
-func (kec *KubernetesEventsCollector) Shutdown(context.Context) error {
+func (kec *KubernetesEventsCollector) Shutdown(ctx context.Context) error {
 	if kec.cancel == nil {
 		return nil
 	}
@@ -78,16 +76,25 @@ func (kec *KubernetesEventsCollector) startWatch(ns string, client k8s.Interface
 	kec.stopperChanList = append(kec.stopperChanList, stopperChan)
 	kec.startWatchingNamespace(client, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj any) {
-			ev := obj.(*corev1.Event)
-			kec.handleEvent(ev, sender)
+			if ev, ok := obj.(*corev1.Event); ok {
+				kec.handleEvent(ev, sender)
+			} else {
+				log.Warn().Msg("received non-Event object from informer")
+			}
 		},
 		UpdateFunc: func(_, obj any) {
-			ev := obj.(*corev1.Event)
-			kec.handleEvent(ev, sender)
+			if ev, ok := obj.(*corev1.Event); ok {
+				kec.handleEvent(ev, sender)
+			} else {
+				log.Warn().Msg("received non-Event object from informer")
+			}
 		},
 		DeleteFunc: func(obj any) {
-			ev := obj.(*corev1.Event)
-			kec.handleEvent(ev, sender)
+			if ev, ok := obj.(*corev1.Event); ok {
+				kec.handleEvent(ev, sender)
+			} else {
+				log.Warn().Msg("received non-Event object from informer")
+			}
 		},
 	}, ns, stopperChan)
 }
@@ -100,8 +107,8 @@ func (kec *KubernetesEventsCollector) startWatchingNamespace(clientset k8s.Inter
 	_, controller := cache.NewInformerWithOptions(cache.InformerOptions{
 		ListerWatcher: watchList,
 		ObjectType:    &corev1.Event{},
-		ResyncPeriod:  0,
-		Handler:       handlers,
+		// ResyncPeriod:  0,
+		Handler: handlers,
 	})
 	go controller.Run(stopper)
 }
@@ -112,54 +119,52 @@ var severityMap = map[string]int{
 }
 
 func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *sender.Sender) {
-	if kec.allowEvent(ev) {
-		// extract event
-		kev := &pb.KubernetesEvent{
-			ObjectKind:            ev.InvolvedObject.Kind,
-			ObjectName:            ev.InvolvedObject.Name,
-			ObjectUid:             string(ev.InvolvedObject.UID),
-			ObjectFieldpath:       ev.InvolvedObject.FieldPath,
-			ObjectApiVersion:      ev.InvolvedObject.APIVersion,
-			ObjectResourceVersion: ev.InvolvedObject.ResourceVersion,
-			ObjectTimestamp:       getEventTimestamp(ev).UnixMilli(),
-			ObjectNamespace:       ev.InvolvedObject.Namespace,
-			EventMessage:          ev.Message,
-			EventReason:           ev.Reason,
-			EventAction:           ev.Action,
-			EventStarttime:        ev.CreationTimestamp.String(),
-			EventName:             ev.Name,
-			EventUid:              string(ev.UID),
-			NodeName:              ev.Source.Host,
-		}
-
-		// Set the "SeverityNumber" and "SeverityText" if a known type of
-		// severity is found.
-		if severityNumber, ok := severityMap[strings.ToLower(ev.Type)]; ok {
-			kev.EventSeverityNumber = int64(severityNumber)
-			kev.EventSeverityText = ev.Type
-		} else {
-			log.Logger.Debug().Msgf("unknown severity type %s", ev.Type)
-		}
-
-		// "Count" field of k8s event will be '0' in case it is
-		// not present in the collected event from k8s.
-		if ev.Count != 0 {
-			kev.EventCount = int64(ev.Count)
-		}
-
-		log.Logger.Trace().Msgf("%v", kev)
-
-		// send it to a channel for the sender
-		sender.KubernetesEventChan <- kev
-	}
-}
-
-// Allow events with eventTimestamp(EventTime/LastTimestamp/FirstTimestamp)
-// not older than the receiver start time so that
-// event flood can be avoided upon startup.
-func (kec *KubernetesEventsCollector) allowEvent(ev *corev1.Event) bool {
 	eventTimestamp := getEventTimestamp(ev)
-	return !eventTimestamp.Before(kec.startTime)
+	if eventTimestamp.IsZero() {
+		log.Debug().Msgf("event %s has no timestamp, skipping", ev.Name)
+	}
+	// extract event
+	kev := &pb.KubernetesEvent{
+		ObjectKind:            ev.InvolvedObject.Kind,
+		ObjectName:            ev.InvolvedObject.Name,
+		ObjectUid:             string(ev.InvolvedObject.UID),
+		ObjectFieldpath:       ev.InvolvedObject.FieldPath,
+		ObjectApiVersion:      ev.InvolvedObject.APIVersion,
+		ObjectResourceVersion: ev.InvolvedObject.ResourceVersion,
+		ObjectTimestamp:       eventTimestamp.UnixMilli(),
+		ObjectNamespace:       ev.InvolvedObject.Namespace,
+		EventMessage:          ev.Message,
+		EventReason:           ev.Reason,
+		EventAction:           ev.Action,
+		EventStarttime:        ev.CreationTimestamp.String(),
+		EventName:             ev.Name,
+		EventUid:              string(ev.UID),
+		NodeName:              ev.Source.Host,
+	}
+
+	// Set the "SeverityNumber" and "SeverityText" if a known type of
+	// severity is found.
+	if severityNumber, ok := severityMap[strings.ToLower(ev.Type)]; ok {
+		kev.EventSeverityNumber = int64(severityNumber)
+		kev.EventSeverityText = ev.Type
+	} else {
+		log.Logger.Debug().Msgf("unknown severity type %s", ev.Type)
+	}
+
+	// "Count" field of k8s event will be '0' in case it is
+	// not present in the collected event from k8s.
+	if ev.Count != 0 {
+		kev.EventCount = int64(ev.Count)
+	}
+
+	log.Logger.Trace().
+		Str("event", ev.Name).
+		Str("namespace", ev.Namespace).
+		Str("reason", ev.Reason).
+		Msg("processed Kubernetes event")
+
+	// send it to a channel for the sender
+	sender.KubernetesEventChan <- kev
 }
 
 // Return the EventTimestamp based on the populated k8s event timestamps.
