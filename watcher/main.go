@@ -6,7 +6,6 @@ import (
 
 	"os"
 	"os/signal"
-	"runtime/debug"
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
@@ -41,7 +40,6 @@ func main() {
 		}
 	}
 
-	debug.SetGCPercent(80)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	collector, err := collector.New(watcherCfg)

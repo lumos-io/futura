@@ -58,7 +58,6 @@ func (kr *KubernetesClusterCollector) startReceiver(ctx context.Context) error {
 	go func() {
 		for e := range kr.Events() {
 			eventMap[e.UID] = e
-			log.Debug().Interface("resource_event", e).Msg("Received ResourceEvent")
 		}
 	}()
 

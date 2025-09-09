@@ -3,7 +3,6 @@ package sender
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"google.golang.org/grpc"
@@ -69,9 +68,6 @@ func (s *Sender) sendEventsInBatch(ch chan *pbtl.KubernetesEvent, interval time.
 			log.Logger.Info().Msg("stopping sending events to backend")
 			return
 		case <-t.C:
-			randomDuration := time.Duration(rand.Intn(50)) * time.Millisecond
-			time.Sleep(randomDuration)
-
 			batch := make([]*pbtl.KubernetesEvent, 0, s.batchSize)
 			loop := true
 
@@ -91,7 +87,7 @@ func (s *Sender) sendEventsInBatch(ch chan *pbtl.KubernetesEvent, interval time.
 				}
 			}
 			if len(batch) == 0 {
-				return
+				continue
 			}
 			payload := &pbtl.KubernetesEventBatch{
 				Events: batch,
@@ -117,9 +113,6 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbtl.KubernetesClusterObject
 			log.Logger.Info().Msg("stopping sending cluster objects to backend")
 			return
 		case <-t.C:
-			randomDuration := time.Duration(rand.Intn(50)) * time.Millisecond
-			time.Sleep(randomDuration)
-
 			batch := make([]*pbtl.KubernetesClusterObject, 0, s.batchSize)
 			loop := true
 
@@ -140,7 +133,7 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbtl.KubernetesClusterObject
 			}
 
 			if len(batch) == 0 {
-				return
+				continue
 			}
 
 			payload := &pbtl.KubernetesClusterObjectBatch{

@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/opisvigilant/futura/go-lib/stream"
 	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
@@ -50,35 +51,40 @@ type flatK8SEvent struct {
 }
 
 func (es *EventFlattener) Flatten(ctx context.Context, msg *pb.KubernetesEvent) error {
-	data := &flatK8SEvent{
-		OrganizationId:        msg.Enrichment.OrganizationId,
-		ClusterId:             msg.Enrichment.ClusterId,
-		K8SVersion:            msg.Enrichment.K8SVersion,
-		ReceivedAtUnix:        msg.Enrichment.ReceivedAtUnix,
-		IdempotencyKey:        msg.Metadata.IdempotencyKey,
-		WatcherVersion:        msg.Metadata.WatcherVersion,
-		ObjectKind:            msg.ObjectKind,
-		ObjectName:            msg.ObjectName,
-		ObjectUid:             msg.ObjectUid,
-		ObjectFieldpath:       msg.ObjectFieldpath,
-		ObjectTimestamp:       msg.ObjectTimestamp,
-		ObjectNamespace:       msg.ObjectNamespace,
-		EventSeverityNumber:   msg.EventSeverityNumber,
-		EventSeverityText:     msg.EventSeverityText,
-		EventReason:           msg.EventReason,
-		EventAction:           msg.EventAction,
-		EventStarttime:        msg.EventStarttime,
-		EventName:             msg.EventName,
-		EventMessage:          msg.EventMessage,
-		EventUid:              msg.EventUid,
-		EventCount:            msg.EventCount,
-		ObjectApiVersion:      msg.ObjectApiVersion,
-		ObjectResourceVersion: msg.ObjectResourceVersion,
-		NodeName:              msg.NodeName,
+	if msg == nil {
+		return fmt.Errorf("nil KubernetesEvent")
 	}
+
+	data := &flatK8SEvent{
+		OrganizationId:        safeUInt32Ptr(msg.Enrichment, func(e *pb.EnrichmentMetadata) uint32 { return e.OrganizationId }),
+		ClusterId:             safeInt64Ptr(msg.Enrichment, func(e *pb.EnrichmentMetadata) int64 { return e.ClusterId }),
+		K8SVersion:            safeStringPtr(msg.Enrichment, func(e *pb.EnrichmentMetadata) string { return e.K8SVersion }),
+		ReceivedAtUnix:        safeInt64Ptr(msg.Enrichment, func(e *pb.EnrichmentMetadata) int64 { return e.ReceivedAtUnix }),
+		IdempotencyKey:        safeStringPtr(msg.Metadata, func(m *pb.Metadata) string { return m.IdempotencyKey }),
+		WatcherVersion:        safeStringPtr(msg.Metadata, func(m *pb.Metadata) string { return m.WatcherVersion }),
+		ObjectKind:            msg.GetObjectKind(),
+		ObjectName:            msg.GetObjectName(),
+		ObjectUid:             msg.GetObjectUid(),
+		ObjectFieldpath:       msg.GetObjectFieldpath(),
+		ObjectTimestamp:       msg.GetObjectTimestamp(),
+		ObjectNamespace:       msg.GetObjectNamespace(),
+		EventSeverityNumber:   msg.GetEventSeverityNumber(),
+		EventSeverityText:     msg.GetEventSeverityText(),
+		EventReason:           msg.GetEventReason(),
+		EventAction:           msg.GetEventAction(),
+		EventStarttime:        msg.GetEventStarttime(),
+		EventName:             msg.GetEventName(),
+		EventMessage:          msg.GetEventMessage(),
+		EventUid:              msg.GetEventUid(),
+		EventCount:            msg.GetEventCount(),
+		ObjectApiVersion:      msg.GetObjectApiVersion(),
+		ObjectResourceVersion: msg.GetObjectResourceVersion(),
+		NodeName:              msg.GetNodeName(),
+	}
+
 	b, err := json.Marshal(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal event: %w", err)
 	}
 	return es.kc.Publish(ctx, StoreKubernetesEventsTopic, b)
 }

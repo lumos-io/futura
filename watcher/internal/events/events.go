@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-
 	"strings"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	corev1 "k8s.io/api/core/v1"
+	eventsv1 "k8s.io/api/events/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -44,16 +44,37 @@ func (kec *KubernetesEventsCollector) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	s, err := sender.New(ctx, kec.config)
 	if err != nil {
 		return err
 	}
-	log.Logger.Info().Msg("starting to watch namespaces for the events.")
+
+	// Detect if events.k8s.io/v1 is available
+	discoveryClient := k8sClient.Discovery()
+	apiGroups, err := discoveryClient.ServerGroups()
+	if err != nil {
+		return err
+	}
+
+	eventsV1Available := false
+	for _, g := range apiGroups.Groups {
+		if g.Name == "events.k8s.io" {
+			for _, v := range g.Versions {
+				if v.Version == "v1" {
+					eventsV1Available = true
+				}
+			}
+		}
+	}
+
+	log.Info().Msgf("events.k8s.io/v1 available: %v", eventsV1Available)
+
 	if len(kec.config.Kubernetes.Namespaces) == 0 {
-		kec.startWatch(corev1.NamespaceAll, k8sClient, s)
+		kec.startWatch(corev1.NamespaceAll, k8sClient, s, eventsV1Available)
 	} else {
 		for _, ns := range kec.config.Kubernetes.Namespaces {
-			kec.startWatch(ns, k8sClient, s)
+			kec.startWatch(ns, k8sClient, s, eventsV1Available)
 		}
 	}
 	return nil
@@ -63,7 +84,6 @@ func (kec *KubernetesEventsCollector) Shutdown(ctx context.Context) error {
 	if kec.cancel == nil {
 		return nil
 	}
-	// Stop watching all the namespaces by closing all the stopper channels.
 	for _, stopperChan := range kec.stopperChanList {
 		close(stopperChan)
 	}
@@ -71,59 +91,105 @@ func (kec *KubernetesEventsCollector) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (kec *KubernetesEventsCollector) startWatch(ns string, client k8s.Interface, sender *sender.Sender) {
+func (kec *KubernetesEventsCollector) startWatch(ns string, client k8s.Interface, sender *sender.Sender, useEventsV1 bool) {
 	stopperChan := make(chan struct{})
 	kec.stopperChanList = append(kec.stopperChanList, stopperChan)
-	kec.startWatchingNamespace(client, cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj any) {
-			if ev, ok := obj.(*corev1.Event); ok {
-				kec.handleEvent(ev, sender)
-			} else {
-				log.Warn().Msg("received non-Event object from informer")
-			}
-		},
-		UpdateFunc: func(_, obj any) {
-			if ev, ok := obj.(*corev1.Event); ok {
-				kec.handleEvent(ev, sender)
-			} else {
-				log.Warn().Msg("received non-Event object from informer")
-			}
-		},
-		DeleteFunc: func(obj any) {
-			if ev, ok := obj.(*corev1.Event); ok {
-				kec.handleEvent(ev, sender)
-			} else {
-				log.Warn().Msg("received non-Event object from informer")
-			}
-		},
-	}, ns, stopperChan)
+
+	if useEventsV1 {
+		kec.startEventsV1Watch(client, ns, sender, stopperChan)
+	} else {
+		kec.startCoreV1Watch(client, ns, sender, stopperChan)
+	}
 }
 
-// startWatchingNamespace creates an informer and starts
-// watching a specific namespace for the events.
-func (kec *KubernetesEventsCollector) startWatchingNamespace(clientset k8s.Interface, handlers cache.ResourceEventHandlerFuncs, ns string, stopper chan struct{}) {
+// -------- core/v1 events --------
+
+func (kec *KubernetesEventsCollector) startCoreV1Watch(clientset k8s.Interface, ns string, sender *sender.Sender, stopper chan struct{}) {
 	client := clientset.CoreV1().RESTClient()
 	watchList := cache.NewListWatchFromClient(client, "events", ns, fields.Everything())
+
 	_, controller := cache.NewInformerWithOptions(cache.InformerOptions{
-		ListerWatcher: watchList,
-		ObjectType:    &corev1.Event{},
-		// ResyncPeriod:  0,
-		Handler: handlers,
+		ListerWatcher:   watchList,
+		ResyncPeriod:    10 * time.Minute,
+		ObjectType:      &corev1.Event{},
+		MinWatchTimeout: 10 * time.Minute,
+		Handler: cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj any) {
+				if ev, ok := obj.(*corev1.Event); ok {
+					kec.handleCoreV1Event(ev, sender)
+				}
+			},
+			UpdateFunc: func(_, obj any) {
+				if ev, ok := obj.(*corev1.Event); ok {
+					kec.handleCoreV1Event(ev, sender)
+				}
+			},
+			DeleteFunc: func(obj any) {
+				if ev, ok := obj.(*corev1.Event); ok {
+					kec.handleCoreV1Event(ev, sender)
+				}
+			},
+		},
 	})
-	go controller.Run(stopper)
+
+	go func() {
+		log.Info().Msgf("starting core/v1 events informer for ns=%q", ns)
+		controller.Run(stopper)
+		log.Info().Msgf("stopped core/v1 events informer for ns=%q", ns)
+	}()
 }
+
+// -------- events.k8s.io/v1 events --------
+
+func (kec *KubernetesEventsCollector) startEventsV1Watch(clientset k8s.Interface, ns string, sender *sender.Sender, stopper chan struct{}) {
+	client := clientset.EventsV1().RESTClient()
+	watchList := cache.NewListWatchFromClient(client, "events", ns, fields.Everything())
+
+	_, controller := cache.NewInformerWithOptions(cache.InformerOptions{
+		ListerWatcher:   watchList,
+		ResyncPeriod:    10 * time.Minute,
+		ObjectType:      &eventsv1.Event{},
+		MinWatchTimeout: 10 * time.Minute,
+		Handler: cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj any) {
+				if ev, ok := obj.(*eventsv1.Event); ok {
+					kec.handleEventsV1Event(ev, sender)
+				}
+			},
+			UpdateFunc: func(_, obj any) {
+				if ev, ok := obj.(*eventsv1.Event); ok {
+					kec.handleEventsV1Event(ev, sender)
+				}
+			},
+			DeleteFunc: func(obj any) {
+				if ev, ok := obj.(*eventsv1.Event); ok {
+					kec.handleEventsV1Event(ev, sender)
+				}
+			},
+		},
+	})
+
+	go func() {
+		log.Info().Msgf("starting events.k8s.io/v1 informer for ns=%q", ns)
+		controller.Run(stopper)
+		log.Info().Msgf("stopped events.k8s.io/v1 informer for ns=%q", ns)
+	}()
+}
+
+// -------- event handlers --------
 
 var severityMap = map[string]int{
 	"normal":  9,
 	"warning": 13,
 }
 
-func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *sender.Sender) {
-	eventTimestamp := getEventTimestamp(ev)
+func (kec *KubernetesEventsCollector) handleCoreV1Event(ev *corev1.Event, sender *sender.Sender) {
+	eventTimestamp := getCoreV1EventTimestamp(ev)
 	if eventTimestamp.IsZero() {
-		log.Debug().Msgf("event %s has no timestamp, skipping", ev.Name)
+		log.Debug().Msgf("core/v1 event %s has no timestamp, skipping", ev.Name)
+		return
 	}
-	// extract event
+
 	kev := &pb.KubernetesEvent{
 		ObjectKind:            ev.InvolvedObject.Kind,
 		ObjectName:            ev.InvolvedObject.Name,
@@ -131,7 +197,7 @@ func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *send
 		ObjectFieldpath:       ev.InvolvedObject.FieldPath,
 		ObjectApiVersion:      ev.InvolvedObject.APIVersion,
 		ObjectResourceVersion: ev.InvolvedObject.ResourceVersion,
-		ObjectTimestamp:       eventTimestamp.UnixMilli(),
+		ObjectTimestamp:       eventTimestamp.Unix(),
 		ObjectNamespace:       ev.InvolvedObject.Namespace,
 		EventMessage:          ev.Message,
 		EventReason:           ev.Reason,
@@ -142,44 +208,91 @@ func (kec *KubernetesEventsCollector) handleEvent(ev *corev1.Event, sender *send
 		NodeName:              ev.Source.Host,
 	}
 
-	// Set the "SeverityNumber" and "SeverityText" if a known type of
-	// severity is found.
 	if severityNumber, ok := severityMap[strings.ToLower(ev.Type)]; ok {
 		kev.EventSeverityNumber = int64(severityNumber)
 		kev.EventSeverityText = ev.Type
-	} else {
-		log.Logger.Debug().Msgf("unknown severity type %s", ev.Type)
 	}
 
-	// "Count" field of k8s event will be '0' in case it is
-	// not present in the collected event from k8s.
 	if ev.Count != 0 {
 		kev.EventCount = int64(ev.Count)
 	}
 
-	log.Logger.Trace().
+	log.Trace().
 		Str("event", ev.Name).
 		Str("namespace", ev.Namespace).
 		Str("reason", ev.Reason).
-		Msg("processed Kubernetes event")
+		Msg("processed core/v1 Kubernetes event")
 
-	// send it to a channel for the sender
 	sender.KubernetesEventChan <- kev
 }
 
-// Return the EventTimestamp based on the populated k8s event timestamps.
-// Priority: EventTime > LastTimestamp > FirstTimestamp.
-func getEventTimestamp(ev *corev1.Event) time.Time {
-	var eventTimestamp time.Time
-
-	switch {
-	case ev.EventTime.Time != time.Time{}:
-		eventTimestamp = ev.EventTime.Time
-	case ev.LastTimestamp.Time != time.Time{}:
-		eventTimestamp = ev.LastTimestamp.Time
-	case ev.FirstTimestamp.Time != time.Time{}:
-		eventTimestamp = ev.FirstTimestamp.Time
+func (kec *KubernetesEventsCollector) handleEventsV1Event(ev *eventsv1.Event, sender *sender.Sender) {
+	eventTimestamp := getEventV1EventTimestamp(ev)
+	if eventTimestamp.IsZero() {
+		log.Debug().Msgf("events.k8s.io/v1 event %s has no timestamp, skipping", ev.Name)
+		return
 	}
 
-	return eventTimestamp
+	kev := &pb.KubernetesEvent{
+		ObjectKind:            ev.Regarding.Kind,
+		ObjectName:            ev.Regarding.Name,
+		ObjectUid:             string(ev.Regarding.UID),
+		ObjectFieldpath:       ev.Regarding.FieldPath,
+		ObjectApiVersion:      ev.Regarding.APIVersion,
+		ObjectResourceVersion: ev.ResourceVersion,
+		ObjectTimestamp:       eventTimestamp.Unix(),
+		ObjectNamespace:       ev.Regarding.Namespace,
+		EventMessage:          ev.Note,
+		EventReason:           ev.Reason,
+		EventAction:           ev.Action,
+		EventStarttime:        ev.CreationTimestamp.String(),
+		EventName:             ev.Name,
+		EventUid:              string(ev.UID),
+		NodeName:              ev.DeprecatedSource.Host,
+	}
+
+	if severityNumber, ok := severityMap[strings.ToLower(string(ev.Type))]; ok {
+		kev.EventSeverityNumber = int64(severityNumber)
+		kev.EventSeverityText = string(ev.Type)
+	}
+
+	if ev.DeprecatedCount != 0 {
+		kev.EventCount = int64(ev.DeprecatedCount)
+	}
+
+	log.Trace().
+		Str("event", ev.Name).
+		Str("namespace", ev.Namespace).
+		Str("reason", ev.Reason).
+		Msg("processed events.k8s.io/v1 Kubernetes event")
+
+	sender.KubernetesEventChan <- kev
+}
+
+// -------- timestamp helpers --------
+
+func getCoreV1EventTimestamp(ev *corev1.Event) time.Time {
+	switch {
+	case !ev.EventTime.Time.IsZero():
+		return ev.EventTime.Time
+	case !ev.LastTimestamp.Time.IsZero():
+		return ev.LastTimestamp.Time
+	case !ev.FirstTimestamp.Time.IsZero():
+		return ev.FirstTimestamp.Time
+	default:
+		return time.Now()
+	}
+}
+
+func getEventV1EventTimestamp(evt *eventsv1.Event) time.Time {
+	switch {
+	case !evt.EventTime.IsZero():
+		return evt.EventTime.Time
+	case !evt.DeprecatedLastTimestamp.IsZero():
+		return evt.DeprecatedLastTimestamp.Time
+	case !evt.ObjectMeta.CreationTimestamp.IsZero():
+		return evt.ObjectMeta.CreationTimestamp.Time
+	default:
+		return time.Now()
+	}
 }

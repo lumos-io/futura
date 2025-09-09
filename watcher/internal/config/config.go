@@ -86,7 +86,7 @@ func Fetch() *Configuration {
 			MetadataCollectionInterval: convertDurationStringToTime(getStringOrDefault("kubernetes.metadataCollectionInterval", "30")),
 			LeaseName:                  viper.GetString("kubernetes.leaseName"),
 			LeaseNamespace:             viper.GetString("kubernetes.leaseNamespace"),
-			LeaseDuration:              convertDurationStringToTime(getStringOrDefault("kubernetes.leaseDuration", "15")),
+			LeaseDuration:              convertDurationStringToTime(getStringOrDefault("kubernetes.leaseDuration", "600")),
 			RenewDuration:              convertDurationStringToTime(getStringOrDefault("kubernetes.renewDeadline", "10")),
 			RetryPeriod:                convertDurationStringToTime(getStringOrDefault("kubernetes.retryPeriod", "2")),
 		},

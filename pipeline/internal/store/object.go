@@ -34,7 +34,7 @@ type flatKubernetesObject struct {
 	ClusterID                       int64             `json:"cluster_id"`
 	K8sVersion                      string            `json:"k8s_version"`
 	ReceivedAtUnix                  int64             `json:"received_at_unix"`
-	Timestamp                       time.Time         `json:"timestamp"`
+	Timestamp                       int64             `json:"timestamp"`
 	Type                            string            `json:"type"`
 	Kind                            string            `json:"kind"`
 	Namespace                       string            `json:"namespace"`
@@ -82,40 +82,40 @@ type flatKubernetesObject struct {
 }
 
 type flatKubernetesContainer struct {
-	UID            string    `json:"uid"`
-	Timestamp      time.Time `json:"timestamp"`
-	ContainerName  string    `json:"container_name"`
-	Image          string    `json:"image"`
-	ImageTag       string    `json:"image_tag"`
-	ContainerID    string    `json:"container_id"`
-	RestartsCount  int64     `json:"restarts_count"`
-	Ready          int64     `json:"ready"`
-	StateType      string    `json:"state_type"` // Enum8 stored as String in JSON
-	CPULimits      string    `json:"cpu_limits"`
-	MemoryLimits   string    `json:"memory_limits"`
-	CPURequests    string    `json:"cpu_requests"`
-	MemoryRequests string    `json:"memory_requests"`
+	UID            string `json:"uid"`
+	Timestamp      int64  `json:"timestamp"`
+	ContainerName  string `json:"container_name"`
+	Image          string `json:"image"`
+	ImageTag       string `json:"image_tag"`
+	ContainerID    string `json:"container_id"`
+	RestartsCount  int64  `json:"restarts_count"`
+	Ready          int64  `json:"ready"`
+	StateType      string `json:"state_type"` // Enum8 stored as String in JSON
+	CPULimits      string `json:"cpu_limits"`
+	MemoryLimits   string `json:"memory_limits"`
+	CPURequests    string `json:"cpu_requests"`
+	MemoryRequests string `json:"memory_requests"`
 }
 
 type flatKubernetesVolume struct {
-	UID        string    `json:"uid"`
-	Timestamp  time.Time `json:"timestamp"`
-	VolumeName string    `json:"volume_name"`
-	VolumeType string    `json:"volume_type"`
+	UID        string `json:"uid"`
+	Timestamp  int64  `json:"timestamp"`
+	VolumeName string `json:"volume_name"`
+	VolumeType string `json:"volume_type"`
 }
 
 type flatKubernetesNodeCondition struct {
-	UID             string    `json:"uid"`
-	Timestamp       time.Time `json:"timestamp"`
-	ConditionType   string    `json:"condition_type"`
-	ConditionStatus string    `json:"condition_status"`
-	Reason          string    `json:"reason"`
-	Message         string    `json:"message"`
+	UID             string `json:"uid"`
+	Timestamp       int64  `json:"timestamp"`
+	ConditionType   string `json:"condition_type"`
+	ConditionStatus string `json:"condition_status"`
+	Reason          string `json:"reason"`
+	Message         string `json:"message"`
 }
 
 type flatKubernetesAllocatableResource struct {
 	UID              string            `json:"uid"`
-	Timestamp        time.Time         `json:"timestamp"`
+	Timestamp        int64             `json:"timestamp"`
 	CPU              string            `json:"cpu"`
 	Memory           string            `json:"memory"`
 	Pods             string            `json:"pods"`
@@ -125,7 +125,7 @@ type flatKubernetesAllocatableResource struct {
 
 type flatKubernetesClusterQuota struct {
 	UID         string              `json:"uid"`
-	Timestamp   time.Time           `json:"timestamp"`
+	Timestamp   int64               `json:"timestamp"`
 	QuotaName   string              `json:"quota_name"`
 	QuotaUID    string              `json:"quota_uid"`
 	TotalLimits []flatResourceTuple `json:"total_limits"`
@@ -134,7 +134,7 @@ type flatKubernetesClusterQuota struct {
 
 type flatKubernetesNamespaceQuota struct {
 	UID       string              `json:"uid"`
-	Timestamp time.Time           `json:"timestamp"`
+	Timestamp int64               `json:"timestamp"`
 	Namespace string              `json:"namespace"`
 	Limits    []flatResourceTuple `json:"limits"`
 	Usage     []flatResourceTuple `json:"usage"`
@@ -146,200 +146,235 @@ type flatResourceTuple struct {
 }
 
 func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClusterObject) error {
+	if msg == nil {
+		return nil // nothing to do
+	}
+
 	timestamp := time.Now()
+
+	// guard optional nested messages
+	enrichment := msg.Enrichment
+	metadata := msg.Metadata
+	allocatable := msg.Allocatable
+	clusterQuota := msg.ClusterQuota
+
 	ko := &flatKubernetesObject{
-		OrganizationID:                  msg.Enrichment.OrganizationId,
-		ClusterID:                       msg.Enrichment.ClusterId,
-		K8sVersion:                      msg.Enrichment.K8SVersion,
-		ReceivedAtUnix:                  msg.Enrichment.ReceivedAtUnix,
-		Timestamp:                       timestamp,
-		Type:                            msg.Type,
-		Kind:                            msg.Kind,
-		Namespace:                       msg.Namespace,
-		Name:                            msg.Name,
-		UID:                             msg.Uid,
-		Labels:                          msg.Labels,
-		Annotations:                     msg.Annotations,
-		NodeName:                        msg.NodeName,
-		Status:                          msg.Status,
-		Phase:                           msg.Phase,
-		RestartCount:                    msg.RestartCount,
-		Replicas:                        msg.Replicas,
-		OwnerKind:                       msg.OwnerKind,
-		OwnerName:                       msg.OwnerName,
-		ReadyReplicas:                   msg.ReadyReplicas,
-		AvailableReplicas:               msg.AvailableReplicas,
-		UpdatedReplicas:                 msg.UpdatedReplicas,
-		CurrentReplicas:                 msg.CurrentReplicas,
+		OrganizationID:                  enrichment.GetOrganizationId(),
+		ClusterID:                       enrichment.GetClusterId(),
+		K8sVersion:                      enrichment.GetK8SVersion(),
+		ReceivedAtUnix:                  enrichment.GetReceivedAtUnix(),
+		Timestamp:                       timestamp.Unix(),
+		Type:                            msg.GetType(),
+		Kind:                            msg.GetKind(),
+		Namespace:                       msg.GetNamespace(),
+		Name:                            msg.GetName(),
+		UID:                             msg.GetUid(),
+		Labels:                          safeMap(msg.Labels),
+		Annotations:                     safeMap(msg.Annotations),
+		NodeName:                        msg.GetNodeName(),
+		Status:                          msg.GetStatus(),
+		Phase:                           msg.GetPhase(),
+		RestartCount:                    msg.GetRestartCount(),
+		Replicas:                        msg.GetReplicas(),
+		OwnerKind:                       msg.GetOwnerKind(),
+		OwnerName:                       msg.GetOwnerName(),
+		ReadyReplicas:                   msg.GetReadyReplicas(),
+		AvailableReplicas:               msg.GetAvailableReplicas(),
+		UpdatedReplicas:                 msg.GetUpdatedReplicas(),
+		CurrentReplicas:                 msg.GetCurrentReplicas(),
 		Tolerations:                     msg.Tolerations,
-		Affinity:                        msg.Affinity,
-		Extra:                           msg.Extra,
-		APIVersion:                      msg.ApiVersion,
-		HPAMaxReplicas:                  msg.HpaMaxReplicas,
-		HPAMinReplicas:                  msg.HpaMinReplicas,
-		HPAScaleTargetRef:               msg.HpaScaleTargetRef,
-		JobActive:                       msg.JobActive,
-		JobFailed:                       msg.JobFailed,
-		JobSucceeded:                    msg.JobSucceeded,
-		JobParallelism:                  msg.JobParallelism,
-		JobCompletions:                  msg.JobCompletions,
-		NsPhaseValue:                    msg.NsPhaseValue,
-		KubeletVersion:                  msg.KubeletVersion,
-		OSType:                          msg.OsType,
-		OSImage:                         msg.OsImage,
-		ContainerRuntime:                msg.ContainerRuntime,
-		ContainerRuntimeVersion:         msg.ContainerRuntimeVersion,
-		PodReason:                       msg.PodReason,
-		QOSClass:                        msg.QosClass,
-		DaemonsetCurrentNumberScheduled: msg.DaemonsetCurrentNumberScheduled,
-		DaemonsetDesiredNumberScheduled: msg.DaemonsetDesiredNumberScheduled,
-		DaemonsetNumberMisscheduled:     msg.DaemonsetNumberMisscheduled,
-		DaemonsetNumberReady:            msg.DaemonsetNumberReady,
-		IdempotencyKey:                  msg.Metadata.IdempotencyKey,
-		WatcherVersion:                  msg.Metadata.IdempotencyKey,
+		Affinity:                        safeMap(msg.Affinity),
+		Extra:                           safeMap(msg.Extra),
+		APIVersion:                      msg.GetApiVersion(),
+		HPAMaxReplicas:                  msg.GetHpaMaxReplicas(),
+		HPAMinReplicas:                  msg.GetHpaMinReplicas(),
+		HPAScaleTargetRef:               msg.GetHpaScaleTargetRef(),
+		JobActive:                       msg.GetJobActive(),
+		JobFailed:                       msg.GetJobFailed(),
+		JobSucceeded:                    msg.GetJobSucceeded(),
+		JobParallelism:                  msg.GetJobParallelism(),
+		JobCompletions:                  msg.GetJobCompletions(),
+		NsPhaseValue:                    msg.GetNsPhaseValue(),
+		KubeletVersion:                  msg.GetKubeletVersion(),
+		OSType:                          msg.GetOsType(),
+		OSImage:                         msg.GetOsImage(),
+		ContainerRuntime:                msg.GetContainerRuntime(),
+		ContainerRuntimeVersion:         msg.GetContainerRuntimeVersion(),
+		PodReason:                       msg.GetPodReason(),
+		QOSClass:                        msg.GetQosClass(),
+		DaemonsetCurrentNumberScheduled: msg.GetDaemonsetCurrentNumberScheduled(),
+		DaemonsetDesiredNumberScheduled: msg.GetDaemonsetDesiredNumberScheduled(),
+		DaemonsetNumberMisscheduled:     msg.GetDaemonsetNumberMisscheduled(),
+		DaemonsetNumberReady:            msg.GetDaemonsetNumberReady(),
+		IdempotencyKey:                  metadata.GetIdempotencyKey(),
+		WatcherVersion:                  metadata.GetWatcherVersion(),
 	}
-	b, err := json.Marshal(ko)
-	if err != nil {
-		return err
-	}
-	if err := os.kc.Publish(ctx, StoreKubernetesObjectsTopic, b); err != nil {
-		return err
-	}
-
-	var kc *flatKubernetesContainer
-	for _, container := range msg.Containers {
-		kc = &flatKubernetesContainer{
-			UID:            msg.Uid,
-			Timestamp:      timestamp,
-			ContainerName:  container.Name,
-			Image:          container.Image,
-			ImageTag:       container.ImageTag,
-			ContainerID:    container.ContainerId,
-			RestartsCount:  container.RestartsCount,
-			Ready:          container.Ready,
-			StateType:      container.State.String(),
-			CPULimits:      container.Resources.Limits.Cpu,
-			MemoryLimits:   container.Resources.Limits.Memory,
-			CPURequests:    container.Resources.Requests.Cpu,
-			MemoryRequests: container.Resources.Requests.Memory,
-		}
-		b, err := json.Marshal(kc)
-		if err != nil {
+	if b, err := json.Marshal(ko); err == nil {
+		if err := os.kc.Publish(ctx, StoreKubernetesObjectsTopic, b); err != nil {
 			return err
 		}
-		if err := os.kc.Publish(ctx, StoreKubernetesContainersTopic, b); err != nil {
-			return err
-		}
-	}
-
-	var kv *flatKubernetesVolume
-	for _, volume := range msg.Volumes {
-		kv = &flatKubernetesVolume{
-			UID:        msg.Uid,
-			Timestamp:  timestamp,
-			VolumeName: volume.Name,
-			VolumeType: volume.Type,
-		}
-		b, err := json.Marshal(kv)
-		if err != nil {
-			return err
-		}
-		if err := os.kc.Publish(ctx, StoreKubernetesVolumesTopic, b); err != nil {
-			return err
-		}
-	}
-
-	var knc *flatKubernetesNodeCondition
-	for _, condition := range msg.Conditions {
-		knc = &flatKubernetesNodeCondition{
-			UID:             msg.Uid,
-			Timestamp:       timestamp,
-			ConditionType:   condition.Type,
-			ConditionStatus: condition.Status,
-			Reason:          condition.Reason,
-			Message:         condition.Message,
-		}
-		b, err := json.Marshal(knc)
-		if err != nil {
-			return err
-		}
-		if err := os.kc.Publish(ctx, StoreKubernetesNodeConditionsTopic, b); err != nil {
-			return err
-		}
-	}
-
-	kar := &flatKubernetesAllocatableResource{
-		UID:              msg.Uid,
-		Timestamp:        timestamp,
-		CPU:              msg.Allocatable.Cpu,
-		Memory:           msg.Allocatable.Memory,
-		Pods:             msg.Allocatable.Pods,
-		EphemeralStorage: msg.Allocatable.EphemeralStorage,
-		Others:           msg.Allocatable.Others,
-	}
-	b, err = json.Marshal(kar)
-	if err != nil {
-		return err
-	}
-	if err := os.kc.Publish(ctx, StoreKubernetesAllocatableResourcesTopic, b); err != nil {
+	} else {
 		return err
 	}
 
-	kcq := &flatKubernetesClusterQuota{
-		UID:         msg.Uid,
-		Timestamp:   timestamp,
-		QuotaName:   msg.ClusterQuota.Name,
-		QuotaUID:    msg.ClusterQuota.Uid,
-		TotalLimits: make([]flatResourceTuple, len(msg.ClusterQuota.TotalLimits)),
-		TotalUsage:  make([]flatResourceTuple, len(msg.ClusterQuota.TotalUsage)),
-	}
-	for i, limits := range msg.ClusterQuota.TotalLimits {
-		kcq.TotalLimits[i] = flatResourceTuple{
-			Resource: limits.Resource,
-			Value:    limits.Value,
+	// containers
+	for _, container := range msg.GetContainers() {
+		var stateType string
+		if container != nil && container.State != nil {
+			stateType = container.State.String()
 		}
-	}
-	for i, usage := range msg.ClusterQuota.TotalUsage {
-		kcq.TotalUsage[i] = flatResourceTuple{
-			Resource: usage.Resource,
-			Value:    usage.Value,
-		}
-	}
-	b, err = json.Marshal(kcq)
-	if err != nil {
-		return err
-	}
-	if err := os.kc.Publish(ctx, StoreKubernetesClusterQuotasTopic, b); err != nil {
-		return err
-	}
 
-	var knq *flatKubernetesNamespaceQuota
-	for _, quota := range msg.ClusterQuota.Quotas {
-		knq = &flatKubernetesNamespaceQuota{
-			UID:       msg.Uid,
-			Timestamp: timestamp,
-			Namespace: msg.Namespace,
-			Limits:    make([]flatResourceTuple, len(quota.Limits)),
-			Usage:     make([]flatResourceTuple, len(quota.Usage)),
-		}
-		for i, limit := range quota.Limits {
-			knq.Limits[i] = flatResourceTuple{
-				Resource: limit.Resource,
-				Value:    limit.Value,
+		var cpuLimits, memLimits, cpuRequests, memRequests string
+		if container != nil && container.Resources != nil {
+			resources := container.GetResources()
+			if resources.Limits != nil {
+				cpuLimits = resources.Limits.Cpu
+				memLimits = resources.Limits.Memory
+			}
+			if resources.Requests != nil {
+				cpuRequests = resources.Requests.Cpu
+				memRequests = resources.Requests.Memory
 			}
 		}
-		for i, usage := range quota.Usage {
-			knq.Usage[i] = flatResourceTuple{
-				Resource: usage.Resource,
-				Value:    usage.Value,
+
+		kc := &flatKubernetesContainer{
+			UID:            msg.GetUid(),
+			Timestamp:      timestamp.Unix(),
+			ContainerName:  container.GetName(),
+			Image:          container.GetImage(),
+			ImageTag:       container.GetImageTag(),
+			ContainerID:    container.GetContainerId(),
+			RestartsCount:  container.GetRestartsCount(),
+			Ready:          container.GetReady(),
+			StateType:      stateType,
+			CPULimits:      cpuLimits,
+			MemoryLimits:   memLimits,
+			CPURequests:    cpuRequests,
+			MemoryRequests: memRequests,
+		}
+		if b, err := json.Marshal(kc); err == nil {
+			if err := os.kc.Publish(ctx, StoreKubernetesContainersTopic, b); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// volumes
+	for _, volume := range msg.GetVolumes() {
+		kv := &flatKubernetesVolume{
+			UID:        msg.GetUid(),
+			Timestamp:  timestamp.Unix(),
+			VolumeName: volume.GetName(),
+			VolumeType: volume.GetType(),
+		}
+		if b, err := json.Marshal(kv); err == nil {
+			if err := os.kc.Publish(ctx, StoreKubernetesVolumesTopic, b); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// conditions
+	for _, condition := range msg.GetConditions() {
+		knc := &flatKubernetesNodeCondition{
+			UID:             msg.GetUid(),
+			Timestamp:       timestamp.Unix(),
+			ConditionType:   condition.GetType(),
+			ConditionStatus: condition.GetStatus(),
+			Reason:          condition.GetReason(),
+			Message:         condition.GetMessage(),
+		}
+		if b, err := json.Marshal(knc); err == nil {
+			if err := os.kc.Publish(ctx, StoreKubernetesNodeConditionsTopic, b); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// allocatable
+	if allocatable != nil {
+		kar := &flatKubernetesAllocatableResource{
+			UID:              msg.GetUid(),
+			Timestamp:        timestamp.Unix(),
+			CPU:              allocatable.GetCpu(),
+			Memory:           allocatable.GetMemory(),
+			Pods:             allocatable.GetPods(),
+			EphemeralStorage: allocatable.GetEphemeralStorage(),
+			Others:           safeMap(allocatable.Others),
+		}
+		if b, err := json.Marshal(kar); err == nil {
+			if err := os.kc.Publish(ctx, StoreKubernetesAllocatableResourcesTopic, b); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// cluster quota
+	if clusterQuota != nil {
+		kcq := &flatKubernetesClusterQuota{
+			UID:         msg.GetUid(),
+			Timestamp:   timestamp.Unix(),
+			QuotaName:   clusterQuota.GetName(),
+			QuotaUID:    clusterQuota.GetUid(),
+			TotalLimits: make([]flatResourceTuple, len(clusterQuota.GetTotalLimits())),
+			TotalUsage:  make([]flatResourceTuple, len(clusterQuota.GetTotalUsage())),
+		}
+		for i, limits := range clusterQuota.GetTotalLimits() {
+			kcq.TotalLimits[i] = flatResourceTuple{
+				Resource: limits.GetResource(),
+				Value:    limits.GetValue(),
 			}
 		}
-		b, err := json.Marshal(knq)
-		if err != nil {
+		for i, usage := range clusterQuota.GetTotalUsage() {
+			kcq.TotalUsage[i] = flatResourceTuple{
+				Resource: usage.GetResource(),
+				Value:    usage.GetValue(),
+			}
+		}
+		if b, err := json.Marshal(kcq); err == nil {
+			if err := os.kc.Publish(ctx, StoreKubernetesClusterQuotasTopic, b); err != nil {
+				return err
+			}
+		} else {
 			return err
 		}
-		if err := os.kc.Publish(ctx, StoreKubernetesNamespaceQuotasTopic, b); err != nil {
-			return err
+
+		// namespace quotas
+		for _, quota := range clusterQuota.GetQuotas() {
+			knq := &flatKubernetesNamespaceQuota{
+				UID:       msg.GetUid(),
+				Timestamp: timestamp.Unix(),
+				Namespace: msg.GetNamespace(),
+				Limits:    make([]flatResourceTuple, len(quota.GetLimits())),
+				Usage:     make([]flatResourceTuple, len(quota.GetUsage())),
+			}
+			for i, limit := range quota.GetLimits() {
+				knq.Limits[i] = flatResourceTuple{
+					Resource: limit.GetResource(),
+					Value:    limit.GetValue(),
+				}
+			}
+			for i, usage := range quota.GetUsage() {
+				knq.Usage[i] = flatResourceTuple{
+					Resource: usage.GetResource(),
+					Value:    usage.GetValue(),
+				}
+			}
+			if b, err := json.Marshal(knq); err == nil {
+				if err := os.kc.Publish(ctx, StoreKubernetesNamespaceQuotasTopic, b); err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
 		}
 	}
 

@@ -30,20 +30,18 @@ func New(config *config.Configuration) (*Collector, error) {
 }
 
 func (c *Collector) Start(ctx context.Context) error {
-	// if err := c.kubernetesEventsCollector.Start(ctx); err != nil {
-	// 	log.Logger.Fatal().Err(err).Msg("failed to start the kubernetes events collector...")
-	// 	return err
-	// }
-
-	// if err := c.kubernetesClusterCollector.Start(ctx); err != nil {
-	// 	log.Logger.Fatal().Err(err).Msg("failed to start the kubernetes cluster collector...")
-	// 	return err
-	// }
+	if err := c.kubernetesEventsCollector.Start(ctx); err != nil {
+		log.Logger.Fatal().Err(err).Msg("failed to start the kubernetes events collector...")
+		return err
+	}
+	if err := c.kubernetesClusterCollector.Start(ctx); err != nil {
+		log.Logger.Fatal().Err(err).Msg("failed to start the kubernetes cluster collector...")
+		return err
+	}
 	if err := c.kuberentesStatsCollector.Start(ctx); err != nil {
 		log.Logger.Fatal().Err(err).Msg("failed to start the kubernetes stats collector...")
 		return err
 	}
-
 	return nil
 }
 

@@ -24,7 +24,7 @@ CREATE TABLE
         object_api_version String,
         object_resource_version String,
         node_name String
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092', -- needs to be templetized
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092', -- needs to be templetized
     kafka_topic_list = 'store.k8s.events', -- needs to be templetized
     kafka_group_name = 'clickhouse-kubernetes-consumer', -- needs to be templetized
     kafka_format = 'JSONEachRow',
@@ -46,7 +46,7 @@ CREATE TABLE
         k8s_version String,
         idempotency_key String,
         received_at_unix Int64,
-        timestamp DateTime64 (3),
+        timestamp Int64,
         type String,
         kind String,
         namespace String,
@@ -89,8 +89,8 @@ CREATE TABLE
         daemonset_desired_number_scheduled Int64,
         daemonset_number_misscheduled Int64,
         daemonset_number_ready Int64,
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubernetes.objects',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.k8s.objects',
     kafka_group_name = 'k8s_objects_consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -105,7 +105,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_containers_kafka (
         uid String,
-        timestamp DateTime64 (3),
+        timestamp Int64,
         container_name String,
         image String,
         image_tag String,
@@ -118,8 +118,8 @@ CREATE TABLE
         memory_limits String,
         cpu_requests String,
         memory_requests String
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubernetes.containers',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.k8s.containers',
     kafka_group_name = 'k8s_containers_consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -134,11 +134,11 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_volumes_kafka (
         uid String,
-        timestamp DateTime64 (3),
+        timestamp Int64,
         volume_name String,
         volume_type String
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubernetes.volumes',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.k8s.volumes',
     kafka_group_name = 'k8s_volumes_consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -153,13 +153,13 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_node_conditions_kafka (
         uid String,
-        timestamp DateTime64 (3),
+        timestamp Int64,
         condition_type String,
         condition_status String,
         reason String,
         message String
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubernetes.node_conditions',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.k8s.node_conditions',
     kafka_group_name = 'k8s_nodeconditions_consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -174,14 +174,14 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_allocatable_resources_kafka (
         uid String,
-        timestamp DateTime64 (3),
+        timestamp Int64,
         cpu String,
         memory String,
         pods String,
         ephemeral_storage String,
         others Map (String, String)
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubernetes.allocatable_resources',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.k8s.allocatable_resources',
     kafka_group_name = 'k8s_allocatable_consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -196,13 +196,13 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_cluster_quotas_kafka (
         uid String,
-        timestamp DateTime64 (3),
+        timestamp Int64,
         quota_name String,
         quota_uid String,
         total_limits Array (Tuple (String, Int64)),
         total_usage Array (Tuple (String, Int64))
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubernetes.cluster_quotas',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.k8s.cluster_quotas',
     kafka_group_name = 'k8s_clusterquotas_consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -217,12 +217,12 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_namespace_quotas_kafka (
         uid String,
-        timestamp DateTime64 (3),
+        timestamp Int64,
         namespace String,
         limits Array (Tuple (String, Int64)),
         usage Array (Tuple (String, Int64))
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubernetes.namespace_quotas',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.k8s.namespace_quotas',
     kafka_group_name = 'k8s_namespacequotas_consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -240,9 +240,9 @@ CREATE TABLE
         organization_id UInt32,
         cluster_id Int64,
         received_at_unix Int64,
-        timestamp DateTime64 (3),
+        timestamp Int64,
         node_name String,
-        start_time DateTime64 (3),
+        start_time Int64,
         cpu_usage_nano_cores UInt64,
         cpu_usage_core_nanoseconds UInt64,
         cpu_psi_full_avg10 Float64,
@@ -262,8 +262,8 @@ CREATE TABLE
         fs_used_bytes UInt64,
         swap_available_bytes UInt64,
         swap_usage_bytes UInt64
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubelet.node.metrics',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.kubelet.node.metrics',
     kafka_group_name = 'clickhouse-kubelet-node-consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -277,11 +277,11 @@ FROM
 
 CREATE TABLE
     IF NOT EXISTS kubelet_pod_metrics_kafka (
-        timestamp DateTime64 (3),
+        timestamp Int64,
         pod_uid String,
         pod_name String,
         pod_namespace String,
-        start_time DateTime64 (3),
+        start_time Int64,
         cpu_usage_nano_cores UInt64,
         memory_usage_bytes UInt64,
         memory_working_set_bytes UInt64,
@@ -290,8 +290,8 @@ CREATE TABLE
         process_count UInt64,
         swap_available_bytes UInt64,
         swap_usage_bytes UInt64
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubelet.pod.metrics',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.kubelet.pod.metrics',
     kafka_group_name = 'clickhouse-kubelet-pod-consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -305,10 +305,10 @@ FROM
 
 CREATE TABLE
     IF NOT EXISTS kubelet_container_metrics_kafka (
-        timestamp DateTime64 (3),
+        timestamp Int64,
         pod_uid String,
         container_name String,
-        container_start_time DateTime64 (3),
+        container_start_time Int64,
         cpu_usage_nano_cores UInt64,
         memory_usage_bytes UInt64,
         memory_working_set_bytes UInt64,
@@ -318,8 +318,8 @@ CREATE TABLE
         logs_used_bytes UInt64,
         accelerator JSON,
         user_metrics JSON
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubelet.container.metrics',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.kubelet.container.metrics',
     kafka_group_name = 'clickhouse-kubelet-container-consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -333,15 +333,15 @@ FROM
 
 CREATE TABLE
     IF NOT EXISTS kubelet_network_metrics_kafka (
-        timestamp DateTime64 (3),
+        timestamp Int64,
         pod_uid String,
         interface_name String,
         rx_bytes UInt64,
         rx_errors UInt64,
         tx_bytes UInt64,
         tx_errors UInt64
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubelet.network.metrics',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.kubelet.network.metrics',
     kafka_group_name = 'clickhouse-kubelet-network-consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,
@@ -355,7 +355,7 @@ FROM
 
 CREATE TABLE
     IF NOT EXISTS kubelet_volume_metrics_kafka (
-        timestamp DateTime64 (3),
+        timestamp Int64,
         pod_uid String,
         volume_name String,
         pvc_name String,
@@ -367,8 +367,8 @@ CREATE TABLE
         inodes_free UInt64,
         inodes UInt64,
         inodes_used UInt64
-    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = 'kubelet.volume.metrics',
+    ) ENGINE = Kafka SETTINGS kafka_broker_list = 'kafka1:9092',
+    kafka_topic_list = 'store.kubelet.volume.metrics',
     kafka_group_name = 'clickhouse-kubelet-volume-consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 1,

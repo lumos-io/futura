@@ -31,3 +31,7 @@ To generate them, run the following command within the Lima VM
 ```shell
 bpftool btf dump file /sys/kernel/btf/vmlinux format c > internal/ebpf/bpf/vmlinux.h
 ```
+
+```text
+Failed to update lock optimistically: Operation cannot be fulfilled on leases.coordination.k8s.io "futura": the object has been modified; please apply your changes to the latest version and try again, falling back to slow path
+```

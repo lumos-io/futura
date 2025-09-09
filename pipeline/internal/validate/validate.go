@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
@@ -156,14 +155,6 @@ func (v *Validator) ValidateKubernetesEvent(e *pb.KubernetesEvent) error {
 	if e.ObjectTimestamp <= 0 {
 		return fmt.Errorf("invalid object_timestamp: %d", e.ObjectTimestamp)
 	}
-
-	// Validate object_timestamp is within ±24h
-	objTime := time.Unix(e.ObjectTimestamp, 0)
-	now := time.Now()
-	if objTime.Before(now.Add(-24*time.Hour)) || objTime.After(now.Add(24*time.Hour)) {
-		return fmt.Errorf("object_timestamp out of acceptable range: %s", objTime)
-	}
-
 	if e.EventUid == "" {
 		return errors.New("event_uid is required")
 	}
@@ -173,14 +164,6 @@ func (v *Validator) ValidateKubernetesEvent(e *pb.KubernetesEvent) error {
 	if e.EventCount < 0 {
 		return fmt.Errorf("event_count must be non-negative: %d", e.EventCount)
 	}
-
-	// Optionally parse event_starttime if format is known (e.g., RFC3339)
-	if e.EventStarttime != "" {
-		if _, err := time.Parse(time.RFC3339, e.EventStarttime); err != nil {
-			return fmt.Errorf("event_starttime not RFC3339: %s", e.EventStarttime)
-		}
-	}
-
 	return nil
 }
 
@@ -192,20 +175,12 @@ func (v *Validator) ValidateKubernetesClusterObject(obj *pb.KubernetesClusterObj
 	if obj.Type == "" {
 		return errors.New("type is required")
 	}
-	if obj.Kind == "" {
-		return errors.New("kind is required")
-	}
-	if obj.Name == "" {
-		return errors.New("name is required")
-	}
 	if obj.Uid == "" {
 		return errors.New("uid is required")
 	}
-
 	if obj.RestartCount < 0 {
 		obj.RestartCount = 0
 	}
-
 	// Replica counts must be non-negative
 	replicaFields := map[string]int64{
 		"replicas":                           obj.Replicas,
@@ -231,46 +206,6 @@ func (v *Validator) ValidateKubernetesClusterObject(obj *pb.KubernetesClusterObj
 			value = 0
 		}
 	}
-
-	for i, c := range obj.Containers {
-		if c.Name == "" {
-			return fmt.Errorf("containers[%d].name is required", i)
-		}
-		if c.Image == "" {
-			return fmt.Errorf("containers[%d].image is required", i)
-		}
-		if c.RestartsCount < 0 {
-			c.RestartsCount = 0
-		}
-	}
-
-	for i, v := range obj.Volumes {
-		if v.Name == "" {
-			return fmt.Errorf("volumes[%d].name is required", i)
-		}
-		if v.Type == "" {
-			return fmt.Errorf("volumes[%d].type is required", i)
-		}
-	}
-
-	for i, cond := range obj.Conditions {
-		if cond.Type == "" {
-			return fmt.Errorf("conditions[%d].type is required", i)
-		}
-		if cond.Status == "" {
-			return fmt.Errorf("conditions[%d].status is required", i)
-		}
-	}
-
-	if obj.ClusterQuota != nil {
-		if obj.ClusterQuota.Name == "" {
-			return errors.New("cluster_quota.name is required")
-		}
-		if obj.ClusterQuota.Uid == "" {
-			return errors.New("cluster_quota.uid is required")
-		}
-	}
-
 	return nil
 }
 

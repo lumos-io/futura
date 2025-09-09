@@ -33,31 +33,22 @@ var storeCmd = &cobra.Command{
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		if err := s.Start(ctx); err != nil {
-			panic(err)
-		}
 
 		// start shutdown goroutine
 		go func() {
 			// capture sigterm and other system call here
 			<-signalCh
-			fmt.Println("Shutting down collecto stage...")
+			signal.Stop(signalCh)
+			cancel()
+			fmt.Println("Shutting down store stage...")
 		}()
+
+		if err := s.Start(ctx); err != nil {
+			panic(err)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(storeCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// storeCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// storeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

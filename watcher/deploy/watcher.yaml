@@ -108,7 +108,7 @@ data:
     provider = "aws" # possible values: aws, azure, gcp, alibaba
 
     [log]
-    level = "debug" # valid values: debug, info, warn, error
+    level = "info" # valid values: debug, info, warn, error
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -203,6 +203,9 @@ rules:
   - apiGroups: [""]
     resources: ["nodes/proxy"]
     verbs: ["get", "list"]
+  - apiGroups: ["events.k8s.io"] # newer events API
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
 ---
 # Source: watcher/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
