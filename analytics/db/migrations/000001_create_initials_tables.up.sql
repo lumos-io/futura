@@ -107,7 +107,7 @@ CREATE TABLE
         container_id String,
         restarts_count Int64,
         ready Int64,
-        state_type Enum8 ('waiting' = 1, 'running' = 2, 'terminated' = 3),
+        state_type String,
         state_json String,
         cpu_limits String,
         memory_limits String,
