@@ -105,6 +105,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_containers_kafka (
         uid String,
+        idempotency_key String,
         timestamp Int64,
         container_name String,
         image String,
@@ -134,6 +135,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_volumes_kafka (
         uid String,
+        idempotency_key String,
         timestamp Int64,
         volume_name String,
         volume_type String
@@ -153,6 +155,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_node_conditions_kafka (
         uid String,
+        idempotency_key String,
         timestamp Int64,
         condition_type String,
         condition_status String,
@@ -174,6 +177,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_allocatable_resources_kafka (
         uid String,
+        idempotency_key String,
         timestamp Int64,
         cpu String,
         memory String,
@@ -196,6 +200,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_cluster_quotas_kafka (
         uid String,
+        idempotency_key String,
         timestamp Int64,
         quota_name String,
         quota_uid String,
@@ -217,6 +222,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubernetes_namespace_quotas_kafka (
         uid String,
+        idempotency_key String,
         timestamp Int64,
         namespace String,
         limits Array (Tuple (String, Int64)),
@@ -238,6 +244,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubelet_node_metrics_kafka (
         organization_id UInt32,
+        idempotency_key String,
         cluster_id Int64,
         received_at_unix Int64,
         timestamp Int64,
@@ -278,6 +285,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubelet_pod_metrics_kafka (
         timestamp Int64,
+        idempotency_key String,
         pod_uid String,
         pod_name String,
         pod_namespace String,
@@ -306,6 +314,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubelet_container_metrics_kafka (
         timestamp Int64,
+        idempotency_key String,
         pod_uid String,
         container_name String,
         container_start_time Int64,
@@ -334,6 +343,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubelet_network_metrics_kafka (
         timestamp Int64,
+        idempotency_key String,
         pod_uid String,
         interface_name String,
         rx_bytes UInt64,
@@ -356,6 +366,7 @@ FROM
 CREATE TABLE
     IF NOT EXISTS kubelet_volume_metrics_kafka (
         timestamp Int64,
+        idempotency_key String,
         pod_uid String,
         volume_name String,
         pvc_name String,

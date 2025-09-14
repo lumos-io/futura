@@ -84,6 +84,7 @@ services:
         hard: 262144
     volumes:
       - ./data/clickhouse:/var/lib/clickhouse
+      - ./data/clickhouse/logs:/var/log/clickhouse-server
 
   kafka1:
     image: apache/kafka:4.0.1-rc0

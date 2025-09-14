@@ -25,18 +25,11 @@ CREATE TABLE
         object_api_version String,
         object_resource_version String,
         node_name String
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toDate (object_timestamp)
 ORDER BY
-    (
-        organization_id,
-        cluster_id,
-        object_namespace,
-        object_kind,
-        object_name,
-        object_timestamp
-    );
+    (idempotency_key);
 
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 CREATE TABLE
@@ -91,15 +84,16 @@ CREATE TABLE
         idempotency_key String,
         watcher_version String,
         cloud_provider String,
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (kind, namespace, name, timestamp);
+    (idempotency_key);
 
 CREATE TABLE
     IF NOT EXISTS kubernetes_containers (
         uid String,
+        idempotency_key String,
         timestamp DateTime64 (3),
         container_name String,
         image String,
@@ -113,79 +107,84 @@ CREATE TABLE
         memory_limits String,
         cpu_requests String,
         memory_requests String
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (uid, container_name, timestamp);
+    (idempotency_key);
 
 CREATE TABLE
     IF NOT EXISTS kubernetes_volumes (
         uid String,
+        idempotency_key String,
         timestamp DateTime64 (3),
         volume_name String,
         volume_type String
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (uid, volume_name);
+    (idempotency_key);
 
 CREATE TABLE
     IF NOT EXISTS kubernetes_node_conditions (
         uid String,
+        idempotency_key String,
         timestamp DateTime64 (3),
         condition_type String,
         condition_status String,
         reason String,
         message String
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (uid, condition_type);
+    (idempotency_key);
 
 CREATE TABLE
     IF NOT EXISTS kubernetes_allocatable_resources (
         uid String,
+        idempotency_key String,
         timestamp DateTime64 (3),
         cpu String,
         memory String,
         pods String,
         ephemeral_storage String,
         others Map (String, String)
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    uid;
+    (idempotency_key);
 
 CREATE TABLE
     IF NOT EXISTS kubernetes_cluster_quotas (
         uid String,
+        idempotency_key String,
         timestamp DateTime64 (3),
         quota_name String,
         quota_uid String,
         total_limits Array (Tuple (String, Int64)),
         total_usage Array (Tuple (String, Int64))
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (uid, quota_name);
+    (idempotency_key);
 
 CREATE TABLE
     IF NOT EXISTS kubernetes_namespace_quotas (
         uid String,
+        idempotency_key String,
         timestamp DateTime64 (3),
         namespace String,
         limits Array (Tuple (String, Int64)),
         usage Array (Tuple (String, Int64))
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (uid, namespace);
+    (idempotency_key);
 
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
 CREATE TABLE
@@ -193,6 +192,7 @@ CREATE TABLE
         organization_id UInt32,
         cluster_id Int64,
         received_at_unix Int64,
+        idempotency_key String,
         timestamp DateTime64 (3),
         node_name String,
         start_time DateTime64 (3),
@@ -220,15 +220,16 @@ CREATE TABLE
         -- Swap
         swap_available_bytes UInt64,
         swap_usage_bytes UInt64
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (node_name, timestamp);
+    (idempotency_key);
 
 CREATE TABLE
     kubelet_pod_metrics (
         timestamp DateTime64 (3),
+        idempotency_key String,
         pod_uid String,
         pod_name String,
         pod_namespace String,
@@ -241,15 +242,16 @@ CREATE TABLE
         process_count UInt64,
         swap_available_bytes UInt64,
         swap_usage_bytes UInt64
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (pod_namespace, pod_name, timestamp);
+    (idempotency_key);
 
 CREATE TABLE
     kubelet_container_metrics (
         timestamp DateTime64 (3),
+        idempotency_key String,
         pod_uid String,
         container_name String,
         container_start_time DateTime64 (3),
@@ -262,30 +264,32 @@ CREATE TABLE
         logs_used_bytes UInt64,
         accelerator JSON, -- or flatten if you have predictable models
         user_metrics JSON
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (pod_uid, container_name, timestamp);
+    (idempotency_key);
 
 CREATE TABLE
     kubelet_network_metrics (
         timestamp DateTime64 (3),
+        idempotency_key String,
         pod_uid String,
         interface_name String,
         rx_bytes UInt64,
         rx_errors UInt64,
         tx_bytes UInt64,
         tx_errors UInt64
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (pod_uid, interface_name, timestamp);
+    (idempotency_key);
 
 CREATE TABLE
     kubelet_volume_metrics (
         timestamp DateTime64 (3),
+        idempotency_key String,
         pod_uid String,
         volume_name String,
         pvc_name String,
@@ -297,8 +301,8 @@ CREATE TABLE
         inodes_free UInt64,
         inodes UInt64,
         inodes_used UInt64
-    ) ENGINE = MergeTree
+    ) ENGINE = ReplacingMergeTree
 PARTITION BY
     toYYYYMM (timestamp)
 ORDER BY
-    (pod_uid, volume_name, timestamp);
+    (idempotency_key);

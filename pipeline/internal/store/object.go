@@ -83,6 +83,7 @@ type flatKubernetesObject struct {
 
 type flatKubernetesContainer struct {
 	UID            string `json:"uid"`
+	IdempotencyKey string `json:"idempotency_key"`
 	Timestamp      int64  `json:"timestamp"`
 	ContainerName  string `json:"container_name"`
 	Image          string `json:"image"`
@@ -98,14 +99,16 @@ type flatKubernetesContainer struct {
 }
 
 type flatKubernetesVolume struct {
-	UID        string `json:"uid"`
-	Timestamp  int64  `json:"timestamp"`
-	VolumeName string `json:"volume_name"`
-	VolumeType string `json:"volume_type"`
+	UID            string `json:"uid"`
+	IdempotencyKey string `json:"idempotency_key"`
+	Timestamp      int64  `json:"timestamp"`
+	VolumeName     string `json:"volume_name"`
+	VolumeType     string `json:"volume_type"`
 }
 
 type flatKubernetesNodeCondition struct {
 	UID             string `json:"uid"`
+	IdempotencyKey  string `json:"idempotency_key"`
 	Timestamp       int64  `json:"timestamp"`
 	ConditionType   string `json:"condition_type"`
 	ConditionStatus string `json:"condition_status"`
@@ -115,6 +118,7 @@ type flatKubernetesNodeCondition struct {
 
 type flatKubernetesAllocatableResource struct {
 	UID              string            `json:"uid"`
+	IdempotencyKey   string            `json:"idempotency_key"`
 	Timestamp        int64             `json:"timestamp"`
 	CPU              string            `json:"cpu"`
 	Memory           string            `json:"memory"`
@@ -124,25 +128,28 @@ type flatKubernetesAllocatableResource struct {
 }
 
 type flatKubernetesClusterQuota struct {
-	UID         string              `json:"uid"`
-	Timestamp   int64               `json:"timestamp"`
-	QuotaName   string              `json:"quota_name"`
-	QuotaUID    string              `json:"quota_uid"`
-	TotalLimits []flatResourceTuple `json:"total_limits"`
-	TotalUsage  []flatResourceTuple `json:"total_usage"`
+	UID            string              `json:"uid"`
+	IdempotencyKey string              `json:"idempotency_key"`
+	Timestamp      int64               `json:"timestamp"`
+	QuotaName      string              `json:"quota_name"`
+	QuotaUID       string              `json:"quota_uid"`
+	TotalLimits    []flatResourceTuple `json:"total_limits"`
+	TotalUsage     []flatResourceTuple `json:"total_usage"`
 }
 
 type flatKubernetesNamespaceQuota struct {
-	UID       string              `json:"uid"`
-	Timestamp int64               `json:"timestamp"`
-	Namespace string              `json:"namespace"`
-	Limits    []flatResourceTuple `json:"limits"`
-	Usage     []flatResourceTuple `json:"usage"`
+	UID            string              `json:"uid"`
+	IdempotencyKey string              `json:"idempotency_key"`
+	Timestamp      int64               `json:"timestamp"`
+	Namespace      string              `json:"namespace"`
+	Limits         []flatResourceTuple `json:"limits"`
+	Usage          []flatResourceTuple `json:"usage"`
 }
 
 type flatResourceTuple struct {
-	Resource string `json:"resource"`
-	Value    int64  `json:"value"`
+	IdempotencyKey string `json:"idempotency_key"`
+	Resource       string `json:"resource"`
+	Value          int64  `json:"value"`
 }
 
 func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClusterObject) error {
@@ -219,6 +226,10 @@ func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClus
 
 	// containers
 	for _, container := range msg.GetContainers() {
+		if container.Name == "" {
+			continue
+		}
+
 		var stateType string
 		if container != nil && container.State != nil {
 			stateType = container.State.String()
@@ -239,6 +250,7 @@ func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClus
 
 		kc := &flatKubernetesContainer{
 			UID:            msg.GetUid(),
+			IdempotencyKey: msg.Metadata.IdempotencyKey,
 			Timestamp:      timestamp.Unix(),
 			ContainerName:  container.GetName(),
 			Image:          container.GetImage(),
@@ -264,10 +276,11 @@ func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClus
 	// volumes
 	for _, volume := range msg.GetVolumes() {
 		kv := &flatKubernetesVolume{
-			UID:        msg.GetUid(),
-			Timestamp:  timestamp.Unix(),
-			VolumeName: volume.GetName(),
-			VolumeType: volume.GetType(),
+			UID:            msg.GetUid(),
+			IdempotencyKey: msg.Metadata.IdempotencyKey,
+			Timestamp:      timestamp.Unix(),
+			VolumeName:     volume.GetName(),
+			VolumeType:     volume.GetType(),
 		}
 		if b, err := json.Marshal(kv); err == nil {
 			if err := os.kc.Publish(ctx, StoreKubernetesVolumesTopic, b); err != nil {
@@ -282,6 +295,7 @@ func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClus
 	for _, condition := range msg.GetConditions() {
 		knc := &flatKubernetesNodeCondition{
 			UID:             msg.GetUid(),
+			IdempotencyKey:  msg.Metadata.IdempotencyKey,
 			Timestamp:       timestamp.Unix(),
 			ConditionType:   condition.GetType(),
 			ConditionStatus: condition.GetStatus(),
@@ -301,6 +315,7 @@ func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClus
 	if allocatable != nil {
 		kar := &flatKubernetesAllocatableResource{
 			UID:              msg.GetUid(),
+			IdempotencyKey:   msg.Metadata.IdempotencyKey,
 			Timestamp:        timestamp.Unix(),
 			CPU:              allocatable.GetCpu(),
 			Memory:           allocatable.GetMemory(),
@@ -320,23 +335,26 @@ func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClus
 	// cluster quota
 	if clusterQuota != nil {
 		kcq := &flatKubernetesClusterQuota{
-			UID:         msg.GetUid(),
-			Timestamp:   timestamp.Unix(),
-			QuotaName:   clusterQuota.GetName(),
-			QuotaUID:    clusterQuota.GetUid(),
-			TotalLimits: make([]flatResourceTuple, len(clusterQuota.GetTotalLimits())),
-			TotalUsage:  make([]flatResourceTuple, len(clusterQuota.GetTotalUsage())),
+			UID:            msg.GetUid(),
+			IdempotencyKey: msg.Metadata.IdempotencyKey,
+			Timestamp:      timestamp.Unix(),
+			QuotaName:      clusterQuota.GetName(),
+			QuotaUID:       clusterQuota.GetUid(),
+			TotalLimits:    make([]flatResourceTuple, len(clusterQuota.GetTotalLimits())),
+			TotalUsage:     make([]flatResourceTuple, len(clusterQuota.GetTotalUsage())),
 		}
 		for i, limits := range clusterQuota.GetTotalLimits() {
 			kcq.TotalLimits[i] = flatResourceTuple{
-				Resource: limits.GetResource(),
-				Value:    limits.GetValue(),
+				IdempotencyKey: msg.Metadata.IdempotencyKey,
+				Resource:       limits.GetResource(),
+				Value:          limits.GetValue(),
 			}
 		}
 		for i, usage := range clusterQuota.GetTotalUsage() {
 			kcq.TotalUsage[i] = flatResourceTuple{
-				Resource: usage.GetResource(),
-				Value:    usage.GetValue(),
+				IdempotencyKey: msg.Metadata.IdempotencyKey,
+				Resource:       usage.GetResource(),
+				Value:          usage.GetValue(),
 			}
 		}
 		if b, err := json.Marshal(kcq); err == nil {
@@ -350,22 +368,25 @@ func (os *ObjectFlattener) Flatten(ctx context.Context, msg *pbcl.KubernetesClus
 		// namespace quotas
 		for _, quota := range clusterQuota.GetQuotas() {
 			knq := &flatKubernetesNamespaceQuota{
-				UID:       msg.GetUid(),
-				Timestamp: timestamp.Unix(),
-				Namespace: msg.GetNamespace(),
-				Limits:    make([]flatResourceTuple, len(quota.GetLimits())),
-				Usage:     make([]flatResourceTuple, len(quota.GetUsage())),
+				UID:            msg.GetUid(),
+				IdempotencyKey: msg.Metadata.IdempotencyKey,
+				Timestamp:      timestamp.Unix(),
+				Namespace:      msg.GetNamespace(),
+				Limits:         make([]flatResourceTuple, len(quota.GetLimits())),
+				Usage:          make([]flatResourceTuple, len(quota.GetUsage())),
 			}
 			for i, limit := range quota.GetLimits() {
 				knq.Limits[i] = flatResourceTuple{
-					Resource: limit.GetResource(),
-					Value:    limit.GetValue(),
+					IdempotencyKey: msg.Metadata.IdempotencyKey,
+					Resource:       limit.GetResource(),
+					Value:          limit.GetValue(),
 				}
 			}
 			for i, usage := range quota.GetUsage() {
 				knq.Usage[i] = flatResourceTuple{
-					Resource: usage.GetResource(),
-					Value:    usage.GetValue(),
+					IdempotencyKey: msg.Metadata.IdempotencyKey,
+					Resource:       usage.GetResource(),
+					Value:          usage.GetValue(),
 				}
 			}
 			if b, err := json.Marshal(knq); err == nil {

@@ -32,6 +32,7 @@ type flatKubeletNodeMetric struct {
 	ClusterID               int64   `json:"cluster_id"`
 	ReceivedAtUnix          int64   `json:"received_at_unix"`
 	Timestamp               int64   `json:"timestamp"`
+	IdempotencyKey          string  `json:"idempotency_key"`
 	NodeName                string  `json:"node_name"`
 	StartTime               int64   `json:"start_time"`
 	CPUUsageNanoCores       uint64  `json:"cpu_usage_nano_cores"`
@@ -57,6 +58,7 @@ type flatKubeletNodeMetric struct {
 
 type flatKubeletPodMetric struct {
 	Timestamp               int64  `json:"timestamp"`
+	IdempotencyKey          string `json:"idempotency_key"`
 	PodUID                  string `json:"pod_uid"`
 	PodName                 string `json:"pod_name"`
 	PodNamespace            string `json:"pod_namespace"`
@@ -75,6 +77,7 @@ type flatKubeletPodMetric struct {
 
 type flatKubeletContainerMetric struct {
 	Timestamp               int64          `json:"timestamp"`
+	IdempotencyKey          string         `json:"idempotency_key"`
 	PodUID                  string         `json:"pod_uid"`
 	ContainerName           string         `json:"container_name"`
 	ContainerStartTime      int64          `json:"container_start_time"`
@@ -93,17 +96,19 @@ type flatKubeletContainerMetric struct {
 }
 
 type flatKubeletNetworkMetric struct {
-	Timestamp     int64  `json:"timestamp"`
-	PodUID        string `json:"pod_uid"`
-	InterfaceName string `json:"interface_name"`
-	RXBytes       uint64 `json:"rx_bytes"`
-	RXErrors      uint64 `json:"rx_errors"`
-	TXBytes       uint64 `json:"tx_bytes"`
-	TXErrors      uint64 `json:"tx_errors"`
+	Timestamp      int64  `json:"timestamp"`
+	IdempotencyKey string `json:"idempotency_key"`
+	PodUID         string `json:"pod_uid"`
+	InterfaceName  string `json:"interface_name"`
+	RXBytes        uint64 `json:"rx_bytes"`
+	RXErrors       uint64 `json:"rx_errors"`
+	TXBytes        uint64 `json:"tx_bytes"`
+	TXErrors       uint64 `json:"tx_errors"`
 }
 
 type flatKubeletVolumeMetric struct {
 	Timestamp      int64  `json:"timestamp"`
+	IdempotencyKey string `json:"idempotency_key"`
 	PodUID         string `json:"pod_uid"`
 	VolumeName     string `json:"volume_name"`
 	PVCName        string `json:"pvc_name"`
@@ -128,6 +133,7 @@ func (es *StatsFlattener) Flatten(ctx context.Context, msg *pb.KubernetesKubelet
 	var knm *flatKubeletNodeMetric
 	if msg.Node != nil {
 		knm = &flatKubeletNodeMetric{
+			IdempotencyKey: msg.Metadata.IdempotencyKey,
 			OrganizationID: msg.GetEnrichment().GetOrganizationId(),
 			ClusterID:      msg.GetEnrichment().GetClusterId(),
 			ReceivedAtUnix: msg.GetEnrichment().GetReceivedAtUnix(),
@@ -187,6 +193,7 @@ func (es *StatsFlattener) Flatten(ctx context.Context, msg *pb.KubernetesKubelet
 
 			kcm := &flatKubeletContainerMetric{
 				Timestamp:               timestamp.Unix(),
+				IdempotencyKey:          msg.Metadata.IdempotencyKey,
 				PodUID:                  pod.GetPodRef().GetUid(),
 				ContainerName:           container.GetName(),
 				ContainerStartTime:      safeTime(container.GetStartTime()),
@@ -216,6 +223,7 @@ func (es *StatsFlattener) Flatten(ctx context.Context, msg *pb.KubernetesKubelet
 		for _, volume := range pod.GetVolumes() {
 			kvm := &flatKubeletVolumeMetric{
 				Timestamp:      timestamp.Unix(),
+				IdempotencyKey: msg.Metadata.IdempotencyKey,
 				PodUID:         pod.GetPodRef().GetUid(),
 				VolumeName:     volume.GetName(),
 				AvailableBytes: safeU64(volume.GetFsStats().GetAvailableBytes()),
@@ -240,13 +248,14 @@ func (es *StatsFlattener) Flatten(ctx context.Context, msg *pb.KubernetesKubelet
 		// Network
 		if pod.GetNetwork() != nil {
 			knm := &flatKubeletNetworkMetric{
-				Timestamp:     timestamp.Unix(),
-				PodUID:        pod.GetPodRef().GetUid(),
-				InterfaceName: pod.GetNetwork().GetInterfaceStats().GetName(),
-				RXBytes:       safeU64(pod.GetNetwork().GetInterfaceStats().GetRxBytes()),
-				RXErrors:      safeU64(pod.GetNetwork().GetInterfaceStats().GetRxErrors()),
-				TXBytes:       safeU64(pod.GetNetwork().GetInterfaceStats().GetTxBytes()),
-				TXErrors:      safeU64(pod.GetNetwork().GetInterfaceStats().GetTxErrors()),
+				Timestamp:      timestamp.Unix(),
+				IdempotencyKey: msg.Metadata.IdempotencyKey,
+				PodUID:         pod.GetPodRef().GetUid(),
+				InterfaceName:  pod.GetNetwork().GetInterfaceStats().GetName(),
+				RXBytes:        safeU64(pod.GetNetwork().GetInterfaceStats().GetRxBytes()),
+				RXErrors:       safeU64(pod.GetNetwork().GetInterfaceStats().GetRxErrors()),
+				TXBytes:        safeU64(pod.GetNetwork().GetInterfaceStats().GetTxBytes()),
+				TXErrors:       safeU64(pod.GetNetwork().GetInterfaceStats().GetTxErrors()),
 			}
 			if b, err := json.Marshal(knm); err == nil {
 				if err := es.kc.Publish(ctx, StoreKubeletNetworkMetricsTopic, b); err != nil {
@@ -260,6 +269,7 @@ func (es *StatsFlattener) Flatten(ctx context.Context, msg *pb.KubernetesKubelet
 		// Pod
 		kpm := &flatKubeletPodMetric{
 			Timestamp:               timestamp.Unix(),
+			IdempotencyKey:          msg.Metadata.IdempotencyKey,
 			PodUID:                  pod.GetPodRef().GetUid(),
 			PodName:                 pod.GetPodRef().GetName(),
 			PodNamespace:            pod.GetPodRef().GetNamespace(),

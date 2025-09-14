@@ -28,7 +28,7 @@ type flatK8SEvent struct {
 	ClusterId             int64  `json:"cluster_id"`
 	K8SVersion            string `json:"k8s_version"`
 	ReceivedAtUnix        int64  `json:"received_at_unix"`
-	IdempotencyKey        string `json:"idempotency_key,omitempty"`
+	IdempotencyKey        string `json:"idempotency_key"`
 	WatcherVersion        string `json:"watcher_version,omitempty"`
 	ObjectKind            string `json:"object_kind,omitempty"`
 	ObjectName            string `json:"object_name,omitempty"`

@@ -40,20 +40,6 @@ func safeUInt32Ptr[T any](ptr *T, getter func(*T) uint32) uint32 {
 	return getter(ptr)
 }
 
-func safeInt32(i *int32) int32 {
-	if i == nil {
-		return 0
-	}
-	return *i
-}
-
-func safeInt64(i *int64) int64 {
-	if i == nil {
-		return 0
-	}
-	return *i
-}
-
 func safeMap(m map[string]string) map[string]string {
 	if m == nil {
 		return map[string]string{}
