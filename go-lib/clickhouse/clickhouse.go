@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	ch "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 type Client struct {
-	conn driver.Conn
+	driver.Conn
 }
 
 func New(addrs []string, username, password, database string, debug bool) (*Client, error) {
@@ -35,11 +36,13 @@ func New(addrs []string, username, password, database string, debug bool) (*Clie
 	if err != nil {
 		return nil, err
 	}
-	if err := conn.Ping(context.Background()); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := conn.Ping(ctx); err != nil {
 		return nil, err
 	}
 
 	return &Client{
-		conn: conn,
+		conn,
 	}, nil
 }

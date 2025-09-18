@@ -26,16 +26,29 @@ func NewMultiDimensionRecommender(config *config.Configuration) (*MultiDimension
 }
 
 func (r *MultiDimensionRecommender) GetActionPlan(app *pbeng.AppRef) (*pbeng.ActionPlan, error) {
-	targetReplicas, err := r.hpaRecommender.CalculateTargetReplicas()
+	hpaResult, err := r.hpaRecommender.CalculateTargetReplicas(&HPAInput{
+		OrganizationID: 1,
+		ClusterID:      app.ClusterId,
+		Namespace:      app.Namespace,
+		DeploymentName: app.AppName,
+		TargetCPUUtil:  90.0,
+	})
 	if err != nil {
 		return nil, err
 	}
-	containersPatch, err := r.vpaRecommender.CalculateContainersPatch()
+	containersPatch, err := r.vpaRecommender.CalculateContainersPatch(&VPAInput{
+		OrganizationID: 1,
+		ClusterID:      app.ClusterId,
+		Namespace:      app.Namespace,
+		DeploymentName: app.AppName,
+		MinCPUNano:     1,
+		MinMemoryByte:  1,
+	})
 	if err != nil {
 		return nil, err
 	}
 	return &pbeng.ActionPlan{
 		Vertical:       containersPatch,
-		TargetReplicas: targetReplicas,
+		TargetReplicas: int32(hpaResult.DesiredReplicas),
 	}, nil
 }
