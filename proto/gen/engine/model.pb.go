@@ -343,11 +343,17 @@ func (x *CandidateProposal) GetSource() string {
 }
 
 type ContainerPatch struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Container     string                 `protobuf:"bytes,1,opt,name=container,proto3" json:"container,omitempty"`
-	Resources     map[string]string      `protobuf:"bytes,2,rep,name=resources,proto3" json:"resources,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // resource -> target quantity
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	ContainerName             string                 `protobuf:"bytes,1,opt,name=container_name,json=containerName,proto3" json:"container_name,omitempty"`
+	Cpu_95ThNano              uint64                 `protobuf:"varint,2,opt,name=cpu_95th_nano,json=cpu95thNano,proto3" json:"cpu_95th_nano,omitempty"`
+	Memory_95ThBytes          uint64                 `protobuf:"varint,3,opt,name=memory_95th_bytes,json=memory95thBytes,proto3" json:"memory_95th_bytes,omitempty"`
+	RecommendedCpuNano        uint64                 `protobuf:"varint,4,opt,name=recommended_cpu_nano,json=recommendedCpuNano,proto3" json:"recommended_cpu_nano,omitempty"`
+	RecommendedMemoryBytes    uint64                 `protobuf:"varint,5,opt,name=recommended_memory_bytes,json=recommendedMemoryBytes,proto3" json:"recommended_memory_bytes,omitempty"`
+	CurrentCpuRequestNano     uint64                 `protobuf:"varint,6,opt,name=current_cpu_request_nano,json=currentCpuRequestNano,proto3" json:"current_cpu_request_nano,omitempty"`
+	CurrentMemoryRequestBytes uint64                 `protobuf:"varint,7,opt,name=current_memory_request_bytes,json=currentMemoryRequestBytes,proto3" json:"current_memory_request_bytes,omitempty"`
+	RecommendationNotes       string                 `protobuf:"bytes,8,opt,name=recommendation_notes,json=recommendationNotes,proto3" json:"recommendation_notes,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *ContainerPatch) Reset() {
@@ -380,18 +386,60 @@ func (*ContainerPatch) Descriptor() ([]byte, []int) {
 	return file_engine_model_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ContainerPatch) GetContainer() string {
+func (x *ContainerPatch) GetContainerName() string {
 	if x != nil {
-		return x.Container
+		return x.ContainerName
 	}
 	return ""
 }
 
-func (x *ContainerPatch) GetResources() map[string]string {
+func (x *ContainerPatch) GetCpu_95ThNano() uint64 {
 	if x != nil {
-		return x.Resources
+		return x.Cpu_95ThNano
 	}
-	return nil
+	return 0
+}
+
+func (x *ContainerPatch) GetMemory_95ThBytes() uint64 {
+	if x != nil {
+		return x.Memory_95ThBytes
+	}
+	return 0
+}
+
+func (x *ContainerPatch) GetRecommendedCpuNano() uint64 {
+	if x != nil {
+		return x.RecommendedCpuNano
+	}
+	return 0
+}
+
+func (x *ContainerPatch) GetRecommendedMemoryBytes() uint64 {
+	if x != nil {
+		return x.RecommendedMemoryBytes
+	}
+	return 0
+}
+
+func (x *ContainerPatch) GetCurrentCpuRequestNano() uint64 {
+	if x != nil {
+		return x.CurrentCpuRequestNano
+	}
+	return 0
+}
+
+func (x *ContainerPatch) GetCurrentMemoryRequestBytes() uint64 {
+	if x != nil {
+		return x.CurrentMemoryRequestBytes
+	}
+	return 0
+}
+
+func (x *ContainerPatch) GetRecommendationNotes() string {
+	if x != nil {
+		return x.RecommendationNotes
+	}
+	return ""
 }
 
 type ActionPlan struct {
@@ -588,7 +636,8 @@ func (x *ModelMetadata) GetCompatibleFeatureSchema() []string {
 type RecommendationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	App   *AppRef                `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
-	// If true, server computes and returns plan but does not execute (for testing).
+	// If true, server computes and returns plan but does not execute (for
+	// testing).
 	DryRun bool `protobuf:"varint,2,opt,name=dry_run,json=dryRun,proto3" json:"dry_run,omitempty"`
 	// Optional: if operator already has some recent metrics to pass through.
 	Snapshot      *MetricSnapshot `protobuf:"bytes,3,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
@@ -818,7 +867,8 @@ func (x *ExecutionOutcome) GetReportedAt() *timestamppb.Timestamp {
 type GetActionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	App   *AppRef                `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
-	// Optional: provide features directly; if empty, server will fetch from ClickHouse/etc.
+	// Optional: provide features directly; if empty, server will fetch from
+	// ClickHouse/etc.
 	Features map[string]float64 `protobuf:"bytes,2,rep,name=features,proto3" json:"features,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"fixed64,2,opt,name=value"`
 	// Optional candidate proposals the policy may pick from or refine
 	Candidates []*CandidateProposal `protobuf:"bytes,3,rep,name=candidates,proto3" json:"candidates,omitempty"`
@@ -1980,13 +2030,16 @@ const file_engine_model_proto_rawDesc = "" +
 	"\x06source\x18\x04 \x01(\tR\x06source\x1a<\n" +
 	"\x0eResourcesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb4\x01\n" +
-	"\x0eContainerPatch\x12\x1c\n" +
-	"\tcontainer\x18\x01 \x01(\tR\tcontainer\x12F\n" +
-	"\tresources\x18\x02 \x03(\v2(.engine.v1.ContainerPatch.ResourcesEntryR\tresources\x1a<\n" +
-	"\x0eResourcesEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"l\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa0\x03\n" +
+	"\x0eContainerPatch\x12%\n" +
+	"\x0econtainer_name\x18\x01 \x01(\tR\rcontainerName\x12\"\n" +
+	"\rcpu_95th_nano\x18\x02 \x01(\x04R\vcpu95thNano\x12*\n" +
+	"\x11memory_95th_bytes\x18\x03 \x01(\x04R\x0fmemory95thBytes\x120\n" +
+	"\x14recommended_cpu_nano\x18\x04 \x01(\x04R\x12recommendedCpuNano\x128\n" +
+	"\x18recommended_memory_bytes\x18\x05 \x01(\x04R\x16recommendedMemoryBytes\x127\n" +
+	"\x18current_cpu_request_nano\x18\x06 \x01(\x04R\x15currentCpuRequestNano\x12?\n" +
+	"\x1ccurrent_memory_request_bytes\x18\a \x01(\x04R\x19currentMemoryRequestBytes\x121\n" +
+	"\x14recommendation_notes\x18\b \x01(\tR\x13recommendationNotes\"l\n" +
 	"\n" +
 	"ActionPlan\x125\n" +
 	"\bvertical\x18\x01 \x03(\v2\x19.engine.v1.ContainerPatchR\bvertical\x12'\n" +
@@ -2193,7 +2246,7 @@ func file_engine_model_proto_rawDescGZIP() []byte {
 }
 
 var file_engine_model_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_engine_model_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
+var file_engine_model_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_engine_model_proto_goTypes = []any{
 	(WorkloadKind)(0),               // 0: engine.v1.WorkloadKind
 	(*AppRef)(nil),                  // 1: engine.v1.AppRef
@@ -2226,92 +2279,90 @@ var file_engine_model_proto_goTypes = []any{
 	(*CancelTrainingAck)(nil),       // 28: engine.v1.CancelTrainingAck
 	nil,                             // 29: engine.v1.SafetyPolicy.ResourceBoundsEntry
 	nil,                             // 30: engine.v1.CandidateProposal.ResourcesEntry
-	nil,                             // 31: engine.v1.ContainerPatch.ResourcesEntry
-	nil,                             // 32: engine.v1.MetricSnapshot.ValuesEntry
-	nil,                             // 33: engine.v1.ModelMetadata.LabelsEntry
-	nil,                             // 34: engine.v1.GetActionRequest.FeaturesEntry
-	nil,                             // 35: engine.v1.TrainRequest.HparamsEntry
-	nil,                             // 36: engine.v1.AgentRegistration.LabelsEntry
-	nil,                             // 37: engine.v1.TrainingSpec.HparamsEntry
-	nil,                             // 38: engine.v1.TrainingProgress.ScalarsEntry
-	nil,                             // 39: engine.v1.TrainingResult.MetricsEntry
-	nil,                             // 40: engine.v1.AgentHeartbeat.SysinfoEntry
-	(*timestamppb.Timestamp)(nil),   // 41: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),           // 42: google.protobuf.Empty
+	nil,                             // 31: engine.v1.MetricSnapshot.ValuesEntry
+	nil,                             // 32: engine.v1.ModelMetadata.LabelsEntry
+	nil,                             // 33: engine.v1.GetActionRequest.FeaturesEntry
+	nil,                             // 34: engine.v1.TrainRequest.HparamsEntry
+	nil,                             // 35: engine.v1.AgentRegistration.LabelsEntry
+	nil,                             // 36: engine.v1.TrainingSpec.HparamsEntry
+	nil,                             // 37: engine.v1.TrainingProgress.ScalarsEntry
+	nil,                             // 38: engine.v1.TrainingResult.MetricsEntry
+	nil,                             // 39: engine.v1.AgentHeartbeat.SysinfoEntry
+	(*timestamppb.Timestamp)(nil),   // 40: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),           // 41: google.protobuf.Empty
 }
 var file_engine_model_proto_depIdxs = []int32{
 	0,  // 0: engine.v1.AppRef.kind:type_name -> engine.v1.WorkloadKind
 	29, // 1: engine.v1.SafetyPolicy.resource_bounds:type_name -> engine.v1.SafetyPolicy.ResourceBoundsEntry
 	30, // 2: engine.v1.CandidateProposal.resources:type_name -> engine.v1.CandidateProposal.ResourcesEntry
-	31, // 3: engine.v1.ContainerPatch.resources:type_name -> engine.v1.ContainerPatch.ResourcesEntry
-	5,  // 4: engine.v1.ActionPlan.vertical:type_name -> engine.v1.ContainerPatch
-	32, // 5: engine.v1.MetricSnapshot.values:type_name -> engine.v1.MetricSnapshot.ValuesEntry
-	41, // 6: engine.v1.MetricSnapshot.ts:type_name -> google.protobuf.Timestamp
-	41, // 7: engine.v1.ModelMetadata.updated_at:type_name -> google.protobuf.Timestamp
-	33, // 8: engine.v1.ModelMetadata.labels:type_name -> engine.v1.ModelMetadata.LabelsEntry
-	1,  // 9: engine.v1.RecommendationRequest.app:type_name -> engine.v1.AppRef
-	7,  // 10: engine.v1.RecommendationRequest.snapshot:type_name -> engine.v1.MetricSnapshot
-	6,  // 11: engine.v1.RecommendationResponse.plan:type_name -> engine.v1.ActionPlan
-	3,  // 12: engine.v1.RecommendationResponse.effective_policy:type_name -> engine.v1.SafetyPolicy
-	1,  // 13: engine.v1.ExecutionOutcome.app:type_name -> engine.v1.AppRef
-	7,  // 14: engine.v1.ExecutionOutcome.post_action_metrics:type_name -> engine.v1.MetricSnapshot
-	41, // 15: engine.v1.ExecutionOutcome.reported_at:type_name -> google.protobuf.Timestamp
-	1,  // 16: engine.v1.GetActionRequest.app:type_name -> engine.v1.AppRef
-	34, // 17: engine.v1.GetActionRequest.features:type_name -> engine.v1.GetActionRequest.FeaturesEntry
-	4,  // 18: engine.v1.GetActionRequest.candidates:type_name -> engine.v1.CandidateProposal
-	3,  // 19: engine.v1.GetActionRequest.policy_override:type_name -> engine.v1.SafetyPolicy
-	6,  // 20: engine.v1.GetActionResponse.plan:type_name -> engine.v1.ActionPlan
-	8,  // 21: engine.v1.EnsureModelResponse.meta:type_name -> engine.v1.ModelMetadata
-	1,  // 22: engine.v1.TrainRequest.app:type_name -> engine.v1.AppRef
-	35, // 23: engine.v1.TrainRequest.hparams:type_name -> engine.v1.TrainRequest.HparamsEntry
-	1,  // 24: engine.v1.ListModelsRequest.app:type_name -> engine.v1.AppRef
-	8,  // 25: engine.v1.ListModelsResponse.models:type_name -> engine.v1.ModelMetadata
-	1,  // 26: engine.v1.GetModelMetadataRequest.app:type_name -> engine.v1.AppRef
-	36, // 27: engine.v1.AgentRegistration.labels:type_name -> engine.v1.AgentRegistration.LabelsEntry
-	1,  // 28: engine.v1.TrainingSpec.app:type_name -> engine.v1.AppRef
-	37, // 29: engine.v1.TrainingSpec.hparams:type_name -> engine.v1.TrainingSpec.HparamsEntry
-	41, // 30: engine.v1.TrainingSpec.start_at:type_name -> google.protobuf.Timestamp
-	41, // 31: engine.v1.TrainingSpec.end_at:type_name -> google.protobuf.Timestamp
-	41, // 32: engine.v1.TrainingProgress.ts:type_name -> google.protobuf.Timestamp
-	38, // 33: engine.v1.TrainingProgress.scalars:type_name -> engine.v1.TrainingProgress.ScalarsEntry
-	39, // 34: engine.v1.TrainingResult.metrics:type_name -> engine.v1.TrainingResult.MetricsEntry
-	41, // 35: engine.v1.TrainingResult.ts:type_name -> google.protobuf.Timestamp
-	41, // 36: engine.v1.AgentHeartbeat.ts:type_name -> google.protobuf.Timestamp
-	40, // 37: engine.v1.AgentHeartbeat.sysinfo:type_name -> engine.v1.AgentHeartbeat.SysinfoEntry
-	2,  // 38: engine.v1.SafetyPolicy.ResourceBoundsEntry.value:type_name -> engine.v1.ResourceLimit
-	9,  // 39: engine.v1.RecommendationService.GetRecommendation:input_type -> engine.v1.RecommendationRequest
-	11, // 40: engine.v1.RecommendationService.ReportExecutionOutcome:input_type -> engine.v1.ExecutionOutcome
-	12, // 41: engine.v1.RLServer.GetAction:input_type -> engine.v1.GetActionRequest
-	1,  // 42: engine.v1.RLServer.EnsureModel:input_type -> engine.v1.AppRef
-	15, // 43: engine.v1.RLServer.TriggerTrain:input_type -> engine.v1.TrainRequest
-	17, // 44: engine.v1.RLServer.ListModels:input_type -> engine.v1.ListModelsRequest
-	19, // 45: engine.v1.RLServer.GetModelMetadata:input_type -> engine.v1.GetModelMetadataRequest
-	11, // 46: engine.v1.RLServer.ReportOutcome:input_type -> engine.v1.ExecutionOutcome
-	20, // 47: engine.v1.AgentCoordinator.RegisterAgent:input_type -> engine.v1.AgentRegistration
-	22, // 48: engine.v1.AgentCoordinator.FetchTrainingSpec:input_type -> engine.v1.TrainingPollRequest
-	24, // 49: engine.v1.AgentCoordinator.ReportProgress:input_type -> engine.v1.TrainingProgress
-	25, // 50: engine.v1.AgentCoordinator.ReportResult:input_type -> engine.v1.TrainingResult
-	26, // 51: engine.v1.AgentCoordinator.Heartbeat:input_type -> engine.v1.AgentHeartbeat
-	27, // 52: engine.v1.AgentCoordinator.CancelTraining:input_type -> engine.v1.CancelTrainingRequest
-	10, // 53: engine.v1.RecommendationService.GetRecommendation:output_type -> engine.v1.RecommendationResponse
-	42, // 54: engine.v1.RecommendationService.ReportExecutionOutcome:output_type -> google.protobuf.Empty
-	13, // 55: engine.v1.RLServer.GetAction:output_type -> engine.v1.GetActionResponse
-	14, // 56: engine.v1.RLServer.EnsureModel:output_type -> engine.v1.EnsureModelResponse
-	16, // 57: engine.v1.RLServer.TriggerTrain:output_type -> engine.v1.TrainResponse
-	18, // 58: engine.v1.RLServer.ListModels:output_type -> engine.v1.ListModelsResponse
-	8,  // 59: engine.v1.RLServer.GetModelMetadata:output_type -> engine.v1.ModelMetadata
-	42, // 60: engine.v1.RLServer.ReportOutcome:output_type -> google.protobuf.Empty
-	21, // 61: engine.v1.AgentCoordinator.RegisterAgent:output_type -> engine.v1.AgentRegistrationAck
-	23, // 62: engine.v1.AgentCoordinator.FetchTrainingSpec:output_type -> engine.v1.TrainingSpec
-	42, // 63: engine.v1.AgentCoordinator.ReportProgress:output_type -> google.protobuf.Empty
-	42, // 64: engine.v1.AgentCoordinator.ReportResult:output_type -> google.protobuf.Empty
-	42, // 65: engine.v1.AgentCoordinator.Heartbeat:output_type -> google.protobuf.Empty
-	28, // 66: engine.v1.AgentCoordinator.CancelTraining:output_type -> engine.v1.CancelTrainingAck
-	53, // [53:67] is the sub-list for method output_type
-	39, // [39:53] is the sub-list for method input_type
-	39, // [39:39] is the sub-list for extension type_name
-	39, // [39:39] is the sub-list for extension extendee
-	0,  // [0:39] is the sub-list for field type_name
+	5,  // 3: engine.v1.ActionPlan.vertical:type_name -> engine.v1.ContainerPatch
+	31, // 4: engine.v1.MetricSnapshot.values:type_name -> engine.v1.MetricSnapshot.ValuesEntry
+	40, // 5: engine.v1.MetricSnapshot.ts:type_name -> google.protobuf.Timestamp
+	40, // 6: engine.v1.ModelMetadata.updated_at:type_name -> google.protobuf.Timestamp
+	32, // 7: engine.v1.ModelMetadata.labels:type_name -> engine.v1.ModelMetadata.LabelsEntry
+	1,  // 8: engine.v1.RecommendationRequest.app:type_name -> engine.v1.AppRef
+	7,  // 9: engine.v1.RecommendationRequest.snapshot:type_name -> engine.v1.MetricSnapshot
+	6,  // 10: engine.v1.RecommendationResponse.plan:type_name -> engine.v1.ActionPlan
+	3,  // 11: engine.v1.RecommendationResponse.effective_policy:type_name -> engine.v1.SafetyPolicy
+	1,  // 12: engine.v1.ExecutionOutcome.app:type_name -> engine.v1.AppRef
+	7,  // 13: engine.v1.ExecutionOutcome.post_action_metrics:type_name -> engine.v1.MetricSnapshot
+	40, // 14: engine.v1.ExecutionOutcome.reported_at:type_name -> google.protobuf.Timestamp
+	1,  // 15: engine.v1.GetActionRequest.app:type_name -> engine.v1.AppRef
+	33, // 16: engine.v1.GetActionRequest.features:type_name -> engine.v1.GetActionRequest.FeaturesEntry
+	4,  // 17: engine.v1.GetActionRequest.candidates:type_name -> engine.v1.CandidateProposal
+	3,  // 18: engine.v1.GetActionRequest.policy_override:type_name -> engine.v1.SafetyPolicy
+	6,  // 19: engine.v1.GetActionResponse.plan:type_name -> engine.v1.ActionPlan
+	8,  // 20: engine.v1.EnsureModelResponse.meta:type_name -> engine.v1.ModelMetadata
+	1,  // 21: engine.v1.TrainRequest.app:type_name -> engine.v1.AppRef
+	34, // 22: engine.v1.TrainRequest.hparams:type_name -> engine.v1.TrainRequest.HparamsEntry
+	1,  // 23: engine.v1.ListModelsRequest.app:type_name -> engine.v1.AppRef
+	8,  // 24: engine.v1.ListModelsResponse.models:type_name -> engine.v1.ModelMetadata
+	1,  // 25: engine.v1.GetModelMetadataRequest.app:type_name -> engine.v1.AppRef
+	35, // 26: engine.v1.AgentRegistration.labels:type_name -> engine.v1.AgentRegistration.LabelsEntry
+	1,  // 27: engine.v1.TrainingSpec.app:type_name -> engine.v1.AppRef
+	36, // 28: engine.v1.TrainingSpec.hparams:type_name -> engine.v1.TrainingSpec.HparamsEntry
+	40, // 29: engine.v1.TrainingSpec.start_at:type_name -> google.protobuf.Timestamp
+	40, // 30: engine.v1.TrainingSpec.end_at:type_name -> google.protobuf.Timestamp
+	40, // 31: engine.v1.TrainingProgress.ts:type_name -> google.protobuf.Timestamp
+	37, // 32: engine.v1.TrainingProgress.scalars:type_name -> engine.v1.TrainingProgress.ScalarsEntry
+	38, // 33: engine.v1.TrainingResult.metrics:type_name -> engine.v1.TrainingResult.MetricsEntry
+	40, // 34: engine.v1.TrainingResult.ts:type_name -> google.protobuf.Timestamp
+	40, // 35: engine.v1.AgentHeartbeat.ts:type_name -> google.protobuf.Timestamp
+	39, // 36: engine.v1.AgentHeartbeat.sysinfo:type_name -> engine.v1.AgentHeartbeat.SysinfoEntry
+	2,  // 37: engine.v1.SafetyPolicy.ResourceBoundsEntry.value:type_name -> engine.v1.ResourceLimit
+	9,  // 38: engine.v1.RecommendationService.GetRecommendation:input_type -> engine.v1.RecommendationRequest
+	11, // 39: engine.v1.RecommendationService.ReportExecutionOutcome:input_type -> engine.v1.ExecutionOutcome
+	12, // 40: engine.v1.RLServer.GetAction:input_type -> engine.v1.GetActionRequest
+	1,  // 41: engine.v1.RLServer.EnsureModel:input_type -> engine.v1.AppRef
+	15, // 42: engine.v1.RLServer.TriggerTrain:input_type -> engine.v1.TrainRequest
+	17, // 43: engine.v1.RLServer.ListModels:input_type -> engine.v1.ListModelsRequest
+	19, // 44: engine.v1.RLServer.GetModelMetadata:input_type -> engine.v1.GetModelMetadataRequest
+	11, // 45: engine.v1.RLServer.ReportOutcome:input_type -> engine.v1.ExecutionOutcome
+	20, // 46: engine.v1.AgentCoordinator.RegisterAgent:input_type -> engine.v1.AgentRegistration
+	22, // 47: engine.v1.AgentCoordinator.FetchTrainingSpec:input_type -> engine.v1.TrainingPollRequest
+	24, // 48: engine.v1.AgentCoordinator.ReportProgress:input_type -> engine.v1.TrainingProgress
+	25, // 49: engine.v1.AgentCoordinator.ReportResult:input_type -> engine.v1.TrainingResult
+	26, // 50: engine.v1.AgentCoordinator.Heartbeat:input_type -> engine.v1.AgentHeartbeat
+	27, // 51: engine.v1.AgentCoordinator.CancelTraining:input_type -> engine.v1.CancelTrainingRequest
+	10, // 52: engine.v1.RecommendationService.GetRecommendation:output_type -> engine.v1.RecommendationResponse
+	41, // 53: engine.v1.RecommendationService.ReportExecutionOutcome:output_type -> google.protobuf.Empty
+	13, // 54: engine.v1.RLServer.GetAction:output_type -> engine.v1.GetActionResponse
+	14, // 55: engine.v1.RLServer.EnsureModel:output_type -> engine.v1.EnsureModelResponse
+	16, // 56: engine.v1.RLServer.TriggerTrain:output_type -> engine.v1.TrainResponse
+	18, // 57: engine.v1.RLServer.ListModels:output_type -> engine.v1.ListModelsResponse
+	8,  // 58: engine.v1.RLServer.GetModelMetadata:output_type -> engine.v1.ModelMetadata
+	41, // 59: engine.v1.RLServer.ReportOutcome:output_type -> google.protobuf.Empty
+	21, // 60: engine.v1.AgentCoordinator.RegisterAgent:output_type -> engine.v1.AgentRegistrationAck
+	23, // 61: engine.v1.AgentCoordinator.FetchTrainingSpec:output_type -> engine.v1.TrainingSpec
+	41, // 62: engine.v1.AgentCoordinator.ReportProgress:output_type -> google.protobuf.Empty
+	41, // 63: engine.v1.AgentCoordinator.ReportResult:output_type -> google.protobuf.Empty
+	41, // 64: engine.v1.AgentCoordinator.Heartbeat:output_type -> google.protobuf.Empty
+	28, // 65: engine.v1.AgentCoordinator.CancelTraining:output_type -> engine.v1.CancelTrainingAck
+	52, // [52:66] is the sub-list for method output_type
+	38, // [38:52] is the sub-list for method input_type
+	38, // [38:38] is the sub-list for extension type_name
+	38, // [38:38] is the sub-list for extension extendee
+	0,  // [0:38] is the sub-list for field type_name
 }
 
 func init() { file_engine_model_proto_init() }
@@ -2325,7 +2376,7 @@ func file_engine_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_engine_model_proto_rawDesc), len(file_engine_model_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   40,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

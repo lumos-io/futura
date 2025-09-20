@@ -47,8 +47,23 @@ func (r *MultiDimensionRecommender) GetActionPlan(app *pbeng.AppRef) (*pbeng.Act
 	if err != nil {
 		return nil, err
 	}
+
+	vertical := make([]*pbeng.ContainerPatch, len(containersPatch.Containers))
+	for i, c := range containersPatch.Containers {
+		vertical[i] = &pbeng.ContainerPatch{
+			ContainerName:             c.ContainerName,
+			Cpu_95ThNano:              c.CPU95thNano,
+			Memory_95ThBytes:          c.Memory95thBytes,
+			RecommendedCpuNano:        c.RecommendedCPUNano,
+			RecommendedMemoryBytes:    c.RecommendedMemoryB,
+			CurrentCpuRequestNano:     c.CurrentCPURequestN,
+			CurrentMemoryRequestBytes: c.CurrentMemoryReqB,
+			RecommendationNotes:       c.RecommendationNotes,
+		}
+	}
+
 	return &pbeng.ActionPlan{
-		Vertical:       containersPatch,
+		Vertical:       vertical,
 		TargetReplicas: int32(hpaResult.DesiredReplicas),
 	}, nil
 }

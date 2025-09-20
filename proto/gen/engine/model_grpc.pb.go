@@ -28,7 +28,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RecommendationServiceClient interface {
-	// Called by the Operator to get the final plan (server may internally consult RLServer)
+	// Called by the Operator to get the final plan (server may internally consult
+	// RLServer)
 	GetRecommendation(ctx context.Context, in *RecommendationRequest, opts ...grpc.CallOption) (*RecommendationResponse, error)
 	// Operator posts execution outcome/telemetry for learning & audit
 	ReportExecutionOutcome(ctx context.Context, in *ExecutionOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -66,7 +67,8 @@ func (c *recommendationServiceClient) ReportExecutionOutcome(ctx context.Context
 // All implementations must embed UnimplementedRecommendationServiceServer
 // for forward compatibility.
 type RecommendationServiceServer interface {
-	// Called by the Operator to get the final plan (server may internally consult RLServer)
+	// Called by the Operator to get the final plan (server may internally consult
+	// RLServer)
 	GetRecommendation(context.Context, *RecommendationRequest) (*RecommendationResponse, error)
 	// Operator posts execution outcome/telemetry for learning & audit
 	ReportExecutionOutcome(context.Context, *ExecutionOutcome) (*emptypb.Empty, error)
@@ -186,7 +188,8 @@ type RLServerClient interface {
 	ListModels(ctx context.Context, in *ListModelsRequest, opts ...grpc.CallOption) (*ListModelsResponse, error)
 	// Introspect metadata for a specific (or latest) model
 	GetModelMetadata(ctx context.Context, in *GetModelMetadataRequest, opts ...grpc.CallOption) (*ModelMetadata, error)
-	// RL server also accepts outcomes directly (e.g., from Operator or MPA Server)
+	// RL server also accepts outcomes directly (e.g., from Operator or MPA
+	// Server)
 	ReportOutcome(ctx context.Context, in *ExecutionOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -272,7 +275,8 @@ type RLServerServer interface {
 	ListModels(context.Context, *ListModelsRequest) (*ListModelsResponse, error)
 	// Introspect metadata for a specific (or latest) model
 	GetModelMetadata(context.Context, *GetModelMetadataRequest) (*ModelMetadata, error)
-	// RL server also accepts outcomes directly (e.g., from Operator or MPA Server)
+	// RL server also accepts outcomes directly (e.g., from Operator or MPA
+	// Server)
 	ReportOutcome(context.Context, *ExecutionOutcome) (*emptypb.Empty, error)
 	mustEmbedUnimplementedRLServerServer()
 }
@@ -491,7 +495,8 @@ type AgentCoordinatorClient interface {
 	ReportResult(ctx context.Context, in *TrainingResult, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Heartbeat for liveness tracking
 	Heartbeat(ctx context.Context, in *AgentHeartbeat, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Server may notify an agent to cancel (agent should poll or receive via side channel)
+	// Server may notify an agent to cancel (agent should poll or receive via side
+	// channel)
 	CancelTraining(ctx context.Context, in *CancelTrainingRequest, opts ...grpc.CallOption) (*CancelTrainingAck, error)
 }
 
@@ -578,7 +583,8 @@ type AgentCoordinatorServer interface {
 	ReportResult(context.Context, *TrainingResult) (*emptypb.Empty, error)
 	// Heartbeat for liveness tracking
 	Heartbeat(context.Context, *AgentHeartbeat) (*emptypb.Empty, error)
-	// Server may notify an agent to cancel (agent should poll or receive via side channel)
+	// Server may notify an agent to cancel (agent should poll or receive via side
+	// channel)
 	CancelTraining(context.Context, *CancelTrainingRequest) (*CancelTrainingAck, error)
 	mustEmbedUnimplementedAgentCoordinatorServer()
 }

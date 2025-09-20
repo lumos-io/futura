@@ -85,19 +85,24 @@ class CandidateProposal(_message.Message):
     def __init__(self, container: _Optional[str] = ..., resources: _Optional[_Mapping[str, str]] = ..., target_replicas: _Optional[int] = ..., source: _Optional[str] = ...) -> None: ...
 
 class ContainerPatch(_message.Message):
-    __slots__ = ("container", "resources")
-    class ResourcesEntry(_message.Message):
-        __slots__ = ("key", "value")
-        KEY_FIELD_NUMBER: _ClassVar[int]
-        VALUE_FIELD_NUMBER: _ClassVar[int]
-        key: str
-        value: str
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
-    CONTAINER_FIELD_NUMBER: _ClassVar[int]
-    RESOURCES_FIELD_NUMBER: _ClassVar[int]
-    container: str
-    resources: _containers.ScalarMap[str, str]
-    def __init__(self, container: _Optional[str] = ..., resources: _Optional[_Mapping[str, str]] = ...) -> None: ...
+    __slots__ = ("container_name", "cpu_95th_nano", "memory_95th_bytes", "recommended_cpu_nano", "recommended_memory_bytes", "current_cpu_request_nano", "current_memory_request_bytes", "recommendation_notes")
+    CONTAINER_NAME_FIELD_NUMBER: _ClassVar[int]
+    CPU_95TH_NANO_FIELD_NUMBER: _ClassVar[int]
+    MEMORY_95TH_BYTES_FIELD_NUMBER: _ClassVar[int]
+    RECOMMENDED_CPU_NANO_FIELD_NUMBER: _ClassVar[int]
+    RECOMMENDED_MEMORY_BYTES_FIELD_NUMBER: _ClassVar[int]
+    CURRENT_CPU_REQUEST_NANO_FIELD_NUMBER: _ClassVar[int]
+    CURRENT_MEMORY_REQUEST_BYTES_FIELD_NUMBER: _ClassVar[int]
+    RECOMMENDATION_NOTES_FIELD_NUMBER: _ClassVar[int]
+    container_name: str
+    cpu_95th_nano: int
+    memory_95th_bytes: int
+    recommended_cpu_nano: int
+    recommended_memory_bytes: int
+    current_cpu_request_nano: int
+    current_memory_request_bytes: int
+    recommendation_notes: str
+    def __init__(self, container_name: _Optional[str] = ..., cpu_95th_nano: _Optional[int] = ..., memory_95th_bytes: _Optional[int] = ..., recommended_cpu_nano: _Optional[int] = ..., recommended_memory_bytes: _Optional[int] = ..., current_cpu_request_nano: _Optional[int] = ..., current_memory_request_bytes: _Optional[int] = ..., recommendation_notes: _Optional[str] = ...) -> None: ...
 
 class ActionPlan(_message.Message):
     __slots__ = ("vertical", "target_replicas")

@@ -10,7 +10,6 @@ import (
 
 	"github.com/opisvigilant/futura/engine/recommender/internal/config"
 	"github.com/opisvigilant/futura/go-lib/clickhouse"
-	pbeng "github.com/opisvigilant/futura/proto/gen/engine"
 )
 
 const (
@@ -67,7 +66,7 @@ type VPAResult struct {
 // - We assume container identity via pod_name prefix (deploymentName-) and kubernetes_containers.container_name
 // - We compute quantile(0.95) for cpu & memory per container name across pods.
 // - The recommended request = max(quantile95, MinCPU) * safety_margin (rounded).
-func (r *VPARecommender) CalculateContainersPatch(input *VPAInput) ([]*pbeng.ContainerPatch, error) {
+func (r *VPARecommender) CalculateContainersPatch(input *VPAInput) (*VPAResult, error) {
 	now := time.Now().UTC()
 	start := now.Add(-metricsWindow)
 
@@ -214,5 +213,5 @@ LIMIT 1
 		Containers: containers,
 		Reason:     fmt.Sprintf("computed VPA recommendations using %d pods window=%s", len(podUIDs), metricsWindow),
 	}
-	return nil, nil
+	return result, nil
 }
