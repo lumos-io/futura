@@ -40,3 +40,5 @@ public
 
 node_modules
 .venv
+
+*.o
