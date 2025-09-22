@@ -1,0 +1,65 @@
+arch: "aarch64"
+images:
+  - location: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
+    arch: "x86_64"
+  - location: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-arm64.qcow2"
+    arch: "aarch64"
+
+memory: "4GiB"
+cpus: 4
+disk: "30GiB"
+
+vmType: "vz"
+mountType: "virtiofs"
+mounts:
+  - location: "/Users/davideberdin/Documents/github/opisvigilant/futura"
+    mountPoint: "/home/davideberdin.linux/futura"
+    writable: true
+
+ssh:
+  # You can choose any port or omit this. Specifying a value ensures same port bindings after restarts
+  # Forwarded to port 22 of the guest.
+  localPort: 2223
+
+containerd:
+  system: false
+  user: false
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      export LIBBPF_VERSION=1.6.1
+      export GOLANG_VERSION=1.24.1
+
+      # Install dependencies (clang, llvm, gcc, etc.)
+      apt-get update && apt-get install -y \
+        clang llvm llvm-dev llvm-strip \
+        make gcc-multilib \
+        bison build-essential cmake flex git \
+        libelf-dev libssl-dev libudev-dev pkg-config wget curl ca-certificates
+
+      # Install libbpf
+      wget --quiet https://github.com/libbpf/libbpf/archive/refs/tags/v${LIBBPF_VERSION}.tar.gz && \
+        tar -xzf v${LIBBPF_VERSION}.tar.gz && \
+        rm v${LIBBPF_VERSION}.tar.gz && \
+        cd libbpf-${LIBBPF_VERSION}/src && \
+        make && make install && \
+        cd ../.. && rm -rf libbpf-${LIBBPF_VERSION}
+
+      # Install Go
+      wget -q https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz && \
+        tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz && \
+        rm go${GOLANG_VERSION}.linux-amd64.tar.gz
+
+      echo 'export PATH="/usr/local/go/bin:$PATH"' >> /etc/profile
+
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      sudo mkdir -p /root/.ssh
+      sudo cp /home/$(whoami)/.ssh/authorized_keys /root/.ssh/authorized_keys
+      sudo chown root:root /root/.ssh/authorized_keys
+      sudo chmod 600 /root/.ssh/authorized_keys

@@ -5,14 +5,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/rlimit"
 )
 
 type Uprobes struct {
 	Objects *uprobeObjects
-	Kprobe  *ebpf.Program
-	Map     *ebpf.Map
 }
 
 func NewUprobes() *Uprobes {
@@ -27,8 +24,6 @@ func NewUprobes() *Uprobes {
 
 	return &Uprobes{
 		Objects: objs,
-		Kprobe:  objs.KprobeExecve,
-		Map:     objs.KprobeMap,
 	}
 }
 
@@ -43,7 +38,7 @@ func (u *Uprobes) Poll(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			var value uint64
-			if err := u.Map.Lookup(uint32(0), &value); err != nil {
+			if err := u.Objects.RpsCount.Lookup(uint32(0), &value); err != nil {
 				log.Printf("reading map: %v", err)
 				continue
 			}
@@ -53,6 +48,6 @@ func (u *Uprobes) Poll(ctx context.Context) error {
 }
 
 func (u *Uprobes) Close() error {
-	u.Kprobe.Close()
+	u.Objects.Close()
 	return u.Objects.Close()
 }
