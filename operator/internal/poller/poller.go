@@ -20,12 +20,12 @@ import (
 )
 
 type Poller struct {
-	grpcClient pbeg.FuturaOptimizerClient
+	grpcClient pbeg.RecommendationServiceClient
 }
 
 func New(grpcConn *grpc.ClientConn) (*Poller, error) {
 	return &Poller{
-		grpcClient: pbeg.NewFuturaOptimizerClient(grpcConn),
+		grpcClient: pbeg.NewRecommendationServiceClient(grpcConn),
 	}, nil
 }
 
@@ -62,8 +62,13 @@ func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, sc
 	apiKey := configs.Items[0].Spec.ApiKey
 
 	// Call gRPC
-	req := &pbeg.DecisionRequest{ClusterId: apiKey}
-	resp, err := p.grpcClient.GetOptimizationDecision(ctx, req)
+	req := &pbeg.RecommendationRequest{App: &pbeg.AppRef{
+		ApiKey:    apiKey,
+		Namespace: "",
+		AppName:   "",
+		Kind:      pbeg.WorkloadKind_DEPLOYMENT,
+	}}
+	resp, err := p.grpcClient.GetRecommendation(ctx, req)
 	if err != nil {
 		logger.Error(err, "Failed to fetch optimization decision from backend")
 		return
@@ -72,7 +77,7 @@ func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, sc
 	logger.Info("Received optimization decision", "decision_id", resp.DecisionId)
 
 	// Apply actions
-	for _, action := range resp.Actions {
+	for _, action := range resp.Plan {
 		switch action.Type {
 		case "HPA_SCALE":
 			if err := p.applyHPAScale(ctx, c, resp.Target, action.GetHpaScale().Replicas); err != nil {

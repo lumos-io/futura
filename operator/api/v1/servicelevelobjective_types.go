@@ -24,6 +24,8 @@ import (
 )
 
 type ServiceLevelObjectiveSpec struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 	// ScaleTargetRef points to the controller managing the set of pods for the autoscaler to
 	// control, e.g., Deployment, StatefulSet. ServiceLevelObjective can be targeted at controller
 	// implementing scale subresource (the pod set is retrieved from the controller's ScaleStatus

@@ -60,7 +60,7 @@ enum WorkloadKind {
 }
 
 message AppRef {
-  string cluster_id = 1; // logical cluster identifier
+  string api_key = 1; // from ClusterOptimizationConfig, for fetching the cluster_id
   string namespace = 2;
   string app_name = 3;   // workload name (e.g., Deployment name)
   WorkloadKind kind = 4; // e.g., DEPLOYMENT

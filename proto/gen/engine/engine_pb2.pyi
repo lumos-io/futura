@@ -81,16 +81,16 @@ class SyncSLOResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
 
 class AppRef(_message.Message):
-    __slots__ = ("cluster_id", "namespace", "app_name", "kind")
-    CLUSTER_ID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("api_key", "namespace", "app_name", "kind")
+    API_KEY_FIELD_NUMBER: _ClassVar[int]
     NAMESPACE_FIELD_NUMBER: _ClassVar[int]
     APP_NAME_FIELD_NUMBER: _ClassVar[int]
     KIND_FIELD_NUMBER: _ClassVar[int]
-    cluster_id: str
+    api_key: str
     namespace: str
     app_name: str
     kind: WorkloadKind
-    def __init__(self, cluster_id: _Optional[str] = ..., namespace: _Optional[str] = ..., app_name: _Optional[str] = ..., kind: _Optional[_Union[WorkloadKind, str]] = ...) -> None: ...
+    def __init__(self, api_key: _Optional[str] = ..., namespace: _Optional[str] = ..., app_name: _Optional[str] = ..., kind: _Optional[_Union[WorkloadKind, str]] = ...) -> None: ...
 
 class ResourceLimit(_message.Message):
     __slots__ = ("min", "max")

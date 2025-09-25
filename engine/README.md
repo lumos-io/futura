@@ -1,6 +1,6 @@
 # Engine
 
-The engine powering the Kubernetes autoscaling.
+The engine powering the Kubernetes multidimensional autoscaling.
 
 ## Usage
 

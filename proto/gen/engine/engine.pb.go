@@ -379,7 +379,7 @@ func (x *SyncSLOResponse) GetMessage() string {
 
 type AppRef struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClusterId     string                 `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"` // logical cluster identifier
+	ApiKey        string                 `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"` // from ClusterOptimizationConfig, for fetching the cluster_id
 	Namespace     string                 `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	AppName       string                 `protobuf:"bytes,3,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`         // workload name (e.g., Deployment name)
 	Kind          WorkloadKind           `protobuf:"varint,4,opt,name=kind,proto3,enum=engine.v1.WorkloadKind" json:"kind,omitempty"` // e.g., DEPLOYMENT
@@ -417,9 +417,9 @@ func (*AppRef) Descriptor() ([]byte, []int) {
 	return file_engine_engine_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *AppRef) GetClusterId() string {
+func (x *AppRef) GetApiKey() string {
 	if x != nil {
-		return x.ClusterId
+		return x.ApiKey
 	}
 	return ""
 }
@@ -2565,10 +2565,9 @@ const file_engine_engine_proto_rawDesc = "" +
 	"\flast_updated\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vlastUpdated\"E\n" +
 	"\x0fSyncSLOResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x8d\x01\n" +
-	"\x06AppRef\x12\x1d\n" +
-	"\n" +
-	"cluster_id\x18\x01 \x01(\tR\tclusterId\x12\x1c\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x87\x01\n" +
+	"\x06AppRef\x12\x17\n" +
+	"\aapi_key\x18\x01 \x01(\tR\x06apiKey\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x19\n" +
 	"\bapp_name\x18\x03 \x01(\tR\aappName\x12+\n" +
 	"\x04kind\x18\x04 \x01(\x0e2\x17.engine.v1.WorkloadKindR\x04kind\"3\n" +
