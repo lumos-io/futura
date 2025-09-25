@@ -4,11 +4,18 @@ package engine.v1;
 
 option go_package = "github.com/opisvigilant/futura/proto/gen/engine;engine";
 
+// External well-known types
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
-// --- ClusterOptimizationConfig ---
 
-message ClusterOptimizationConfig {
+////////////////////////////////////////////////////////////////////////////////
+// This part of the proto is about to inform which applications will be registered to use
+// the Futura Optimizer using the SLO crd object. Each of those SLOs will request
+// the optimizations that the operator needs to apply
+////////////////////////////////////////////////////////////////////////////////
+
+message ClusterOptimizationConfigRequest {
   string api_key = 1;
   string cloud_provider = 2;
   string region = 3;
@@ -19,29 +26,19 @@ message ClusterOptimizationConfig {
   string max_spot_percentage = 8;
 }
 
-message ClusterOptimizationConfigRequest {
-  ClusterOptimizationConfig config = 1;
-}
-
 message ClusterOptimizationConfigResponse {
   bool success = 1;
   string message = 2;
 }
 
-// --- ServiceLevelObjective ---
-
-message ServiceLevelObjective {
-  string service_name = 1;
-  string target_p95_latency = 2; // e.g. "250ms"
-  string target_error_rate = 3;  // e.g. "0.01"
-  string target_throughput = 4;  // e.g. "1000rps"
-  string priority = 5;            // e.g. "high"
-  google.protobuf.Timestamp last_updated = 6;
-}
-
 message SyncSLORequest {
-  ServiceLevelObjective slo = 1;
-  string api_key = 2; // from ClusterOptimizationConfig, for auth
+  string api_key = 1; // from ClusterOptimizationConfig, for auth
+  string service_name = 2;
+  string target_p95_latency = 3; // e.g. "250ms"
+  string target_error_rate = 4;  // e.g. "0.01"
+  string target_throughput = 5;  // e.g. "1000rps"
+  string priority = 6;            // e.g. "high"
+  google.protobuf.Timestamp last_updated = 7;
 }
 
 message SyncSLOResponse {
@@ -49,23 +46,68 @@ message SyncSLOResponse {
   string message = 2;
 }
 
-// --- Service definition ---
+////////////////////////////////////////////////////////////////////////////////
+// Common types
+////////////////////////////////////////////////////////////////////////////////
 
-message DecisionRequest {
-  string cluster_id = 1; // Or API key, depending on how you identify clusters
+enum WorkloadKind {
+  WORKLOAD_KIND_UNSPECIFIED = 0;
+  DEPLOYMENT = 1;
+  STATEFUL_SET = 2;
+  DAEMON_SET = 3;
+  JOB = 4;
+  CRON_JOB = 5;
 }
 
-message TargetRef {
-  string kind = 1;
+message AppRef {
+  string cluster_id = 1; // logical cluster identifier
   string namespace = 2;
-  string name = 3;
+  string app_name = 3;   // workload name (e.g., Deployment name)
+  WorkloadKind kind = 4; // e.g., DEPLOYMENT
+}
+
+message ResourceLimit {
+  // Kubernetes quantity strings (e.g., "750m", "512Mi", "1")
+  string min = 1; // optional
+  string max = 2; // optional
+}
+
+message SafetyPolicy {
+  // Hard resource bounds applied on server side
+  map<string, ResourceLimit> resource_bounds =
+      1; // key: resource name ("cpu","memory","nvidia.com/gpu")
+  // Step limits (ratio multipliers, e.g., 1.5 = allow +50%, 0.75 = allow -25%)
+  double max_increase_ratio = 2; // 0 = disabled
+  double max_decrease_ratio = 3; // 0 = disabled
+  // Cooldown window in seconds between actions on same app
+  int64 min_action_cooldown_seconds = 4;
+}
+
+message CandidateProposal {
+  // Optional candidate patches the RL can choose from
+  string container = 1;
+  map<string, string> resources =
+      2; // resource -> target quantity ("cpu":"750m","memory":"512Mi")
+  int32 target_replicas = 3; // 0 means no horizontal change
+  string source = 4;         // "mpa","baseline","last_action",...
+}
+
+message ContainerPatch {
+  string container_name = 1;
+  uint64 cpu_95th_nano = 2;
+  uint64 memory_95th_bytes = 3;
+  uint64 recommended_cpu_nano = 4;
+  uint64 recommended_memory_bytes = 5;
+  uint64 current_cpu_request_nano = 6;
+  uint64 current_memory_request_bytes = 7;
+  string recommendation_notes = 8;
 }
 
 message HpaScaleAction {
   int32 replicas = 1;
 }
 
-message KarpenterProvisionAction {
+message ClusterProvisionAction {
   repeated string instance_types = 1;
   int32 count = 2;
   string capacity_type = 3; // on-demand / spot
@@ -78,32 +120,233 @@ message VpaRecommendAction {
   string mode = 4; // recommendation / enforce
 }
 
-message Action {
+message ActionPlan {
   string type = 1; // e.g., "HPA_SCALE", "KARPENTER_PROVISION", "VPA_RECOMMEND"
   double confidence = 2;
   string reason = 3;
 
   oneof details {
     HpaScaleAction hpa_scale = 4;
-    KarpenterProvisionAction karpenter_provision = 5;
+    ClusterProvisionAction karpenter_provision = 5;
     VpaRecommendAction vpa_recommend = 6;
   }
 }
 
-message ExpectedOutcomes {
-  double predicted_latency_p95_ms = 1;
-  double predicted_cost_delta_per_hour_usd = 2;
+message MetricSnapshot {
+  // Flattened features/metrics; names should be stable & documented
+  map<string, double> values = 1; // e.g., "p99_latency_ms":123.4, "cpu_util":0.82
+  google.protobuf.Timestamp ts = 2;
 }
 
-message DecisionResponse {
+message ModelMetadata {
+  string model_version = 1;
+  string policy_name = 2; // e.g., "rl-ppo-v4"
+  google.protobuf.Timestamp updated_at = 3;
+  map<string, string> labels = 4;
+  string checkpoint_uri = 5; // s3://... or pvc://...
+  repeated string compatible_feature_schema = 6; // optional schema/version hints
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// 1) Operator ↔ MPA Server (Recommendation engine)
+////////////////////////////////////////////////////////////////////////////////
+
+message RecommendationRequest {
+  AppRef app = 1;
+  // If true, server computes and returns plan but does not execute (for
+  // testing).
+  bool dry_run = 2;
+  // Optional: if operator already has some recent metrics to pass through.
+  MetricSnapshot snapshot = 3;
+}
+
+message RecommendationResponse {
+  ActionPlan plan = 1; // final action to apply (could be empty for NO_ACTION)
+  string decision_id = 2;   // correlate with outcomes/telemetry
+  string model_version = 3; // model version used (from RL or heuristic)
+  double confidence = 4;    // optional [0..1]
+  repeated string audit_reasons = 5; // human-readable justification / safety capping notes
+  SafetyPolicy effective_policy = 6; // snapshot of bounds/limits used for this decision
+}
+
+message ExecutionOutcome {
   string decision_id = 1;
-  TargetRef target = 2;
-  repeated Action actions = 3;
-  ExpectedOutcomes expected_outcomes = 4;
+  AppRef app = 2;
+  bool success = 3;
+  string note = 4; // failure reason, rollout notes, etc.
+  MetricSnapshot post_action_metrics = 5; // observed metrics after action window
+  google.protobuf.Timestamp reported_at = 6;
 }
 
-service FuturaOptimizer {  
+service RecommendationService {
   rpc SyncClusterOptimizationConfig(ClusterOptimizationConfigRequest) returns (ClusterOptimizationConfigResponse);
-  rpc SyncServiceLevelObjective(SyncSLORequest) returns (SyncSLOResponse);
-  rpc GetOptimizationDecision(DecisionRequest) returns (DecisionResponse);
+  rpc SyncServiceLevelObjective(SyncSLORequest) returns (SyncSLOResponse);  
+  // Called by the Operator to get the final plan (server may internally consult
+  // RLServer)
+  rpc GetRecommendation(RecommendationRequest) returns (RecommendationResponse);
+  // Operator posts execution outcome/telemetry for learning & audit
+  rpc ReportExecutionOutcome(ExecutionOutcome) returns (google.protobuf.Empty);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// 2) RL Server (Control plane) – inference & lifecycle
+////////////////////////////////////////////////////////////////////////////////
+
+message GetActionRequest {
+  AppRef app = 1;
+  // Optional: provide features directly; if empty, server will fetch from
+  // ClickHouse/etc.
+  map<string, double> features = 2;
+  // Optional candidate proposals the policy may pick from or refine
+  repeated CandidateProposal candidates = 3;
+  // Optional safety policy overrides for this call
+  SafetyPolicy policy_override = 4;
+}
+
+message GetActionResponse {
+  ActionPlan plan = 1;
+  string model_version = 2;
+  double confidence = 3;
+  string decision_id = 4;
+  repeated string audit_reasons = 5;
+}
+
+message EnsureModelResponse {
+  string model_version = 1;
+  bool created = 2; // true if bootstrapped from baseline
+  ModelMetadata meta = 3;
+}
+
+message TrainRequest {
+  AppRef app = 1;
+  string reason = 2;               // "scheduled","drift","manual"
+  int64 horizon_hours = 3;         // how much history to use
+  string base_version = 4;         // fine-tune from this version, optional
+  map<string, string> hparams = 5; // hyperparams (e.g., lr, epochs)
+}
+
+message TrainResponse {
+  string training_id = 1; // server-assigned id
+  string job_name = 2;    // Kubernetes Job name (if applicable)
+}
+
+message ListModelsRequest { AppRef app = 1; }
+
+message ListModelsResponse {
+  repeated ModelMetadata models = 1; // ordered newest-first
+}
+
+message GetModelMetadataRequest {
+  AppRef app = 1;
+  string model_version = 2; // if empty, return latest
+}
+
+service RLServer {
+  // Online inference – RL policy picks an action plan
+  rpc GetAction(GetActionRequest) returns (GetActionResponse);
+  // Ensure a model exists & is loaded in memory (bootstrap if needed)
+  rpc EnsureModel(AppRef) returns (EnsureModelResponse);
+  // Kick off (re)training; typically spawns a K8s Job
+  rpc TriggerTrain(TrainRequest) returns (TrainResponse);
+  // Discover available models/versions
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+  // Introspect metadata for a specific (or latest) model
+  rpc GetModelMetadata(GetModelMetadataRequest) returns (ModelMetadata);
+  // RL server also accepts outcomes directly (e.g., from Operator or MPA
+  // Server)
+  rpc ReportOutcome(ExecutionOutcome) returns (google.protobuf.Empty);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// 3) Agent/Trainer (Data plane) – training job protocol
+//    In Option 2, trainers are ephemeral Jobs that PULL their assignment and
+//    PUSH progress/results back to the RL Server using these RPCs.
+//    The RL Server implements this service; agents call it as clients.
+////////////////////////////////////////////////////////////////////////////////
+
+message AgentRegistration {
+  string training_id = 1; // assigned by RLServer via TriggerTrain
+  string agent_id = 2;    // pod unique id
+  string version = 3;     // trainer container version
+  map<string, string> labels = 4;
+}
+
+message AgentRegistrationAck {
+  bool accepted = 1;
+  string message = 2;
+}
+
+message TrainingPollRequest {
+  string training_id = 1;
+  string agent_id = 2;
+}
+
+message TrainingSpec {
+  string training_id = 1;
+  AppRef app = 2;
+  int64 horizon_hours = 3;
+  string base_version = 4;
+  map<string, string> hparams = 5;
+  string output_uri = 6;     // where to write checkpoints
+  string clickhouse_dsn = 7; // or secret ref, depending on your setup
+  // Optional time window overrides
+  google.protobuf.Timestamp start_at = 8;
+  google.protobuf.Timestamp end_at = 9;
+}
+
+message TrainingProgress {
+  string training_id = 1;
+  string agent_id = 2;
+  int32 step = 3;
+  double train_loss = 4;
+  double eval_reward = 5;
+  double progress_pct = 6; // 0..100
+  google.protobuf.Timestamp ts = 7;
+  map<string, double> scalars = 8; // extra metrics
+}
+
+message TrainingResult {
+  string training_id = 1;
+  string agent_id = 2;
+  bool success = 3;
+  string error_message = 4; // if !success
+  string model_version = 5; // assigned by server upon registration/result ingest
+  string checkpoint_uri = 6;
+  double eval_reward = 7;
+  map<string, double> metrics = 8; // final metrics
+  google.protobuf.Timestamp ts = 9;
+}
+
+message AgentHeartbeat {
+  string training_id = 1;
+  string agent_id = 2;
+  google.protobuf.Timestamp ts = 3;
+  map<string, string> sysinfo = 4; // gpu/cpu mem, etc.
+}
+
+message CancelTrainingRequest {
+  string training_id = 1;
+  string reason = 2;
+}
+
+message CancelTrainingAck {
+  bool acknowledged = 1;
+  string message = 2;
+}
+
+service AgentCoordinator {
+  // Trainer calls these on the RL Server
+  // Register the agent pod for a specific training_id
+  rpc RegisterAgent(AgentRegistration) returns (AgentRegistrationAck);
+  // Poll to fetch the training spec (hyperparams, data window, output URI)
+  rpc FetchTrainingSpec(TrainingPollRequest) returns (TrainingSpec);
+  // Report periodic progress (metrics, scalar logs)
+  rpc ReportProgress(TrainingProgress) returns (google.protobuf.Empty);
+  // Report final result (success/failure + checkpoint URI)
+  rpc ReportResult(TrainingResult) returns (google.protobuf.Empty);
+  // Heartbeat for liveness tracking
+  rpc Heartbeat(AgentHeartbeat) returns (google.protobuf.Empty);
+  // Server may notify an agent to cancel (agent should poll or receive via side
+  // channel)
+  rpc CancelTraining(CancelTrainingRequest) returns (CancelTrainingAck);
 }

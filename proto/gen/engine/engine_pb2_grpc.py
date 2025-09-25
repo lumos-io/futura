@@ -4,6 +4,7 @@ import grpc
 import warnings
 
 import engine_pb2 as engine__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 GRPC_GENERATED_VERSION = '1.75.0'
 GRPC_VERSION = grpc.__version__
@@ -25,7 +26,7 @@ if _version_not_supported:
     )
 
 
-class FuturaOptimizerStub(object):
+class RecommendationServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -35,23 +36,28 @@ class FuturaOptimizerStub(object):
             channel: A grpc.Channel.
         """
         self.SyncClusterOptimizationConfig = channel.unary_unary(
-                '/engine.v1.FuturaOptimizer/SyncClusterOptimizationConfig',
+                '/engine.v1.RecommendationService/SyncClusterOptimizationConfig',
                 request_serializer=engine__pb2.ClusterOptimizationConfigRequest.SerializeToString,
                 response_deserializer=engine__pb2.ClusterOptimizationConfigResponse.FromString,
                 _registered_method=True)
         self.SyncServiceLevelObjective = channel.unary_unary(
-                '/engine.v1.FuturaOptimizer/SyncServiceLevelObjective',
+                '/engine.v1.RecommendationService/SyncServiceLevelObjective',
                 request_serializer=engine__pb2.SyncSLORequest.SerializeToString,
                 response_deserializer=engine__pb2.SyncSLOResponse.FromString,
                 _registered_method=True)
-        self.GetOptimizationDecision = channel.unary_unary(
-                '/engine.v1.FuturaOptimizer/GetOptimizationDecision',
-                request_serializer=engine__pb2.DecisionRequest.SerializeToString,
-                response_deserializer=engine__pb2.DecisionResponse.FromString,
+        self.GetRecommendation = channel.unary_unary(
+                '/engine.v1.RecommendationService/GetRecommendation',
+                request_serializer=engine__pb2.RecommendationRequest.SerializeToString,
+                response_deserializer=engine__pb2.RecommendationResponse.FromString,
+                _registered_method=True)
+        self.ReportExecutionOutcome = channel.unary_unary(
+                '/engine.v1.RecommendationService/ReportExecutionOutcome',
+                request_serializer=engine__pb2.ExecutionOutcome.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 _registered_method=True)
 
 
-class FuturaOptimizerServicer(object):
+class RecommendationServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def SyncClusterOptimizationConfig(self, request, context):
@@ -66,14 +72,23 @@ class FuturaOptimizerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetOptimizationDecision(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+    def GetRecommendation(self, request, context):
+        """Called by the Operator to get the final plan (server may internally consult
+        RLServer)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReportExecutionOutcome(self, request, context):
+        """Operator posts execution outcome/telemetry for learning & audit
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_FuturaOptimizerServicer_to_server(servicer, server):
+def add_RecommendationServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'SyncClusterOptimizationConfig': grpc.unary_unary_rpc_method_handler(
                     servicer.SyncClusterOptimizationConfig,
@@ -85,20 +100,25 @@ def add_FuturaOptimizerServicer_to_server(servicer, server):
                     request_deserializer=engine__pb2.SyncSLORequest.FromString,
                     response_serializer=engine__pb2.SyncSLOResponse.SerializeToString,
             ),
-            'GetOptimizationDecision': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetOptimizationDecision,
-                    request_deserializer=engine__pb2.DecisionRequest.FromString,
-                    response_serializer=engine__pb2.DecisionResponse.SerializeToString,
+            'GetRecommendation': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetRecommendation,
+                    request_deserializer=engine__pb2.RecommendationRequest.FromString,
+                    response_serializer=engine__pb2.RecommendationResponse.SerializeToString,
+            ),
+            'ReportExecutionOutcome': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReportExecutionOutcome,
+                    request_deserializer=engine__pb2.ExecutionOutcome.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'engine.v1.FuturaOptimizer', rpc_method_handlers)
+            'engine.v1.RecommendationService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('engine.v1.FuturaOptimizer', rpc_method_handlers)
+    server.add_registered_method_handlers('engine.v1.RecommendationService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class FuturaOptimizer(object):
+class RecommendationService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -115,7 +135,7 @@ class FuturaOptimizer(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/engine.v1.FuturaOptimizer/SyncClusterOptimizationConfig',
+            '/engine.v1.RecommendationService/SyncClusterOptimizationConfig',
             engine__pb2.ClusterOptimizationConfigRequest.SerializeToString,
             engine__pb2.ClusterOptimizationConfigResponse.FromString,
             options,
@@ -142,7 +162,7 @@ class FuturaOptimizer(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/engine.v1.FuturaOptimizer/SyncServiceLevelObjective',
+            '/engine.v1.RecommendationService/SyncServiceLevelObjective',
             engine__pb2.SyncSLORequest.SerializeToString,
             engine__pb2.SyncSLOResponse.FromString,
             options,
@@ -156,7 +176,7 @@ class FuturaOptimizer(object):
             _registered_method=True)
 
     @staticmethod
-    def GetOptimizationDecision(request,
+    def GetRecommendation(request,
             target,
             options=(),
             channel_credentials=None,
@@ -169,9 +189,625 @@ class FuturaOptimizer(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/engine.v1.FuturaOptimizer/GetOptimizationDecision',
-            engine__pb2.DecisionRequest.SerializeToString,
-            engine__pb2.DecisionResponse.FromString,
+            '/engine.v1.RecommendationService/GetRecommendation',
+            engine__pb2.RecommendationRequest.SerializeToString,
+            engine__pb2.RecommendationResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReportExecutionOutcome(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RecommendationService/ReportExecutionOutcome',
+            engine__pb2.ExecutionOutcome.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class RLServerStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.GetAction = channel.unary_unary(
+                '/engine.v1.RLServer/GetAction',
+                request_serializer=engine__pb2.GetActionRequest.SerializeToString,
+                response_deserializer=engine__pb2.GetActionResponse.FromString,
+                _registered_method=True)
+        self.EnsureModel = channel.unary_unary(
+                '/engine.v1.RLServer/EnsureModel',
+                request_serializer=engine__pb2.AppRef.SerializeToString,
+                response_deserializer=engine__pb2.EnsureModelResponse.FromString,
+                _registered_method=True)
+        self.TriggerTrain = channel.unary_unary(
+                '/engine.v1.RLServer/TriggerTrain',
+                request_serializer=engine__pb2.TrainRequest.SerializeToString,
+                response_deserializer=engine__pb2.TrainResponse.FromString,
+                _registered_method=True)
+        self.ListModels = channel.unary_unary(
+                '/engine.v1.RLServer/ListModels',
+                request_serializer=engine__pb2.ListModelsRequest.SerializeToString,
+                response_deserializer=engine__pb2.ListModelsResponse.FromString,
+                _registered_method=True)
+        self.GetModelMetadata = channel.unary_unary(
+                '/engine.v1.RLServer/GetModelMetadata',
+                request_serializer=engine__pb2.GetModelMetadataRequest.SerializeToString,
+                response_deserializer=engine__pb2.ModelMetadata.FromString,
+                _registered_method=True)
+        self.ReportOutcome = channel.unary_unary(
+                '/engine.v1.RLServer/ReportOutcome',
+                request_serializer=engine__pb2.ExecutionOutcome.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                _registered_method=True)
+
+
+class RLServerServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def GetAction(self, request, context):
+        """Online inference – RL policy picks an action plan
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def EnsureModel(self, request, context):
+        """Ensure a model exists & is loaded in memory (bootstrap if needed)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def TriggerTrain(self, request, context):
+        """Kick off (re)training; typically spawns a K8s Job
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListModels(self, request, context):
+        """Discover available models/versions
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetModelMetadata(self, request, context):
+        """Introspect metadata for a specific (or latest) model
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReportOutcome(self, request, context):
+        """RL server also accepts outcomes directly (e.g., from Operator or MPA
+        Server)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_RLServerServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'GetAction': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAction,
+                    request_deserializer=engine__pb2.GetActionRequest.FromString,
+                    response_serializer=engine__pb2.GetActionResponse.SerializeToString,
+            ),
+            'EnsureModel': grpc.unary_unary_rpc_method_handler(
+                    servicer.EnsureModel,
+                    request_deserializer=engine__pb2.AppRef.FromString,
+                    response_serializer=engine__pb2.EnsureModelResponse.SerializeToString,
+            ),
+            'TriggerTrain': grpc.unary_unary_rpc_method_handler(
+                    servicer.TriggerTrain,
+                    request_deserializer=engine__pb2.TrainRequest.FromString,
+                    response_serializer=engine__pb2.TrainResponse.SerializeToString,
+            ),
+            'ListModels': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListModels,
+                    request_deserializer=engine__pb2.ListModelsRequest.FromString,
+                    response_serializer=engine__pb2.ListModelsResponse.SerializeToString,
+            ),
+            'GetModelMetadata': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetModelMetadata,
+                    request_deserializer=engine__pb2.GetModelMetadataRequest.FromString,
+                    response_serializer=engine__pb2.ModelMetadata.SerializeToString,
+            ),
+            'ReportOutcome': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReportOutcome,
+                    request_deserializer=engine__pb2.ExecutionOutcome.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'engine.v1.RLServer', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('engine.v1.RLServer', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class RLServer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def GetAction(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RLServer/GetAction',
+            engine__pb2.GetActionRequest.SerializeToString,
+            engine__pb2.GetActionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def EnsureModel(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RLServer/EnsureModel',
+            engine__pb2.AppRef.SerializeToString,
+            engine__pb2.EnsureModelResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def TriggerTrain(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RLServer/TriggerTrain',
+            engine__pb2.TrainRequest.SerializeToString,
+            engine__pb2.TrainResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListModels(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RLServer/ListModels',
+            engine__pb2.ListModelsRequest.SerializeToString,
+            engine__pb2.ListModelsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetModelMetadata(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RLServer/GetModelMetadata',
+            engine__pb2.GetModelMetadataRequest.SerializeToString,
+            engine__pb2.ModelMetadata.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReportOutcome(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RLServer/ReportOutcome',
+            engine__pb2.ExecutionOutcome.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class AgentCoordinatorStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.RegisterAgent = channel.unary_unary(
+                '/engine.v1.AgentCoordinator/RegisterAgent',
+                request_serializer=engine__pb2.AgentRegistration.SerializeToString,
+                response_deserializer=engine__pb2.AgentRegistrationAck.FromString,
+                _registered_method=True)
+        self.FetchTrainingSpec = channel.unary_unary(
+                '/engine.v1.AgentCoordinator/FetchTrainingSpec',
+                request_serializer=engine__pb2.TrainingPollRequest.SerializeToString,
+                response_deserializer=engine__pb2.TrainingSpec.FromString,
+                _registered_method=True)
+        self.ReportProgress = channel.unary_unary(
+                '/engine.v1.AgentCoordinator/ReportProgress',
+                request_serializer=engine__pb2.TrainingProgress.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                _registered_method=True)
+        self.ReportResult = channel.unary_unary(
+                '/engine.v1.AgentCoordinator/ReportResult',
+                request_serializer=engine__pb2.TrainingResult.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                _registered_method=True)
+        self.Heartbeat = channel.unary_unary(
+                '/engine.v1.AgentCoordinator/Heartbeat',
+                request_serializer=engine__pb2.AgentHeartbeat.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                _registered_method=True)
+        self.CancelTraining = channel.unary_unary(
+                '/engine.v1.AgentCoordinator/CancelTraining',
+                request_serializer=engine__pb2.CancelTrainingRequest.SerializeToString,
+                response_deserializer=engine__pb2.CancelTrainingAck.FromString,
+                _registered_method=True)
+
+
+class AgentCoordinatorServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def RegisterAgent(self, request, context):
+        """Trainer calls these on the RL Server
+        Register the agent pod for a specific training_id
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def FetchTrainingSpec(self, request, context):
+        """Poll to fetch the training spec (hyperparams, data window, output URI)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReportProgress(self, request, context):
+        """Report periodic progress (metrics, scalar logs)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReportResult(self, request, context):
+        """Report final result (success/failure + checkpoint URI)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Heartbeat(self, request, context):
+        """Heartbeat for liveness tracking
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CancelTraining(self, request, context):
+        """Server may notify an agent to cancel (agent should poll or receive via side
+        channel)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_AgentCoordinatorServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'RegisterAgent': grpc.unary_unary_rpc_method_handler(
+                    servicer.RegisterAgent,
+                    request_deserializer=engine__pb2.AgentRegistration.FromString,
+                    response_serializer=engine__pb2.AgentRegistrationAck.SerializeToString,
+            ),
+            'FetchTrainingSpec': grpc.unary_unary_rpc_method_handler(
+                    servicer.FetchTrainingSpec,
+                    request_deserializer=engine__pb2.TrainingPollRequest.FromString,
+                    response_serializer=engine__pb2.TrainingSpec.SerializeToString,
+            ),
+            'ReportProgress': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReportProgress,
+                    request_deserializer=engine__pb2.TrainingProgress.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'ReportResult': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReportResult,
+                    request_deserializer=engine__pb2.TrainingResult.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'Heartbeat': grpc.unary_unary_rpc_method_handler(
+                    servicer.Heartbeat,
+                    request_deserializer=engine__pb2.AgentHeartbeat.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'CancelTraining': grpc.unary_unary_rpc_method_handler(
+                    servicer.CancelTraining,
+                    request_deserializer=engine__pb2.CancelTrainingRequest.FromString,
+                    response_serializer=engine__pb2.CancelTrainingAck.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'engine.v1.AgentCoordinator', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('engine.v1.AgentCoordinator', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class AgentCoordinator(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def RegisterAgent(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.AgentCoordinator/RegisterAgent',
+            engine__pb2.AgentRegistration.SerializeToString,
+            engine__pb2.AgentRegistrationAck.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def FetchTrainingSpec(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.AgentCoordinator/FetchTrainingSpec',
+            engine__pb2.TrainingPollRequest.SerializeToString,
+            engine__pb2.TrainingSpec.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReportProgress(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.AgentCoordinator/ReportProgress',
+            engine__pb2.TrainingProgress.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReportResult(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.AgentCoordinator/ReportResult',
+            engine__pb2.TrainingResult.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Heartbeat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.AgentCoordinator/Heartbeat',
+            engine__pb2.AgentHeartbeat.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CancelTraining(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.AgentCoordinator/CancelTraining',
+            engine__pb2.CancelTrainingRequest.SerializeToString,
+            engine__pb2.CancelTrainingAck.FromString,
             options,
             channel_credentials,
             insecure,

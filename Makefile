@@ -65,6 +65,7 @@ proto-py: ensure-proto-deps
 		--pyi_out=$(OUT_ENGINE_DIR) \
 		--grpc_python_out=$(OUT_ENGINE_DIR) \
 		$(PROTO_ENGINE_FILES)
+	touch $(OUT_ENGINE_DIR)/__init__.py
 
 .PHONY: ensure-proto-deps
 ensure-proto-deps:
