@@ -1,10 +1,25 @@
 [project]
-name = "rl-server"
+name = "futura-engine"
 version = "0.1.0"
-description = "Add your description here"
+description = "Futura ML-powered Kubernetes optimization engine with RL-based decision making"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "grpcio>=1.75.0",
     "grpcio-tools>=1.75.0",
+    "protobuf>=5.28.0",
+    "numpy>=2.0.0",
+    "torch>=2.0.0",
+    "scipy>=1.13.0",
+    "aiohttp>=3.12.15",
+]
+
+[project.scripts]
+futura-engine = "server:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "grpcio-testing>=1.75.0",
 ]
