@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: futura-recommendation-service
+spec:
+  template:
+    spec:
+      containers:
+      - name: recommendation-service
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+        env:
+        - name: LOG_LEVEL
+          value: INFO
+        # Add production-specific configurations
+        livenessProbe:
+          initialDelaySeconds: 45
+          periodSeconds: 30
+        readinessProbe:
+          initialDelaySeconds: 15
+          periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: futura-rl-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: rl-server
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+        env:
+        - name: LOG_LEVEL
+          value: INFO
+        # Increased timeouts for production model loading
+        livenessProbe:
+          initialDelaySeconds: 120
+          periodSeconds: 60
+        readinessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 20
+      # Add affinity rules for production
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-type
+                operator: In
+                values: ["compute", "ml"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: futura-agent-coordinator
+spec:
+  template:
+    spec:
+      containers:
+      - name: agent-coordinator
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        env:
+        - name: LOG_LEVEL
+          value: INFO

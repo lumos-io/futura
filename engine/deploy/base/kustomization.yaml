@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: futura-engine-base
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - rbac.yaml
+  - recommendation-service.yaml
+  - rl-server.yaml
+  - agent-coordinator.yaml
+  # Uncomment for all-in-one deployment:
+  # - all-services.yaml
+
+commonLabels:
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/part-of: futura
+
+images:
+  - name: futura/engine
+    newTag: latest

@@ -1,21 +1,19 @@
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../proto/gen/engine'))
-
 import grpc
 from google.protobuf import empty_pb2, timestamp_pb2
-import engine_pb2
-import engine_pb2_grpc
+from proto.gen.engine import engine_pb2, engine_pb2_grpc
 from typing import Dict, Optional, List
 import logging
-import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 import numpy as np
+import torch
+import os
 
 # Import RL models
 from rl_models.reward_functions import RewardCalculator
 from rl_models.state_action_space import StateSpace, ActionSpace, FeatureExtractor, ActionType
+from rl_models.ppo import PPOAgent
+from rl_models.meta_ppo import MetaPPOAgent
 
 # Import storage layers
 from storage.clickhouse_client import ClickHouseClient, EngineDataAccess
@@ -52,8 +50,14 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             self.slo_data = SLODataAccess(self.clickhouse_client)
 
         # In-memory model registry (backed by ClickHouse when available)
-        self.models: Dict[str, Dict[str, engine_pb2.ModelMetadata]] = {}  # app_key -> {version -> metadata}
-        self.loaded_models: Dict[str, str] = {}  # app_key -> current_loaded_version
+        # app_key -> {version -> metadata}
+        self.models: Dict[str, Dict[str, engine_pb2.ModelMetadata]] = {}
+        # app_key -> current_loaded_version
+        self.loaded_models: Dict[str, str] = {}
+        # app_key -> actual PyTorch models
+        self.pytorch_models: Dict[str, PPOAgent] = {}
+        # app_key -> meta-learning models
+        self.meta_models: Dict[str, MetaPPOAgent] = {}
         self.training_jobs: Dict[str, dict] = {}  # training_id -> job_info
 
         # Model storage configuration
@@ -63,8 +67,10 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         # RL components (from controller implementation)
         self.reward_calculator = RewardCalculator(alpha=0.3, slo_weight=0.2)
         self.state_space = StateSpace()
-        self.action_space = ActionSpace(scaling_step_cpu=256, scaling_step_memory=256)
-        self.feature_extractors: Dict[str, FeatureExtractor] = {}  # app_key -> feature_extractor
+        self.action_space = ActionSpace(
+            scaling_step_cpu=256, scaling_step_memory=256)
+        # app_key -> feature_extractor
+        self.feature_extractors: Dict[str, FeatureExtractor] = {}
 
         # Scaling algorithms integration
         self.scaling_algorithms = ScalingAlgorithms(
@@ -85,8 +91,10 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         )
 
         # Action history for reward calculation and oscillation detection
-        self.action_history: Dict[str, List[Dict[str, int]]] = {}  # app_key -> action_history
-        self.state_history: Dict[str, List[Dict[str, float]]] = {}  # app_key -> state_history
+        # app_key -> action_history
+        self.action_history: Dict[str, List[Dict[str, int]]] = {}
+        # app_key -> state_history
+        self.state_history: Dict[str, List[Dict[str, float]]] = {}
 
     async def GetAppAction(
         self,
@@ -103,13 +111,15 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             # Check if we have a loaded model for this app
             loaded_version = self.loaded_models.get(app_key)
             if not loaded_version:
-                logger.warning(f"No model loaded for {app_key}, using baseline policy")
+                logger.warning(
+                    f"No model loaded for {app_key}, using baseline policy")
                 return self._generate_baseline_action(request)
 
             # Get model metadata
             model_meta = self.models.get(app_key, {}).get(loaded_version)
             if not model_meta:
-                logger.warning(f"Model metadata not found for {app_key}:{loaded_version}")
+                logger.warning(
+                    f"Model metadata not found for {app_key}:{loaded_version}")
                 return self._generate_baseline_action(request)
 
             # Extract features from ClickHouse if available, otherwise use provided features
@@ -128,11 +138,13 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             features.setdefault("namespace", request.app.namespace)
             features.setdefault("app_name", request.app.app_name)
 
-            logger.info(f"Running inference with model {loaded_version} on features: {features}")
+            logger.info(
+                f"Running inference with model {loaded_version} on features: {features}")
 
             # In a real implementation, this would load and run the actual RL model
             # For now, we simulate intelligent behavior based on features
-            action_plan = self._run_model_inference(features, request.candidates, model_meta)
+            action_plan = self._run_model_inference(
+                features, request.candidates, model_meta)
 
             decision_id = str(uuid.uuid4())
 
@@ -175,13 +187,16 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
 
             if app_models:
                 # Get the latest model
-                latest_version = max(app_models.keys(), key=lambda v: app_models[v].updated_at.seconds)
+                latest_version = max(
+                    app_models.keys(), key=lambda v: app_models[v].updated_at.seconds)
                 latest_meta = app_models[latest_version]
 
                 # Load model into memory if not already loaded
                 if self.loaded_models.get(app_key) != latest_version:
-                    self._load_model_into_memory(app_key, latest_version, latest_meta)
-                    logger.info(f"Loaded existing model {latest_version} for {app_key}")
+                    self._load_pytorch_model(
+                        app_key, latest_version, latest_meta)
+                    logger.info(
+                        f"Loaded existing model {latest_version} for {app_key}")
 
                 return engine_pb2.EnsureModelResponse(
                     model_version=latest_version,
@@ -190,8 +205,9 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                 )
             else:
                 # Bootstrap a baseline model
-                baseline_version = self._bootstrap_baseline_model(app_key)
-                logger.info(f"Bootstrapped baseline model {baseline_version} for {app_key}")
+                baseline_version = self._bootstrap_pytorch_model(app_key)
+                logger.info(
+                    f"Bootstrapped baseline model {baseline_version} for {app_key}")
 
                 return engine_pb2.EnsureModelResponse(
                     model_version=baseline_version,
@@ -217,7 +233,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         training_id = str(uuid.uuid4())
         job_name = f"trainer-{app_key.replace(':', '-').replace('/', '-')}-{training_id[:8]}"
 
-        logger.info(f"Triggering training for {app_key}: reason={request.reason}, horizon={request.horizon_hours}h")
+        logger.info(
+            f"Triggering training for {app_key}: reason={request.reason}, horizon={request.horizon_hours}h")
 
         try:
             # Store training job metadata
@@ -259,11 +276,13 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             job_created = await self.training_job_manager.create_training_job(training_spec)
 
             if job_created:
-                logger.info(f"Successfully created Kubernetes training job: {job_name}")
+                logger.info(
+                    f"Successfully created Kubernetes training job: {job_name}")
                 training_job["status"] = "running"
                 training_job["k8s_job_created"] = True
             else:
-                logger.error(f"Failed to create Kubernetes training job: {job_name}")
+                logger.error(
+                    f"Failed to create Kubernetes training job: {job_name}")
                 training_job["status"] = "failed"
                 training_job["k8s_job_created"] = False
 
@@ -316,7 +335,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         Get metadata for a specific model version, or latest if version not specified.
         """
         app_key = self._get_app_key(request.app)
-        logger.info(f"Getting model metadata for {app_key}, version: {request.model_version or 'latest'}")
+        logger.info(
+            f"Getting model metadata for {app_key}, version: {request.model_version or 'latest'}")
 
         try:
             app_models = self.models.get(app_key, {})
@@ -331,12 +351,14 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                 model_meta = app_models.get(request.model_version)
                 if not model_meta:
                     context.set_code(grpc.StatusCode.NOT_FOUND)
-                    context.set_details(f"Model version {request.model_version} not found")
+                    context.set_details(
+                        f"Model version {request.model_version} not found")
                     return engine_pb2.ModelMetadata()
                 return model_meta
             else:
                 # Get latest version
-                latest_version = max(app_models.keys(), key=lambda v: app_models[v].updated_at.seconds)
+                latest_version = max(
+                    app_models.keys(), key=lambda v: app_models[v].updated_at.seconds)
                 return app_models[latest_version]
 
         except Exception as e:
@@ -355,7 +377,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         This implements the reward calculation from the controller research.
         """
         app_key = self._get_app_key(request.app)
-        logger.info(f"Received outcome for {app_key}, decision: {request.decision_id}")
+        logger.info(
+            f"Received outcome for {app_key}, decision: {request.decision_id}")
 
         try:
             # Log the outcome
@@ -399,8 +422,9 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             if (app_key not in self.action_history or
                 app_key not in self.state_history or
                 len(self.action_history[app_key]) < 2 or
-                len(self.state_history[app_key]) < 2):
-                logger.debug(f"Insufficient history for reward calculation for {app_key}")
+                    len(self.state_history[app_key]) < 2):
+                logger.debug(
+                    f"Insufficient history for reward calculation for {app_key}")
                 return
 
             # Get current and last state/action
@@ -437,7 +461,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             # Apply success/failure modifier
             if not outcome.success:
                 reward -= 1.0  # Large penalty for failed executions
-                logger.info(f"Applied failure penalty for {app_key}: {outcome.note}")
+                logger.info(
+                    f"Applied failure penalty for {app_key}: {outcome.note}")
 
             logger.info(f"Calculated reward for {app_key}: {reward:.3f}")
 
@@ -454,7 +479,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         """
         try:
             if not self.engine_data:
-                logger.debug(f"Drift detection check for {app_key} (ClickHouse not available)")
+                logger.debug(
+                    f"Drift detection check for {app_key} (ClickHouse not available)")
                 return
 
             # Get recent execution success rate
@@ -467,7 +493,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             api_key = parts[0]
             app_parts = parts[1].split("/")
             if len(app_parts) != 2:
-                logger.warning(f"Invalid app_key namespace/app format: {app_key}")
+                logger.warning(
+                    f"Invalid app_key namespace/app format: {app_key}")
                 return
 
             namespace, app_name = app_parts
@@ -484,7 +511,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
 
             # Trigger retraining if success rate is too low
             if success_rate < 0.7:  # Less than 70% success
-                logger.warning(f"Low success rate detected for {app_key}: {success_rate:.2f}")
+                logger.warning(
+                    f"Low success rate detected for {app_key}: {success_rate:.2f}")
                 # TODO: Trigger retraining job with reason="performance_drift"
                 # self._trigger_training_for_drift(app_key, success_rate)
 
@@ -539,7 +567,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             model_version="baseline-v1",
             confidence=0.5,
             decision_id=str(uuid.uuid4()),
-            audit_reasons=["Baseline heuristic policy", f"CPU: {cpu_util:.2f}, Memory: {memory_util:.2f}"]
+            audit_reasons=["Baseline heuristic policy",
+                           f"CPU: {cpu_util:.2f}, Memory: {memory_util:.2f}"]
         )
 
     def _bootstrap_baseline_model(self, app_key: str) -> str:
@@ -556,7 +585,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             updated_at=now,
             labels={"type": "baseline", "auto_generated": "true"},
             checkpoint_uri=f"{self.model_store_base_uri}/{app_key}/baseline-v1/model.pkl",
-            compatible_feature_schema=["cpu_utilization", "memory_utilization", "request_rate", "p95_latency_ms"]
+            compatible_feature_schema=[
+                "cpu_utilization", "memory_utilization", "request_rate", "p95_latency_ms"]
         )
 
         # Store in registry
@@ -577,7 +607,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         # 2. Load PyTorch model weights
         # 3. Initialize model in inference mode
 
-        logger.info(f"Loading model {version} for {app_key} from {model_meta.checkpoint_uri}")
+        logger.info(
+            f"Loading model {version} for {app_key} from {model_meta.checkpoint_uri}")
 
         # For simulation, just mark as loaded
         self.loaded_models[app_key] = version
@@ -604,13 +635,15 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         normalized_features = self.state_space.extract_features(features)
 
         # Get current state description
-        current_state = self.state_space.get_state_description(normalized_features)
+        current_state = self.state_space.get_state_description(
+            normalized_features)
 
         logger.info(f"Running RL inference for {app_key}")
         logger.debug(f"Current state: {current_state}")
 
         # Convert to ResourceState for scaling algorithms
-        resource_state = self.scaling_algorithms.convert_state_dict_to_resource_state(features)
+        resource_state = self.scaling_algorithms.convert_state_dict_to_resource_state(
+            features)
 
         # Get SLO targets if available
         slo_targets = self._get_slo_targets_for_inference(features)
@@ -624,27 +657,33 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
 
         # If scaling algorithms suggest a specific action, use it
         if scaling_action.action_type != "no_action":
-            logger.info(f"Scaling algorithms suggest: {scaling_action.action_type} - {scaling_action.reason}")
+            logger.info(
+                f"Scaling algorithms suggest: {scaling_action.action_type} - {scaling_action.reason}")
 
             # Convert scaling action to RL action space for policy learning
-            action_index = self._convert_scaling_action_to_rl_action(scaling_action)
+            action_index = self._convert_scaling_action_to_rl_action(
+                scaling_action)
 
             # Mark scaling as executed for cooldown tracking
             if scaling_action.action_type in ["horizontal"]:
-                self.scaling_algorithms.mark_scaling_executed(app_key, "horizontal")
+                self.scaling_algorithms.mark_scaling_executed(
+                    app_key, "horizontal")
             elif scaling_action.action_type in ["vertical_cpu", "vertical_memory"]:
-                self.scaling_algorithms.mark_scaling_executed(app_key, "vertical")
+                self.scaling_algorithms.mark_scaling_executed(
+                    app_key, "vertical")
 
         else:
-            # Fall back to RL policy simulation when scaling algorithms suggest no action
-            logger.info("Scaling algorithms suggest no action, using RL policy simulation")
-            action_probs = self._simulate_policy_output(normalized_features, current_state)
-            action_index = self.action_space.sample_action(action_probs)
+            # Fall back to RL policy when scaling algorithms suggest no action
+            logger.info(
+                "Scaling algorithms suggest no action, using RL policy inference")
+            action_index, action_confidence = self._run_pytorch_inference(
+                app_key, normalized_features, current_state)
 
         action_type = ActionType(action_index)
 
         # Convert to Kubernetes resource changes
-        k8s_changes = self.action_space.convert_action_to_k8s_changes(action_index, current_state)
+        k8s_changes = self.action_space.convert_action_to_k8s_changes(
+            action_index, current_state)
 
         # Store action history for reward calculation
         action_dict = self.action_space.convert_action_to_dict(action_index)
@@ -653,12 +692,15 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         # Build ActionPlan based on selected action
         if scaling_action.action_type != "no_action":
             # Use scaling algorithm's decision
-            action_plan = self._convert_scaling_action_to_action_plan(scaling_action, resource_state)
+            action_plan = self._convert_scaling_action_to_action_plan(
+                scaling_action, resource_state)
         else:
             # Use RL policy's decision
-            action_plan = self._convert_to_action_plan(action_index, k8s_changes, current_state)
+            action_plan = self._convert_to_action_plan(
+                action_index, k8s_changes, current_state)
 
-        logger.info(f"Selected action: {action_type.name} - {self.action_space.get_action_description(action_index)}")
+        logger.info(
+            f"Selected action: {action_type.name} - {self.action_space.get_action_description(action_index)}")
 
         return action_plan
 
@@ -692,14 +734,18 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
 
         # High memory utilization → scale up memory
         if memory_util > 0.8:
-            action_logits[ActionType.VERTICAL_MEMORY_UP] += 3.0 * (memory_util - 0.8)
+            action_logits[ActionType.VERTICAL_MEMORY_UP] += 3.0 * \
+                (memory_util - 0.8)
 
         # Low utilization → consider scaling down
         if cpu_util < 0.3 and memory_util < 0.3:
-            action_logits[ActionType.VERTICAL_CPU_DOWN] += 1.5 * (0.3 - cpu_util)
-            action_logits[ActionType.VERTICAL_MEMORY_DOWN] += 1.5 * (0.3 - memory_util)
+            action_logits[ActionType.VERTICAL_CPU_DOWN] += 1.5 * \
+                (0.3 - cpu_util)
+            action_logits[ActionType.VERTICAL_MEMORY_DOWN] += 1.5 * \
+                (0.3 - memory_util)
             if current_state.get('num_replicas', 1) > 1:
-                action_logits[ActionType.HORIZONTAL_DOWN] += 1.0 * (0.3 - cpu_util)
+                action_logits[ActionType.HORIZONTAL_DOWN] += 1.0 * \
+                    (0.3 - cpu_util)
 
         # High latency → scale up resources or replicas
         if latency > 300:  # ms
@@ -734,15 +780,245 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         # Apply softmax to get probabilities
         action_probs = self._softmax(action_logits)
 
-        logger.debug(f"Action probabilities: {dict(zip([a.name for a in ActionType], action_probs))}")
+        logger.debug(
+            f"Action probabilities: {dict(zip([a.name for a in ActionType], action_probs))}")
 
         return action_probs
 
     def _softmax(self, logits: np.ndarray, temperature: float = 1.0) -> np.ndarray:
         """Apply softmax with temperature to get action probabilities."""
         scaled_logits = logits / temperature
-        exp_logits = np.exp(scaled_logits - np.max(scaled_logits))  # Subtract max for numerical stability
+        # Subtract max for numerical stability
+        exp_logits = np.exp(scaled_logits - np.max(scaled_logits))
         return exp_logits / np.sum(exp_logits)
+
+    def _run_pytorch_inference(
+        self,
+        app_key: str,
+        normalized_features: np.ndarray,
+        current_state: Dict[str, float]
+    ) -> tuple[int, float]:
+        """
+        Run actual PyTorch model inference using PPO or Meta-PPO agents.
+
+        Args:
+            app_key: Application identifier
+            normalized_features: Normalized state features
+            current_state: Current resource state
+
+        Returns:
+            Tuple of (action_index, confidence)
+        """
+        try:
+            # Check if we have a loaded PyTorch model for this app
+            if app_key in self.pytorch_models:
+                # Use standard PPO model
+                ppo_model = self.pytorch_models[app_key]
+                ppo_model.set_training_mode(False)  # Set to inference mode
+
+                action_index, log_prob = ppo_model.get_action(
+                    normalized_features, deterministic=True
+                )
+                confidence = float(np.exp(log_prob))  # Convert log prob to confidence
+
+                logger.info(f"PPO inference for {app_key}: action={action_index}, confidence={confidence:.3f}")
+                return action_index, confidence
+
+            elif app_key in self.meta_models:
+                # Use meta-learning model
+                meta_model = self.meta_models[app_key]
+                meta_model.set_training_mode(False)  # Set to inference mode
+
+                action_index, log_prob = meta_model.get_action(
+                    normalized_features, deterministic=True
+                )
+                confidence = float(np.exp(log_prob))  # Convert log prob to confidence
+
+                logger.info(f"Meta-PPO inference for {app_key}: action={action_index}, confidence={confidence:.3f}")
+                return action_index, confidence
+
+            else:
+                # Fall back to heuristic policy if no model is loaded
+                logger.warning(f"No PyTorch model loaded for {app_key}, using heuristic policy")
+                action_probs = self._heuristic_policy_fallback(normalized_features, current_state)
+                action_index = self.action_space.sample_action(action_probs)
+                confidence = float(action_probs[action_index])
+
+                return action_index, confidence
+
+        except Exception as e:
+            logger.error(f"Error during PyTorch inference for {app_key}: {str(e)}")
+            # Fall back to heuristic policy on error
+            action_probs = self._heuristic_policy_fallback(normalized_features, current_state)
+            action_index = self.action_space.sample_action(action_probs)
+            confidence = float(action_probs[action_index])
+
+            return action_index, confidence
+
+    def _heuristic_policy_fallback(
+        self,
+        normalized_features: np.ndarray,
+        current_state: Dict[str, float]
+    ) -> np.ndarray:
+        """
+        Heuristic policy fallback when PyTorch models are not available.
+        """
+        # Get current resource utilization and performance metrics
+        cpu_util = current_state.get('cpu_util', 0.5)
+        memory_util = current_state.get('memory_util', 0.5)
+        latency = current_state.get('latency', 100.0)
+
+        # Initialize action probabilities (softmax will be applied)
+        action_logits = np.zeros(len(ActionType))
+
+        # Base policy: prefer no action for stability
+        action_logits[ActionType.NO_ACTION] = 2.0
+
+        # High CPU utilization → scale up CPU or scale out
+        if cpu_util > 0.8:
+            action_logits[ActionType.VERTICAL_CPU_UP] += 3.0 * (cpu_util - 0.8)
+            action_logits[ActionType.HORIZONTAL_UP] += 2.0 * (cpu_util - 0.8)
+
+        # High memory utilization → scale up memory
+        if memory_util > 0.8:
+            action_logits[ActionType.VERTICAL_MEMORY_UP] += 3.0 * (memory_util - 0.8)
+
+        # Low utilization → consider scaling down
+        if cpu_util < 0.3 and memory_util < 0.3:
+            action_logits[ActionType.VERTICAL_CPU_DOWN] += 1.5 * (0.3 - cpu_util)
+            action_logits[ActionType.VERTICAL_MEMORY_DOWN] += 1.5 * (0.3 - memory_util)
+            if current_state.get('num_replicas', 1) > 1:
+                action_logits[ActionType.HORIZONTAL_DOWN] += 1.0 * (0.3 - cpu_util)
+
+        # Apply resource bounds constraints
+        current_replicas = int(current_state.get('num_replicas', 1))
+        current_cpu = current_state.get('cpu_limit', 1000)
+        current_memory = current_state.get('memory_limit', 512)
+
+        if current_replicas >= 20:
+            action_logits[ActionType.HORIZONTAL_UP] = -5.0
+        if current_replicas <= 1:
+            action_logits[ActionType.HORIZONTAL_DOWN] = -5.0
+        if current_cpu >= 4000:
+            action_logits[ActionType.VERTICAL_CPU_UP] = -5.0
+        if current_cpu <= 200:
+            action_logits[ActionType.VERTICAL_CPU_DOWN] = -5.0
+        if current_memory >= 8192:
+            action_logits[ActionType.VERTICAL_MEMORY_UP] = -5.0
+        if current_memory <= 256:
+            action_logits[ActionType.VERTICAL_MEMORY_DOWN] = -5.0
+
+        # Apply softmax to get probabilities
+        action_probs = self._softmax(action_logits)
+        logger.debug(f"Heuristic action probabilities: {dict(zip([a.name for a in ActionType], action_probs))}")
+
+        return action_probs
+
+    def _load_pytorch_model(self, app_key: str, version: str, model_meta: engine_pb2.ModelMetadata):
+        """Load a PyTorch model into memory for inference."""
+        try:
+            logger.info(f"Loading PyTorch model {version} for {app_key} from {model_meta.checkpoint_uri}")
+
+            # Parse model type from metadata
+            model_type = model_meta.policy_name.lower()
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            if "meta" in model_type:
+                # Load Meta-PPO model
+                meta_agent = MetaPPOAgent(
+                    state_size=10,
+                    action_size=7,
+                    hidden_size=64,
+                    device=device,
+                    verbose=False
+                )
+
+                # Load model checkpoint if file exists
+                if os.path.exists(model_meta.checkpoint_uri):
+                    meta_agent.load_model(model_meta.checkpoint_uri)
+                    logger.info(f"Loaded Meta-PPO checkpoint for {app_key}")
+                else:
+                    logger.warning(f"Checkpoint not found at {model_meta.checkpoint_uri}, using initialized model")
+
+                meta_agent.set_training_mode(False)  # Set to inference mode
+                self.meta_models[app_key] = meta_agent
+
+            else:
+                # Load standard PPO model
+                ppo_agent = PPOAgent(
+                    state_size=10,
+                    action_size=7,
+                    hidden_size=64,
+                    device=device
+                )
+
+                # Load model checkpoint if file exists
+                if os.path.exists(model_meta.checkpoint_uri):
+                    ppo_agent.load_model(model_meta.checkpoint_uri)
+                    logger.info(f"Loaded PPO checkpoint for {app_key}")
+                else:
+                    logger.warning(f"Checkpoint not found at {model_meta.checkpoint_uri}, using initialized model")
+
+                ppo_agent.set_training_mode(False)  # Set to inference mode
+                self.pytorch_models[app_key] = ppo_agent
+
+            # Mark as loaded
+            self.loaded_models[app_key] = version
+            logger.info(f"Successfully loaded model {version} for {app_key} on device: {device}")
+
+        except Exception as e:
+            logger.error(f"Failed to load model {version} for {app_key}: {str(e)}")
+            # Don't mark as loaded if loading failed
+            raise
+
+    def _bootstrap_pytorch_model(self, app_key: str) -> str:
+        """Bootstrap a baseline PyTorch model for new applications."""
+        try:
+            version = "baseline-v1"
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            # Create a baseline PPO model
+            ppo_agent = PPOAgent(
+                state_size=10,
+                action_size=7,
+                hidden_size=64,
+                device=device
+            )
+
+            # Initialize in inference mode
+            ppo_agent.set_training_mode(False)
+
+            # Store the model
+            self.pytorch_models[app_key] = ppo_agent
+            self.loaded_models[app_key] = version
+
+            # Create metadata
+            now = datetime.utcnow()
+            model_meta = engine_pb2.ModelMetadata(
+                version=version,
+                policy_name="baseline-ppo",
+                checkpoint_uri=f"/tmp/futura-models/{app_key}/{version}/model.pth",
+                created_at=timestamp_pb2.Timestamp(seconds=int(now.timestamp())),
+                updated_at=timestamp_pb2.Timestamp(seconds=int(now.timestamp())),
+                training_metrics={
+                    "episodes": "0",
+                    "reward_mean": "0.0",
+                    "loss": "0.0"
+                },
+                is_production=False
+            )
+
+            # Store in registry
+            if app_key not in self.models:
+                self.models[app_key] = {}
+            self.models[app_key][version] = model_meta
+
+            logger.info(f"Bootstrapped baseline PyTorch PPO model for {app_key}")
+            return version
+
+        except Exception as e:
+            logger.error(f"Failed to bootstrap model for {app_key}: {str(e)}")
+            raise
 
     def _convert_to_action_plan(
         self,
@@ -763,7 +1039,7 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             )
 
         elif action_type in [ActionType.VERTICAL_CPU_UP, ActionType.VERTICAL_CPU_DOWN,
-                           ActionType.VERTICAL_MEMORY_UP, ActionType.VERTICAL_MEMORY_DOWN]:
+                             ActionType.VERTICAL_MEMORY_UP, ActionType.VERTICAL_MEMORY_DOWN]:
             # Vertical scaling action
             cpu_request = k8s_changes.get('cpu_request_mcpu')
             memory_request = k8s_changes.get('memory_request_mib')
@@ -774,15 +1050,18 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                 reason=f"RL model: {self.action_space.get_action_description(action_index)}",
                 vpa_recommend=engine_pb2.VpaRecommendAction(
                     container="app",
-                    cpu_request_mcpu=cpu_request or int(current_state.get('cpu_limit', 1000)),
-                    memory_mib=memory_request or int(current_state.get('memory_limit', 512)),
+                    cpu_request_mcpu=cpu_request or int(
+                        current_state.get('cpu_limit', 1000)),
+                    memory_mib=memory_request or int(
+                        current_state.get('memory_limit', 512)),
                     mode="recommendation"
                 )
             )
 
         elif action_type in [ActionType.HORIZONTAL_UP, ActionType.HORIZONTAL_DOWN]:
             # Horizontal scaling action
-            target_replicas = k8s_changes.get('replicas', int(current_state.get('num_replicas', 1)))
+            target_replicas = k8s_changes.get(
+                'replicas', int(current_state.get('num_replicas', 1)))
 
             return engine_pb2.ActionPlan(
                 type="HPA_SCALE",
@@ -858,9 +1137,11 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                     "memory_limit": latest_metrics.get("memory_limit", 512)
                 })
 
-                logger.info(f"Extracted {len(features)} features from ClickHouse for {app_ref.namespace}/{app_ref.app_name}")
+                logger.info(
+                    f"Extracted {len(features)} features from ClickHouse for {app_ref.namespace}/{app_ref.app_name}")
             else:
-                logger.warning(f"No recent metrics found in ClickHouse for {app_ref.namespace}/{app_ref.app_name}")
+                logger.warning(
+                    f"No recent metrics found in ClickHouse for {app_ref.namespace}/{app_ref.app_name}")
                 # TODO: Add more comprehensive metric collection from multiple tables
 
             # Get additional context from SLO data if available
@@ -880,7 +1161,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             return features
 
         except Exception as e:
-            logger.error(f"Error extracting features from ClickHouse: {str(e)}")
+            logger.error(
+                f"Error extracting features from ClickHouse: {str(e)}")
             return {}
 
     async def _store_decision_in_clickhouse(
@@ -944,9 +1226,11 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             )
 
             if success:
-                logger.info(f"Stored decision {decision_id} in ClickHouse for {app_ref.namespace}/{app_ref.app_name}")
+                logger.info(
+                    f"Stored decision {decision_id} in ClickHouse for {app_ref.namespace}/{app_ref.app_name}")
             else:
-                logger.warning(f"Failed to store decision {decision_id} in ClickHouse")
+                logger.warning(
+                    f"Failed to store decision {decision_id} in ClickHouse")
 
         except Exception as e:
             logger.error(f"Error storing decision in ClickHouse: {str(e)}")
@@ -983,9 +1267,11 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             )
 
             if success:
-                logger.info(f"Stored outcome for decision {outcome.decision_id} in ClickHouse")
+                logger.info(
+                    f"Stored outcome for decision {outcome.decision_id} in ClickHouse")
             else:
-                logger.warning(f"Failed to store outcome for decision {outcome.decision_id} in ClickHouse")
+                logger.warning(
+                    f"Failed to store outcome for decision {outcome.decision_id} in ClickHouse")
 
         except Exception as e:
             logger.error(f"Error storing outcome in ClickHouse: {str(e)}")

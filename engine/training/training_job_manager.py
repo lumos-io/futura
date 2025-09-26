@@ -7,8 +7,8 @@ for RL model training with ClickHouse result storage.
 
 import logging
 import asyncio
-from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from typing import Dict, Optional, Any
+from datetime import datetime
 from dataclasses import dataclass
 import json
 import os
@@ -163,10 +163,12 @@ class KubernetesTrainingJobManager:
             return True
 
         except ApiException as e:
-            logger.error(f"Failed to create training job {spec.job_name}: {e.reason}")
+            logger.error(
+                f"Failed to create training job {spec.job_name}: {e.reason}")
             return False
         except Exception as e:
-            logger.error(f"Error creating training job {spec.job_name}: {str(e)}")
+            logger.error(
+                f"Error creating training job {spec.job_name}: {str(e)}")
             return False
 
     async def get_job_status(self, training_id: str) -> Optional[str]:
@@ -195,10 +197,12 @@ class KubernetesTrainingJobManager:
         except ApiException as e:
             if e.status == 404:
                 return "not_found"
-            logger.error(f"Error getting job status for {spec.job_name}: {e.reason}")
+            logger.error(
+                f"Error getting job status for {spec.job_name}: {e.reason}")
             return "error"
         except Exception as e:
-            logger.error(f"Error getting job status for {spec.job_name}: {str(e)}")
+            logger.error(
+                f"Error getting job status for {spec.job_name}: {str(e)}")
             return "error"
 
     async def collect_job_result(self, training_id: str) -> Optional[TrainingJobResult]:
@@ -240,7 +244,8 @@ class KubernetesTrainingJobManager:
                 result.checkpoint_uri = f"{spec.output_uri}/checkpoint.pt"
                 result.final_loss = result.metrics.get("final_loss", 0.0)
                 result.final_reward = result.metrics.get("final_reward", 0.0)
-                result.episodes_completed = int(result.metrics.get("episodes", 0))
+                result.episodes_completed = int(
+                    result.metrics.get("episodes", 0))
             else:
                 result.error_message = self._extract_error_from_logs(logs)
 
@@ -251,11 +256,13 @@ class KubernetesTrainingJobManager:
             if self.engine_data:
                 await self._store_job_result(result)
 
-            logger.info(f"Collected result for training job {spec.job_name}: success={result.success}")
+            logger.info(
+                f"Collected result for training job {spec.job_name}: success={result.success}")
             return result
 
         except Exception as e:
-            logger.error(f"Error collecting job result for {spec.job_name}: {str(e)}")
+            logger.error(
+                f"Error collecting job result for {spec.job_name}: {str(e)}")
             return None
 
     async def cleanup_completed_job(self, training_id: str) -> bool:
@@ -313,18 +320,21 @@ class KubernetesTrainingJobManager:
                     if result:
                         # Schedule cleanup after a delay
                         asyncio.create_task(
-                            self._delayed_cleanup(training_id, delay_seconds=300)  # 5 min delay
+                            self._delayed_cleanup(
+                                training_id, delay_seconds=300)  # 5 min delay
                         )
 
                 elif status in ["not_found", "error"]:
                     # Job disappeared or errored, clean up tracking
-                    logger.warning(f"Training job {training_id} has status {status}, removing from tracking")
+                    logger.warning(
+                        f"Training job {training_id} has status {status}, removing from tracking")
                     if training_id in self.active_jobs:
                         del self.active_jobs[training_id]
 
             # Log active job count
             if self.active_jobs:
-                logger.debug(f"Monitoring {len(self.active_jobs)} active training jobs")
+                logger.debug(
+                    f"Monitoring {len(self.active_jobs)} active training jobs")
 
         except Exception as e:
             logger.error(f"Error in job monitoring: {str(e)}")
@@ -353,14 +363,16 @@ class KubernetesTrainingJobManager:
         env_vars = [
             client.V1EnvVar(name="TRAINING_ID", value=spec.training_id),
             client.V1EnvVar(name="APP_KEY", value=spec.app_key),
-            client.V1EnvVar(name="HORIZON_HOURS", value=str(spec.horizon_hours)),
+            client.V1EnvVar(name="HORIZON_HOURS",
+                            value=str(spec.horizon_hours)),
             client.V1EnvVar(name="BASE_VERSION", value=spec.base_version),
             client.V1EnvVar(name="HPARAMS", value=json.dumps(spec.hparams)),
             client.V1EnvVar(name="REASON", value=spec.reason),
             client.V1EnvVar(name="OUTPUT_URI", value=spec.output_uri),
             client.V1EnvVar(name="CHECKPOINT_URI", value=spec.checkpoint_uri),
             client.V1EnvVar(name="CLICKHOUSE_DSN", value=spec.clickhouse_dsn),
-            client.V1EnvVar(name="TRAINING_DATA_HOURS", value=str(spec.training_data_hours)),
+            client.V1EnvVar(name="TRAINING_DATA_HOURS",
+                            value=str(spec.training_data_hours)),
         ]
 
         # Container specification
@@ -442,7 +454,8 @@ class KubernetesTrainingJobManager:
                     )
                     logs.append(f"--- Pod {pod.metadata.name} ---\n{pod_logs}")
                 except ApiException as e:
-                    logs.append(f"--- Pod {pod.metadata.name} (failed to get logs: {e.reason}) ---")
+                    logs.append(
+                        f"--- Pod {pod.metadata.name} (failed to get logs: {e.reason}) ---")
 
             return "\n\n".join(logs)
 
@@ -459,17 +472,20 @@ class KubernetesTrainingJobManager:
             # Example patterns to parse
             if "Final Loss:" in line:
                 try:
-                    metrics["final_loss"] = float(line.split("Final Loss:")[1].strip())
+                    metrics["final_loss"] = float(
+                        line.split("Final Loss:")[1].strip())
                 except:
                     pass
             elif "Final Reward:" in line:
                 try:
-                    metrics["final_reward"] = float(line.split("Final Reward:")[1].strip())
+                    metrics["final_reward"] = float(
+                        line.split("Final Reward:")[1].strip())
                 except:
                     pass
             elif "Episodes Completed:" in line:
                 try:
-                    metrics["episodes"] = float(line.split("Episodes Completed:")[1].strip())
+                    metrics["episodes"] = float(
+                        line.split("Episodes Completed:")[1].strip())
                 except:
                     pass
 

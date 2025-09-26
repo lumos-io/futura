@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: futura-engine-config
+data:
+  # Development-specific overrides
+  LOG_LEVEL: "DEBUG"
+  CLICKHOUSE_URL: "http://clickhouse-dev.futura-engine.svc.cluster.local:8123"
+  TRAINING_IMAGE: "futura/rl-trainer:dev"
+  MODEL_STORAGE_URI: "s3://futura-models-dev"
+
+  # Development training settings
+  DEFAULT_EPISODES: "50"  # Shorter training for dev
+  DEFAULT_HORIZON_HOURS: "6"  # Shorter horizon
+  JOB_TTL_SECONDS: "1800"  # 30 minutes for dev
+
+  # Relaxed resource limits for dev
+  MAX_INSTANCES: "10"
+  TRAINING_CPU_LIMIT: "2"
+  TRAINING_MEMORY_LIMIT: "4Gi"
