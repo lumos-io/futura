@@ -445,6 +445,50 @@ func (x *AppRef) GetKind() WorkloadKind {
 	return WorkloadKind_WORKLOAD_KIND_UNSPECIFIED
 }
 
+type ClusterRef struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ApiKey        string                 `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"` // from ClusterOptimizationConfig, for fetching the cluster_id
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClusterRef) Reset() {
+	*x = ClusterRef{}
+	mi := &file_engine_engine_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClusterRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClusterRef) ProtoMessage() {}
+
+func (x *ClusterRef) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClusterRef.ProtoReflect.Descriptor instead.
+func (*ClusterRef) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ClusterRef) GetApiKey() string {
+	if x != nil {
+		return x.ApiKey
+	}
+	return ""
+}
+
 type ResourceLimit struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Kubernetes quantity strings (e.g., "750m", "512Mi", "1")
@@ -456,7 +500,7 @@ type ResourceLimit struct {
 
 func (x *ResourceLimit) Reset() {
 	*x = ResourceLimit{}
-	mi := &file_engine_engine_proto_msgTypes[5]
+	mi := &file_engine_engine_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -468,7 +512,7 @@ func (x *ResourceLimit) String() string {
 func (*ResourceLimit) ProtoMessage() {}
 
 func (x *ResourceLimit) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[5]
+	mi := &file_engine_engine_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -481,7 +525,7 @@ func (x *ResourceLimit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceLimit.ProtoReflect.Descriptor instead.
 func (*ResourceLimit) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{5}
+	return file_engine_engine_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ResourceLimit) GetMin() string {
@@ -513,7 +557,7 @@ type SafetyPolicy struct {
 
 func (x *SafetyPolicy) Reset() {
 	*x = SafetyPolicy{}
-	mi := &file_engine_engine_proto_msgTypes[6]
+	mi := &file_engine_engine_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -525,7 +569,7 @@ func (x *SafetyPolicy) String() string {
 func (*SafetyPolicy) ProtoMessage() {}
 
 func (x *SafetyPolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[6]
+	mi := &file_engine_engine_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -538,7 +582,7 @@ func (x *SafetyPolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SafetyPolicy.ProtoReflect.Descriptor instead.
 func (*SafetyPolicy) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{6}
+	return file_engine_engine_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SafetyPolicy) GetResourceBounds() map[string]*ResourceLimit {
@@ -582,7 +626,7 @@ type CandidateProposal struct {
 
 func (x *CandidateProposal) Reset() {
 	*x = CandidateProposal{}
-	mi := &file_engine_engine_proto_msgTypes[7]
+	mi := &file_engine_engine_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -594,7 +638,7 @@ func (x *CandidateProposal) String() string {
 func (*CandidateProposal) ProtoMessage() {}
 
 func (x *CandidateProposal) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[7]
+	mi := &file_engine_engine_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -607,7 +651,7 @@ func (x *CandidateProposal) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CandidateProposal.ProtoReflect.Descriptor instead.
 func (*CandidateProposal) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{7}
+	return file_engine_engine_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CandidateProposal) GetContainer() string {
@@ -654,7 +698,7 @@ type ContainerPatch struct {
 
 func (x *ContainerPatch) Reset() {
 	*x = ContainerPatch{}
-	mi := &file_engine_engine_proto_msgTypes[8]
+	mi := &file_engine_engine_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -666,7 +710,7 @@ func (x *ContainerPatch) String() string {
 func (*ContainerPatch) ProtoMessage() {}
 
 func (x *ContainerPatch) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[8]
+	mi := &file_engine_engine_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,7 +723,7 @@ func (x *ContainerPatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerPatch.ProtoReflect.Descriptor instead.
 func (*ContainerPatch) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{8}
+	return file_engine_engine_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ContainerPatch) GetContainerName() string {
@@ -747,7 +791,7 @@ type HpaScaleAction struct {
 
 func (x *HpaScaleAction) Reset() {
 	*x = HpaScaleAction{}
-	mi := &file_engine_engine_proto_msgTypes[9]
+	mi := &file_engine_engine_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -759,7 +803,7 @@ func (x *HpaScaleAction) String() string {
 func (*HpaScaleAction) ProtoMessage() {}
 
 func (x *HpaScaleAction) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[9]
+	mi := &file_engine_engine_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -772,7 +816,7 @@ func (x *HpaScaleAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HpaScaleAction.ProtoReflect.Descriptor instead.
 func (*HpaScaleAction) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{9}
+	return file_engine_engine_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *HpaScaleAction) GetReplicas() int32 {
@@ -793,7 +837,7 @@ type ClusterProvisionAction struct {
 
 func (x *ClusterProvisionAction) Reset() {
 	*x = ClusterProvisionAction{}
-	mi := &file_engine_engine_proto_msgTypes[10]
+	mi := &file_engine_engine_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -805,7 +849,7 @@ func (x *ClusterProvisionAction) String() string {
 func (*ClusterProvisionAction) ProtoMessage() {}
 
 func (x *ClusterProvisionAction) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[10]
+	mi := &file_engine_engine_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -818,7 +862,7 @@ func (x *ClusterProvisionAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClusterProvisionAction.ProtoReflect.Descriptor instead.
 func (*ClusterProvisionAction) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{10}
+	return file_engine_engine_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ClusterProvisionAction) GetInstanceTypes() []string {
@@ -854,7 +898,7 @@ type VpaRecommendAction struct {
 
 func (x *VpaRecommendAction) Reset() {
 	*x = VpaRecommendAction{}
-	mi := &file_engine_engine_proto_msgTypes[11]
+	mi := &file_engine_engine_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -866,7 +910,7 @@ func (x *VpaRecommendAction) String() string {
 func (*VpaRecommendAction) ProtoMessage() {}
 
 func (x *VpaRecommendAction) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[11]
+	mi := &file_engine_engine_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -879,7 +923,7 @@ func (x *VpaRecommendAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VpaRecommendAction.ProtoReflect.Descriptor instead.
 func (*VpaRecommendAction) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{11}
+	return file_engine_engine_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *VpaRecommendAction) GetContainer() string {
@@ -910,36 +954,35 @@ func (x *VpaRecommendAction) GetMode() string {
 	return ""
 }
 
-type ActionPlan struct {
+type AppActionPlan struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	Type       string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"` // e.g., "HPA_SCALE", "KARPENTER_PROVISION", "VPA_RECOMMEND"
 	Confidence float64                `protobuf:"fixed64,2,opt,name=confidence,proto3" json:"confidence,omitempty"`
 	Reason     string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	// Types that are valid to be assigned to Details:
 	//
-	//	*ActionPlan_HpaScale
-	//	*ActionPlan_KarpenterProvision
-	//	*ActionPlan_VpaRecommend
-	Details       isActionPlan_Details `protobuf_oneof:"details"`
+	//	*AppActionPlan_HpaScale
+	//	*AppActionPlan_VpaRecommend
+	Details       isAppActionPlan_Details `protobuf_oneof:"details"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ActionPlan) Reset() {
-	*x = ActionPlan{}
-	mi := &file_engine_engine_proto_msgTypes[12]
+func (x *AppActionPlan) Reset() {
+	*x = AppActionPlan{}
+	mi := &file_engine_engine_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ActionPlan) String() string {
+func (x *AppActionPlan) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ActionPlan) ProtoMessage() {}
+func (*AppActionPlan) ProtoMessage() {}
 
-func (x *ActionPlan) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[12]
+func (x *AppActionPlan) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -950,87 +993,132 @@ func (x *ActionPlan) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ActionPlan.ProtoReflect.Descriptor instead.
-func (*ActionPlan) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{12}
+// Deprecated: Use AppActionPlan.ProtoReflect.Descriptor instead.
+func (*AppActionPlan) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ActionPlan) GetType() string {
+func (x *AppActionPlan) GetType() string {
 	if x != nil {
 		return x.Type
 	}
 	return ""
 }
 
-func (x *ActionPlan) GetConfidence() float64 {
+func (x *AppActionPlan) GetConfidence() float64 {
 	if x != nil {
 		return x.Confidence
 	}
 	return 0
 }
 
-func (x *ActionPlan) GetReason() string {
+func (x *AppActionPlan) GetReason() string {
 	if x != nil {
 		return x.Reason
 	}
 	return ""
 }
 
-func (x *ActionPlan) GetDetails() isActionPlan_Details {
+func (x *AppActionPlan) GetDetails() isAppActionPlan_Details {
 	if x != nil {
 		return x.Details
 	}
 	return nil
 }
 
-func (x *ActionPlan) GetHpaScale() *HpaScaleAction {
+func (x *AppActionPlan) GetHpaScale() *HpaScaleAction {
 	if x != nil {
-		if x, ok := x.Details.(*ActionPlan_HpaScale); ok {
+		if x, ok := x.Details.(*AppActionPlan_HpaScale); ok {
 			return x.HpaScale
 		}
 	}
 	return nil
 }
 
-func (x *ActionPlan) GetKarpenterProvision() *ClusterProvisionAction {
+func (x *AppActionPlan) GetVpaRecommend() *VpaRecommendAction {
 	if x != nil {
-		if x, ok := x.Details.(*ActionPlan_KarpenterProvision); ok {
-			return x.KarpenterProvision
-		}
-	}
-	return nil
-}
-
-func (x *ActionPlan) GetVpaRecommend() *VpaRecommendAction {
-	if x != nil {
-		if x, ok := x.Details.(*ActionPlan_VpaRecommend); ok {
+		if x, ok := x.Details.(*AppActionPlan_VpaRecommend); ok {
 			return x.VpaRecommend
 		}
 	}
 	return nil
 }
 
-type isActionPlan_Details interface {
-	isActionPlan_Details()
+type isAppActionPlan_Details interface {
+	isAppActionPlan_Details()
 }
 
-type ActionPlan_HpaScale struct {
+type AppActionPlan_HpaScale struct {
 	HpaScale *HpaScaleAction `protobuf:"bytes,4,opt,name=hpa_scale,json=hpaScale,proto3,oneof"`
 }
 
-type ActionPlan_KarpenterProvision struct {
-	KarpenterProvision *ClusterProvisionAction `protobuf:"bytes,5,opt,name=karpenter_provision,json=karpenterProvision,proto3,oneof"`
-}
-
-type ActionPlan_VpaRecommend struct {
+type AppActionPlan_VpaRecommend struct {
 	VpaRecommend *VpaRecommendAction `protobuf:"bytes,6,opt,name=vpa_recommend,json=vpaRecommend,proto3,oneof"`
 }
 
-func (*ActionPlan_HpaScale) isActionPlan_Details() {}
+func (*AppActionPlan_HpaScale) isAppActionPlan_Details() {}
 
-func (*ActionPlan_KarpenterProvision) isActionPlan_Details() {}
+func (*AppActionPlan_VpaRecommend) isAppActionPlan_Details() {}
 
-func (*ActionPlan_VpaRecommend) isActionPlan_Details() {}
+type ClusterActionPlan struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Confidence    float64                 `protobuf:"fixed64,1,opt,name=confidence,proto3" json:"confidence,omitempty"`
+	Reason        string                  `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	Details       *ClusterProvisionAction `protobuf:"bytes,3,opt,name=details,proto3" json:"details,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClusterActionPlan) Reset() {
+	*x = ClusterActionPlan{}
+	mi := &file_engine_engine_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClusterActionPlan) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClusterActionPlan) ProtoMessage() {}
+
+func (x *ClusterActionPlan) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClusterActionPlan.ProtoReflect.Descriptor instead.
+func (*ClusterActionPlan) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ClusterActionPlan) GetConfidence() float64 {
+	if x != nil {
+		return x.Confidence
+	}
+	return 0
+}
+
+func (x *ClusterActionPlan) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *ClusterActionPlan) GetDetails() *ClusterProvisionAction {
+	if x != nil {
+		return x.Details
+	}
+	return nil
+}
 
 type MetricSnapshot struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1043,7 +1131,7 @@ type MetricSnapshot struct {
 
 func (x *MetricSnapshot) Reset() {
 	*x = MetricSnapshot{}
-	mi := &file_engine_engine_proto_msgTypes[13]
+	mi := &file_engine_engine_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1055,7 +1143,7 @@ func (x *MetricSnapshot) String() string {
 func (*MetricSnapshot) ProtoMessage() {}
 
 func (x *MetricSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[13]
+	mi := &file_engine_engine_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1068,7 +1156,7 @@ func (x *MetricSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricSnapshot.ProtoReflect.Descriptor instead.
 func (*MetricSnapshot) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{13}
+	return file_engine_engine_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *MetricSnapshot) GetValues() map[string]float64 {
@@ -1099,7 +1187,7 @@ type ModelMetadata struct {
 
 func (x *ModelMetadata) Reset() {
 	*x = ModelMetadata{}
-	mi := &file_engine_engine_proto_msgTypes[14]
+	mi := &file_engine_engine_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1111,7 +1199,7 @@ func (x *ModelMetadata) String() string {
 func (*ModelMetadata) ProtoMessage() {}
 
 func (x *ModelMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[14]
+	mi := &file_engine_engine_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1124,7 +1212,7 @@ func (x *ModelMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelMetadata.ProtoReflect.Descriptor instead.
 func (*ModelMetadata) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{14}
+	return file_engine_engine_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ModelMetadata) GetModelVersion() string {
@@ -1169,7 +1257,7 @@ func (x *ModelMetadata) GetCompatibleFeatureSchema() []string {
 	return nil
 }
 
-type RecommendationRequest struct {
+type RecommendationAppRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	App   *AppRef                `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
 	// If true, server computes and returns plan but does not execute (for
@@ -1181,21 +1269,21 @@ type RecommendationRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RecommendationRequest) Reset() {
-	*x = RecommendationRequest{}
-	mi := &file_engine_engine_proto_msgTypes[15]
+func (x *RecommendationAppRequest) Reset() {
+	*x = RecommendationAppRequest{}
+	mi := &file_engine_engine_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RecommendationRequest) String() string {
+func (x *RecommendationAppRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RecommendationRequest) ProtoMessage() {}
+func (*RecommendationAppRequest) ProtoMessage() {}
 
-func (x *RecommendationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[15]
+func (x *RecommendationAppRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1206,35 +1294,35 @@ func (x *RecommendationRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RecommendationRequest.ProtoReflect.Descriptor instead.
-func (*RecommendationRequest) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{15}
+// Deprecated: Use RecommendationAppRequest.ProtoReflect.Descriptor instead.
+func (*RecommendationAppRequest) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *RecommendationRequest) GetApp() *AppRef {
+func (x *RecommendationAppRequest) GetApp() *AppRef {
 	if x != nil {
 		return x.App
 	}
 	return nil
 }
 
-func (x *RecommendationRequest) GetDryRun() bool {
+func (x *RecommendationAppRequest) GetDryRun() bool {
 	if x != nil {
 		return x.DryRun
 	}
 	return false
 }
 
-func (x *RecommendationRequest) GetSnapshot() *MetricSnapshot {
+func (x *RecommendationAppRequest) GetSnapshot() *MetricSnapshot {
 	if x != nil {
 		return x.Snapshot
 	}
 	return nil
 }
 
-type RecommendationResponse struct {
+type RecommendationAppResponse struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	Plan            *ActionPlan            `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`                                              // final action to apply (could be empty for NO_ACTION)
+	Plan            []*AppActionPlan       `protobuf:"bytes,1,rep,name=plan,proto3" json:"plan,omitempty"`                                              // final action to apply (could be empty for NO_ACTION)
 	DecisionId      string                 `protobuf:"bytes,2,opt,name=decision_id,json=decisionId,proto3" json:"decision_id,omitempty"`                // correlate with outcomes/telemetry
 	ModelVersion    string                 `protobuf:"bytes,3,opt,name=model_version,json=modelVersion,proto3" json:"model_version,omitempty"`          // model version used (from RL or heuristic)
 	Confidence      float64                `protobuf:"fixed64,4,opt,name=confidence,proto3" json:"confidence,omitempty"`                                // optional [0..1]
@@ -1244,21 +1332,21 @@ type RecommendationResponse struct {
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *RecommendationResponse) Reset() {
-	*x = RecommendationResponse{}
-	mi := &file_engine_engine_proto_msgTypes[16]
+func (x *RecommendationAppResponse) Reset() {
+	*x = RecommendationAppResponse{}
+	mi := &file_engine_engine_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RecommendationResponse) String() string {
+func (x *RecommendationAppResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RecommendationResponse) ProtoMessage() {}
+func (*RecommendationAppResponse) ProtoMessage() {}
 
-func (x *RecommendationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[16]
+func (x *RecommendationAppResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1269,54 +1357,54 @@ func (x *RecommendationResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RecommendationResponse.ProtoReflect.Descriptor instead.
-func (*RecommendationResponse) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{16}
+// Deprecated: Use RecommendationAppResponse.ProtoReflect.Descriptor instead.
+func (*RecommendationAppResponse) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *RecommendationResponse) GetPlan() *ActionPlan {
+func (x *RecommendationAppResponse) GetPlan() []*AppActionPlan {
 	if x != nil {
 		return x.Plan
 	}
 	return nil
 }
 
-func (x *RecommendationResponse) GetDecisionId() string {
+func (x *RecommendationAppResponse) GetDecisionId() string {
 	if x != nil {
 		return x.DecisionId
 	}
 	return ""
 }
 
-func (x *RecommendationResponse) GetModelVersion() string {
+func (x *RecommendationAppResponse) GetModelVersion() string {
 	if x != nil {
 		return x.ModelVersion
 	}
 	return ""
 }
 
-func (x *RecommendationResponse) GetConfidence() float64 {
+func (x *RecommendationAppResponse) GetConfidence() float64 {
 	if x != nil {
 		return x.Confidence
 	}
 	return 0
 }
 
-func (x *RecommendationResponse) GetAuditReasons() []string {
+func (x *RecommendationAppResponse) GetAuditReasons() []string {
 	if x != nil {
 		return x.AuditReasons
 	}
 	return nil
 }
 
-func (x *RecommendationResponse) GetEffectivePolicy() *SafetyPolicy {
+func (x *RecommendationAppResponse) GetEffectivePolicy() *SafetyPolicy {
 	if x != nil {
 		return x.EffectivePolicy
 	}
 	return nil
 }
 
-type ExecutionOutcome struct {
+type ExecutionAppOutcome struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	DecisionId        string                 `protobuf:"bytes,1,opt,name=decision_id,json=decisionId,proto3" json:"decision_id,omitempty"`
 	App               *AppRef                `protobuf:"bytes,2,opt,name=app,proto3" json:"app,omitempty"`
@@ -1328,21 +1416,21 @@ type ExecutionOutcome struct {
 	sizeCache         protoimpl.SizeCache
 }
 
-func (x *ExecutionOutcome) Reset() {
-	*x = ExecutionOutcome{}
-	mi := &file_engine_engine_proto_msgTypes[17]
+func (x *ExecutionAppOutcome) Reset() {
+	*x = ExecutionAppOutcome{}
+	mi := &file_engine_engine_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ExecutionOutcome) String() string {
+func (x *ExecutionAppOutcome) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ExecutionOutcome) ProtoMessage() {}
+func (*ExecutionAppOutcome) ProtoMessage() {}
 
-func (x *ExecutionOutcome) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[17]
+func (x *ExecutionAppOutcome) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1353,54 +1441,277 @@ func (x *ExecutionOutcome) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ExecutionOutcome.ProtoReflect.Descriptor instead.
-func (*ExecutionOutcome) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{17}
+// Deprecated: Use ExecutionAppOutcome.ProtoReflect.Descriptor instead.
+func (*ExecutionAppOutcome) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{19}
 }
 
-func (x *ExecutionOutcome) GetDecisionId() string {
+func (x *ExecutionAppOutcome) GetDecisionId() string {
 	if x != nil {
 		return x.DecisionId
 	}
 	return ""
 }
 
-func (x *ExecutionOutcome) GetApp() *AppRef {
+func (x *ExecutionAppOutcome) GetApp() *AppRef {
 	if x != nil {
 		return x.App
 	}
 	return nil
 }
 
-func (x *ExecutionOutcome) GetSuccess() bool {
+func (x *ExecutionAppOutcome) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *ExecutionOutcome) GetNote() string {
+func (x *ExecutionAppOutcome) GetNote() string {
 	if x != nil {
 		return x.Note
 	}
 	return ""
 }
 
-func (x *ExecutionOutcome) GetPostActionMetrics() *MetricSnapshot {
+func (x *ExecutionAppOutcome) GetPostActionMetrics() *MetricSnapshot {
 	if x != nil {
 		return x.PostActionMetrics
 	}
 	return nil
 }
 
-func (x *ExecutionOutcome) GetReportedAt() *timestamppb.Timestamp {
+func (x *ExecutionAppOutcome) GetReportedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ReportedAt
 	}
 	return nil
 }
 
-type GetActionRequest struct {
+type RecommendationClusterRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Cluster *ClusterRef            `protobuf:"bytes,1,opt,name=cluster,proto3" json:"cluster,omitempty"`
+	// If true, server computes and returns plan but does not execute (for
+	// testing).
+	DryRun bool `protobuf:"varint,2,opt,name=dry_run,json=dryRun,proto3" json:"dry_run,omitempty"`
+	// Optional: if operator already has some recent metrics to pass through.
+	Snapshot      *MetricSnapshot `protobuf:"bytes,3,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecommendationClusterRequest) Reset() {
+	*x = RecommendationClusterRequest{}
+	mi := &file_engine_engine_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecommendationClusterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecommendationClusterRequest) ProtoMessage() {}
+
+func (x *RecommendationClusterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecommendationClusterRequest.ProtoReflect.Descriptor instead.
+func (*RecommendationClusterRequest) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RecommendationClusterRequest) GetCluster() *ClusterRef {
+	if x != nil {
+		return x.Cluster
+	}
+	return nil
+}
+
+func (x *RecommendationClusterRequest) GetDryRun() bool {
+	if x != nil {
+		return x.DryRun
+	}
+	return false
+}
+
+func (x *RecommendationClusterRequest) GetSnapshot() *MetricSnapshot {
+	if x != nil {
+		return x.Snapshot
+	}
+	return nil
+}
+
+type RecommendationClusterResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plan          *ClusterActionPlan     `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`                                     // final action to apply (could be empty for NO_ACTION)
+	DecisionId    string                 `protobuf:"bytes,2,opt,name=decision_id,json=decisionId,proto3" json:"decision_id,omitempty"`       // correlate with outcomes/telemetry
+	ModelVersion  string                 `protobuf:"bytes,3,opt,name=model_version,json=modelVersion,proto3" json:"model_version,omitempty"` // model version used (from RL or heuristic)
+	Confidence    float64                `protobuf:"fixed64,4,opt,name=confidence,proto3" json:"confidence,omitempty"`                       // optional [0..1]
+	AuditReasons  []string               `protobuf:"bytes,5,rep,name=audit_reasons,json=auditReasons,proto3" json:"audit_reasons,omitempty"` // human-readable justification / safety capping notes
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecommendationClusterResponse) Reset() {
+	*x = RecommendationClusterResponse{}
+	mi := &file_engine_engine_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecommendationClusterResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecommendationClusterResponse) ProtoMessage() {}
+
+func (x *RecommendationClusterResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecommendationClusterResponse.ProtoReflect.Descriptor instead.
+func (*RecommendationClusterResponse) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *RecommendationClusterResponse) GetPlan() *ClusterActionPlan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+func (x *RecommendationClusterResponse) GetDecisionId() string {
+	if x != nil {
+		return x.DecisionId
+	}
+	return ""
+}
+
+func (x *RecommendationClusterResponse) GetModelVersion() string {
+	if x != nil {
+		return x.ModelVersion
+	}
+	return ""
+}
+
+func (x *RecommendationClusterResponse) GetConfidence() float64 {
+	if x != nil {
+		return x.Confidence
+	}
+	return 0
+}
+
+func (x *RecommendationClusterResponse) GetAuditReasons() []string {
+	if x != nil {
+		return x.AuditReasons
+	}
+	return nil
+}
+
+type ExecutionClusterOutcome struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	DecisionId        string                 `protobuf:"bytes,1,opt,name=decision_id,json=decisionId,proto3" json:"decision_id,omitempty"`
+	Cluster           *ClusterRef            `protobuf:"bytes,2,opt,name=cluster,proto3" json:"cluster,omitempty"`
+	Success           bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`
+	Note              string                 `protobuf:"bytes,4,opt,name=note,proto3" json:"note,omitempty"`                                                      // failure reason, rollout notes, etc.
+	PostActionMetrics *MetricSnapshot        `protobuf:"bytes,5,opt,name=post_action_metrics,json=postActionMetrics,proto3" json:"post_action_metrics,omitempty"` // observed metrics after action window
+	ReportedAt        *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ExecutionClusterOutcome) Reset() {
+	*x = ExecutionClusterOutcome{}
+	mi := &file_engine_engine_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecutionClusterOutcome) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecutionClusterOutcome) ProtoMessage() {}
+
+func (x *ExecutionClusterOutcome) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecutionClusterOutcome.ProtoReflect.Descriptor instead.
+func (*ExecutionClusterOutcome) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ExecutionClusterOutcome) GetDecisionId() string {
+	if x != nil {
+		return x.DecisionId
+	}
+	return ""
+}
+
+func (x *ExecutionClusterOutcome) GetCluster() *ClusterRef {
+	if x != nil {
+		return x.Cluster
+	}
+	return nil
+}
+
+func (x *ExecutionClusterOutcome) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ExecutionClusterOutcome) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *ExecutionClusterOutcome) GetPostActionMetrics() *MetricSnapshot {
+	if x != nil {
+		return x.PostActionMetrics
+	}
+	return nil
+}
+
+func (x *ExecutionClusterOutcome) GetReportedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ReportedAt
+	}
+	return nil
+}
+
+type GetAppActionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	App   *AppRef                `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
 	// Optional: provide features directly; if empty, server will fetch from
@@ -1414,21 +1725,21 @@ type GetActionRequest struct {
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *GetActionRequest) Reset() {
-	*x = GetActionRequest{}
-	mi := &file_engine_engine_proto_msgTypes[18]
+func (x *GetAppActionRequest) Reset() {
+	*x = GetAppActionRequest{}
+	mi := &file_engine_engine_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetActionRequest) String() string {
+func (x *GetAppActionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetActionRequest) ProtoMessage() {}
+func (*GetAppActionRequest) ProtoMessage() {}
 
-func (x *GetActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[18]
+func (x *GetAppActionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1439,42 +1750,42 @@ func (x *GetActionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetActionRequest.ProtoReflect.Descriptor instead.
-func (*GetActionRequest) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{18}
+// Deprecated: Use GetAppActionRequest.ProtoReflect.Descriptor instead.
+func (*GetAppActionRequest) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *GetActionRequest) GetApp() *AppRef {
+func (x *GetAppActionRequest) GetApp() *AppRef {
 	if x != nil {
 		return x.App
 	}
 	return nil
 }
 
-func (x *GetActionRequest) GetFeatures() map[string]float64 {
+func (x *GetAppActionRequest) GetFeatures() map[string]float64 {
 	if x != nil {
 		return x.Features
 	}
 	return nil
 }
 
-func (x *GetActionRequest) GetCandidates() []*CandidateProposal {
+func (x *GetAppActionRequest) GetCandidates() []*CandidateProposal {
 	if x != nil {
 		return x.Candidates
 	}
 	return nil
 }
 
-func (x *GetActionRequest) GetPolicyOverride() *SafetyPolicy {
+func (x *GetAppActionRequest) GetPolicyOverride() *SafetyPolicy {
 	if x != nil {
 		return x.PolicyOverride
 	}
 	return nil
 }
 
-type GetActionResponse struct {
+type GetAppActionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Plan          *ActionPlan            `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
+	Plan          *AppActionPlan         `protobuf:"bytes,1,opt,name=plan,proto3" json:"plan,omitempty"`
 	ModelVersion  string                 `protobuf:"bytes,2,opt,name=model_version,json=modelVersion,proto3" json:"model_version,omitempty"`
 	Confidence    float64                `protobuf:"fixed64,3,opt,name=confidence,proto3" json:"confidence,omitempty"`
 	DecisionId    string                 `protobuf:"bytes,4,opt,name=decision_id,json=decisionId,proto3" json:"decision_id,omitempty"`
@@ -1483,21 +1794,21 @@ type GetActionResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetActionResponse) Reset() {
-	*x = GetActionResponse{}
-	mi := &file_engine_engine_proto_msgTypes[19]
+func (x *GetAppActionResponse) Reset() {
+	*x = GetAppActionResponse{}
+	mi := &file_engine_engine_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetActionResponse) String() string {
+func (x *GetAppActionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetActionResponse) ProtoMessage() {}
+func (*GetAppActionResponse) ProtoMessage() {}
 
-func (x *GetActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[19]
+func (x *GetAppActionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_engine_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1508,40 +1819,40 @@ func (x *GetActionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetActionResponse.ProtoReflect.Descriptor instead.
-func (*GetActionResponse) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{19}
+// Deprecated: Use GetAppActionResponse.ProtoReflect.Descriptor instead.
+func (*GetAppActionResponse) Descriptor() ([]byte, []int) {
+	return file_engine_engine_proto_rawDescGZIP(), []int{24}
 }
 
-func (x *GetActionResponse) GetPlan() *ActionPlan {
+func (x *GetAppActionResponse) GetPlan() *AppActionPlan {
 	if x != nil {
 		return x.Plan
 	}
 	return nil
 }
 
-func (x *GetActionResponse) GetModelVersion() string {
+func (x *GetAppActionResponse) GetModelVersion() string {
 	if x != nil {
 		return x.ModelVersion
 	}
 	return ""
 }
 
-func (x *GetActionResponse) GetConfidence() float64 {
+func (x *GetAppActionResponse) GetConfidence() float64 {
 	if x != nil {
 		return x.Confidence
 	}
 	return 0
 }
 
-func (x *GetActionResponse) GetDecisionId() string {
+func (x *GetAppActionResponse) GetDecisionId() string {
 	if x != nil {
 		return x.DecisionId
 	}
 	return ""
 }
 
-func (x *GetActionResponse) GetAuditReasons() []string {
+func (x *GetAppActionResponse) GetAuditReasons() []string {
 	if x != nil {
 		return x.AuditReasons
 	}
@@ -1559,7 +1870,7 @@ type EnsureModelResponse struct {
 
 func (x *EnsureModelResponse) Reset() {
 	*x = EnsureModelResponse{}
-	mi := &file_engine_engine_proto_msgTypes[20]
+	mi := &file_engine_engine_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1571,7 +1882,7 @@ func (x *EnsureModelResponse) String() string {
 func (*EnsureModelResponse) ProtoMessage() {}
 
 func (x *EnsureModelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[20]
+	mi := &file_engine_engine_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1584,7 +1895,7 @@ func (x *EnsureModelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnsureModelResponse.ProtoReflect.Descriptor instead.
 func (*EnsureModelResponse) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{20}
+	return file_engine_engine_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *EnsureModelResponse) GetModelVersion() string {
@@ -1621,7 +1932,7 @@ type TrainRequest struct {
 
 func (x *TrainRequest) Reset() {
 	*x = TrainRequest{}
-	mi := &file_engine_engine_proto_msgTypes[21]
+	mi := &file_engine_engine_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1633,7 +1944,7 @@ func (x *TrainRequest) String() string {
 func (*TrainRequest) ProtoMessage() {}
 
 func (x *TrainRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[21]
+	mi := &file_engine_engine_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1646,7 +1957,7 @@ func (x *TrainRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrainRequest.ProtoReflect.Descriptor instead.
 func (*TrainRequest) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{21}
+	return file_engine_engine_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *TrainRequest) GetApp() *AppRef {
@@ -1694,7 +2005,7 @@ type TrainResponse struct {
 
 func (x *TrainResponse) Reset() {
 	*x = TrainResponse{}
-	mi := &file_engine_engine_proto_msgTypes[22]
+	mi := &file_engine_engine_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1706,7 +2017,7 @@ func (x *TrainResponse) String() string {
 func (*TrainResponse) ProtoMessage() {}
 
 func (x *TrainResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[22]
+	mi := &file_engine_engine_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1719,7 +2030,7 @@ func (x *TrainResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrainResponse.ProtoReflect.Descriptor instead.
 func (*TrainResponse) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{22}
+	return file_engine_engine_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *TrainResponse) GetTrainingId() string {
@@ -1745,7 +2056,7 @@ type ListModelsRequest struct {
 
 func (x *ListModelsRequest) Reset() {
 	*x = ListModelsRequest{}
-	mi := &file_engine_engine_proto_msgTypes[23]
+	mi := &file_engine_engine_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1757,7 +2068,7 @@ func (x *ListModelsRequest) String() string {
 func (*ListModelsRequest) ProtoMessage() {}
 
 func (x *ListModelsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[23]
+	mi := &file_engine_engine_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1770,7 +2081,7 @@ func (x *ListModelsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModelsRequest.ProtoReflect.Descriptor instead.
 func (*ListModelsRequest) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{23}
+	return file_engine_engine_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListModelsRequest) GetApp() *AppRef {
@@ -1789,7 +2100,7 @@ type ListModelsResponse struct {
 
 func (x *ListModelsResponse) Reset() {
 	*x = ListModelsResponse{}
-	mi := &file_engine_engine_proto_msgTypes[24]
+	mi := &file_engine_engine_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1801,7 +2112,7 @@ func (x *ListModelsResponse) String() string {
 func (*ListModelsResponse) ProtoMessage() {}
 
 func (x *ListModelsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[24]
+	mi := &file_engine_engine_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1814,7 +2125,7 @@ func (x *ListModelsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModelsResponse.ProtoReflect.Descriptor instead.
 func (*ListModelsResponse) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{24}
+	return file_engine_engine_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ListModelsResponse) GetModels() []*ModelMetadata {
@@ -1834,7 +2145,7 @@ type GetModelMetadataRequest struct {
 
 func (x *GetModelMetadataRequest) Reset() {
 	*x = GetModelMetadataRequest{}
-	mi := &file_engine_engine_proto_msgTypes[25]
+	mi := &file_engine_engine_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1846,7 +2157,7 @@ func (x *GetModelMetadataRequest) String() string {
 func (*GetModelMetadataRequest) ProtoMessage() {}
 
 func (x *GetModelMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[25]
+	mi := &file_engine_engine_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1859,7 +2170,7 @@ func (x *GetModelMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelMetadataRequest.ProtoReflect.Descriptor instead.
 func (*GetModelMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{25}
+	return file_engine_engine_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GetModelMetadataRequest) GetApp() *AppRef {
@@ -1888,7 +2199,7 @@ type AgentRegistration struct {
 
 func (x *AgentRegistration) Reset() {
 	*x = AgentRegistration{}
-	mi := &file_engine_engine_proto_msgTypes[26]
+	mi := &file_engine_engine_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1900,7 +2211,7 @@ func (x *AgentRegistration) String() string {
 func (*AgentRegistration) ProtoMessage() {}
 
 func (x *AgentRegistration) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[26]
+	mi := &file_engine_engine_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1913,7 +2224,7 @@ func (x *AgentRegistration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentRegistration.ProtoReflect.Descriptor instead.
 func (*AgentRegistration) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{26}
+	return file_engine_engine_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *AgentRegistration) GetTrainingId() string {
@@ -1954,7 +2265,7 @@ type AgentRegistrationAck struct {
 
 func (x *AgentRegistrationAck) Reset() {
 	*x = AgentRegistrationAck{}
-	mi := &file_engine_engine_proto_msgTypes[27]
+	mi := &file_engine_engine_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1966,7 +2277,7 @@ func (x *AgentRegistrationAck) String() string {
 func (*AgentRegistrationAck) ProtoMessage() {}
 
 func (x *AgentRegistrationAck) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[27]
+	mi := &file_engine_engine_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1979,7 +2290,7 @@ func (x *AgentRegistrationAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentRegistrationAck.ProtoReflect.Descriptor instead.
 func (*AgentRegistrationAck) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{27}
+	return file_engine_engine_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *AgentRegistrationAck) GetAccepted() bool {
@@ -2006,7 +2317,7 @@ type TrainingPollRequest struct {
 
 func (x *TrainingPollRequest) Reset() {
 	*x = TrainingPollRequest{}
-	mi := &file_engine_engine_proto_msgTypes[28]
+	mi := &file_engine_engine_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2018,7 +2329,7 @@ func (x *TrainingPollRequest) String() string {
 func (*TrainingPollRequest) ProtoMessage() {}
 
 func (x *TrainingPollRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[28]
+	mi := &file_engine_engine_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2031,7 +2342,7 @@ func (x *TrainingPollRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrainingPollRequest.ProtoReflect.Descriptor instead.
 func (*TrainingPollRequest) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{28}
+	return file_engine_engine_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *TrainingPollRequest) GetTrainingId() string {
@@ -2066,7 +2377,7 @@ type TrainingSpec struct {
 
 func (x *TrainingSpec) Reset() {
 	*x = TrainingSpec{}
-	mi := &file_engine_engine_proto_msgTypes[29]
+	mi := &file_engine_engine_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2078,7 +2389,7 @@ func (x *TrainingSpec) String() string {
 func (*TrainingSpec) ProtoMessage() {}
 
 func (x *TrainingSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[29]
+	mi := &file_engine_engine_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2091,7 +2402,7 @@ func (x *TrainingSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrainingSpec.ProtoReflect.Descriptor instead.
 func (*TrainingSpec) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{29}
+	return file_engine_engine_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *TrainingSpec) GetTrainingId() string {
@@ -2173,7 +2484,7 @@ type TrainingProgress struct {
 
 func (x *TrainingProgress) Reset() {
 	*x = TrainingProgress{}
-	mi := &file_engine_engine_proto_msgTypes[30]
+	mi := &file_engine_engine_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2185,7 +2496,7 @@ func (x *TrainingProgress) String() string {
 func (*TrainingProgress) ProtoMessage() {}
 
 func (x *TrainingProgress) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[30]
+	mi := &file_engine_engine_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2198,7 +2509,7 @@ func (x *TrainingProgress) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrainingProgress.ProtoReflect.Descriptor instead.
 func (*TrainingProgress) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{30}
+	return file_engine_engine_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *TrainingProgress) GetTrainingId() string {
@@ -2274,7 +2585,7 @@ type TrainingResult struct {
 
 func (x *TrainingResult) Reset() {
 	*x = TrainingResult{}
-	mi := &file_engine_engine_proto_msgTypes[31]
+	mi := &file_engine_engine_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2286,7 +2597,7 @@ func (x *TrainingResult) String() string {
 func (*TrainingResult) ProtoMessage() {}
 
 func (x *TrainingResult) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[31]
+	mi := &file_engine_engine_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2299,7 +2610,7 @@ func (x *TrainingResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrainingResult.ProtoReflect.Descriptor instead.
 func (*TrainingResult) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{31}
+	return file_engine_engine_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *TrainingResult) GetTrainingId() string {
@@ -2377,7 +2688,7 @@ type AgentHeartbeat struct {
 
 func (x *AgentHeartbeat) Reset() {
 	*x = AgentHeartbeat{}
-	mi := &file_engine_engine_proto_msgTypes[32]
+	mi := &file_engine_engine_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2389,7 +2700,7 @@ func (x *AgentHeartbeat) String() string {
 func (*AgentHeartbeat) ProtoMessage() {}
 
 func (x *AgentHeartbeat) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[32]
+	mi := &file_engine_engine_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2402,7 +2713,7 @@ func (x *AgentHeartbeat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentHeartbeat.ProtoReflect.Descriptor instead.
 func (*AgentHeartbeat) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{32}
+	return file_engine_engine_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *AgentHeartbeat) GetTrainingId() string {
@@ -2443,7 +2754,7 @@ type CancelTrainingRequest struct {
 
 func (x *CancelTrainingRequest) Reset() {
 	*x = CancelTrainingRequest{}
-	mi := &file_engine_engine_proto_msgTypes[33]
+	mi := &file_engine_engine_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2455,7 +2766,7 @@ func (x *CancelTrainingRequest) String() string {
 func (*CancelTrainingRequest) ProtoMessage() {}
 
 func (x *CancelTrainingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[33]
+	mi := &file_engine_engine_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2468,7 +2779,7 @@ func (x *CancelTrainingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelTrainingRequest.ProtoReflect.Descriptor instead.
 func (*CancelTrainingRequest) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{33}
+	return file_engine_engine_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *CancelTrainingRequest) GetTrainingId() string {
@@ -2495,7 +2806,7 @@ type CancelTrainingAck struct {
 
 func (x *CancelTrainingAck) Reset() {
 	*x = CancelTrainingAck{}
-	mi := &file_engine_engine_proto_msgTypes[34]
+	mi := &file_engine_engine_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2507,7 +2818,7 @@ func (x *CancelTrainingAck) String() string {
 func (*CancelTrainingAck) ProtoMessage() {}
 
 func (x *CancelTrainingAck) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_engine_proto_msgTypes[34]
+	mi := &file_engine_engine_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2520,7 +2831,7 @@ func (x *CancelTrainingAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelTrainingAck.ProtoReflect.Descriptor instead.
 func (*CancelTrainingAck) Descriptor() ([]byte, []int) {
-	return file_engine_engine_proto_rawDescGZIP(), []int{34}
+	return file_engine_engine_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *CancelTrainingAck) GetAcknowledged() bool {
@@ -2570,7 +2881,10 @@ const file_engine_engine_proto_rawDesc = "" +
 	"\aapi_key\x18\x01 \x01(\tR\x06apiKey\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x19\n" +
 	"\bapp_name\x18\x03 \x01(\tR\aappName\x12+\n" +
-	"\x04kind\x18\x04 \x01(\x0e2\x17.engine.v1.WorkloadKindR\x04kind\"3\n" +
+	"\x04kind\x18\x04 \x01(\x0e2\x17.engine.v1.WorkloadKindR\x04kind\"%\n" +
+	"\n" +
+	"ClusterRef\x12\x17\n" +
+	"\aapi_key\x18\x01 \x01(\tR\x06apiKey\"3\n" +
 	"\rResourceLimit\x12\x10\n" +
 	"\x03min\x18\x01 \x01(\tR\x03min\x12\x10\n" +
 	"\x03max\x18\x02 \x01(\tR\x03max\"\xdc\x02\n" +
@@ -2610,18 +2924,22 @@ const file_engine_engine_proto_rawDesc = "" +
 	"\x10cpu_request_mcpu\x18\x02 \x01(\x05R\x0ecpuRequestMcpu\x12\x1d\n" +
 	"\n" +
 	"memory_mib\x18\x03 \x01(\x05R\tmemoryMib\x12\x12\n" +
-	"\x04mode\x18\x04 \x01(\tR\x04mode\"\xb9\x02\n" +
-	"\n" +
-	"ActionPlan\x12\x12\n" +
+	"\x04mode\x18\x04 \x01(\tR\x04mode\"\xe6\x01\n" +
+	"\rAppActionPlan\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1e\n" +
 	"\n" +
 	"confidence\x18\x02 \x01(\x01R\n" +
 	"confidence\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\x128\n" +
-	"\thpa_scale\x18\x04 \x01(\v2\x19.engine.v1.HpaScaleActionH\x00R\bhpaScale\x12T\n" +
-	"\x13karpenter_provision\x18\x05 \x01(\v2!.engine.v1.ClusterProvisionActionH\x00R\x12karpenterProvision\x12D\n" +
+	"\thpa_scale\x18\x04 \x01(\v2\x19.engine.v1.HpaScaleActionH\x00R\bhpaScale\x12D\n" +
 	"\rvpa_recommend\x18\x06 \x01(\v2\x1d.engine.v1.VpaRecommendActionH\x00R\fvpaRecommendB\t\n" +
-	"\adetails\"\xb6\x01\n" +
+	"\adetails\"\x88\x01\n" +
+	"\x11ClusterActionPlan\x12\x1e\n" +
+	"\n" +
+	"confidence\x18\x01 \x01(\x01R\n" +
+	"confidence\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\x12;\n" +
+	"\adetails\x18\x03 \x01(\v2!.engine.v1.ClusterProvisionActionR\adetails\"\xb6\x01\n" +
 	"\x0eMetricSnapshot\x12=\n" +
 	"\x06values\x18\x01 \x03(\v2%.engine.v1.MetricSnapshot.ValuesEntryR\x06values\x12*\n" +
 	"\x02ts\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02ts\x1a9\n" +
@@ -2639,13 +2957,13 @@ const file_engine_engine_proto_rawDesc = "" +
 	"\x19compatible_feature_schema\x18\x06 \x03(\tR\x17compatibleFeatureSchema\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8c\x01\n" +
-	"\x15RecommendationRequest\x12#\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8f\x01\n" +
+	"\x18RecommendationAppRequest\x12#\n" +
 	"\x03app\x18\x01 \x01(\v2\x11.engine.v1.AppRefR\x03app\x12\x17\n" +
 	"\adry_run\x18\x02 \x01(\bR\x06dryRun\x125\n" +
-	"\bsnapshot\x18\x03 \x01(\v2\x19.engine.v1.MetricSnapshotR\bsnapshot\"\x92\x02\n" +
-	"\x16RecommendationResponse\x12)\n" +
-	"\x04plan\x18\x01 \x01(\v2\x15.engine.v1.ActionPlanR\x04plan\x12\x1f\n" +
+	"\bsnapshot\x18\x03 \x01(\v2\x19.engine.v1.MetricSnapshotR\bsnapshot\"\x98\x02\n" +
+	"\x19RecommendationAppResponse\x12,\n" +
+	"\x04plan\x18\x01 \x03(\v2\x18.engine.v1.AppActionPlanR\x04plan\x12\x1f\n" +
 	"\vdecision_id\x18\x02 \x01(\tR\n" +
 	"decisionId\x12#\n" +
 	"\rmodel_version\x18\x03 \x01(\tR\fmodelVersion\x12\x1e\n" +
@@ -2653,8 +2971,8 @@ const file_engine_engine_proto_rawDesc = "" +
 	"confidence\x18\x04 \x01(\x01R\n" +
 	"confidence\x12#\n" +
 	"\raudit_reasons\x18\x05 \x03(\tR\fauditReasons\x12B\n" +
-	"\x10effective_policy\x18\x06 \x01(\v2\x17.engine.v1.SafetyPolicyR\x0feffectivePolicy\"\x8e\x02\n" +
-	"\x10ExecutionOutcome\x12\x1f\n" +
+	"\x10effective_policy\x18\x06 \x01(\v2\x17.engine.v1.SafetyPolicyR\x0feffectivePolicy\"\x91\x02\n" +
+	"\x13ExecutionAppOutcome\x12\x1f\n" +
 	"\vdecision_id\x18\x01 \x01(\tR\n" +
 	"decisionId\x12#\n" +
 	"\x03app\x18\x02 \x01(\v2\x11.engine.v1.AppRefR\x03app\x12\x18\n" +
@@ -2662,19 +2980,41 @@ const file_engine_engine_proto_rawDesc = "" +
 	"\x04note\x18\x04 \x01(\tR\x04note\x12I\n" +
 	"\x13post_action_metrics\x18\x05 \x01(\v2\x19.engine.v1.MetricSnapshotR\x11postActionMetrics\x12;\n" +
 	"\vreported_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"reportedAt\"\xbb\x02\n" +
-	"\x10GetActionRequest\x12#\n" +
-	"\x03app\x18\x01 \x01(\v2\x11.engine.v1.AppRefR\x03app\x12E\n" +
-	"\bfeatures\x18\x02 \x03(\v2).engine.v1.GetActionRequest.FeaturesEntryR\bfeatures\x12<\n" +
+	"reportedAt\"\x9f\x01\n" +
+	"\x1cRecommendationClusterRequest\x12/\n" +
+	"\acluster\x18\x01 \x01(\v2\x15.engine.v1.ClusterRefR\acluster\x12\x17\n" +
+	"\adry_run\x18\x02 \x01(\bR\x06dryRun\x125\n" +
+	"\bsnapshot\x18\x03 \x01(\v2\x19.engine.v1.MetricSnapshotR\bsnapshot\"\xdc\x01\n" +
+	"\x1dRecommendationClusterResponse\x120\n" +
+	"\x04plan\x18\x01 \x01(\v2\x1c.engine.v1.ClusterActionPlanR\x04plan\x12\x1f\n" +
+	"\vdecision_id\x18\x02 \x01(\tR\n" +
+	"decisionId\x12#\n" +
+	"\rmodel_version\x18\x03 \x01(\tR\fmodelVersion\x12\x1e\n" +
+	"\n" +
+	"confidence\x18\x04 \x01(\x01R\n" +
+	"confidence\x12#\n" +
+	"\raudit_reasons\x18\x05 \x03(\tR\fauditReasons\"\xa1\x02\n" +
+	"\x17ExecutionClusterOutcome\x12\x1f\n" +
+	"\vdecision_id\x18\x01 \x01(\tR\n" +
+	"decisionId\x12/\n" +
+	"\acluster\x18\x02 \x01(\v2\x15.engine.v1.ClusterRefR\acluster\x12\x18\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04note\x18\x04 \x01(\tR\x04note\x12I\n" +
+	"\x13post_action_metrics\x18\x05 \x01(\v2\x19.engine.v1.MetricSnapshotR\x11postActionMetrics\x12;\n" +
+	"\vreported_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"reportedAt\"\xc1\x02\n" +
+	"\x13GetAppActionRequest\x12#\n" +
+	"\x03app\x18\x01 \x01(\v2\x11.engine.v1.AppRefR\x03app\x12H\n" +
+	"\bfeatures\x18\x02 \x03(\v2,.engine.v1.GetAppActionRequest.FeaturesEntryR\bfeatures\x12<\n" +
 	"\n" +
 	"candidates\x18\x03 \x03(\v2\x1c.engine.v1.CandidateProposalR\n" +
 	"candidates\x12@\n" +
 	"\x0fpolicy_override\x18\x04 \x01(\v2\x17.engine.v1.SafetyPolicyR\x0epolicyOverride\x1a;\n" +
 	"\rFeaturesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x01R\x05value:\x028\x01\"\xc9\x01\n" +
-	"\x11GetActionResponse\x12)\n" +
-	"\x04plan\x18\x01 \x01(\v2\x15.engine.v1.ActionPlanR\x04plan\x12#\n" +
+	"\x05value\x18\x02 \x01(\x01R\x05value:\x028\x01\"\xcf\x01\n" +
+	"\x14GetAppActionResponse\x12,\n" +
+	"\x04plan\x18\x01 \x01(\v2\x18.engine.v1.AppActionPlanR\x04plan\x12#\n" +
 	"\rmodel_version\x18\x02 \x01(\tR\fmodelVersion\x12\x1e\n" +
 	"\n" +
 	"confidence\x18\x03 \x01(\x01R\n" +
@@ -2791,20 +3131,22 @@ const file_engine_engine_proto_rawDesc = "" +
 	"\n" +
 	"DAEMON_SET\x10\x03\x12\a\n" +
 	"\x03JOB\x10\x04\x12\f\n" +
-	"\bCRON_JOB\x10\x052\x90\x03\n" +
+	"\bCRON_JOB\x10\x052\xeb\x04\n" +
 	"\x15RecommendationService\x12z\n" +
 	"\x1dSyncClusterOptimizationConfig\x12+.engine.v1.ClusterOptimizationConfigRequest\x1a,.engine.v1.ClusterOptimizationConfigResponse\x12R\n" +
-	"\x19SyncServiceLevelObjective\x12\x19.engine.v1.SyncSLORequest\x1a\x1a.engine.v1.SyncSLOResponse\x12X\n" +
-	"\x11GetRecommendation\x12 .engine.v1.RecommendationRequest\x1a!.engine.v1.RecommendationResponse\x12M\n" +
-	"\x16ReportExecutionOutcome\x12\x1b.engine.v1.ExecutionOutcome\x1a\x16.google.protobuf.Empty2\xba\x03\n" +
-	"\bRLServer\x12F\n" +
-	"\tGetAction\x12\x1b.engine.v1.GetActionRequest\x1a\x1c.engine.v1.GetActionResponse\x12@\n" +
+	"\x19SyncServiceLevelObjective\x12\x19.engine.v1.SyncSLORequest\x1a\x1a.engine.v1.SyncSLOResponse\x12a\n" +
+	"\x14GetAppRecommendation\x12#.engine.v1.RecommendationAppRequest\x1a$.engine.v1.RecommendationAppResponse\x12m\n" +
+	"\x18GetClusterRecommendation\x12'.engine.v1.RecommendationClusterRequest\x1a(.engine.v1.RecommendationClusterResponse\x12S\n" +
+	"\x19ReportExecutionAppOutcome\x12\x1e.engine.v1.ExecutionAppOutcome\x1a\x16.google.protobuf.Empty\x12[\n" +
+	"\x1dReportExecutionClusterOutcome\x12\".engine.v1.ExecutionClusterOutcome\x1a\x16.google.protobuf.Empty2\xc9\x03\n" +
+	"\bRLServer\x12O\n" +
+	"\fGetAppAction\x12\x1e.engine.v1.GetAppActionRequest\x1a\x1f.engine.v1.GetAppActionResponse\x12@\n" +
 	"\vEnsureModel\x12\x11.engine.v1.AppRef\x1a\x1e.engine.v1.EnsureModelResponse\x12A\n" +
 	"\fTriggerTrain\x12\x17.engine.v1.TrainRequest\x1a\x18.engine.v1.TrainResponse\x12I\n" +
 	"\n" +
 	"ListModels\x12\x1c.engine.v1.ListModelsRequest\x1a\x1d.engine.v1.ListModelsResponse\x12P\n" +
-	"\x10GetModelMetadata\x12\".engine.v1.GetModelMetadataRequest\x1a\x18.engine.v1.ModelMetadata\x12D\n" +
-	"\rReportOutcome\x12\x1b.engine.v1.ExecutionOutcome\x1a\x16.google.protobuf.Empty2\xcc\x03\n" +
+	"\x10GetModelMetadata\x12\".engine.v1.GetModelMetadataRequest\x1a\x18.engine.v1.ModelMetadata\x12J\n" +
+	"\x10ReportAppOutcome\x12\x1e.engine.v1.ExecutionAppOutcome\x1a\x16.google.protobuf.Empty2\xcc\x03\n" +
 	"\x10AgentCoordinator\x12N\n" +
 	"\rRegisterAgent\x12\x1c.engine.v1.AgentRegistration\x1a\x1f.engine.v1.AgentRegistrationAck\x12L\n" +
 	"\x11FetchTrainingSpec\x12\x1e.engine.v1.TrainingPollRequest\x1a\x17.engine.v1.TrainingSpec\x12E\n" +
@@ -2826,7 +3168,7 @@ func file_engine_engine_proto_rawDescGZIP() []byte {
 }
 
 var file_engine_engine_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_engine_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_engine_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 51)
 var file_engine_engine_proto_goTypes = []any{
 	(WorkloadKind)(0),                         // 0: engine.v1.WorkloadKind
 	(*ClusterOptimizationConfigRequest)(nil),  // 1: engine.v1.ClusterOptimizationConfigRequest
@@ -2834,129 +3176,144 @@ var file_engine_engine_proto_goTypes = []any{
 	(*SyncSLORequest)(nil),                    // 3: engine.v1.SyncSLORequest
 	(*SyncSLOResponse)(nil),                   // 4: engine.v1.SyncSLOResponse
 	(*AppRef)(nil),                            // 5: engine.v1.AppRef
-	(*ResourceLimit)(nil),                     // 6: engine.v1.ResourceLimit
-	(*SafetyPolicy)(nil),                      // 7: engine.v1.SafetyPolicy
-	(*CandidateProposal)(nil),                 // 8: engine.v1.CandidateProposal
-	(*ContainerPatch)(nil),                    // 9: engine.v1.ContainerPatch
-	(*HpaScaleAction)(nil),                    // 10: engine.v1.HpaScaleAction
-	(*ClusterProvisionAction)(nil),            // 11: engine.v1.ClusterProvisionAction
-	(*VpaRecommendAction)(nil),                // 12: engine.v1.VpaRecommendAction
-	(*ActionPlan)(nil),                        // 13: engine.v1.ActionPlan
-	(*MetricSnapshot)(nil),                    // 14: engine.v1.MetricSnapshot
-	(*ModelMetadata)(nil),                     // 15: engine.v1.ModelMetadata
-	(*RecommendationRequest)(nil),             // 16: engine.v1.RecommendationRequest
-	(*RecommendationResponse)(nil),            // 17: engine.v1.RecommendationResponse
-	(*ExecutionOutcome)(nil),                  // 18: engine.v1.ExecutionOutcome
-	(*GetActionRequest)(nil),                  // 19: engine.v1.GetActionRequest
-	(*GetActionResponse)(nil),                 // 20: engine.v1.GetActionResponse
-	(*EnsureModelResponse)(nil),               // 21: engine.v1.EnsureModelResponse
-	(*TrainRequest)(nil),                      // 22: engine.v1.TrainRequest
-	(*TrainResponse)(nil),                     // 23: engine.v1.TrainResponse
-	(*ListModelsRequest)(nil),                 // 24: engine.v1.ListModelsRequest
-	(*ListModelsResponse)(nil),                // 25: engine.v1.ListModelsResponse
-	(*GetModelMetadataRequest)(nil),           // 26: engine.v1.GetModelMetadataRequest
-	(*AgentRegistration)(nil),                 // 27: engine.v1.AgentRegistration
-	(*AgentRegistrationAck)(nil),              // 28: engine.v1.AgentRegistrationAck
-	(*TrainingPollRequest)(nil),               // 29: engine.v1.TrainingPollRequest
-	(*TrainingSpec)(nil),                      // 30: engine.v1.TrainingSpec
-	(*TrainingProgress)(nil),                  // 31: engine.v1.TrainingProgress
-	(*TrainingResult)(nil),                    // 32: engine.v1.TrainingResult
-	(*AgentHeartbeat)(nil),                    // 33: engine.v1.AgentHeartbeat
-	(*CancelTrainingRequest)(nil),             // 34: engine.v1.CancelTrainingRequest
-	(*CancelTrainingAck)(nil),                 // 35: engine.v1.CancelTrainingAck
-	nil,                                       // 36: engine.v1.SafetyPolicy.ResourceBoundsEntry
-	nil,                                       // 37: engine.v1.CandidateProposal.ResourcesEntry
-	nil,                                       // 38: engine.v1.MetricSnapshot.ValuesEntry
-	nil,                                       // 39: engine.v1.ModelMetadata.LabelsEntry
-	nil,                                       // 40: engine.v1.GetActionRequest.FeaturesEntry
-	nil,                                       // 41: engine.v1.TrainRequest.HparamsEntry
-	nil,                                       // 42: engine.v1.AgentRegistration.LabelsEntry
-	nil,                                       // 43: engine.v1.TrainingSpec.HparamsEntry
-	nil,                                       // 44: engine.v1.TrainingProgress.ScalarsEntry
-	nil,                                       // 45: engine.v1.TrainingResult.MetricsEntry
-	nil,                                       // 46: engine.v1.AgentHeartbeat.SysinfoEntry
-	(*timestamppb.Timestamp)(nil),             // 47: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),                     // 48: google.protobuf.Empty
+	(*ClusterRef)(nil),                        // 6: engine.v1.ClusterRef
+	(*ResourceLimit)(nil),                     // 7: engine.v1.ResourceLimit
+	(*SafetyPolicy)(nil),                      // 8: engine.v1.SafetyPolicy
+	(*CandidateProposal)(nil),                 // 9: engine.v1.CandidateProposal
+	(*ContainerPatch)(nil),                    // 10: engine.v1.ContainerPatch
+	(*HpaScaleAction)(nil),                    // 11: engine.v1.HpaScaleAction
+	(*ClusterProvisionAction)(nil),            // 12: engine.v1.ClusterProvisionAction
+	(*VpaRecommendAction)(nil),                // 13: engine.v1.VpaRecommendAction
+	(*AppActionPlan)(nil),                     // 14: engine.v1.AppActionPlan
+	(*ClusterActionPlan)(nil),                 // 15: engine.v1.ClusterActionPlan
+	(*MetricSnapshot)(nil),                    // 16: engine.v1.MetricSnapshot
+	(*ModelMetadata)(nil),                     // 17: engine.v1.ModelMetadata
+	(*RecommendationAppRequest)(nil),          // 18: engine.v1.RecommendationAppRequest
+	(*RecommendationAppResponse)(nil),         // 19: engine.v1.RecommendationAppResponse
+	(*ExecutionAppOutcome)(nil),               // 20: engine.v1.ExecutionAppOutcome
+	(*RecommendationClusterRequest)(nil),      // 21: engine.v1.RecommendationClusterRequest
+	(*RecommendationClusterResponse)(nil),     // 22: engine.v1.RecommendationClusterResponse
+	(*ExecutionClusterOutcome)(nil),           // 23: engine.v1.ExecutionClusterOutcome
+	(*GetAppActionRequest)(nil),               // 24: engine.v1.GetAppActionRequest
+	(*GetAppActionResponse)(nil),              // 25: engine.v1.GetAppActionResponse
+	(*EnsureModelResponse)(nil),               // 26: engine.v1.EnsureModelResponse
+	(*TrainRequest)(nil),                      // 27: engine.v1.TrainRequest
+	(*TrainResponse)(nil),                     // 28: engine.v1.TrainResponse
+	(*ListModelsRequest)(nil),                 // 29: engine.v1.ListModelsRequest
+	(*ListModelsResponse)(nil),                // 30: engine.v1.ListModelsResponse
+	(*GetModelMetadataRequest)(nil),           // 31: engine.v1.GetModelMetadataRequest
+	(*AgentRegistration)(nil),                 // 32: engine.v1.AgentRegistration
+	(*AgentRegistrationAck)(nil),              // 33: engine.v1.AgentRegistrationAck
+	(*TrainingPollRequest)(nil),               // 34: engine.v1.TrainingPollRequest
+	(*TrainingSpec)(nil),                      // 35: engine.v1.TrainingSpec
+	(*TrainingProgress)(nil),                  // 36: engine.v1.TrainingProgress
+	(*TrainingResult)(nil),                    // 37: engine.v1.TrainingResult
+	(*AgentHeartbeat)(nil),                    // 38: engine.v1.AgentHeartbeat
+	(*CancelTrainingRequest)(nil),             // 39: engine.v1.CancelTrainingRequest
+	(*CancelTrainingAck)(nil),                 // 40: engine.v1.CancelTrainingAck
+	nil,                                       // 41: engine.v1.SafetyPolicy.ResourceBoundsEntry
+	nil,                                       // 42: engine.v1.CandidateProposal.ResourcesEntry
+	nil,                                       // 43: engine.v1.MetricSnapshot.ValuesEntry
+	nil,                                       // 44: engine.v1.ModelMetadata.LabelsEntry
+	nil,                                       // 45: engine.v1.GetAppActionRequest.FeaturesEntry
+	nil,                                       // 46: engine.v1.TrainRequest.HparamsEntry
+	nil,                                       // 47: engine.v1.AgentRegistration.LabelsEntry
+	nil,                                       // 48: engine.v1.TrainingSpec.HparamsEntry
+	nil,                                       // 49: engine.v1.TrainingProgress.ScalarsEntry
+	nil,                                       // 50: engine.v1.TrainingResult.MetricsEntry
+	nil,                                       // 51: engine.v1.AgentHeartbeat.SysinfoEntry
+	(*timestamppb.Timestamp)(nil),             // 52: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                     // 53: google.protobuf.Empty
 }
 var file_engine_engine_proto_depIdxs = []int32{
-	47, // 0: engine.v1.SyncSLORequest.last_updated:type_name -> google.protobuf.Timestamp
+	52, // 0: engine.v1.SyncSLORequest.last_updated:type_name -> google.protobuf.Timestamp
 	0,  // 1: engine.v1.AppRef.kind:type_name -> engine.v1.WorkloadKind
-	36, // 2: engine.v1.SafetyPolicy.resource_bounds:type_name -> engine.v1.SafetyPolicy.ResourceBoundsEntry
-	37, // 3: engine.v1.CandidateProposal.resources:type_name -> engine.v1.CandidateProposal.ResourcesEntry
-	10, // 4: engine.v1.ActionPlan.hpa_scale:type_name -> engine.v1.HpaScaleAction
-	11, // 5: engine.v1.ActionPlan.karpenter_provision:type_name -> engine.v1.ClusterProvisionAction
-	12, // 6: engine.v1.ActionPlan.vpa_recommend:type_name -> engine.v1.VpaRecommendAction
-	38, // 7: engine.v1.MetricSnapshot.values:type_name -> engine.v1.MetricSnapshot.ValuesEntry
-	47, // 8: engine.v1.MetricSnapshot.ts:type_name -> google.protobuf.Timestamp
-	47, // 9: engine.v1.ModelMetadata.updated_at:type_name -> google.protobuf.Timestamp
-	39, // 10: engine.v1.ModelMetadata.labels:type_name -> engine.v1.ModelMetadata.LabelsEntry
-	5,  // 11: engine.v1.RecommendationRequest.app:type_name -> engine.v1.AppRef
-	14, // 12: engine.v1.RecommendationRequest.snapshot:type_name -> engine.v1.MetricSnapshot
-	13, // 13: engine.v1.RecommendationResponse.plan:type_name -> engine.v1.ActionPlan
-	7,  // 14: engine.v1.RecommendationResponse.effective_policy:type_name -> engine.v1.SafetyPolicy
-	5,  // 15: engine.v1.ExecutionOutcome.app:type_name -> engine.v1.AppRef
-	14, // 16: engine.v1.ExecutionOutcome.post_action_metrics:type_name -> engine.v1.MetricSnapshot
-	47, // 17: engine.v1.ExecutionOutcome.reported_at:type_name -> google.protobuf.Timestamp
-	5,  // 18: engine.v1.GetActionRequest.app:type_name -> engine.v1.AppRef
-	40, // 19: engine.v1.GetActionRequest.features:type_name -> engine.v1.GetActionRequest.FeaturesEntry
-	8,  // 20: engine.v1.GetActionRequest.candidates:type_name -> engine.v1.CandidateProposal
-	7,  // 21: engine.v1.GetActionRequest.policy_override:type_name -> engine.v1.SafetyPolicy
-	13, // 22: engine.v1.GetActionResponse.plan:type_name -> engine.v1.ActionPlan
-	15, // 23: engine.v1.EnsureModelResponse.meta:type_name -> engine.v1.ModelMetadata
-	5,  // 24: engine.v1.TrainRequest.app:type_name -> engine.v1.AppRef
-	41, // 25: engine.v1.TrainRequest.hparams:type_name -> engine.v1.TrainRequest.HparamsEntry
-	5,  // 26: engine.v1.ListModelsRequest.app:type_name -> engine.v1.AppRef
-	15, // 27: engine.v1.ListModelsResponse.models:type_name -> engine.v1.ModelMetadata
-	5,  // 28: engine.v1.GetModelMetadataRequest.app:type_name -> engine.v1.AppRef
-	42, // 29: engine.v1.AgentRegistration.labels:type_name -> engine.v1.AgentRegistration.LabelsEntry
-	5,  // 30: engine.v1.TrainingSpec.app:type_name -> engine.v1.AppRef
-	43, // 31: engine.v1.TrainingSpec.hparams:type_name -> engine.v1.TrainingSpec.HparamsEntry
-	47, // 32: engine.v1.TrainingSpec.start_at:type_name -> google.protobuf.Timestamp
-	47, // 33: engine.v1.TrainingSpec.end_at:type_name -> google.protobuf.Timestamp
-	47, // 34: engine.v1.TrainingProgress.ts:type_name -> google.protobuf.Timestamp
-	44, // 35: engine.v1.TrainingProgress.scalars:type_name -> engine.v1.TrainingProgress.ScalarsEntry
-	45, // 36: engine.v1.TrainingResult.metrics:type_name -> engine.v1.TrainingResult.MetricsEntry
-	47, // 37: engine.v1.TrainingResult.ts:type_name -> google.protobuf.Timestamp
-	47, // 38: engine.v1.AgentHeartbeat.ts:type_name -> google.protobuf.Timestamp
-	46, // 39: engine.v1.AgentHeartbeat.sysinfo:type_name -> engine.v1.AgentHeartbeat.SysinfoEntry
-	6,  // 40: engine.v1.SafetyPolicy.ResourceBoundsEntry.value:type_name -> engine.v1.ResourceLimit
-	1,  // 41: engine.v1.RecommendationService.SyncClusterOptimizationConfig:input_type -> engine.v1.ClusterOptimizationConfigRequest
-	3,  // 42: engine.v1.RecommendationService.SyncServiceLevelObjective:input_type -> engine.v1.SyncSLORequest
-	16, // 43: engine.v1.RecommendationService.GetRecommendation:input_type -> engine.v1.RecommendationRequest
-	18, // 44: engine.v1.RecommendationService.ReportExecutionOutcome:input_type -> engine.v1.ExecutionOutcome
-	19, // 45: engine.v1.RLServer.GetAction:input_type -> engine.v1.GetActionRequest
-	5,  // 46: engine.v1.RLServer.EnsureModel:input_type -> engine.v1.AppRef
-	22, // 47: engine.v1.RLServer.TriggerTrain:input_type -> engine.v1.TrainRequest
-	24, // 48: engine.v1.RLServer.ListModels:input_type -> engine.v1.ListModelsRequest
-	26, // 49: engine.v1.RLServer.GetModelMetadata:input_type -> engine.v1.GetModelMetadataRequest
-	18, // 50: engine.v1.RLServer.ReportOutcome:input_type -> engine.v1.ExecutionOutcome
-	27, // 51: engine.v1.AgentCoordinator.RegisterAgent:input_type -> engine.v1.AgentRegistration
-	29, // 52: engine.v1.AgentCoordinator.FetchTrainingSpec:input_type -> engine.v1.TrainingPollRequest
-	31, // 53: engine.v1.AgentCoordinator.ReportProgress:input_type -> engine.v1.TrainingProgress
-	32, // 54: engine.v1.AgentCoordinator.ReportResult:input_type -> engine.v1.TrainingResult
-	33, // 55: engine.v1.AgentCoordinator.Heartbeat:input_type -> engine.v1.AgentHeartbeat
-	34, // 56: engine.v1.AgentCoordinator.CancelTraining:input_type -> engine.v1.CancelTrainingRequest
-	2,  // 57: engine.v1.RecommendationService.SyncClusterOptimizationConfig:output_type -> engine.v1.ClusterOptimizationConfigResponse
-	4,  // 58: engine.v1.RecommendationService.SyncServiceLevelObjective:output_type -> engine.v1.SyncSLOResponse
-	17, // 59: engine.v1.RecommendationService.GetRecommendation:output_type -> engine.v1.RecommendationResponse
-	48, // 60: engine.v1.RecommendationService.ReportExecutionOutcome:output_type -> google.protobuf.Empty
-	20, // 61: engine.v1.RLServer.GetAction:output_type -> engine.v1.GetActionResponse
-	21, // 62: engine.v1.RLServer.EnsureModel:output_type -> engine.v1.EnsureModelResponse
-	23, // 63: engine.v1.RLServer.TriggerTrain:output_type -> engine.v1.TrainResponse
-	25, // 64: engine.v1.RLServer.ListModels:output_type -> engine.v1.ListModelsResponse
-	15, // 65: engine.v1.RLServer.GetModelMetadata:output_type -> engine.v1.ModelMetadata
-	48, // 66: engine.v1.RLServer.ReportOutcome:output_type -> google.protobuf.Empty
-	28, // 67: engine.v1.AgentCoordinator.RegisterAgent:output_type -> engine.v1.AgentRegistrationAck
-	30, // 68: engine.v1.AgentCoordinator.FetchTrainingSpec:output_type -> engine.v1.TrainingSpec
-	48, // 69: engine.v1.AgentCoordinator.ReportProgress:output_type -> google.protobuf.Empty
-	48, // 70: engine.v1.AgentCoordinator.ReportResult:output_type -> google.protobuf.Empty
-	48, // 71: engine.v1.AgentCoordinator.Heartbeat:output_type -> google.protobuf.Empty
-	35, // 72: engine.v1.AgentCoordinator.CancelTraining:output_type -> engine.v1.CancelTrainingAck
-	57, // [57:73] is the sub-list for method output_type
-	41, // [41:57] is the sub-list for method input_type
-	41, // [41:41] is the sub-list for extension type_name
-	41, // [41:41] is the sub-list for extension extendee
-	0,  // [0:41] is the sub-list for field type_name
+	41, // 2: engine.v1.SafetyPolicy.resource_bounds:type_name -> engine.v1.SafetyPolicy.ResourceBoundsEntry
+	42, // 3: engine.v1.CandidateProposal.resources:type_name -> engine.v1.CandidateProposal.ResourcesEntry
+	11, // 4: engine.v1.AppActionPlan.hpa_scale:type_name -> engine.v1.HpaScaleAction
+	13, // 5: engine.v1.AppActionPlan.vpa_recommend:type_name -> engine.v1.VpaRecommendAction
+	12, // 6: engine.v1.ClusterActionPlan.details:type_name -> engine.v1.ClusterProvisionAction
+	43, // 7: engine.v1.MetricSnapshot.values:type_name -> engine.v1.MetricSnapshot.ValuesEntry
+	52, // 8: engine.v1.MetricSnapshot.ts:type_name -> google.protobuf.Timestamp
+	52, // 9: engine.v1.ModelMetadata.updated_at:type_name -> google.protobuf.Timestamp
+	44, // 10: engine.v1.ModelMetadata.labels:type_name -> engine.v1.ModelMetadata.LabelsEntry
+	5,  // 11: engine.v1.RecommendationAppRequest.app:type_name -> engine.v1.AppRef
+	16, // 12: engine.v1.RecommendationAppRequest.snapshot:type_name -> engine.v1.MetricSnapshot
+	14, // 13: engine.v1.RecommendationAppResponse.plan:type_name -> engine.v1.AppActionPlan
+	8,  // 14: engine.v1.RecommendationAppResponse.effective_policy:type_name -> engine.v1.SafetyPolicy
+	5,  // 15: engine.v1.ExecutionAppOutcome.app:type_name -> engine.v1.AppRef
+	16, // 16: engine.v1.ExecutionAppOutcome.post_action_metrics:type_name -> engine.v1.MetricSnapshot
+	52, // 17: engine.v1.ExecutionAppOutcome.reported_at:type_name -> google.protobuf.Timestamp
+	6,  // 18: engine.v1.RecommendationClusterRequest.cluster:type_name -> engine.v1.ClusterRef
+	16, // 19: engine.v1.RecommendationClusterRequest.snapshot:type_name -> engine.v1.MetricSnapshot
+	15, // 20: engine.v1.RecommendationClusterResponse.plan:type_name -> engine.v1.ClusterActionPlan
+	6,  // 21: engine.v1.ExecutionClusterOutcome.cluster:type_name -> engine.v1.ClusterRef
+	16, // 22: engine.v1.ExecutionClusterOutcome.post_action_metrics:type_name -> engine.v1.MetricSnapshot
+	52, // 23: engine.v1.ExecutionClusterOutcome.reported_at:type_name -> google.protobuf.Timestamp
+	5,  // 24: engine.v1.GetAppActionRequest.app:type_name -> engine.v1.AppRef
+	45, // 25: engine.v1.GetAppActionRequest.features:type_name -> engine.v1.GetAppActionRequest.FeaturesEntry
+	9,  // 26: engine.v1.GetAppActionRequest.candidates:type_name -> engine.v1.CandidateProposal
+	8,  // 27: engine.v1.GetAppActionRequest.policy_override:type_name -> engine.v1.SafetyPolicy
+	14, // 28: engine.v1.GetAppActionResponse.plan:type_name -> engine.v1.AppActionPlan
+	17, // 29: engine.v1.EnsureModelResponse.meta:type_name -> engine.v1.ModelMetadata
+	5,  // 30: engine.v1.TrainRequest.app:type_name -> engine.v1.AppRef
+	46, // 31: engine.v1.TrainRequest.hparams:type_name -> engine.v1.TrainRequest.HparamsEntry
+	5,  // 32: engine.v1.ListModelsRequest.app:type_name -> engine.v1.AppRef
+	17, // 33: engine.v1.ListModelsResponse.models:type_name -> engine.v1.ModelMetadata
+	5,  // 34: engine.v1.GetModelMetadataRequest.app:type_name -> engine.v1.AppRef
+	47, // 35: engine.v1.AgentRegistration.labels:type_name -> engine.v1.AgentRegistration.LabelsEntry
+	5,  // 36: engine.v1.TrainingSpec.app:type_name -> engine.v1.AppRef
+	48, // 37: engine.v1.TrainingSpec.hparams:type_name -> engine.v1.TrainingSpec.HparamsEntry
+	52, // 38: engine.v1.TrainingSpec.start_at:type_name -> google.protobuf.Timestamp
+	52, // 39: engine.v1.TrainingSpec.end_at:type_name -> google.protobuf.Timestamp
+	52, // 40: engine.v1.TrainingProgress.ts:type_name -> google.protobuf.Timestamp
+	49, // 41: engine.v1.TrainingProgress.scalars:type_name -> engine.v1.TrainingProgress.ScalarsEntry
+	50, // 42: engine.v1.TrainingResult.metrics:type_name -> engine.v1.TrainingResult.MetricsEntry
+	52, // 43: engine.v1.TrainingResult.ts:type_name -> google.protobuf.Timestamp
+	52, // 44: engine.v1.AgentHeartbeat.ts:type_name -> google.protobuf.Timestamp
+	51, // 45: engine.v1.AgentHeartbeat.sysinfo:type_name -> engine.v1.AgentHeartbeat.SysinfoEntry
+	7,  // 46: engine.v1.SafetyPolicy.ResourceBoundsEntry.value:type_name -> engine.v1.ResourceLimit
+	1,  // 47: engine.v1.RecommendationService.SyncClusterOptimizationConfig:input_type -> engine.v1.ClusterOptimizationConfigRequest
+	3,  // 48: engine.v1.RecommendationService.SyncServiceLevelObjective:input_type -> engine.v1.SyncSLORequest
+	18, // 49: engine.v1.RecommendationService.GetAppRecommendation:input_type -> engine.v1.RecommendationAppRequest
+	21, // 50: engine.v1.RecommendationService.GetClusterRecommendation:input_type -> engine.v1.RecommendationClusterRequest
+	20, // 51: engine.v1.RecommendationService.ReportExecutionAppOutcome:input_type -> engine.v1.ExecutionAppOutcome
+	23, // 52: engine.v1.RecommendationService.ReportExecutionClusterOutcome:input_type -> engine.v1.ExecutionClusterOutcome
+	24, // 53: engine.v1.RLServer.GetAppAction:input_type -> engine.v1.GetAppActionRequest
+	5,  // 54: engine.v1.RLServer.EnsureModel:input_type -> engine.v1.AppRef
+	27, // 55: engine.v1.RLServer.TriggerTrain:input_type -> engine.v1.TrainRequest
+	29, // 56: engine.v1.RLServer.ListModels:input_type -> engine.v1.ListModelsRequest
+	31, // 57: engine.v1.RLServer.GetModelMetadata:input_type -> engine.v1.GetModelMetadataRequest
+	20, // 58: engine.v1.RLServer.ReportAppOutcome:input_type -> engine.v1.ExecutionAppOutcome
+	32, // 59: engine.v1.AgentCoordinator.RegisterAgent:input_type -> engine.v1.AgentRegistration
+	34, // 60: engine.v1.AgentCoordinator.FetchTrainingSpec:input_type -> engine.v1.TrainingPollRequest
+	36, // 61: engine.v1.AgentCoordinator.ReportProgress:input_type -> engine.v1.TrainingProgress
+	37, // 62: engine.v1.AgentCoordinator.ReportResult:input_type -> engine.v1.TrainingResult
+	38, // 63: engine.v1.AgentCoordinator.Heartbeat:input_type -> engine.v1.AgentHeartbeat
+	39, // 64: engine.v1.AgentCoordinator.CancelTraining:input_type -> engine.v1.CancelTrainingRequest
+	2,  // 65: engine.v1.RecommendationService.SyncClusterOptimizationConfig:output_type -> engine.v1.ClusterOptimizationConfigResponse
+	4,  // 66: engine.v1.RecommendationService.SyncServiceLevelObjective:output_type -> engine.v1.SyncSLOResponse
+	19, // 67: engine.v1.RecommendationService.GetAppRecommendation:output_type -> engine.v1.RecommendationAppResponse
+	22, // 68: engine.v1.RecommendationService.GetClusterRecommendation:output_type -> engine.v1.RecommendationClusterResponse
+	53, // 69: engine.v1.RecommendationService.ReportExecutionAppOutcome:output_type -> google.protobuf.Empty
+	53, // 70: engine.v1.RecommendationService.ReportExecutionClusterOutcome:output_type -> google.protobuf.Empty
+	25, // 71: engine.v1.RLServer.GetAppAction:output_type -> engine.v1.GetAppActionResponse
+	26, // 72: engine.v1.RLServer.EnsureModel:output_type -> engine.v1.EnsureModelResponse
+	28, // 73: engine.v1.RLServer.TriggerTrain:output_type -> engine.v1.TrainResponse
+	30, // 74: engine.v1.RLServer.ListModels:output_type -> engine.v1.ListModelsResponse
+	17, // 75: engine.v1.RLServer.GetModelMetadata:output_type -> engine.v1.ModelMetadata
+	53, // 76: engine.v1.RLServer.ReportAppOutcome:output_type -> google.protobuf.Empty
+	33, // 77: engine.v1.AgentCoordinator.RegisterAgent:output_type -> engine.v1.AgentRegistrationAck
+	35, // 78: engine.v1.AgentCoordinator.FetchTrainingSpec:output_type -> engine.v1.TrainingSpec
+	53, // 79: engine.v1.AgentCoordinator.ReportProgress:output_type -> google.protobuf.Empty
+	53, // 80: engine.v1.AgentCoordinator.ReportResult:output_type -> google.protobuf.Empty
+	53, // 81: engine.v1.AgentCoordinator.Heartbeat:output_type -> google.protobuf.Empty
+	40, // 82: engine.v1.AgentCoordinator.CancelTraining:output_type -> engine.v1.CancelTrainingAck
+	65, // [65:83] is the sub-list for method output_type
+	47, // [47:65] is the sub-list for method input_type
+	47, // [47:47] is the sub-list for extension type_name
+	47, // [47:47] is the sub-list for extension extendee
+	0,  // [0:47] is the sub-list for field type_name
 }
 
 func init() { file_engine_engine_proto_init() }
@@ -2964,10 +3321,9 @@ func file_engine_engine_proto_init() {
 	if File_engine_engine_proto != nil {
 		return
 	}
-	file_engine_engine_proto_msgTypes[12].OneofWrappers = []any{
-		(*ActionPlan_HpaScale)(nil),
-		(*ActionPlan_KarpenterProvision)(nil),
-		(*ActionPlan_VpaRecommend)(nil),
+	file_engine_engine_proto_msgTypes[13].OneofWrappers = []any{
+		(*AppActionPlan_HpaScale)(nil),
+		(*AppActionPlan_VpaRecommend)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2975,7 +3331,7 @@ func file_engine_engine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_engine_engine_proto_rawDesc), len(file_engine_engine_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   46,
+			NumMessages:   51,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

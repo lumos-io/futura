@@ -61,14 +61,14 @@ func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, sc
 
 	apiKey := configs.Items[0].Spec.ApiKey
 
-	// Call gRPC
-	req := &pbeg.RecommendationRequest{App: &pbeg.AppRef{
+	// Call gRPC for app recommendations
+	req := &pbeg.RecommendationAppRequest{App: &pbeg.AppRef{
 		ApiKey:    apiKey,
 		Namespace: "",
 		AppName:   "",
 		Kind:      pbeg.WorkloadKind_DEPLOYMENT,
 	}}
-	resp, err := p.grpcClient.GetRecommendation(ctx, req)
+	resp, err := p.grpcClient.GetAppRecommendation(ctx, req)
 	if err != nil {
 		logger.Error(err, "Failed to fetch optimization decision from backend")
 		return
@@ -76,33 +76,43 @@ func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, sc
 
 	logger.Info("Received optimization decision", "decision_id", resp.DecisionId)
 
-	// Apply actions
+	// Apply app actions
 	for _, action := range resp.Plan {
 		switch action.Type {
 		case "HPA_SCALE":
-			if err := p.applyHPAScale(ctx, c, resp.Target, action.GetHpaScale().Replicas); err != nil {
+			if err := p.applyHPAScale(ctx, c, req.App, action.GetHpaScale().Replicas); err != nil {
 				logger.Error(err, "Failed to apply HPA scale action")
 			}
 		case "VPA_RECOMMEND":
-			if err := p.applyVPARecommendation(ctx, c, resp.Target, action.GetVpaRecommend()); err != nil {
+			if err := p.applyVPARecommendation(ctx, c, req.App, action.GetVpaRecommend()); err != nil {
 				logger.Error(err, "Failed to apply VPA recommendation")
-			}
-		case "KARPENTER_PROVISION":
-			if err := p.applyKarpenterProvision(ctx, c, action.GetKarpenterProvision()); err != nil {
-				logger.Error(err, "Failed to apply Karpenter provision action")
 			}
 		default:
 			logger.Info("Unknown action type, skipping", "type", action.Type)
 		}
 	}
+
+	// Also call cluster recommendations
+	clusterReq := &pbeg.RecommendationClusterRequest{Cluster: &pbeg.ClusterRef{
+		ApiKey: apiKey,
+	}}
+	clusterResp, err := p.grpcClient.GetClusterRecommendation(ctx, clusterReq)
+	if err != nil {
+		logger.Error(err, "Failed to fetch cluster optimization decision from backend")
+	} else {
+		logger.Info("Received cluster optimization decision", "decision_id", clusterResp.DecisionId)
+		if err := p.applyClusterProvision(ctx, c, clusterResp.Plan.Details); err != nil {
+			logger.Error(err, "Failed to apply cluster provision action")
+		}
+	}
 }
 
-func (p *Poller) applyHPAScale(ctx context.Context, c client.Client, target *pbeg.TargetRef, replicas int32) error {
+func (p *Poller) applyHPAScale(ctx context.Context, c client.Client, app *pbeg.AppRef, replicas int32) error {
 	dep := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: target.Namespace,
-			Name:      target.Name,
+			Namespace: app.Namespace,
+			Name:      app.AppName,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -112,7 +122,7 @@ func (p *Poller) applyHPAScale(ctx context.Context, c client.Client, target *pbe
 	return c.Patch(ctx, &dep, patch, client.ForceOwnership, client.FieldOwner("futura-optimizer"))
 }
 
-func (p *Poller) applyVPARecommendation(ctx context.Context, c client.Client, target *pbeg.TargetRef, vpa *pbeg.VpaRecommendAction) error {
+func (p *Poller) applyVPARecommendation(ctx context.Context, c client.Client, app *pbeg.AppRef, vpa *pbeg.VpaRecommendAction) error {
 	cpuWithBuffer := int64(float64(vpa.CpuRequestMcpu) * 1.5) // multiply by 1.5
 	cpuQty := resource.MustParse(fmt.Sprintf("%dm", vpa.CpuRequestMcpu))
 	cpuQtyWithBuffer := resource.MustParse(fmt.Sprintf("%dm", cpuWithBuffer))
@@ -124,8 +134,8 @@ func (p *Poller) applyVPARecommendation(ctx context.Context, c client.Client, ta
 	dep := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: target.Namespace,
-			Name:      target.Name,
+			Namespace: app.Namespace,
+			Name:      app.AppName,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{
@@ -150,7 +160,7 @@ func (p *Poller) applyVPARecommendation(ctx context.Context, c client.Client, ta
 	return c.Patch(ctx, &dep, client.Apply, client.ForceOwnership, client.FieldOwner("futura-optimizer"))
 }
 
-func (p *Poller) applyKarpenterProvision(ctx context.Context, c client.Client, provision *pbeg.KarpenterProvisionAction) error {
+func (p *Poller) applyClusterProvision(ctx context.Context, c client.Client, provision *pbeg.ClusterProvisionAction) error {
 	// This would create/update a Karpenter Provisioner CR
 	// For simplicity, just log
 	fmt.Printf("Would provision %d nodes of types %v (%s)\n", provision.Count, provision.InstanceTypes, provision.CapacityType)

@@ -22,8 +22,10 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	RecommendationService_SyncClusterOptimizationConfig_FullMethodName = "/engine.v1.RecommendationService/SyncClusterOptimizationConfig"
 	RecommendationService_SyncServiceLevelObjective_FullMethodName     = "/engine.v1.RecommendationService/SyncServiceLevelObjective"
-	RecommendationService_GetRecommendation_FullMethodName             = "/engine.v1.RecommendationService/GetRecommendation"
-	RecommendationService_ReportExecutionOutcome_FullMethodName        = "/engine.v1.RecommendationService/ReportExecutionOutcome"
+	RecommendationService_GetAppRecommendation_FullMethodName          = "/engine.v1.RecommendationService/GetAppRecommendation"
+	RecommendationService_GetClusterRecommendation_FullMethodName      = "/engine.v1.RecommendationService/GetClusterRecommendation"
+	RecommendationService_ReportExecutionAppOutcome_FullMethodName     = "/engine.v1.RecommendationService/ReportExecutionAppOutcome"
+	RecommendationService_ReportExecutionClusterOutcome_FullMethodName = "/engine.v1.RecommendationService/ReportExecutionClusterOutcome"
 )
 
 // RecommendationServiceClient is the client API for RecommendationService service.
@@ -32,11 +34,14 @@ const (
 type RecommendationServiceClient interface {
 	SyncClusterOptimizationConfig(ctx context.Context, in *ClusterOptimizationConfigRequest, opts ...grpc.CallOption) (*ClusterOptimizationConfigResponse, error)
 	SyncServiceLevelObjective(ctx context.Context, in *SyncSLORequest, opts ...grpc.CallOption) (*SyncSLOResponse, error)
-	// Called by the Operator to get the final plan (server may internally consult
-	// RLServer)
-	GetRecommendation(ctx context.Context, in *RecommendationRequest, opts ...grpc.CallOption) (*RecommendationResponse, error)
-	// Operator posts execution outcome/telemetry for learning & audit
-	ReportExecutionOutcome(ctx context.Context, in *ExecutionOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Called by the Operator to get the final plan for a given App (server may internally consult RLServer)
+	GetAppRecommendation(ctx context.Context, in *RecommendationAppRequest, opts ...grpc.CallOption) (*RecommendationAppResponse, error)
+	// Called by the Operator to get the final plan for a given Cluster (server may internally consult RLServer)
+	GetClusterRecommendation(ctx context.Context, in *RecommendationClusterRequest, opts ...grpc.CallOption) (*RecommendationClusterResponse, error)
+	// Operator posts execution app outcome/telemetry for learning & audit
+	ReportExecutionAppOutcome(ctx context.Context, in *ExecutionAppOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Operator posts execution cluster outcome/telemetry for learning & audit
+	ReportExecutionClusterOutcome(ctx context.Context, in *ExecutionClusterOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type recommendationServiceClient struct {
@@ -67,20 +72,40 @@ func (c *recommendationServiceClient) SyncServiceLevelObjective(ctx context.Cont
 	return out, nil
 }
 
-func (c *recommendationServiceClient) GetRecommendation(ctx context.Context, in *RecommendationRequest, opts ...grpc.CallOption) (*RecommendationResponse, error) {
+func (c *recommendationServiceClient) GetAppRecommendation(ctx context.Context, in *RecommendationAppRequest, opts ...grpc.CallOption) (*RecommendationAppResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RecommendationResponse)
-	err := c.cc.Invoke(ctx, RecommendationService_GetRecommendation_FullMethodName, in, out, cOpts...)
+	out := new(RecommendationAppResponse)
+	err := c.cc.Invoke(ctx, RecommendationService_GetAppRecommendation_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *recommendationServiceClient) ReportExecutionOutcome(ctx context.Context, in *ExecutionOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *recommendationServiceClient) GetClusterRecommendation(ctx context.Context, in *RecommendationClusterRequest, opts ...grpc.CallOption) (*RecommendationClusterResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecommendationClusterResponse)
+	err := c.cc.Invoke(ctx, RecommendationService_GetClusterRecommendation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recommendationServiceClient) ReportExecutionAppOutcome(ctx context.Context, in *ExecutionAppOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, RecommendationService_ReportExecutionOutcome_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, RecommendationService_ReportExecutionAppOutcome_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *recommendationServiceClient) ReportExecutionClusterOutcome(ctx context.Context, in *ExecutionClusterOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, RecommendationService_ReportExecutionClusterOutcome_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -93,11 +118,14 @@ func (c *recommendationServiceClient) ReportExecutionOutcome(ctx context.Context
 type RecommendationServiceServer interface {
 	SyncClusterOptimizationConfig(context.Context, *ClusterOptimizationConfigRequest) (*ClusterOptimizationConfigResponse, error)
 	SyncServiceLevelObjective(context.Context, *SyncSLORequest) (*SyncSLOResponse, error)
-	// Called by the Operator to get the final plan (server may internally consult
-	// RLServer)
-	GetRecommendation(context.Context, *RecommendationRequest) (*RecommendationResponse, error)
-	// Operator posts execution outcome/telemetry for learning & audit
-	ReportExecutionOutcome(context.Context, *ExecutionOutcome) (*emptypb.Empty, error)
+	// Called by the Operator to get the final plan for a given App (server may internally consult RLServer)
+	GetAppRecommendation(context.Context, *RecommendationAppRequest) (*RecommendationAppResponse, error)
+	// Called by the Operator to get the final plan for a given Cluster (server may internally consult RLServer)
+	GetClusterRecommendation(context.Context, *RecommendationClusterRequest) (*RecommendationClusterResponse, error)
+	// Operator posts execution app outcome/telemetry for learning & audit
+	ReportExecutionAppOutcome(context.Context, *ExecutionAppOutcome) (*emptypb.Empty, error)
+	// Operator posts execution cluster outcome/telemetry for learning & audit
+	ReportExecutionClusterOutcome(context.Context, *ExecutionClusterOutcome) (*emptypb.Empty, error)
 	mustEmbedUnimplementedRecommendationServiceServer()
 }
 
@@ -114,11 +142,17 @@ func (UnimplementedRecommendationServiceServer) SyncClusterOptimizationConfig(co
 func (UnimplementedRecommendationServiceServer) SyncServiceLevelObjective(context.Context, *SyncSLORequest) (*SyncSLOResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SyncServiceLevelObjective not implemented")
 }
-func (UnimplementedRecommendationServiceServer) GetRecommendation(context.Context, *RecommendationRequest) (*RecommendationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRecommendation not implemented")
+func (UnimplementedRecommendationServiceServer) GetAppRecommendation(context.Context, *RecommendationAppRequest) (*RecommendationAppResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAppRecommendation not implemented")
 }
-func (UnimplementedRecommendationServiceServer) ReportExecutionOutcome(context.Context, *ExecutionOutcome) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportExecutionOutcome not implemented")
+func (UnimplementedRecommendationServiceServer) GetClusterRecommendation(context.Context, *RecommendationClusterRequest) (*RecommendationClusterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClusterRecommendation not implemented")
+}
+func (UnimplementedRecommendationServiceServer) ReportExecutionAppOutcome(context.Context, *ExecutionAppOutcome) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportExecutionAppOutcome not implemented")
+}
+func (UnimplementedRecommendationServiceServer) ReportExecutionClusterOutcome(context.Context, *ExecutionClusterOutcome) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportExecutionClusterOutcome not implemented")
 }
 func (UnimplementedRecommendationServiceServer) mustEmbedUnimplementedRecommendationServiceServer() {}
 func (UnimplementedRecommendationServiceServer) testEmbeddedByValue()                               {}
@@ -177,38 +211,74 @@ func _RecommendationService_SyncServiceLevelObjective_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RecommendationService_GetRecommendation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RecommendationRequest)
+func _RecommendationService_GetAppRecommendation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecommendationAppRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RecommendationServiceServer).GetRecommendation(ctx, in)
+		return srv.(RecommendationServiceServer).GetAppRecommendation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RecommendationService_GetRecommendation_FullMethodName,
+		FullMethod: RecommendationService_GetAppRecommendation_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecommendationServiceServer).GetRecommendation(ctx, req.(*RecommendationRequest))
+		return srv.(RecommendationServiceServer).GetAppRecommendation(ctx, req.(*RecommendationAppRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RecommendationService_ReportExecutionOutcome_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExecutionOutcome)
+func _RecommendationService_GetClusterRecommendation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecommendationClusterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RecommendationServiceServer).ReportExecutionOutcome(ctx, in)
+		return srv.(RecommendationServiceServer).GetClusterRecommendation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RecommendationService_ReportExecutionOutcome_FullMethodName,
+		FullMethod: RecommendationService_GetClusterRecommendation_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RecommendationServiceServer).ReportExecutionOutcome(ctx, req.(*ExecutionOutcome))
+		return srv.(RecommendationServiceServer).GetClusterRecommendation(ctx, req.(*RecommendationClusterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecommendationService_ReportExecutionAppOutcome_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecutionAppOutcome)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecommendationServiceServer).ReportExecutionAppOutcome(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecommendationService_ReportExecutionAppOutcome_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecommendationServiceServer).ReportExecutionAppOutcome(ctx, req.(*ExecutionAppOutcome))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RecommendationService_ReportExecutionClusterOutcome_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecutionClusterOutcome)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecommendationServiceServer).ReportExecutionClusterOutcome(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecommendationService_ReportExecutionClusterOutcome_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecommendationServiceServer).ReportExecutionClusterOutcome(ctx, req.(*ExecutionClusterOutcome))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -229,12 +299,20 @@ var RecommendationService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RecommendationService_SyncServiceLevelObjective_Handler,
 		},
 		{
-			MethodName: "GetRecommendation",
-			Handler:    _RecommendationService_GetRecommendation_Handler,
+			MethodName: "GetAppRecommendation",
+			Handler:    _RecommendationService_GetAppRecommendation_Handler,
 		},
 		{
-			MethodName: "ReportExecutionOutcome",
-			Handler:    _RecommendationService_ReportExecutionOutcome_Handler,
+			MethodName: "GetClusterRecommendation",
+			Handler:    _RecommendationService_GetClusterRecommendation_Handler,
+		},
+		{
+			MethodName: "ReportExecutionAppOutcome",
+			Handler:    _RecommendationService_ReportExecutionAppOutcome_Handler,
+		},
+		{
+			MethodName: "ReportExecutionClusterOutcome",
+			Handler:    _RecommendationService_ReportExecutionClusterOutcome_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -242,20 +320,20 @@ var RecommendationService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	RLServer_GetAction_FullMethodName        = "/engine.v1.RLServer/GetAction"
+	RLServer_GetAppAction_FullMethodName     = "/engine.v1.RLServer/GetAppAction"
 	RLServer_EnsureModel_FullMethodName      = "/engine.v1.RLServer/EnsureModel"
 	RLServer_TriggerTrain_FullMethodName     = "/engine.v1.RLServer/TriggerTrain"
 	RLServer_ListModels_FullMethodName       = "/engine.v1.RLServer/ListModels"
 	RLServer_GetModelMetadata_FullMethodName = "/engine.v1.RLServer/GetModelMetadata"
-	RLServer_ReportOutcome_FullMethodName    = "/engine.v1.RLServer/ReportOutcome"
+	RLServer_ReportAppOutcome_FullMethodName = "/engine.v1.RLServer/ReportAppOutcome"
 )
 
 // RLServerClient is the client API for RLServer service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RLServerClient interface {
-	// Online inference – RL policy picks an action plan
-	GetAction(ctx context.Context, in *GetActionRequest, opts ...grpc.CallOption) (*GetActionResponse, error)
+	// Online inference – RL policy picks an app action plan
+	GetAppAction(ctx context.Context, in *GetAppActionRequest, opts ...grpc.CallOption) (*GetAppActionResponse, error)
 	// Ensure a model exists & is loaded in memory (bootstrap if needed)
 	EnsureModel(ctx context.Context, in *AppRef, opts ...grpc.CallOption) (*EnsureModelResponse, error)
 	// Kick off (re)training; typically spawns a K8s Job
@@ -266,7 +344,7 @@ type RLServerClient interface {
 	GetModelMetadata(ctx context.Context, in *GetModelMetadataRequest, opts ...grpc.CallOption) (*ModelMetadata, error)
 	// RL server also accepts outcomes directly (e.g., from Operator or MPA
 	// Server)
-	ReportOutcome(ctx context.Context, in *ExecutionOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ReportAppOutcome(ctx context.Context, in *ExecutionAppOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type rLServerClient struct {
@@ -277,10 +355,10 @@ func NewRLServerClient(cc grpc.ClientConnInterface) RLServerClient {
 	return &rLServerClient{cc}
 }
 
-func (c *rLServerClient) GetAction(ctx context.Context, in *GetActionRequest, opts ...grpc.CallOption) (*GetActionResponse, error) {
+func (c *rLServerClient) GetAppAction(ctx context.Context, in *GetAppActionRequest, opts ...grpc.CallOption) (*GetAppActionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetActionResponse)
-	err := c.cc.Invoke(ctx, RLServer_GetAction_FullMethodName, in, out, cOpts...)
+	out := new(GetAppActionResponse)
+	err := c.cc.Invoke(ctx, RLServer_GetAppAction_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -327,10 +405,10 @@ func (c *rLServerClient) GetModelMetadata(ctx context.Context, in *GetModelMetad
 	return out, nil
 }
 
-func (c *rLServerClient) ReportOutcome(ctx context.Context, in *ExecutionOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *rLServerClient) ReportAppOutcome(ctx context.Context, in *ExecutionAppOutcome, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, RLServer_ReportOutcome_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, RLServer_ReportAppOutcome_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -341,8 +419,8 @@ func (c *rLServerClient) ReportOutcome(ctx context.Context, in *ExecutionOutcome
 // All implementations must embed UnimplementedRLServerServer
 // for forward compatibility.
 type RLServerServer interface {
-	// Online inference – RL policy picks an action plan
-	GetAction(context.Context, *GetActionRequest) (*GetActionResponse, error)
+	// Online inference – RL policy picks an app action plan
+	GetAppAction(context.Context, *GetAppActionRequest) (*GetAppActionResponse, error)
 	// Ensure a model exists & is loaded in memory (bootstrap if needed)
 	EnsureModel(context.Context, *AppRef) (*EnsureModelResponse, error)
 	// Kick off (re)training; typically spawns a K8s Job
@@ -353,7 +431,7 @@ type RLServerServer interface {
 	GetModelMetadata(context.Context, *GetModelMetadataRequest) (*ModelMetadata, error)
 	// RL server also accepts outcomes directly (e.g., from Operator or MPA
 	// Server)
-	ReportOutcome(context.Context, *ExecutionOutcome) (*emptypb.Empty, error)
+	ReportAppOutcome(context.Context, *ExecutionAppOutcome) (*emptypb.Empty, error)
 	mustEmbedUnimplementedRLServerServer()
 }
 
@@ -364,8 +442,8 @@ type RLServerServer interface {
 // pointer dereference when methods are called.
 type UnimplementedRLServerServer struct{}
 
-func (UnimplementedRLServerServer) GetAction(context.Context, *GetActionRequest) (*GetActionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAction not implemented")
+func (UnimplementedRLServerServer) GetAppAction(context.Context, *GetAppActionRequest) (*GetAppActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAppAction not implemented")
 }
 func (UnimplementedRLServerServer) EnsureModel(context.Context, *AppRef) (*EnsureModelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EnsureModel not implemented")
@@ -379,8 +457,8 @@ func (UnimplementedRLServerServer) ListModels(context.Context, *ListModelsReques
 func (UnimplementedRLServerServer) GetModelMetadata(context.Context, *GetModelMetadataRequest) (*ModelMetadata, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetModelMetadata not implemented")
 }
-func (UnimplementedRLServerServer) ReportOutcome(context.Context, *ExecutionOutcome) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportOutcome not implemented")
+func (UnimplementedRLServerServer) ReportAppOutcome(context.Context, *ExecutionAppOutcome) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportAppOutcome not implemented")
 }
 func (UnimplementedRLServerServer) mustEmbedUnimplementedRLServerServer() {}
 func (UnimplementedRLServerServer) testEmbeddedByValue()                  {}
@@ -403,20 +481,20 @@ func RegisterRLServerServer(s grpc.ServiceRegistrar, srv RLServerServer) {
 	s.RegisterService(&RLServer_ServiceDesc, srv)
 }
 
-func _RLServer_GetAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetActionRequest)
+func _RLServer_GetAppAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAppActionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RLServerServer).GetAction(ctx, in)
+		return srv.(RLServerServer).GetAppAction(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RLServer_GetAction_FullMethodName,
+		FullMethod: RLServer_GetAppAction_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RLServerServer).GetAction(ctx, req.(*GetActionRequest))
+		return srv.(RLServerServer).GetAppAction(ctx, req.(*GetAppActionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -493,20 +571,20 @@ func _RLServer_GetModelMetadata_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RLServer_ReportOutcome_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExecutionOutcome)
+func _RLServer_ReportAppOutcome_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecutionAppOutcome)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RLServerServer).ReportOutcome(ctx, in)
+		return srv.(RLServerServer).ReportAppOutcome(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RLServer_ReportOutcome_FullMethodName,
+		FullMethod: RLServer_ReportAppOutcome_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RLServerServer).ReportOutcome(ctx, req.(*ExecutionOutcome))
+		return srv.(RLServerServer).ReportAppOutcome(ctx, req.(*ExecutionAppOutcome))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -519,8 +597,8 @@ var RLServer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*RLServerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetAction",
-			Handler:    _RLServer_GetAction_Handler,
+			MethodName: "GetAppAction",
+			Handler:    _RLServer_GetAppAction_Handler,
 		},
 		{
 			MethodName: "EnsureModel",
@@ -539,8 +617,8 @@ var RLServer_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RLServer_GetModelMetadata_Handler,
 		},
 		{
-			MethodName: "ReportOutcome",
-			Handler:    _RLServer_ReportOutcome_Handler,
+			MethodName: "ReportAppOutcome",
+			Handler:    _RLServer_ReportAppOutcome_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

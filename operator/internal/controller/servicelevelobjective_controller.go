@@ -40,13 +40,13 @@ import (
 type ServiceLevelObjectiveReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	grpcClient pbeg.FuturaOptimizerClient
+	grpcClient pbeg.RecommendationServiceClient
 }
 
 func NewSLOReconciler(k8sClient client.Client, grpcConn *grpc.ClientConn) *ServiceLevelObjectiveReconciler {
 	return &ServiceLevelObjectiveReconciler{
 		Client:     k8sClient,
-		grpcClient: pbeg.NewFuturaOptimizerClient(grpcConn),
+		grpcClient: pbeg.NewRecommendationServiceClient(grpcConn),
 	}
 }
 
@@ -81,15 +81,13 @@ func (r *ServiceLevelObjectiveReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	grpcReq := &pbeg.SyncSLORequest{
-		ApiKey: config.Spec.ApiKey,
-		Slo: &pbeg.ServiceLevelObjective{
-			// ServiceName:      slo.Spec.ServiceName,
-			// TargetP95Latency: slo.Spec.TargetP95Latency,
-			// TargetErrorRate:  slo.Spec.TargetErrorRate,
-			// TargetThroughput: slo.Spec.TargetThroughput,
-			// Priority:    slo.Spec.Priority,
-			LastUpdated: timestamppb.New(slo.Status.LastUpdated.Time),
-		},
+		ApiKey:             config.Spec.ApiKey,
+		ServiceName:        slo.Spec.Name,
+		TargetP95Latency:   "250ms", // TODO: Extract from metrics spec
+		TargetErrorRate:    "0.01",  // TODO: Extract from metrics spec
+		TargetThroughput:   "1000rps", // TODO: Extract from metrics spec
+		Priority:           "medium",  // TODO: Make this configurable
+		LastUpdated:        timestamppb.New(slo.Status.LastUpdated.Time),
 	}
 
 	// Call gRPC backend

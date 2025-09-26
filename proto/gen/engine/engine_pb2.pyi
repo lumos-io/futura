@@ -92,6 +92,12 @@ class AppRef(_message.Message):
     kind: WorkloadKind
     def __init__(self, api_key: _Optional[str] = ..., namespace: _Optional[str] = ..., app_name: _Optional[str] = ..., kind: _Optional[_Union[WorkloadKind, str]] = ...) -> None: ...
 
+class ClusterRef(_message.Message):
+    __slots__ = ("api_key",)
+    API_KEY_FIELD_NUMBER: _ClassVar[int]
+    api_key: str
+    def __init__(self, api_key: _Optional[str] = ...) -> None: ...
+
 class ResourceLimit(_message.Message):
     __slots__ = ("min", "max")
     MIN_FIELD_NUMBER: _ClassVar[int]
@@ -186,21 +192,29 @@ class VpaRecommendAction(_message.Message):
     mode: str
     def __init__(self, container: _Optional[str] = ..., cpu_request_mcpu: _Optional[int] = ..., memory_mib: _Optional[int] = ..., mode: _Optional[str] = ...) -> None: ...
 
-class ActionPlan(_message.Message):
-    __slots__ = ("type", "confidence", "reason", "hpa_scale", "karpenter_provision", "vpa_recommend")
+class AppActionPlan(_message.Message):
+    __slots__ = ("type", "confidence", "reason", "hpa_scale", "vpa_recommend")
     TYPE_FIELD_NUMBER: _ClassVar[int]
     CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
     REASON_FIELD_NUMBER: _ClassVar[int]
     HPA_SCALE_FIELD_NUMBER: _ClassVar[int]
-    KARPENTER_PROVISION_FIELD_NUMBER: _ClassVar[int]
     VPA_RECOMMEND_FIELD_NUMBER: _ClassVar[int]
     type: str
     confidence: float
     reason: str
     hpa_scale: HpaScaleAction
-    karpenter_provision: ClusterProvisionAction
     vpa_recommend: VpaRecommendAction
-    def __init__(self, type: _Optional[str] = ..., confidence: _Optional[float] = ..., reason: _Optional[str] = ..., hpa_scale: _Optional[_Union[HpaScaleAction, _Mapping]] = ..., karpenter_provision: _Optional[_Union[ClusterProvisionAction, _Mapping]] = ..., vpa_recommend: _Optional[_Union[VpaRecommendAction, _Mapping]] = ...) -> None: ...
+    def __init__(self, type: _Optional[str] = ..., confidence: _Optional[float] = ..., reason: _Optional[str] = ..., hpa_scale: _Optional[_Union[HpaScaleAction, _Mapping]] = ..., vpa_recommend: _Optional[_Union[VpaRecommendAction, _Mapping]] = ...) -> None: ...
+
+class ClusterActionPlan(_message.Message):
+    __slots__ = ("confidence", "reason", "details")
+    CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    DETAILS_FIELD_NUMBER: _ClassVar[int]
+    confidence: float
+    reason: str
+    details: ClusterProvisionAction
+    def __init__(self, confidence: _Optional[float] = ..., reason: _Optional[str] = ..., details: _Optional[_Union[ClusterProvisionAction, _Mapping]] = ...) -> None: ...
 
 class MetricSnapshot(_message.Message):
     __slots__ = ("values", "ts")
@@ -240,7 +254,7 @@ class ModelMetadata(_message.Message):
     compatible_feature_schema: _containers.RepeatedScalarFieldContainer[str]
     def __init__(self, model_version: _Optional[str] = ..., policy_name: _Optional[str] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., labels: _Optional[_Mapping[str, str]] = ..., checkpoint_uri: _Optional[str] = ..., compatible_feature_schema: _Optional[_Iterable[str]] = ...) -> None: ...
 
-class RecommendationRequest(_message.Message):
+class RecommendationAppRequest(_message.Message):
     __slots__ = ("app", "dry_run", "snapshot")
     APP_FIELD_NUMBER: _ClassVar[int]
     DRY_RUN_FIELD_NUMBER: _ClassVar[int]
@@ -250,7 +264,7 @@ class RecommendationRequest(_message.Message):
     snapshot: MetricSnapshot
     def __init__(self, app: _Optional[_Union[AppRef, _Mapping]] = ..., dry_run: bool = ..., snapshot: _Optional[_Union[MetricSnapshot, _Mapping]] = ...) -> None: ...
 
-class RecommendationResponse(_message.Message):
+class RecommendationAppResponse(_message.Message):
     __slots__ = ("plan", "decision_id", "model_version", "confidence", "audit_reasons", "effective_policy")
     PLAN_FIELD_NUMBER: _ClassVar[int]
     DECISION_ID_FIELD_NUMBER: _ClassVar[int]
@@ -258,15 +272,15 @@ class RecommendationResponse(_message.Message):
     CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
     AUDIT_REASONS_FIELD_NUMBER: _ClassVar[int]
     EFFECTIVE_POLICY_FIELD_NUMBER: _ClassVar[int]
-    plan: ActionPlan
+    plan: _containers.RepeatedCompositeFieldContainer[AppActionPlan]
     decision_id: str
     model_version: str
     confidence: float
     audit_reasons: _containers.RepeatedScalarFieldContainer[str]
     effective_policy: SafetyPolicy
-    def __init__(self, plan: _Optional[_Union[ActionPlan, _Mapping]] = ..., decision_id: _Optional[str] = ..., model_version: _Optional[str] = ..., confidence: _Optional[float] = ..., audit_reasons: _Optional[_Iterable[str]] = ..., effective_policy: _Optional[_Union[SafetyPolicy, _Mapping]] = ...) -> None: ...
+    def __init__(self, plan: _Optional[_Iterable[_Union[AppActionPlan, _Mapping]]] = ..., decision_id: _Optional[str] = ..., model_version: _Optional[str] = ..., confidence: _Optional[float] = ..., audit_reasons: _Optional[_Iterable[str]] = ..., effective_policy: _Optional[_Union[SafetyPolicy, _Mapping]] = ...) -> None: ...
 
-class ExecutionOutcome(_message.Message):
+class ExecutionAppOutcome(_message.Message):
     __slots__ = ("decision_id", "app", "success", "note", "post_action_metrics", "reported_at")
     DECISION_ID_FIELD_NUMBER: _ClassVar[int]
     APP_FIELD_NUMBER: _ClassVar[int]
@@ -282,7 +296,47 @@ class ExecutionOutcome(_message.Message):
     reported_at: _timestamp_pb2.Timestamp
     def __init__(self, decision_id: _Optional[str] = ..., app: _Optional[_Union[AppRef, _Mapping]] = ..., success: bool = ..., note: _Optional[str] = ..., post_action_metrics: _Optional[_Union[MetricSnapshot, _Mapping]] = ..., reported_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
-class GetActionRequest(_message.Message):
+class RecommendationClusterRequest(_message.Message):
+    __slots__ = ("cluster", "dry_run", "snapshot")
+    CLUSTER_FIELD_NUMBER: _ClassVar[int]
+    DRY_RUN_FIELD_NUMBER: _ClassVar[int]
+    SNAPSHOT_FIELD_NUMBER: _ClassVar[int]
+    cluster: ClusterRef
+    dry_run: bool
+    snapshot: MetricSnapshot
+    def __init__(self, cluster: _Optional[_Union[ClusterRef, _Mapping]] = ..., dry_run: bool = ..., snapshot: _Optional[_Union[MetricSnapshot, _Mapping]] = ...) -> None: ...
+
+class RecommendationClusterResponse(_message.Message):
+    __slots__ = ("plan", "decision_id", "model_version", "confidence", "audit_reasons")
+    PLAN_FIELD_NUMBER: _ClassVar[int]
+    DECISION_ID_FIELD_NUMBER: _ClassVar[int]
+    MODEL_VERSION_FIELD_NUMBER: _ClassVar[int]
+    CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
+    AUDIT_REASONS_FIELD_NUMBER: _ClassVar[int]
+    plan: ClusterActionPlan
+    decision_id: str
+    model_version: str
+    confidence: float
+    audit_reasons: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, plan: _Optional[_Union[ClusterActionPlan, _Mapping]] = ..., decision_id: _Optional[str] = ..., model_version: _Optional[str] = ..., confidence: _Optional[float] = ..., audit_reasons: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class ExecutionClusterOutcome(_message.Message):
+    __slots__ = ("decision_id", "cluster", "success", "note", "post_action_metrics", "reported_at")
+    DECISION_ID_FIELD_NUMBER: _ClassVar[int]
+    CLUSTER_FIELD_NUMBER: _ClassVar[int]
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    NOTE_FIELD_NUMBER: _ClassVar[int]
+    POST_ACTION_METRICS_FIELD_NUMBER: _ClassVar[int]
+    REPORTED_AT_FIELD_NUMBER: _ClassVar[int]
+    decision_id: str
+    cluster: ClusterRef
+    success: bool
+    note: str
+    post_action_metrics: MetricSnapshot
+    reported_at: _timestamp_pb2.Timestamp
+    def __init__(self, decision_id: _Optional[str] = ..., cluster: _Optional[_Union[ClusterRef, _Mapping]] = ..., success: bool = ..., note: _Optional[str] = ..., post_action_metrics: _Optional[_Union[MetricSnapshot, _Mapping]] = ..., reported_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+
+class GetAppActionRequest(_message.Message):
     __slots__ = ("app", "features", "candidates", "policy_override")
     class FeaturesEntry(_message.Message):
         __slots__ = ("key", "value")
@@ -301,19 +355,19 @@ class GetActionRequest(_message.Message):
     policy_override: SafetyPolicy
     def __init__(self, app: _Optional[_Union[AppRef, _Mapping]] = ..., features: _Optional[_Mapping[str, float]] = ..., candidates: _Optional[_Iterable[_Union[CandidateProposal, _Mapping]]] = ..., policy_override: _Optional[_Union[SafetyPolicy, _Mapping]] = ...) -> None: ...
 
-class GetActionResponse(_message.Message):
+class GetAppActionResponse(_message.Message):
     __slots__ = ("plan", "model_version", "confidence", "decision_id", "audit_reasons")
     PLAN_FIELD_NUMBER: _ClassVar[int]
     MODEL_VERSION_FIELD_NUMBER: _ClassVar[int]
     CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
     DECISION_ID_FIELD_NUMBER: _ClassVar[int]
     AUDIT_REASONS_FIELD_NUMBER: _ClassVar[int]
-    plan: ActionPlan
+    plan: AppActionPlan
     model_version: str
     confidence: float
     decision_id: str
     audit_reasons: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, plan: _Optional[_Union[ActionPlan, _Mapping]] = ..., model_version: _Optional[str] = ..., confidence: _Optional[float] = ..., decision_id: _Optional[str] = ..., audit_reasons: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(self, plan: _Optional[_Union[AppActionPlan, _Mapping]] = ..., model_version: _Optional[str] = ..., confidence: _Optional[float] = ..., decision_id: _Optional[str] = ..., audit_reasons: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class EnsureModelResponse(_message.Message):
     __slots__ = ("model_version", "created", "meta")
