@@ -197,6 +197,16 @@ class FuturaEngineServer:
             cleanup_thread.start()
             logger.info("Started agent coordinator cleanup task")
 
+        if self.rl_server and hasattr(self.rl_server, 'training_job_manager'):
+            # Start training job monitoring task
+            training_monitor_thread = threading.Thread(
+                target=self._training_monitor_task,
+                daemon=True,
+                name="TrainingJobMonitor"
+            )
+            training_monitor_thread.start()
+            logger.info("Started training job monitoring task")
+
     def _cleanup_task(self):
         """Background task to clean up expired training jobs and agents."""
         while not self.shutdown_event.is_set():
@@ -208,6 +218,28 @@ class FuturaEngineServer:
 
             # Run cleanup every hour
             self.shutdown_event.wait(3600)
+
+    def _training_monitor_task(self):
+        """Background task to monitor Kubernetes training jobs."""
+        import asyncio
+
+        async def monitor_loop():
+            while not self.shutdown_event.is_set():
+                try:
+                    if self.rl_server and hasattr(self.rl_server, 'training_job_manager'):
+                        # Run the job monitoring and collection
+                        await self.rl_server.training_job_manager.monitor_and_collect_jobs()
+                except Exception as e:
+                    logger.error(f"Error in training job monitoring: {str(e)}")
+
+                # Check every 2 minutes
+                await asyncio.sleep(120)
+
+        # Run the async monitoring loop
+        try:
+            asyncio.run(monitor_loop())
+        except Exception as e:
+            logger.error(f"Training monitor task failed: {str(e)}")
 
 
 def main():

@@ -25,6 +25,9 @@ from storage.slo_data_access import SLODataAccess
 # Import scaling algorithms
 from scaling.scaling_algorithms import ScalingAlgorithms, ScalingAction, ResourceState, ScalingConstraints
 
+# Import training job management
+from training.training_job_manager import KubernetesTrainingJobManager, TrainingJobSpec
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,6 +75,13 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                 max_cpu_limit=4000,
                 max_memory_limit=8192
             )
+        )
+
+        # Kubernetes training job management
+        self.training_job_manager = KubernetesTrainingJobManager(
+            clickhouse_client=self.clickhouse_client,
+            namespace="futura-training",
+            training_image="futura/rl-trainer:latest"
         )
 
         # Action history for reward calculation and oscillation detection
@@ -195,7 +205,7 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             context.set_details(f"Model ensure error: {str(e)}")
             return engine_pb2.EnsureModelResponse()
 
-    def TriggerTrain(
+    async def TriggerTrain(
         self,
         request: engine_pb2.TrainRequest,
         context: grpc.ServicerContext
@@ -225,15 +235,37 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
 
             self.training_jobs[training_id] = training_job
 
-            # In a real implementation, this would create a Kubernetes Job
-            # For now, we simulate the job creation
-            logger.info(f"Created training job: {job_name}")
+            # Create actual Kubernetes Job for training
+            training_spec = TrainingJobSpec(
+                training_id=training_id,
+                app_key=app_key,
+                job_name=job_name,
+                horizon_hours=request.horizon_hours,
+                base_version=request.base_version or "baseline-v1",
+                hparams=dict(request.hparams) if request.hparams else {},
+                reason=request.reason,
+                output_uri=f"s3://futura-models/{app_key}/{training_id}",
+                checkpoint_uri=f"s3://futura-models/{app_key}/{training_id}/checkpoints",
+                clickhouse_dsn=self.clickhouse_dsn,
+                training_data_hours=24,
+                # Resource allocation for training
+                cpu_request="2",
+                memory_request="4Gi",
+                cpu_limit="4",
+                memory_limit="8Gi"
+            )
 
-            # TODO: Create actual Kubernetes Job with:
-            # - Training container with RL code
-            # - Environment variables for ClickHouse DSN, output URI, etc.
-            # - Volume mounts for checkpoint storage
-            # self._create_training_job(training_job)
+            # Create the Kubernetes Job
+            job_created = await self.training_job_manager.create_training_job(training_spec)
+
+            if job_created:
+                logger.info(f"Successfully created Kubernetes training job: {job_name}")
+                training_job["status"] = "running"
+                training_job["k8s_job_created"] = True
+            else:
+                logger.error(f"Failed to create Kubernetes training job: {job_name}")
+                training_job["status"] = "failed"
+                training_job["k8s_job_created"] = False
 
             return engine_pb2.TrainResponse(
                 training_id=training_id,
