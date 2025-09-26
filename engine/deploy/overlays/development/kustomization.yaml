@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: futura-engine-development
+
+namespace: futura-engine
+
+resources:
+  - ../../base
+
+patchesStrategicMerge:
+  - deployment-patches.yaml
+  - configmap-patches.yaml
+
+configMapGenerator:
+  - name: futura-engine-dev-config
+    literals:
+      - LOG_LEVEL=DEBUG
+      - CLICKHOUSE_URL=http://clickhouse-dev.futura-engine.svc.cluster.local:8123
+      - TRAINING_IMAGE=futura/rl-trainer:dev
+      - MODEL_STORAGE_URI=s3://futura-models-dev
+
+secretGenerator:
+  - name: futura-engine-dev-secrets
+    literals:
+      - CLICKHOUSE_USER=dev_user
+      - AWS_REGION=us-west-2
+
+images:
+  - name: futura/engine
+    newTag: dev
+
+replicas:
+  - name: futura-recommendation-service
+    count: 1
+  - name: futura-rl-server
+    count: 1
+  - name: futura-agent-coordinator
+    count: 1
+
+commonLabels:
+  environment: development
+  version: dev

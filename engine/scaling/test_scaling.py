@@ -6,11 +6,10 @@ This script validates that the scaling algorithms work correctly
 with different resource states and SLO configurations.
 """
 
+from scaling_algorithms import ScalingAlgorithms, ResourceState
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from scaling_algorithms import ScalingAlgorithms, ResourceState, ScalingConstraints
 
 
 def test_horizontal_scaling():
@@ -31,9 +30,11 @@ def test_horizontal_scaling():
     )
 
     action = scaling.should_scale_horizontally(high_util_state, "test-app")
-    print(f"High utilization action: {action.action_type if action else 'None'}")
+    print(
+        f"High utilization action: {action.action_type if action else 'None'}")
     if action:
-        print(f"  Target replicas: {action.target_replicas}, Reason: {action.reason}")
+        print(
+            f"  Target replicas: {action.target_replicas}, Reason: {action.reason}")
 
     # Low utilization -> scale in
     low_util_state = ResourceState(
@@ -47,9 +48,11 @@ def test_horizontal_scaling():
     )
 
     action = scaling.should_scale_horizontally(low_util_state, "test-app")
-    print(f"Low utilization action: {action.action_type if action else 'None'}")
+    print(
+        f"Low utilization action: {action.action_type if action else 'None'}")
     if action:
-        print(f"  Target replicas: {action.target_replicas}, Reason: {action.reason}")
+        print(
+            f"  Target replicas: {action.target_replicas}, Reason: {action.reason}")
 
     print()
 
@@ -74,7 +77,8 @@ def test_vertical_scaling():
     action = scaling.should_scale_vertically(high_cpu_state, "test-app")
     print(f"High CPU action: {action.action_type if action else 'None'}")
     if action:
-        print(f"  Target CPU: {action.target_cpu_mcpu}, Reason: {action.reason}")
+        print(
+            f"  Target CPU: {action.target_cpu_mcpu}, Reason: {action.reason}")
 
     # High Memory -> scale up memory
     high_mem_state = ResourceState(
@@ -90,7 +94,8 @@ def test_vertical_scaling():
     action = scaling.should_scale_vertically(high_mem_state, "test-app")
     print(f"High Memory action: {action.action_type if action else 'None'}")
     if action:
-        print(f"  Target Memory: {action.target_memory_mib}, Reason: {action.reason}")
+        print(
+            f"  Target Memory: {action.target_memory_mib}, Reason: {action.reason}")
 
     print()
 
@@ -185,7 +190,8 @@ def test_no_action_needed():
 
     action = scaling.get_intelligent_scaling_action(
         current_state=balanced_state,
-        slo_targets={'target_p95_latency_ms': 400.0, 'target_error_rate': 0.01},
+        slo_targets={'target_p95_latency_ms': 400.0,
+                     'target_error_rate': 0.01},
         app_key="test-app"
     )
 

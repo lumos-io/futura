@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: futura-recommendation-service
+spec:
+  template:
+    spec:
+      containers:
+      - name: recommendation-service
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        env:
+        - name: LOG_LEVEL
+          value: DEBUG
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: futura-rl-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: rl-server
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+        env:
+        - name: LOG_LEVEL
+          value: DEBUG
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: futura-agent-coordinator
+spec:
+  template:
+    spec:
+      containers:
+      - name: agent-coordinator
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        env:
+        - name: LOG_LEVEL
+          value: DEBUG

@@ -1,0 +1,52 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: futura-engine-production
+
+namespace: futura-engine
+
+resources:
+  - ../../base
+
+patchesStrategicMerge:
+  - deployment-patches.yaml
+  - service-patches.yaml
+
+configMapGenerator:
+  - name: futura-engine-prod-config
+    literals:
+      - LOG_LEVEL=INFO
+      - CLICKHOUSE_URL=http://clickhouse.futura-engine.svc.cluster.local:8123
+      - TRAINING_IMAGE=futura/rl-trainer:v0.1.0
+      - MODEL_STORAGE_URI=s3://futura-models-prod
+
+images:
+  - name: futura/engine
+    newTag: v0.1.0
+
+replicas:
+  - name: futura-recommendation-service
+    count: 3
+  - name: futura-rl-server
+    count: 1  # Keep singleton for model consistency
+  - name: futura-agent-coordinator
+    count: 1  # Keep singleton for coordination
+
+commonLabels:
+  environment: production
+  version: v0.1.0
+
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: futura-recommendation-service
+    path: hpa-patch.yaml
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: futura-rl-server
+    path: resource-patch.yaml

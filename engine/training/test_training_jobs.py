@@ -6,14 +6,13 @@ This demonstrates how the training job system works with ClickHouse
 result storage and automatic cleanup.
 """
 
+from training_job_manager import KubernetesTrainingJobManager, TrainingJobSpec
 import asyncio
 import logging
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from training_job_manager import KubernetesTrainingJobManager, TrainingJobSpec
-from storage.clickhouse_client import ClickHouseClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -63,7 +62,8 @@ async def test_training_job_creation():
         print(f"  App Key: {training_spec.app_key}")
         print(f"  Job Name: {training_spec.job_name}")
         print(f"  Horizon: {training_spec.horizon_hours} hours")
-        print(f"  Resources: {training_spec.cpu_request}/{training_spec.cpu_limit} CPU, {training_spec.memory_request}/{training_spec.memory_limit} memory")
+        print(
+            f"  Resources: {training_spec.cpu_request}/{training_spec.cpu_limit} CPU, {training_spec.memory_request}/{training_spec.memory_limit} memory")
         print(f"  Output URI: {training_spec.output_uri}")
 
         # Test job creation (will fail if not in Kubernetes cluster)
@@ -105,7 +105,8 @@ async def test_training_job_creation():
                 print("⚠️ Job cleanup failed")
 
         else:
-            print("❌ Training job creation failed (expected if not in Kubernetes cluster)")
+            print(
+                "❌ Training job creation failed (expected if not in Kubernetes cluster)")
 
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")

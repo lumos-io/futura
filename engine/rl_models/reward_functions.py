@@ -7,7 +7,7 @@ resource utilization, application performance, and SLO compliance.
 """
 
 import numpy as np
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 import logging
 
 logger = logging.getLogger(__name__)

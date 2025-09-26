@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: futura-engine
+  namespace: futura-engine
+  labels:
+    app.kubernetes.io/name: futura-engine
+    app.kubernetes.io/component: serviceaccount
+    app.kubernetes.io/part-of: futura
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: futura-engine
+  labels:
+    app.kubernetes.io/name: futura-engine
+    app.kubernetes.io/component: clusterrole
+    app.kubernetes.io/part-of: futura
+rules:
+# Training Job Management
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+
+# Application Scaling (for VPA/HPA recommendations)
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps"]
+  verbs: ["get", "list", "watch"]
+
+# HPA Resources
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+# VPA Resources (if available)
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["verticalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+# Custom Resources (for MPA if implemented)
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["multidimpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+# Metrics (for performance monitoring)
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+
+# Events (for audit trail)
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: futura-engine
+  labels:
+    app.kubernetes.io/name: futura-engine
+    app.kubernetes.io/component: clusterrolebinding
+    app.kubernetes.io/part-of: futura
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: futura-engine
+subjects:
+- kind: ServiceAccount
+  name: futura-engine
+  namespace: futura-engine
+---
+# Training namespace role for job management
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: futura-training-manager
+  namespace: futura-training
+  labels:
+    app.kubernetes.io/name: futura-training
+    app.kubernetes.io/component: role
+    app.kubernetes.io/part-of: futura
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "delete"]
+
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: futura-training-manager
+  namespace: futura-training
+  labels:
+    app.kubernetes.io/name: futura-training
+    app.kubernetes.io/component: rolebinding
+    app.kubernetes.io/part-of: futura
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: futura-training-manager
+subjects:
+- kind: ServiceAccount
+  name: futura-engine
+  namespace: futura-engine

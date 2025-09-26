@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: futura-engine
+  labels:
+    app.kubernetes.io/name: futura-engine
+    app.kubernetes.io/component: namespace
+    app.kubernetes.io/part-of: futura
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: futura-training
+  labels:
+    app.kubernetes.io/name: futura-training
+    app.kubernetes.io/component: training-namespace
+    app.kubernetes.io/part-of: futura

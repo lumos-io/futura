@@ -6,13 +6,10 @@ replacing the Prometheus adapter functionality from the controller
 with direct database queries for metrics and model data.
 """
 
-import asyncio
 import logging
 from typing import Dict, List, Optional, Any, Tuple, Union
 from datetime import datetime, timedelta
 import json
-from urllib.parse import urlparse
-import asyncio
 import aiohttp
 
 logger = logging.getLogger(__name__)
