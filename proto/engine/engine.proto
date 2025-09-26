@@ -66,6 +66,10 @@ message AppRef {
   WorkloadKind kind = 4; // e.g., DEPLOYMENT
 }
 
+message ClusterRef {
+  string api_key = 1; // from ClusterOptimizationConfig, for fetching the cluster_id
+}
+
 message ResourceLimit {
   // Kubernetes quantity strings (e.g., "750m", "512Mi", "1")
   string min = 1; // optional
@@ -74,8 +78,7 @@ message ResourceLimit {
 
 message SafetyPolicy {
   // Hard resource bounds applied on server side
-  map<string, ResourceLimit> resource_bounds =
-      1; // key: resource name ("cpu","memory","nvidia.com/gpu")
+  map<string, ResourceLimit> resource_bounds = 1; // key: resource name ("cpu","memory","nvidia.com/gpu")
   // Step limits (ratio multipliers, e.g., 1.5 = allow +50%, 0.75 = allow -25%)
   double max_increase_ratio = 2; // 0 = disabled
   double max_decrease_ratio = 3; // 0 = disabled
@@ -120,16 +123,22 @@ message VpaRecommendAction {
   string mode = 4; // recommendation / enforce
 }
 
-message ActionPlan {
+message AppActionPlan {
   string type = 1; // e.g., "HPA_SCALE", "KARPENTER_PROVISION", "VPA_RECOMMEND"
   double confidence = 2;
   string reason = 3;
 
   oneof details {
-    HpaScaleAction hpa_scale = 4;
-    ClusterProvisionAction karpenter_provision = 5;
+    HpaScaleAction hpa_scale = 4;    
     VpaRecommendAction vpa_recommend = 6;
   }
+}
+
+message ClusterActionPlan {  
+  double confidence = 1;
+  string reason = 2;
+
+  ClusterProvisionAction details = 3;
 }
 
 message MetricSnapshot {
@@ -151,7 +160,7 @@ message ModelMetadata {
 // 1) Operator ↔ MPA Server (Recommendation engine)
 ////////////////////////////////////////////////////////////////////////////////
 
-message RecommendationRequest {
+message RecommendationAppRequest {
   AppRef app = 1;
   // If true, server computes and returns plan but does not execute (for
   // testing).
@@ -160,8 +169,8 @@ message RecommendationRequest {
   MetricSnapshot snapshot = 3;
 }
 
-message RecommendationResponse {
-  ActionPlan plan = 1; // final action to apply (could be empty for NO_ACTION)
+message RecommendationAppResponse {
+  repeated AppActionPlan plan = 1; // final action to apply (could be empty for NO_ACTION)
   string decision_id = 2;   // correlate with outcomes/telemetry
   string model_version = 3; // model version used (from RL or heuristic)
   double confidence = 4;    // optional [0..1]
@@ -169,9 +178,36 @@ message RecommendationResponse {
   SafetyPolicy effective_policy = 6; // snapshot of bounds/limits used for this decision
 }
 
-message ExecutionOutcome {
+message ExecutionAppOutcome {
   string decision_id = 1;
   AppRef app = 2;
+  bool success = 3;
+  string note = 4; // failure reason, rollout notes, etc.
+  MetricSnapshot post_action_metrics = 5; // observed metrics after action window
+  google.protobuf.Timestamp reported_at = 6;
+}
+
+message RecommendationClusterRequest {
+  ClusterRef cluster = 1;
+  // If true, server computes and returns plan but does not execute (for
+  // testing).
+  bool dry_run = 2;
+  // Optional: if operator already has some recent metrics to pass through.
+  MetricSnapshot snapshot = 3;
+}
+
+message RecommendationClusterResponse {
+  ClusterActionPlan plan = 1; // final action to apply (could be empty for NO_ACTION)
+  string decision_id = 2;   // correlate with outcomes/telemetry
+  string model_version = 3; // model version used (from RL or heuristic)
+  double confidence = 4;    // optional [0..1]
+  repeated string audit_reasons = 5; // human-readable justification / safety capping notes
+  // SafetyPolicy effective_policy = 6; // snapshot of bounds/limits used for this decision
+}
+
+message ExecutionClusterOutcome {
+  string decision_id = 1;
+  ClusterRef cluster = 2;
   bool success = 3;
   string note = 4; // failure reason, rollout notes, etc.
   MetricSnapshot post_action_metrics = 5; // observed metrics after action window
@@ -181,18 +217,21 @@ message ExecutionOutcome {
 service RecommendationService {
   rpc SyncClusterOptimizationConfig(ClusterOptimizationConfigRequest) returns (ClusterOptimizationConfigResponse);
   rpc SyncServiceLevelObjective(SyncSLORequest) returns (SyncSLOResponse);  
-  // Called by the Operator to get the final plan (server may internally consult
-  // RLServer)
-  rpc GetRecommendation(RecommendationRequest) returns (RecommendationResponse);
-  // Operator posts execution outcome/telemetry for learning & audit
-  rpc ReportExecutionOutcome(ExecutionOutcome) returns (google.protobuf.Empty);
+  // Called by the Operator to get the final plan for a given App (server may internally consult RLServer)
+  rpc GetAppRecommendation(RecommendationAppRequest) returns (RecommendationAppResponse);
+  // Called by the Operator to get the final plan for a given Cluster (server may internally consult RLServer)
+  rpc GetClusterRecommendation(RecommendationClusterRequest) returns (RecommendationClusterResponse);
+  // Operator posts execution app outcome/telemetry for learning & audit
+  rpc ReportExecutionAppOutcome(ExecutionAppOutcome) returns (google.protobuf.Empty);
+  // Operator posts execution cluster outcome/telemetry for learning & audit
+  rpc ReportExecutionClusterOutcome(ExecutionClusterOutcome) returns (google.protobuf.Empty);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // 2) RL Server (Control plane) – inference & lifecycle
 ////////////////////////////////////////////////////////////////////////////////
 
-message GetActionRequest {
+message GetAppActionRequest {
   AppRef app = 1;
   // Optional: provide features directly; if empty, server will fetch from
   // ClickHouse/etc.
@@ -203,8 +242,8 @@ message GetActionRequest {
   SafetyPolicy policy_override = 4;
 }
 
-message GetActionResponse {
-  ActionPlan plan = 1;
+message GetAppActionResponse {
+  AppActionPlan plan = 1;
   string model_version = 2;
   double confidence = 3;
   string decision_id = 4;
@@ -242,8 +281,8 @@ message GetModelMetadataRequest {
 }
 
 service RLServer {
-  // Online inference – RL policy picks an action plan
-  rpc GetAction(GetActionRequest) returns (GetActionResponse);
+  // Online inference – RL policy picks an app action plan
+  rpc GetAppAction(GetAppActionRequest) returns (GetAppActionResponse);
   // Ensure a model exists & is loaded in memory (bootstrap if needed)
   rpc EnsureModel(AppRef) returns (EnsureModelResponse);
   // Kick off (re)training; typically spawns a K8s Job
@@ -254,7 +293,7 @@ service RLServer {
   rpc GetModelMetadata(GetModelMetadataRequest) returns (ModelMetadata);
   // RL server also accepts outcomes directly (e.g., from Operator or MPA
   // Server)
-  rpc ReportOutcome(ExecutionOutcome) returns (google.protobuf.Empty);
+  rpc ReportAppOutcome(ExecutionAppOutcome) returns (google.protobuf.Empty);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

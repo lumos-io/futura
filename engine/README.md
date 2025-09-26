@@ -7,6 +7,7 @@ The ML-powered Kubernetes optimization engine that implements reinforcement lear
 The engine consists of three main gRPC services:
 
 ### 🎯 RecommendationService (MPA Server)
+
 - **Purpose**: Orchestrates optimization decisions and safety policies
 - **Called by**: Kubernetes Operator
 - **Functions**:
@@ -16,6 +17,7 @@ The engine consists of three main gRPC services:
   - `ReportExecutionOutcome` - Receive feedback for learning
 
 ### 🧠 RLServer (Control Plane)
+
 - **Purpose**: ML model serving and lifecycle management
 - **Functions**:
   - `GetAction` - Online inference from RL models
@@ -25,6 +27,7 @@ The engine consists of three main gRPC services:
   - `ReportOutcome` - Accept outcomes for model learning
 
 ### 🔧 AgentCoordinator (Training Orchestration)
+
 - **Purpose**: Manages ephemeral training job lifecycle
 - **Functions**:
   - `RegisterAgent` - Register training pods
@@ -74,12 +77,15 @@ FUTURA_DEFAULT_MEMORY_REQUEST_MIB=512
 ### Service Configurations
 
 #### All-in-One (Default)
+
 ```bash
 uv run main.py --port 50051
 ```
+
 Runs all three services in a single process.
 
 #### Distributed Setup
+
 ```bash
 # Terminal 1: RL Server + Agent Coordinator
 uv run server.py --services rl+coordinator --port 50051
@@ -93,13 +99,16 @@ uv run server.py --services recommendation --port 50052 --rl-server-address loca
 The engine adapts the **PPO-based multidimensional autoscaling approach** from the USENIX ATC'23 research paper implementation in the `controller/` folder:
 
 ### 🧠 **RL Algorithm Implementation**
+
 - **State Space** (`rl_models/state_action_space.py`):
+
   - System metrics: CPU, memory, disk I/O utilization
   - Application metrics: Request rate, latency, throughput
   - Resource allocation: Current limits and replica counts
   - Feature normalization and extraction from Prometheus data
 
 - **Action Space** (Multidimensional Scaling):
+
   - **Vertical Scaling**: CPU/memory limit adjustments (256m/256Mi steps)
   - **Horizontal Scaling**: Replica count changes (+1/-1)
   - **No Action**: Stability preference with intelligent action selection
@@ -112,6 +121,7 @@ The engine adapts the **PPO-based multidimensional autoscaling approach** from t
   - **Performance Penalties**: Penalizes latency increases and processing lag
 
 ### 🔄 **From Controller Reference**
+
 - **PPO Policy Network** → Simulated with intelligent heuristics and action probabilities
 - **Environment Interface** → Feature extraction from Kubernetes and Prometheus
 - **Reward Calculation** → Direct implementation of paper's reward functions
@@ -119,6 +129,7 @@ The engine adapts the **PPO-based multidimensional autoscaling approach** from t
 - **Action History** → Tracking for oscillation detection and reward calculation
 
 ### 🚀 **Production Enhancements**
+
 - **gRPC Services** → Production-ready API interfaces following proto definitions
 - **Multi-App Support** → Per-application feature extractors and model instances
 - **Safety Policies** → Resource bounds and constraint enforcement
@@ -129,6 +140,7 @@ The engine adapts the **PPO-based multidimensional autoscaling approach** from t
 ## API Examples
 
 ### Get Recommendation
+
 ```python
 import grpc
 from proto.gen.engine import engine_pb2_grpc, engine_pb2
@@ -162,6 +174,7 @@ print(f"Confidence: {response.confidence}")
 ```
 
 ### Trigger Training
+
 ```python
 rl_client = engine_pb2_grpc.RLServerStub(channel)
 
@@ -187,6 +200,7 @@ print(f"Training ID: {train_response.training_id}")
 ## Deployment
 
 ### Kubernetes
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -203,18 +217,19 @@ spec:
         app: futura-engine
     spec:
       containers:
-      - name: engine
-        image: futura/engine:latest
-        ports:
-        - containerPort: 50051
-        env:
-        - name: FUTURA_MODEL_STORE_URI
-          value: "s3://futura-models"
-        - name: FUTURA_CLICKHOUSE_DSN
-          value: "clickhouse://clickhouse:9000/futura"
+        - name: engine
+          image: futura/engine:latest
+          ports:
+            - containerPort: 50051
+          env:
+            - name: FUTURA_MODEL_STORE_URI
+              value: "s3://futura-models"
+            - name: FUTURA_CLICKHOUSE_DSN
+              value: "clickhouse://clickhouse:9000/futura"
 ```
 
 ### Docker
+
 ```bash
 docker build -t futura/engine .
 docker run -p 50051:50051 futura/engine
@@ -223,6 +238,7 @@ docker run -p 50051:50051 futura/engine
 ## Development
 
 ### Project Structure
+
 ```
 engine/
 ├── services/           # gRPC service implementations
@@ -237,6 +253,7 @@ engine/
 ```
 
 ### Testing
+
 ```bash
 # Run tests
 uv run pytest

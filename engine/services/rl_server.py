@@ -88,11 +88,11 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
         self.action_history: Dict[str, List[Dict[str, int]]] = {}  # app_key -> action_history
         self.state_history: Dict[str, List[Dict[str, float]]] = {}  # app_key -> state_history
 
-    async def GetAction(
+    async def GetAppAction(
         self,
-        request: engine_pb2.GetActionRequest,
+        request: engine_pb2.GetAppActionRequest,
         context: grpc.ServicerContext
-    ) -> engine_pb2.GetActionResponse:
+    ) -> engine_pb2.GetAppActionResponse:
         """
         Online inference - RL policy picks an action plan based on current features.
         """
@@ -140,7 +140,7 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
             if self.engine_data:
                 await self._store_decision_in_clickhouse(request, decision_id, loaded_version, action_plan)
 
-            return engine_pb2.GetActionResponse(
+            return engine_pb2.GetAppActionResponse(
                 plan=action_plan,
                 model_version=loaded_version,
                 confidence=0.85,  # Simulate high confidence from trained model

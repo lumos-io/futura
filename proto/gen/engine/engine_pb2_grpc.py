@@ -45,14 +45,24 @@ class RecommendationServiceStub(object):
                 request_serializer=engine__pb2.SyncSLORequest.SerializeToString,
                 response_deserializer=engine__pb2.SyncSLOResponse.FromString,
                 _registered_method=True)
-        self.GetRecommendation = channel.unary_unary(
-                '/engine.v1.RecommendationService/GetRecommendation',
-                request_serializer=engine__pb2.RecommendationRequest.SerializeToString,
-                response_deserializer=engine__pb2.RecommendationResponse.FromString,
+        self.GetAppRecommendation = channel.unary_unary(
+                '/engine.v1.RecommendationService/GetAppRecommendation',
+                request_serializer=engine__pb2.RecommendationAppRequest.SerializeToString,
+                response_deserializer=engine__pb2.RecommendationAppResponse.FromString,
                 _registered_method=True)
-        self.ReportExecutionOutcome = channel.unary_unary(
-                '/engine.v1.RecommendationService/ReportExecutionOutcome',
-                request_serializer=engine__pb2.ExecutionOutcome.SerializeToString,
+        self.GetClusterRecommendation = channel.unary_unary(
+                '/engine.v1.RecommendationService/GetClusterRecommendation',
+                request_serializer=engine__pb2.RecommendationClusterRequest.SerializeToString,
+                response_deserializer=engine__pb2.RecommendationClusterResponse.FromString,
+                _registered_method=True)
+        self.ReportExecutionAppOutcome = channel.unary_unary(
+                '/engine.v1.RecommendationService/ReportExecutionAppOutcome',
+                request_serializer=engine__pb2.ExecutionAppOutcome.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                _registered_method=True)
+        self.ReportExecutionClusterOutcome = channel.unary_unary(
+                '/engine.v1.RecommendationService/ReportExecutionClusterOutcome',
+                request_serializer=engine__pb2.ExecutionClusterOutcome.SerializeToString,
                 response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 _registered_method=True)
 
@@ -72,16 +82,29 @@ class RecommendationServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetRecommendation(self, request, context):
-        """Called by the Operator to get the final plan (server may internally consult
-        RLServer)
+    def GetAppRecommendation(self, request, context):
+        """Called by the Operator to get the final plan for a given App (server may internally consult RLServer)
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ReportExecutionOutcome(self, request, context):
-        """Operator posts execution outcome/telemetry for learning & audit
+    def GetClusterRecommendation(self, request, context):
+        """Called by the Operator to get the final plan for a given Cluster (server may internally consult RLServer)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReportExecutionAppOutcome(self, request, context):
+        """Operator posts execution app outcome/telemetry for learning & audit
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReportExecutionClusterOutcome(self, request, context):
+        """Operator posts execution cluster outcome/telemetry for learning & audit
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -100,14 +123,24 @@ def add_RecommendationServiceServicer_to_server(servicer, server):
                     request_deserializer=engine__pb2.SyncSLORequest.FromString,
                     response_serializer=engine__pb2.SyncSLOResponse.SerializeToString,
             ),
-            'GetRecommendation': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetRecommendation,
-                    request_deserializer=engine__pb2.RecommendationRequest.FromString,
-                    response_serializer=engine__pb2.RecommendationResponse.SerializeToString,
+            'GetAppRecommendation': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAppRecommendation,
+                    request_deserializer=engine__pb2.RecommendationAppRequest.FromString,
+                    response_serializer=engine__pb2.RecommendationAppResponse.SerializeToString,
             ),
-            'ReportExecutionOutcome': grpc.unary_unary_rpc_method_handler(
-                    servicer.ReportExecutionOutcome,
-                    request_deserializer=engine__pb2.ExecutionOutcome.FromString,
+            'GetClusterRecommendation': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetClusterRecommendation,
+                    request_deserializer=engine__pb2.RecommendationClusterRequest.FromString,
+                    response_serializer=engine__pb2.RecommendationClusterResponse.SerializeToString,
+            ),
+            'ReportExecutionAppOutcome': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReportExecutionAppOutcome,
+                    request_deserializer=engine__pb2.ExecutionAppOutcome.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'ReportExecutionClusterOutcome': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReportExecutionClusterOutcome,
+                    request_deserializer=engine__pb2.ExecutionClusterOutcome.FromString,
                     response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
@@ -176,7 +209,7 @@ class RecommendationService(object):
             _registered_method=True)
 
     @staticmethod
-    def GetRecommendation(request,
+    def GetAppRecommendation(request,
             target,
             options=(),
             channel_credentials=None,
@@ -189,9 +222,9 @@ class RecommendationService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/engine.v1.RecommendationService/GetRecommendation',
-            engine__pb2.RecommendationRequest.SerializeToString,
-            engine__pb2.RecommendationResponse.FromString,
+            '/engine.v1.RecommendationService/GetAppRecommendation',
+            engine__pb2.RecommendationAppRequest.SerializeToString,
+            engine__pb2.RecommendationAppResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -203,7 +236,7 @@ class RecommendationService(object):
             _registered_method=True)
 
     @staticmethod
-    def ReportExecutionOutcome(request,
+    def GetClusterRecommendation(request,
             target,
             options=(),
             channel_credentials=None,
@@ -216,8 +249,62 @@ class RecommendationService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/engine.v1.RecommendationService/ReportExecutionOutcome',
-            engine__pb2.ExecutionOutcome.SerializeToString,
+            '/engine.v1.RecommendationService/GetClusterRecommendation',
+            engine__pb2.RecommendationClusterRequest.SerializeToString,
+            engine__pb2.RecommendationClusterResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReportExecutionAppOutcome(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RecommendationService/ReportExecutionAppOutcome',
+            engine__pb2.ExecutionAppOutcome.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReportExecutionClusterOutcome(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/engine.v1.RecommendationService/ReportExecutionClusterOutcome',
+            engine__pb2.ExecutionClusterOutcome.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options,
             channel_credentials,
@@ -239,10 +326,10 @@ class RLServerStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.GetAction = channel.unary_unary(
-                '/engine.v1.RLServer/GetAction',
-                request_serializer=engine__pb2.GetActionRequest.SerializeToString,
-                response_deserializer=engine__pb2.GetActionResponse.FromString,
+        self.GetAppAction = channel.unary_unary(
+                '/engine.v1.RLServer/GetAppAction',
+                request_serializer=engine__pb2.GetAppActionRequest.SerializeToString,
+                response_deserializer=engine__pb2.GetAppActionResponse.FromString,
                 _registered_method=True)
         self.EnsureModel = channel.unary_unary(
                 '/engine.v1.RLServer/EnsureModel',
@@ -264,9 +351,9 @@ class RLServerStub(object):
                 request_serializer=engine__pb2.GetModelMetadataRequest.SerializeToString,
                 response_deserializer=engine__pb2.ModelMetadata.FromString,
                 _registered_method=True)
-        self.ReportOutcome = channel.unary_unary(
-                '/engine.v1.RLServer/ReportOutcome',
-                request_serializer=engine__pb2.ExecutionOutcome.SerializeToString,
+        self.ReportAppOutcome = channel.unary_unary(
+                '/engine.v1.RLServer/ReportAppOutcome',
+                request_serializer=engine__pb2.ExecutionAppOutcome.SerializeToString,
                 response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 _registered_method=True)
 
@@ -274,8 +361,8 @@ class RLServerStub(object):
 class RLServerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def GetAction(self, request, context):
-        """Online inference – RL policy picks an action plan
+    def GetAppAction(self, request, context):
+        """Online inference – RL policy picks an app action plan
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -309,7 +396,7 @@ class RLServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ReportOutcome(self, request, context):
+    def ReportAppOutcome(self, request, context):
         """RL server also accepts outcomes directly (e.g., from Operator or MPA
         Server)
         """
@@ -320,10 +407,10 @@ class RLServerServicer(object):
 
 def add_RLServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'GetAction': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetAction,
-                    request_deserializer=engine__pb2.GetActionRequest.FromString,
-                    response_serializer=engine__pb2.GetActionResponse.SerializeToString,
+            'GetAppAction': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAppAction,
+                    request_deserializer=engine__pb2.GetAppActionRequest.FromString,
+                    response_serializer=engine__pb2.GetAppActionResponse.SerializeToString,
             ),
             'EnsureModel': grpc.unary_unary_rpc_method_handler(
                     servicer.EnsureModel,
@@ -345,9 +432,9 @@ def add_RLServerServicer_to_server(servicer, server):
                     request_deserializer=engine__pb2.GetModelMetadataRequest.FromString,
                     response_serializer=engine__pb2.ModelMetadata.SerializeToString,
             ),
-            'ReportOutcome': grpc.unary_unary_rpc_method_handler(
-                    servicer.ReportOutcome,
-                    request_deserializer=engine__pb2.ExecutionOutcome.FromString,
+            'ReportAppOutcome': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReportAppOutcome,
+                    request_deserializer=engine__pb2.ExecutionAppOutcome.FromString,
                     response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
@@ -362,7 +449,7 @@ class RLServer(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def GetAction(request,
+    def GetAppAction(request,
             target,
             options=(),
             channel_credentials=None,
@@ -375,9 +462,9 @@ class RLServer(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/engine.v1.RLServer/GetAction',
-            engine__pb2.GetActionRequest.SerializeToString,
-            engine__pb2.GetActionResponse.FromString,
+            '/engine.v1.RLServer/GetAppAction',
+            engine__pb2.GetAppActionRequest.SerializeToString,
+            engine__pb2.GetAppActionResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -497,7 +584,7 @@ class RLServer(object):
             _registered_method=True)
 
     @staticmethod
-    def ReportOutcome(request,
+    def ReportAppOutcome(request,
             target,
             options=(),
             channel_credentials=None,
@@ -510,8 +597,8 @@ class RLServer(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/engine.v1.RLServer/ReportOutcome',
-            engine__pb2.ExecutionOutcome.SerializeToString,
+            '/engine.v1.RLServer/ReportAppOutcome',
+            engine__pb2.ExecutionAppOutcome.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options,
             channel_credentials,

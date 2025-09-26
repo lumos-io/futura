@@ -162,14 +162,14 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
                 message=f"Internal error: {str(e)}"
             )
 
-    def GetRecommendation(
+    def GetAppRecommendation(
         self,
-        request: engine_pb2.RecommendationRequest,
+        request: engine_pb2.RecommendationAppRequest,
         context: grpc.ServicerContext
-    ) -> engine_pb2.RecommendationResponse:
+    ) -> engine_pb2.RecommendationAppResponse:
         """
-        Get optimization recommendation for a specific workload.
-        This is the main decision endpoint called by the Kubernetes Operator.
+        Get optimization recommendation for a specific app workload.
+        This is the main decision endpoint called by the Kubernetes Operator for app-level optimizations.
         """
         logger.info(
             f"Getting recommendation for app: {request.app.app_name} in namespace: {request.app.namespace}")
@@ -202,14 +202,14 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
                     if request.snapshot and request.snapshot.values:
                         features = dict(request.snapshot.values)
 
-                    # Build GetAction request
-                    rl_request = engine_pb2.GetActionRequest(
+                    # Build GetAppAction request
+                    rl_request = engine_pb2.GetAppActionRequest(
                         app=request.app,
                         features=features
                     )
 
                     # Get action from RL server
-                    rl_response = self.rl_server_client.GetAction(rl_request)
+                    rl_response = self.rl_server_client.GetAppAction(rl_request)
 
                     action_plan = rl_response.plan
                     model_version = rl_response.model_version
@@ -244,8 +244,8 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
                     f"Dry run recommendation generated: decision_id={decision_id}")
                 audit_reasons.append("DRY RUN - no execution")
 
-            return engine_pb2.RecommendationResponse(
-                plan=action_plan,
+            return engine_pb2.RecommendationAppResponse(
+                plan=[action_plan] if action_plan else [],
                 decision_id=decision_id,
                 model_version=model_version,
                 confidence=confidence,
@@ -257,11 +257,11 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
             logger.error(f"Error generating recommendation: {str(e)}")
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Internal error: {str(e)}")
-            return engine_pb2.RecommendationResponse()
+            return engine_pb2.RecommendationAppResponse()
 
-    async def ReportExecutionOutcome(
+    async def ReportExecutionAppOutcome(
         self,
-        request: engine_pb2.ExecutionOutcome,
+        request: engine_pb2.ExecutionAppOutcome,
         context: grpc.ServicerContext
     ) -> empty_pb2.Empty:
         """
@@ -312,7 +312,7 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
             # Forward to RL server for learning if available
             if self.rl_server_client:
                 try:
-                    await self.rl_server_client.ReportOutcome(request)
+                    await self.rl_server_client.ReportAppOutcome(request)
                     logger.info("Outcome forwarded to RL server for learning")
                 except Exception as rl_error:
                     logger.warning(
@@ -326,12 +326,122 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
             context.set_details(f"Internal error: {str(e)}")
             return empty_pb2.Empty()
 
+    def GetClusterRecommendation(
+        self,
+        request: engine_pb2.RecommendationClusterRequest,
+        context: grpc.ServicerContext
+    ) -> engine_pb2.RecommendationClusterResponse:
+        """
+        Get optimization recommendation for cluster-level resources.
+        This handles Karpenter-style node provisioning recommendations.
+        """
+        logger.info(
+            f"Getting cluster recommendation for API key: {request.cluster.api_key[:8]}...")
+
+        try:
+            # Generate a unique decision ID for tracking
+            import uuid
+            decision_id = str(uuid.uuid4())
+
+            # Get cluster config for this API key
+            cluster_config = self.cluster_configs.get(request.cluster.api_key)
+            if not cluster_config:
+                logger.warning(
+                    f"No cluster config found for API key: {request.cluster.api_key[:8]}...")
+
+            # For now, use placeholder cluster recommendation logic
+            # TODO: Implement proper Karpenter-style algorithms
+            cluster_plan = self._generate_baseline_cluster_recommendation(
+                request, cluster_config)
+
+            audit_reasons = ["Using placeholder cluster optimization algorithm"]
+
+            if not request.dry_run:
+                logger.info(
+                    f"Cluster recommendation ready for execution: decision_id={decision_id}")
+            else:
+                logger.info(
+                    f"Dry run cluster recommendation generated: decision_id={decision_id}")
+                audit_reasons.append("DRY RUN - no execution")
+
+            return engine_pb2.RecommendationClusterResponse(
+                plan=cluster_plan,
+                decision_id=decision_id,
+                model_version="cluster-baseline-v1",
+                confidence=0.6,
+                audit_reasons=audit_reasons
+            )
+
+        except Exception as e:
+            logger.error(f"Error generating cluster recommendation: {str(e)}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal error: {str(e)}")
+            return engine_pb2.RecommendationClusterResponse()
+
+    async def ReportExecutionClusterOutcome(
+        self,
+        request: engine_pb2.ExecutionClusterOutcome,
+        context: grpc.ServicerContext
+    ) -> empty_pb2.Empty:
+        """
+        Receive execution outcome from the Operator for cluster-level changes.
+        """
+        logger.info(
+            f"Received cluster execution outcome for decision: {request.decision_id}")
+
+        try:
+            # Log the outcome
+            status = "SUCCESS" if request.success else "FAILED"
+            logger.info(
+                f"Cluster execution {status}: {request.note}")
+
+            # If we have post-action metrics, log them
+            if request.post_action_metrics and request.post_action_metrics.values:
+                logger.info(
+                    f"Post-action cluster metrics: {dict(request.post_action_metrics.values)}")
+
+            # Persist to ClickHouse for historical analysis
+            if self.engine_data:
+                try:
+                    post_metrics = {}
+                    if request.post_action_metrics and request.post_action_metrics.values:
+                        post_metrics = dict(request.post_action_metrics.values)
+
+                    # Store cluster outcome (adapt the method or create new one)
+                    success = await self.engine_data.store_execution_outcome(
+                        cluster_id=request.cluster.api_key,
+                        namespace="",  # Cluster-level has no namespace
+                        app_name="cluster",
+                        workload_kind="Cluster",
+                        decision_id=request.decision_id,
+                        success=request.success,
+                        note=request.note,
+                        post_action_metrics=post_metrics,
+                        reported_at=datetime.utcnow()
+                    )
+
+                    if success:
+                        logger.info(f"Persisted cluster outcome to ClickHouse for decision {request.decision_id}")
+                    else:
+                        logger.warning(f"Failed to persist cluster outcome to ClickHouse for decision {request.decision_id}")
+
+                except Exception as db_error:
+                    logger.warning(f"Failed to persist cluster outcome to ClickHouse: {str(db_error)}")
+
+            return empty_pb2.Empty()
+
+        except Exception as e:
+            logger.error(f"Error processing cluster execution outcome: {str(e)}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal error: {str(e)}")
+            return empty_pb2.Empty()
+
     def _generate_baseline_recommendation(
         self,
-        request: engine_pb2.RecommendationRequest,
+        request: engine_pb2.RecommendationAppRequest,
         service_slo: Optional[engine_pb2.SyncSLORequest],
         cluster_config: Optional[engine_pb2.ClusterOptimizationConfigRequest]
-    ) -> engine_pb2.ActionPlan:
+    ) -> engine_pb2.AppActionPlan:
         """Generate a baseline heuristic recommendation when ML is not available."""
 
         # Simple heuristic: if we have recent metrics, make conservative adjustments
@@ -345,7 +455,7 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
             # Conservative scaling logic
             if cpu_util > 0.8 or memory_util > 0.8:
                 # Scale up resources
-                return engine_pb2.ActionPlan(
+                return engine_pb2.AppActionPlan(
                     type="VPA_RECOMMEND",
                     confidence=0.7,
                     reason="High resource utilization detected",
@@ -360,7 +470,7 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
                 )
             elif cpu_util < 0.3 and memory_util < 0.3:
                 # Scale down resources
-                return engine_pb2.ActionPlan(
+                return engine_pb2.AppActionPlan(
                     type="VPA_RECOMMEND",
                     confidence=0.6,
                     reason="Low resource utilization detected",
@@ -375,7 +485,7 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
                 )
 
         # No action needed
-        return engine_pb2.ActionPlan(
+        return engine_pb2.AppActionPlan(
             type="NO_ACTION",
             confidence=0.5,
             reason="No significant resource pressure detected"
@@ -402,9 +512,9 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
 
     def _apply_safety_constraints(
         self,
-        action_plan: engine_pb2.ActionPlan,
+        action_plan: engine_pb2.AppActionPlan,
         safety_policy: engine_pb2.SafetyPolicy
-    ) -> engine_pb2.ActionPlan:
+    ) -> engine_pb2.AppActionPlan:
         """Apply safety policy constraints to the action plan."""
 
         # For now, return the plan as-is
@@ -414,3 +524,39 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
         # - Ensure cooldown periods
 
         return action_plan
+
+    def _generate_baseline_cluster_recommendation(
+        self,
+        request: engine_pb2.RecommendationClusterRequest,
+        cluster_config: Optional[engine_pb2.ClusterOptimizationConfigRequest]
+    ) -> engine_pb2.ClusterActionPlan:
+        """Generate a baseline cluster recommendation (placeholder for Karpenter-style logic)."""
+
+        # Placeholder cluster recommendation logic
+        # TODO: Implement proper Karpenter-style algorithms that consider:
+        # - Current node utilization
+        # - Pending pods that can't be scheduled
+        # - Cost optimization based on instance types
+        # - Spot vs on-demand preferences
+        # - Node diversity for availability
+
+        # For now, return a simple cluster provisioning recommendation
+        instance_types = ["m5.large", "m5.xlarge"]
+        if cluster_config and cluster_config.preferred_instance_types:
+            instance_types = list(cluster_config.preferred_instance_types)
+
+        capacity_type = "on-demand"
+        if cluster_config and cluster_config.allow_spot:
+            capacity_type = "spot"
+
+        provision_action = engine_pb2.ClusterProvisionAction(
+            instance_types=instance_types,
+            count=1,  # Conservative default
+            capacity_type=capacity_type
+        )
+
+        return engine_pb2.ClusterActionPlan(
+            confidence=0.6,
+            reason="Placeholder cluster recommendation - needs proper Karpenter algorithm",
+            details=provision_action
+        )

@@ -47,7 +47,7 @@ type ClusterOptimizationConfigReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	poller     *poller.Poller
-	grpcClient pbeg.FuturaOptimizerClient
+	grpcClient pbeg.RecommendationServiceClient
 }
 
 func NewClusterOptimizationConfigReconciler(c client.Client, scheme *runtime.Scheme, grpcConn *grpc.ClientConn, poller *poller.Poller) *ClusterOptimizationConfigReconciler {
@@ -57,7 +57,7 @@ func NewClusterOptimizationConfigReconciler(c client.Client, scheme *runtime.Sch
 		Client:     c,
 		Scheme:     scheme,
 		poller:     poller,
-		grpcClient: pbeg.NewFuturaOptimizerClient(grpcConn),
+		grpcClient: pbeg.NewRecommendationServiceClient(grpcConn),
 	}
 }
 
@@ -76,14 +76,14 @@ func (r *ClusterOptimizationConfigReconciler) Reconcile(ctx context.Context, req
 	}
 
 	grpcReq := &pbeg.ClusterOptimizationConfigRequest{
-		Config: &pbeg.ClusterOptimizationConfig{
-			ApiKey:                 config.Spec.ApiKey,
-			CostSensitivity:        config.Spec.CostOptimization.CostSensitivity,
-			MonthlyBudget:          config.Spec.CostOptimization.MaxMonthlyBudgetUSD,
-			PreferredInstanceTypes: config.Spec.CostOptimization.PreferredInstanceTypes,
-			AllowSpot:              config.Spec.CostOptimization.SpotInstanceAllowed,
-			MaxSpotPercentage:      config.Spec.CostOptimization.MaxSpotPercentage,
-		},
+		ApiKey:                 config.Spec.ApiKey,
+		CloudProvider:          "aws", // TODO: Make this configurable
+		Region:                 "us-east-1", // TODO: Make this configurable
+		CostSensitivity:        config.Spec.CostOptimization.CostSensitivity,
+		MonthlyBudget:          config.Spec.CostOptimization.MaxMonthlyBudgetUSD,
+		PreferredInstanceTypes: config.Spec.CostOptimization.PreferredInstanceTypes,
+		AllowSpot:              config.Spec.CostOptimization.SpotInstanceAllowed,
+		MaxSpotPercentage:      config.Spec.CostOptimization.MaxSpotPercentage,
 	}
 
 	resp, err := r.grpcClient.SyncClusterOptimizationConfig(ctx, grpcReq)
