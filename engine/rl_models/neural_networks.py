@@ -18,12 +18,15 @@ import os
 logger = logging.getLogger(__name__)
 
 # Device detection
+
+
 def get_device():
     """Get the best available device (CUDA if available, otherwise CPU)."""
     if torch.cuda.is_available():
         return torch.device("cuda")
     else:
         return torch.device("cpu")
+
 
 DEVICE = get_device()
 
@@ -175,10 +178,13 @@ class PPOTrainer:
         self.critic = CriticNetwork(state_dim, hidden_dim)
 
         # Optimizers
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=learning_rate)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=learning_rate)
+        self.actor_optimizer = optim.Adam(
+            self.actor.parameters(), lr=learning_rate)
+        self.critic_optimizer = optim.Adam(
+            self.critic.parameters(), lr=learning_rate)
 
-        logger.info(f"Initialized PPO trainer with state_dim={state_dim}, action_dim={action_dim}")
+        logger.info(
+            f"Initialized PPO trainer with state_dim={state_dim}, action_dim={action_dim}")
 
     def select_action(self, state: List[float]) -> int:
         """Select an action given the current state."""
@@ -215,28 +221,33 @@ class PPOTrainer:
             next_values = self.critic(next_states_tensor).squeeze()
 
             # Calculate returns using GAE
-            returns = self._calculate_returns(rewards_tensor, next_values, dones_tensor)
+            returns = self._calculate_returns(
+                rewards_tensor, next_values, dones_tensor)
             advantages = returns - values
 
             # Normalize advantages
-            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+            advantages = (advantages - advantages.mean()) / \
+                (advantages.std() + 1e-8)
 
             # Get old action probabilities
             old_action_probs = self.actor(states_tensor)
-            old_log_probs = torch.log(old_action_probs.gather(1, actions_tensor.unsqueeze(1))).squeeze()
+            old_log_probs = torch.log(old_action_probs.gather(
+                1, actions_tensor.unsqueeze(1))).squeeze()
 
         # PPO update loop
         for _ in range(self.epochs):
             # Current action probabilities
             current_action_probs = self.actor(states_tensor)
-            current_log_probs = torch.log(current_action_probs.gather(1, actions_tensor.unsqueeze(1))).squeeze()
+            current_log_probs = torch.log(current_action_probs.gather(
+                1, actions_tensor.unsqueeze(1))).squeeze()
 
             # Calculate ratio
             ratio = torch.exp(current_log_probs - old_log_probs)
 
             # Calculate clipped objective
             surr1 = ratio * advantages
-            surr2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * advantages
+            surr2 = torch.clamp(ratio, 1 - self.epsilon,
+                                1 + self.epsilon) * advantages
             actor_loss = -torch.min(surr1, surr2).mean()
 
             # Update actor
@@ -257,10 +268,12 @@ class PPOTrainer:
         returns = torch.zeros_like(rewards)
 
         # Bootstrap from next value if not done
-        next_return = torch.where(dones[-1], torch.zeros(1).to(DEVICE), next_values[-1])
+        next_return = torch.where(
+            dones[-1], torch.zeros(1).to(DEVICE), next_values[-1])
 
         for t in reversed(range(len(rewards))):
-            returns[t] = rewards[t] + self.gamma * next_return * (1 - dones[t].float())
+            returns[t] = rewards[t] + self.gamma * \
+                next_return * (1 - dones[t].float())
             next_return = returns[t]
 
         return returns
@@ -313,15 +326,20 @@ class MetaPPOTrainer(PPOTrainer):
         )
 
         # Meta-optimizer for trajectory encoder
-        self.meta_optimizer = optim.Adam(self.trajectory_encoder.parameters(), lr=meta_lr)
+        self.meta_optimizer = optim.Adam(
+            self.trajectory_encoder.parameters(), lr=meta_lr)
 
         # Modify actor and critic to take trajectory embeddings as additional input
-        self.actor = MetaActorNetwork(state_dim + trajectory_dim, action_dim, hidden_dim)
+        self.actor = MetaActorNetwork(
+            state_dim + trajectory_dim, action_dim, hidden_dim)
         self.critic = MetaCriticNetwork(state_dim + trajectory_dim, hidden_dim)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=learning_rate)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=learning_rate)
+        self.actor_optimizer = optim.Adam(
+            self.actor.parameters(), lr=learning_rate)
+        self.critic_optimizer = optim.Adam(
+            self.critic.parameters(), lr=learning_rate)
 
-        logger.info(f"Initialized Meta-PPO trainer with trajectory_dim={trajectory_dim}")
+        logger.info(
+            f"Initialized Meta-PPO trainer with trajectory_dim={trajectory_dim}")
 
     def encode_trajectory(self, trajectory: Dict[str, List]) -> torch.Tensor:
         """
@@ -338,7 +356,8 @@ class MetaPPOTrainer(PPOTrainer):
         rewards = torch.FloatTensor(trajectory['rewards'])
 
         # One-hot encode actions
-        actions_onehot = F.one_hot(actions, num_classes=self.action_dim).float()
+        actions_onehot = F.one_hot(
+            actions, num_classes=self.action_dim).float()
 
         # Combine state, action, reward
         trajectory_input = torch.cat([
@@ -397,7 +416,8 @@ class MetaPPOTrainer(PPOTrainer):
                 augmented_states = []
                 for state in states:
                     if len(state) != self.state_dim:
-                        logger.warning(f"Task {task_idx}: State dimension mismatch")
+                        logger.warning(
+                            f"Task {task_idx}: State dimension mismatch")
                         continue
 
                     augmented_state = torch.cat([
@@ -412,11 +432,14 @@ class MetaPPOTrainer(PPOTrainer):
 
                 # Convert to tensors
                 states_tensor = torch.stack(augmented_states)
-                actions_tensor = torch.LongTensor(actions[:len(augmented_states)]).to(DEVICE)
-                rewards_tensor = torch.FloatTensor(rewards[:len(augmented_states)]).to(DEVICE)
+                actions_tensor = torch.LongTensor(
+                    actions[:len(augmented_states)]).to(DEVICE)
+                rewards_tensor = torch.FloatTensor(
+                    rewards[:len(augmented_states)]).to(DEVICE)
 
                 # Ensure actions are within valid range
-                actions_tensor = torch.clamp(actions_tensor, 0, self.action_dim - 1)
+                actions_tensor = torch.clamp(
+                    actions_tensor, 0, self.action_dim - 1)
 
                 # Forward pass
                 action_probs = self.actor(states_tensor)
@@ -426,7 +449,8 @@ class MetaPPOTrainer(PPOTrainer):
                 action_probs = torch.clamp(action_probs, min=1e-8, max=1.0)
 
                 # Calculate log probabilities
-                log_probs = torch.log(action_probs.gather(1, actions_tensor.unsqueeze(1))).squeeze()
+                log_probs = torch.log(action_probs.gather(
+                    1, actions_tensor.unsqueeze(1))).squeeze()
 
                 # Calculate advantages (simplified)
                 advantages = rewards_tensor - values.detach()
@@ -469,10 +493,10 @@ class MetaPPOTrainer(PPOTrainer):
             self.meta_optimizer.step()
 
             avg_meta_loss = total_meta_loss / total_tasks
-            logger.info(f"Meta-update completed for {total_tasks} tasks, avg_loss={avg_meta_loss:.4f}")
+            logger.info(
+                f"Meta-update completed for {total_tasks} tasks, avg_loss={avg_meta_loss:.4f}")
         else:
             logger.warning("No valid tasks processed in meta-update")
-
 
 
 class MetaActorNetwork(nn.Module):
@@ -558,7 +582,8 @@ class ModelRegistry:
         # Create storage directory
         os.makedirs(storage_path, exist_ok=True)
 
-        logger.info(f"Model registry initialized with storage_path={storage_path}")
+        logger.info(
+            f"Model registry initialized with storage_path={storage_path}")
 
     def register_model(self, model_info: Dict[str, Any]):
         """Register a new model in the registry."""
@@ -572,18 +597,21 @@ class ModelRegistry:
 
     def save_checkpoint(self, model_id: str, checkpoint_data: Dict[str, Any]) -> str:
         """Save a model checkpoint."""
-        checkpoint_path = os.path.join(self.storage_path, f"{model_id}_checkpoint.pth")
+        checkpoint_path = os.path.join(
+            self.storage_path, f"{model_id}_checkpoint.pth")
         torch.save(checkpoint_data, checkpoint_path)
         logger.info(f"Saved checkpoint for {model_id} to {checkpoint_path}")
         return checkpoint_path
 
     def load_checkpoint(self, model_id: str) -> Optional[Dict[str, Any]]:
         """Load a model checkpoint."""
-        checkpoint_path = os.path.join(self.storage_path, f"{model_id}_checkpoint.pth")
+        checkpoint_path = os.path.join(
+            self.storage_path, f"{model_id}_checkpoint.pth")
 
         if os.path.exists(checkpoint_path):
             checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
-            logger.info(f"Loaded checkpoint for {model_id} from {checkpoint_path}")
+            logger.info(
+                f"Loaded checkpoint for {model_id} from {checkpoint_path}")
             return checkpoint
         else:
             logger.warning(f"No checkpoint found for {model_id}")
