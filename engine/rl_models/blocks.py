@@ -141,7 +141,8 @@ class DenseBlock(nn.Module):
         # Gated activation: tanh(W * x) * sigmoid(V * x)
         xf = self.causal_conv1(input_tensor)
         xg = self.causal_conv2(input_tensor)
-        activations = torch.tanh(xf) * torch.sigmoid(xg)  # Shape: (N, filters, T)
+        # Shape: (N, filters, T)
+        activations = torch.tanh(xf) * torch.sigmoid(xg)
 
         # Residual connection by concatenation
         return torch.cat((input_tensor, activations), dim=1)
@@ -224,7 +225,8 @@ class AttentionBlock(nn.Module):
         self.linear_values = nn.Linear(in_channels, value_size)
         self.sqrt_key_size = math.sqrt(key_size)
 
-        logger.debug(f"AttentionBlock initialized: in_channels={in_channels}, key_size={key_size}, value_size={value_size}")
+        logger.debug(
+            f"AttentionBlock initialized: in_channels={in_channels}, key_size={key_size}, value_size={value_size}")
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         """
@@ -253,7 +255,8 @@ class AttentionBlock(nn.Module):
 
         # Scaled dot-product attention
         # Compute attention scores
-        scores = torch.bmm(queries, torch.transpose(keys, 1, 2))  # Shape: (N, T, T)
+        scores = torch.bmm(queries, torch.transpose(
+            keys, 1, 2))  # Shape: (N, T, T)
         scores = scores / self.sqrt_key_size
 
         # Apply causal mask
@@ -263,7 +266,8 @@ class AttentionBlock(nn.Module):
         attention_weights = F.softmax(scores, dim=-1)  # Shape: (N, T, T)
 
         # Apply attention to values
-        attended_values = torch.bmm(attention_weights, values)  # Shape: (N, T, value_size)
+        # Shape: (N, T, value_size)
+        attended_values = torch.bmm(attention_weights, values)
 
         # Concatenate with input (residual connection)
         output = torch.cat((input_tensor, attended_values), dim=2)
@@ -338,9 +342,12 @@ class MultiHeadAttention(nn.Module):
         values = self.linear_values(input_tensor)
 
         # Reshape for multi-head attention
-        queries = queries.view(batch_size, seq_length, self.num_heads, self.head_key_size)
-        keys = keys.view(batch_size, seq_length, self.num_heads, self.head_key_size)
-        values = values.view(batch_size, seq_length, self.num_heads, self.head_value_size)
+        queries = queries.view(batch_size, seq_length,
+                               self.num_heads, self.head_key_size)
+        keys = keys.view(batch_size, seq_length,
+                         self.num_heads, self.head_key_size)
+        values = values.view(batch_size, seq_length,
+                             self.num_heads, self.head_value_size)
 
         # Transpose for attention computation
         queries = queries.transpose(1, 2)  # (N, num_heads, T, head_key_size)
@@ -348,8 +355,10 @@ class MultiHeadAttention(nn.Module):
         values = values.transpose(1, 2)    # (N, num_heads, T, head_value_size)
 
         # Scaled dot-product attention for each head
-        scores = torch.matmul(queries, keys.transpose(-2, -1)) / self.sqrt_key_size
-        scores = scores.masked_fill(mask.unsqueeze(0).unsqueeze(0), -float('inf'))
+        scores = torch.matmul(
+            queries, keys.transpose(-2, -1)) / self.sqrt_key_size
+        scores = scores.masked_fill(
+            mask.unsqueeze(0).unsqueeze(0), -float('inf'))
 
         attention_weights = F.softmax(scores, dim=-1)
         attention_weights = self.dropout(attention_weights)
@@ -410,7 +419,8 @@ class PositionalEncoding(nn.Module):
 
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        div_term = torch.exp(torch.arange(
+            0, d_model, 2).float() * (-math.log(10000.0) / d_model))
 
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
