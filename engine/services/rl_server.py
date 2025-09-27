@@ -819,9 +819,11 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                 action_index, log_prob = ppo_model.get_action(
                     normalized_features, deterministic=True
                 )
-                confidence = float(np.exp(log_prob))  # Convert log prob to confidence
+                # Convert log prob to confidence
+                confidence = float(np.exp(log_prob))
 
-                logger.info(f"PPO inference for {app_key}: action={action_index}, confidence={confidence:.3f}")
+                logger.info(
+                    f"PPO inference for {app_key}: action={action_index}, confidence={confidence:.3f}")
                 return action_index, confidence
 
             elif app_key in self.meta_models:
@@ -832,24 +834,30 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                 action_index, log_prob = meta_model.get_action(
                     normalized_features, deterministic=True
                 )
-                confidence = float(np.exp(log_prob))  # Convert log prob to confidence
+                # Convert log prob to confidence
+                confidence = float(np.exp(log_prob))
 
-                logger.info(f"Meta-PPO inference for {app_key}: action={action_index}, confidence={confidence:.3f}")
+                logger.info(
+                    f"Meta-PPO inference for {app_key}: action={action_index}, confidence={confidence:.3f}")
                 return action_index, confidence
 
             else:
                 # Fall back to heuristic policy if no model is loaded
-                logger.warning(f"No PyTorch model loaded for {app_key}, using heuristic policy")
-                action_probs = self._heuristic_policy_fallback(normalized_features, current_state)
+                logger.warning(
+                    f"No PyTorch model loaded for {app_key}, using heuristic policy")
+                action_probs = self._heuristic_policy_fallback(
+                    normalized_features, current_state)
                 action_index = self.action_space.sample_action(action_probs)
                 confidence = float(action_probs[action_index])
 
                 return action_index, confidence
 
         except Exception as e:
-            logger.error(f"Error during PyTorch inference for {app_key}: {str(e)}")
+            logger.error(
+                f"Error during PyTorch inference for {app_key}: {str(e)}")
             # Fall back to heuristic policy on error
-            action_probs = self._heuristic_policy_fallback(normalized_features, current_state)
+            action_probs = self._heuristic_policy_fallback(
+                normalized_features, current_state)
             action_index = self.action_space.sample_action(action_probs)
             confidence = float(action_probs[action_index])
 
@@ -881,14 +889,18 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
 
         # High memory utilization → scale up memory
         if memory_util > 0.8:
-            action_logits[ActionType.VERTICAL_MEMORY_UP] += 3.0 * (memory_util - 0.8)
+            action_logits[ActionType.VERTICAL_MEMORY_UP] += 3.0 * \
+                (memory_util - 0.8)
 
         # Low utilization → consider scaling down
         if cpu_util < 0.3 and memory_util < 0.3:
-            action_logits[ActionType.VERTICAL_CPU_DOWN] += 1.5 * (0.3 - cpu_util)
-            action_logits[ActionType.VERTICAL_MEMORY_DOWN] += 1.5 * (0.3 - memory_util)
+            action_logits[ActionType.VERTICAL_CPU_DOWN] += 1.5 * \
+                (0.3 - cpu_util)
+            action_logits[ActionType.VERTICAL_MEMORY_DOWN] += 1.5 * \
+                (0.3 - memory_util)
             if current_state.get('num_replicas', 1) > 1:
-                action_logits[ActionType.HORIZONTAL_DOWN] += 1.0 * (0.3 - cpu_util)
+                action_logits[ActionType.HORIZONTAL_DOWN] += 1.0 * \
+                    (0.3 - cpu_util)
 
         # Apply resource bounds constraints
         current_replicas = int(current_state.get('num_replicas', 1))
@@ -910,14 +922,16 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
 
         # Apply softmax to get probabilities
         action_probs = self._softmax(action_logits)
-        logger.debug(f"Heuristic action probabilities: {dict(zip([a.name for a in ActionType], action_probs))}")
+        logger.debug(
+            f"Heuristic action probabilities: {dict(zip([a.name for a in ActionType], action_probs))}")
 
         return action_probs
 
     def _load_pytorch_model(self, app_key: str, version: str, model_meta: engine_pb2.ModelMetadata):
         """Load a PyTorch model into memory for inference."""
         try:
-            logger.info(f"Loading PyTorch model {version} for {app_key} from {model_meta.checkpoint_uri}")
+            logger.info(
+                f"Loading PyTorch model {version} for {app_key} from {model_meta.checkpoint_uri}")
 
             # Parse model type from metadata
             model_type = model_meta.policy_name.lower()
@@ -938,7 +952,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                     meta_agent.load_model(model_meta.checkpoint_uri)
                     logger.info(f"Loaded Meta-PPO checkpoint for {app_key}")
                 else:
-                    logger.warning(f"Checkpoint not found at {model_meta.checkpoint_uri}, using initialized model")
+                    logger.warning(
+                        f"Checkpoint not found at {model_meta.checkpoint_uri}, using initialized model")
 
                 meta_agent.set_training_mode(False)  # Set to inference mode
                 self.meta_models[app_key] = meta_agent
@@ -957,17 +972,20 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                     ppo_agent.load_model(model_meta.checkpoint_uri)
                     logger.info(f"Loaded PPO checkpoint for {app_key}")
                 else:
-                    logger.warning(f"Checkpoint not found at {model_meta.checkpoint_uri}, using initialized model")
+                    logger.warning(
+                        f"Checkpoint not found at {model_meta.checkpoint_uri}, using initialized model")
 
                 ppo_agent.set_training_mode(False)  # Set to inference mode
                 self.pytorch_models[app_key] = ppo_agent
 
             # Mark as loaded
             self.loaded_models[app_key] = version
-            logger.info(f"Successfully loaded model {version} for {app_key} on device: {device}")
+            logger.info(
+                f"Successfully loaded model {version} for {app_key} on device: {device}")
 
         except Exception as e:
-            logger.error(f"Failed to load model {version} for {app_key}: {str(e)}")
+            logger.error(
+                f"Failed to load model {version} for {app_key}: {str(e)}")
             # Don't mark as loaded if loading failed
             raise
 
@@ -998,8 +1016,10 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                 version=version,
                 policy_name="baseline-ppo",
                 checkpoint_uri=f"/tmp/futura-models/{app_key}/{version}/model.pth",
-                created_at=timestamp_pb2.Timestamp(seconds=int(now.timestamp())),
-                updated_at=timestamp_pb2.Timestamp(seconds=int(now.timestamp())),
+                created_at=timestamp_pb2.Timestamp(
+                    seconds=int(now.timestamp())),
+                updated_at=timestamp_pb2.Timestamp(
+                    seconds=int(now.timestamp())),
                 training_metrics={
                     "episodes": "0",
                     "reward_mean": "0.0",
@@ -1013,7 +1033,8 @@ class RLServer(engine_pb2_grpc.RLServerServicer):
                 self.models[app_key] = {}
             self.models[app_key][version] = model_meta
 
-            logger.info(f"Bootstrapped baseline PyTorch PPO model for {app_key}")
+            logger.info(
+                f"Bootstrapped baseline PyTorch PPO model for {app_key}")
             return version
 
         except Exception as e:

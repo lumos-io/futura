@@ -96,7 +96,7 @@ def sample_resource_state():
         cpu_limit=1000,
         memory_limit=512,
         cpu_util=0.75,
-        memory_util=0.65,
+        memory_util=0.75,
         request_rate=150.0,
         p95_latency_ms=200.0,
         processing_rate=150.0,

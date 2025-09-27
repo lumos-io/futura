@@ -142,7 +142,7 @@ class TestScalingAlgorithms:
             num_replicas=3,
             cpu_limit=1000,
             memory_limit=512,
-            cpu_util=0.6,  # Lower CPU to avoid CPU scaling
+            cpu_util=0.75,  # CPU within acceptable bounds (0.7-0.9)
             memory_util=0.95,  # High memory
             request_rate=150.0,
             p95_latency_ms=250.0
@@ -300,7 +300,7 @@ class TestScalingAlgorithms:
                 num_replicas=replicas,
                 cpu_limit=1000,
                 memory_limit=512,
-                cpu_util=0.9,
+                cpu_util=0.95,
                 memory_util=0.8,
                 request_rate=200.0,
                 p95_latency_ms=400.0

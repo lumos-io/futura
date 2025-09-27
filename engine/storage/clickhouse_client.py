@@ -15,6 +15,34 @@ import aiohttp
 logger = logging.getLogger(__name__)
 
 
+class EngineDataAccess:
+    """High-level data access layer for engine operations."""
+
+    def __init__(self, clickhouse_client):
+        self.client = clickhouse_client
+
+    async def store_training_event(self, training_id: str, app_key: str, job_name: str,
+                                 event_type: str, status: str, metadata: Dict[str, Any]):
+        """Store a training event."""
+        # TODO: Implement actual ClickHouse storage
+        pass
+
+    async def store_training_result(self, training_id: str, job_name: str, success: bool,
+                                  model_version: str = "", final_loss: float = 0.0,
+                                  episodes_completed: int = 0, training_time_seconds: int = 0,
+                                  model_uri: str = "", metrics: Optional[Dict] = None,
+                                  final_reward: float = 0.0, training_metrics: Optional[Dict] = None,
+                                  error_message: str = "", completed_at = None):
+        """Store training results."""
+        # TODO: Implement actual ClickHouse storage
+        pass
+
+    async def store_training_cleanup(self, training_id: str, job_name: str):
+        """Store training cleanup event."""
+        # TODO: Implement actual ClickHouse storage
+        pass
+
+
 class ClickHouseClient:
     """
     Async ClickHouse client for engine data operations.
