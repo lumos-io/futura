@@ -14,32 +14,43 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 @pytest.fixture
 def mock_torch():
     """Mock PyTorch modules for testing without GPU dependencies."""
-    torch_mock = Mock()
-    torch_mock.cuda.is_available.return_value = False
-    torch_mock.device.return_value = "cpu"
-    torch_mock.tensor.return_value = Mock()
-    torch_mock.zeros.return_value = Mock()
-    torch_mock.save = Mock()
-    torch_mock.load = Mock()
+    # Check if torch is available - if so, just patch CUDA detection
+    try:
+        import torch
+        import torch.nn as nn
 
-    # Mock nn module
-    nn_mock = Mock()
-    nn_mock.Module = Mock
-    nn_mock.Linear = Mock
-    nn_mock.ReLU = Mock
-    nn_mock.LSTM = Mock
-    nn_mock.functional.relu = Mock()
-    nn_mock.functional.log_softmax = Mock()
+        # PyTorch is available, just mock CUDA detection
+        with patch('torch.cuda.is_available', return_value=False):
+            yield torch
 
-    torch_mock.nn = nn_mock
+    except ImportError:
+        # PyTorch not available, create full mock
+        torch_mock = Mock()
+        torch_mock.cuda.is_available.return_value = False
+        torch_mock.device.return_value = "cpu"
+        torch_mock.tensor.return_value = Mock()
+        torch_mock.zeros.return_value = Mock()
+        torch_mock.save = Mock()
+        torch_mock.load = Mock()
 
-    with patch.dict('sys.modules', {
-        'torch': torch_mock,
-        'torch.nn': nn_mock,
-        'torch.nn.functional': nn_mock.functional,
-        'torch.optim': Mock()
-    }):
-        yield torch_mock
+        # Mock nn module
+        nn_mock = Mock()
+        nn_mock.Module = Mock
+        nn_mock.Linear = Mock
+        nn_mock.ReLU = Mock
+        nn_mock.LSTM = Mock
+        nn_mock.functional.relu = Mock()
+        nn_mock.functional.log_softmax = Mock()
+
+        torch_mock.nn = nn_mock
+
+        with patch.dict('sys.modules', {
+            'torch': torch_mock,
+            'torch.nn': nn_mock,
+            'torch.nn.functional': nn_mock.functional,
+            'torch.optim': Mock()
+        }):
+            yield torch_mock
 
 
 class TestActorNetwork:
@@ -75,13 +86,14 @@ class TestActorNetwork:
                 hidden_dim=64
             )
 
-            # Mock input tensor
-            mock_state = Mock()
-            mock_torch.tensor.return_value = mock_state
+            # Create real input tensor
+            import torch
+            mock_state = torch.randn(1, 10)  # batch_size=1, state_dim=10
 
-            # Mock forward pass should return action probabilities
+            # Forward pass should return action probabilities
             result = actor.forward(mock_state)
             assert result is not None
+            assert result.shape == (1, 5)  # batch_size=1, action_dim=5
         except ImportError:
             pytest.skip("ActorNetwork not available")
 
@@ -135,13 +147,14 @@ class TestCriticNetwork:
                 hidden_dim=64
             )
 
-            # Mock input tensor
-            mock_state = Mock()
-            mock_torch.tensor.return_value = mock_state
+            # Create real input tensor
+            import torch
+            mock_state = torch.randn(1, 10)  # batch_size=1, state_dim=10
 
-            # Mock forward pass should return value estimate
+            # Forward pass should return value estimate
             result = critic.forward(mock_state)
             assert result is not None
+            assert result.shape == (1, 1)  # batch_size=1, single value output
         except ImportError:
             pytest.skip("CriticNetwork not available")
 
@@ -357,9 +370,9 @@ class TestRewardFunctions:
 
             # Mock SLO targets and current state
             slo_targets = {
-                'target_p95_latency_ms': 400.0,
-                'target_error_rate': 0.01,
-                'target_throughput_rps': 150.0
+                'p95_latency_ms': 400.0,
+                'error_rate': 0.01,
+                'throughput_rps': 150.0
             }
 
             current_state = {

@@ -7,7 +7,7 @@ for RL model training with ClickHouse result storage.
 
 import logging
 import asyncio
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 from datetime import datetime
 from dataclasses import dataclass
 import json
@@ -283,6 +283,17 @@ class KubernetesTrainingJobManager:
                 propagation_policy="Background"
             )
 
+            # Delete associated ConfigMap (if any)
+            try:
+                await asyncio.to_thread(
+                    self.core_v1.delete_namespaced_config_map,
+                    name=f"{spec.job_name}-config",
+                    namespace=self.namespace
+                )
+            except ApiException:
+                # ConfigMap might not exist, ignore
+                pass
+
             # Remove from active jobs
             del self.active_jobs[training_id]
 
@@ -304,6 +315,39 @@ class KubernetesTrainingJobManager:
         except Exception as e:
             logger.error(f"Error cleaning up job {spec.job_name}: {str(e)}")
             return False
+
+    async def list_active_jobs(self) -> List[Dict[str, Any]]:
+        """
+        List all active training jobs in the namespace.
+        Returns list of job information dictionaries.
+        """
+        try:
+            if not self.batch_v1:
+                return []
+
+            # List jobs with our label selector
+            jobs = self.batch_v1.list_namespaced_job(
+                namespace=self.namespace,
+                label_selector="app=futura-trainer"
+            )
+
+            active_jobs = []
+            for job in jobs.items:
+                # Only include running/active jobs
+                if job.status.active:
+                    job_info = {
+                        "name": job.metadata.name,
+                        "training_id": job.metadata.labels.get("training-id", "unknown"),
+                        "status": "running",
+                        "created": job.metadata.creation_timestamp.isoformat() if job.metadata.creation_timestamp else None
+                    }
+                    active_jobs.append(job_info)
+
+            return active_jobs
+
+        except Exception as e:
+            logger.error(f"Error listing active jobs: {str(e)}")
+            return []
 
     async def monitor_and_collect_jobs(self):
         """

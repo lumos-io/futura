@@ -10,6 +10,31 @@ import numpy as np
 from typing import Dict, Optional
 import logging
 
+# Import neural network classes for compatibility with tests
+try:
+    from .neural_networks import (
+        ActorNetwork,
+        CriticNetwork,
+        PPOTrainer,
+        MetaPPOTrainer,
+        TrajectoryEncoder,
+        ModelRegistry,
+        calculate_performance_reward,
+        calculate_slo_reward,
+        calculate_efficiency_reward
+    )
+except ImportError:
+    # Gracefully handle missing PyTorch dependencies
+    ActorNetwork = None
+    CriticNetwork = None
+    PPOTrainer = None
+    MetaPPOTrainer = None
+    TrajectoryEncoder = None
+    ModelRegistry = None
+    calculate_performance_reward = None
+    calculate_slo_reward = None
+    calculate_efficiency_reward = None
+
 logger = logging.getLogger(__name__)
 
 # Constants from controller implementation
