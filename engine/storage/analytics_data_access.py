@@ -351,21 +351,21 @@ class AnalyticsDataAccess:
         Get application SLO metrics (latency, error rate, throughput).
 
         TODO: This requires custom application metrics to be ingested into ClickHouse.
-        For now, we'll simulate with placeholder values.
         """
         # TODO: Implement when custom application metrics are available
         # This would query application-specific metrics like:
-        # - P95 latency from application metrics
+        # - P95 latency from application metrics or traces
         # - Error rate from application logs/metrics
         # - Request throughput from application metrics
+        # - Integration with Prometheus, OpenTelemetry, or custom metrics endpoints
 
         logger.debug(
             f"SLO metrics not yet implemented for {namespace}/{app_name}")
 
         return {
-            "p95_latency_ms": 100.0,  # Placeholder
-            "error_rate": 0.01,       # Placeholder 1% error rate
-            "request_rate": 50.0      # Placeholder 50 RPS
+            "p95_latency_ms": 100.0,  # Default values until real metrics available
+            "error_rate": 0.01,       # Default 1% error rate
+            "request_rate": 50.0      # Default 50 RPS
         }
 
     async def _build_application_metrics(
@@ -388,7 +388,7 @@ class AnalyticsDataAccess:
         memory_utilization = min(
             1.0, memory_usage_mib / max(memory_limit_mib, 1)) if memory_limit_mib > 0 else 0
 
-        # Get SLO metrics (placeholder for now)
+        # TODO: Get real SLO metrics from application monitoring
         slo_metrics = {
             "p95_latency_ms": 100.0,
             "error_rate": 0.01,
@@ -532,8 +532,8 @@ class AnalyticsDataAccess:
             }
 
         capacity = results[0]
-        # TODO: Calculate actual utilization from running workloads
-        capacity["cpu_utilization"] = 0.0  # Placeholder
-        capacity["memory_utilization"] = 0.0  # Placeholder
+        # TODO: Calculate actual utilization by aggregating kubelet_container_metrics data
+        capacity["cpu_utilization"] = 0.0  # Requires aggregating actual pod usage
+        capacity["memory_utilization"] = 0.0  # Requires aggregating actual pod usage
 
         return capacity

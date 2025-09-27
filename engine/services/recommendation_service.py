@@ -8,6 +8,8 @@ import grpc
 # Import storage layers for ClickHouse integration
 from storage.clickhouse_client import ClickHouseClient, EngineDataAccess
 from storage.slo_data_access import SLODataAccess
+from storage.cluster_scaling_data_access import ClusterScalingDataAccess
+from scaling.cluster_scaling_algorithms import KarpenterStyleScaler
 
 
 logger = logging.getLogger(__name__)
@@ -36,10 +38,14 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
         self.clickhouse_client = clickhouse_client
         self.engine_data: Optional[EngineDataAccess] = None
         self.slo_data: Optional[SLODataAccess] = None
+        self.cluster_scaling_data: Optional[ClusterScalingDataAccess] = None
+        self.cluster_scaler: Optional[KarpenterStyleScaler] = None
 
         if self.clickhouse_client:
             self.engine_data = EngineDataAccess(self.clickhouse_client)
             self.slo_data = SLODataAccess(self.clickhouse_client)
+            self.cluster_scaling_data = ClusterScalingDataAccess(self.clickhouse_client)
+            self.cluster_scaler = KarpenterStyleScaler(self.cluster_scaling_data)
 
     async def SyncClusterOptimizationConfig(
         self,
@@ -326,7 +332,7 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
             context.set_details(f"Internal error: {str(e)}")
             return empty_pb2.Empty()
 
-    def GetClusterRecommendation(
+    async def GetClusterRecommendation(
         self,
         request: engine_pb2.RecommendationClusterRequest,
         context: grpc.ServicerContext
@@ -349,12 +355,46 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
                 logger.warning(
                     f"No cluster config found for API key: {request.cluster.api_key[:8]}...")
 
-            # For now, use placeholder cluster recommendation logic
-            # TODO: Implement proper Karpenter-style algorithms
-            cluster_plan = self._generate_baseline_cluster_recommendation(
-                request, cluster_config)
+            # Get cluster ID from API key (simplified mapping)
+            cluster_id = hash(request.cluster.api_key) % 1000000  # Simple cluster ID derivation
 
-            audit_reasons = ["Using placeholder cluster optimization algorithm"]
+            # Use intelligent cluster scaling if available
+            cluster_plan = None
+            model_version = "cluster-baseline-v1"
+            confidence = 0.6
+            audit_reasons = []
+
+            if self.cluster_scaler and self.cluster_scaling_data:
+                try:
+                    # Perform intelligent cluster scaling analysis
+                    scaling_decision = await self.cluster_scaler.analyze_scaling_decision(
+                        cluster_id, cluster_config
+                    )
+
+                    # Convert scaling decision to cluster action plan
+                    cluster_plan = self._convert_scaling_decision_to_plan(scaling_decision)
+                    model_version = "karpenter-style-v1"
+                    confidence = scaling_decision.confidence
+                    audit_reasons = [
+                        f"Karpenter-style analysis: {scaling_decision.reason}",
+                        f"Urgency: {scaling_decision.urgency:.2f}",
+                        f"Cost impact: ${scaling_decision.cost_impact:.3f}/hour",
+                        f"Pods to schedule: {scaling_decision.pods_that_will_schedule}",
+                        f"Efficiency gain: {scaling_decision.efficiency_gain:.1%}"
+                    ]
+
+                    logger.info(f"Intelligent scaling decision: {scaling_decision.action_type}, "
+                               f"confidence={confidence:.2f}, cost_impact=${scaling_decision.cost_impact:.3f}/hour")
+
+                except Exception as scaling_error:
+                    logger.warning(f"Intelligent scaling failed, falling back to baseline: {str(scaling_error)}")
+                    audit_reasons.append(f"Scaling analysis error: {str(scaling_error)}")
+
+            # Fallback to baseline if intelligent scaling failed
+            if not cluster_plan:
+                cluster_plan = self._generate_baseline_cluster_recommendation(
+                    request, cluster_config)
+                audit_reasons.append("Used baseline heuristic due to scaling analysis failure")
 
             if not request.dry_run:
                 logger.info(
@@ -367,8 +407,8 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
             return engine_pb2.RecommendationClusterResponse(
                 plan=cluster_plan,
                 decision_id=decision_id,
-                model_version="cluster-baseline-v1",
-                confidence=0.6,
+                model_version=model_version,
+                confidence=confidence,
                 audit_reasons=audit_reasons
             )
 
@@ -525,38 +565,112 @@ class RecommendationService(engine_pb2_grpc.RecommendationServiceServicer):
 
         return action_plan
 
+    def _convert_scaling_decision_to_plan(
+        self,
+        scaling_decision
+    ) -> engine_pb2.ClusterActionPlan:
+        """Convert a ScalingDecision to a ClusterActionPlan proto message."""
+
+        # Create cost benefit analysis
+        cost_benefit = engine_pb2.CostBenefit(
+            cost_change_per_hour=scaling_decision.cost_impact,
+            pods_that_will_schedule=scaling_decision.pods_that_will_schedule,
+            cluster_efficiency_gain=scaling_decision.efficiency_gain,
+            estimated_waste_reduction=scaling_decision.waste_reduction,
+            disruption_risk=scaling_decision.disruption_risk,
+            spot_interruption_risk=0.0  # TODO: Calculate based on instance types
+        )
+
+        # Create the action plan based on decision type
+        plan = engine_pb2.ClusterActionPlan(
+            action_type=scaling_decision.action_type,
+            confidence=scaling_decision.confidence,
+            reason=scaling_decision.reason,
+            cost_benefit=cost_benefit,
+            urgency=scaling_decision.urgency,
+            execute_within_seconds=int(300 if scaling_decision.urgency > 0.7 else 900)  # 5-15 minutes
+        )
+
+        if scaling_decision.action_type == "provision_nodes":
+            # Create provision action with multiple node groups
+            provision_action = engine_pb2.ClusterProvisionAction(
+                node_groups=scaling_decision.node_groups,
+                strategy="immediate" if scaling_decision.urgency > 0.8 else "gradual",
+                bin_packing_strategy="best-fit"  # Our algorithm uses best-fit approach
+            )
+            plan.provision.CopyFrom(provision_action)
+
+        elif scaling_decision.action_type == "deprovision_nodes":
+            # Create deprovision action
+            deprovision_action = engine_pb2.ClusterDeprovisionAction(
+                node_names=scaling_decision.nodes_to_remove,
+                strategy="drain",  # Always use graceful draining
+                max_parallel=min(2, len(scaling_decision.nodes_to_remove)),  # Conservative parallel draining
+                drain_timeout_seconds=300,  # 5 minute timeout
+                reason=scaling_decision.reason
+            )
+            plan.deprovision.CopyFrom(deprovision_action)
+
+        elif scaling_decision.action_type == "no_action":
+            # Create no action
+            no_action = engine_pb2.ClusterNoAction(
+                reason=scaling_decision.reason,
+                reassess_in_seconds=300  # Check again in 5 minutes
+            )
+            plan.no_action.CopyFrom(no_action)
+
+        return plan
+
     def _generate_baseline_cluster_recommendation(
         self,
         request: engine_pb2.RecommendationClusterRequest,
         cluster_config: Optional[engine_pb2.ClusterOptimizationConfigRequest]
     ) -> engine_pb2.ClusterActionPlan:
-        """Generate a baseline cluster recommendation (placeholder for Karpenter-style logic)."""
+        """Generate a baseline cluster recommendation (fallback when intelligent scaling fails)."""
 
-        # Placeholder cluster recommendation logic
-        # TODO: Implement proper Karpenter-style algorithms that consider:
-        # - Current node utilization
-        # - Pending pods that can't be scheduled
-        # - Cost optimization based on instance types
-        # - Spot vs on-demand preferences
-        # - Node diversity for availability
-
-        # For now, return a simple cluster provisioning recommendation
-        instance_types = ["m5.large", "m5.xlarge"]
+        # Simple baseline logic - provision one node if config suggests it
+        instance_types = ["m5.large"]
         if cluster_config and cluster_config.preferred_instance_types:
-            instance_types = list(cluster_config.preferred_instance_types)
+            instance_types = list(cluster_config.preferred_instance_types)[:1]  # Take first preferred type
 
         capacity_type = "on-demand"
         if cluster_config and cluster_config.allow_spot:
             capacity_type = "spot"
 
-        provision_action = engine_pb2.ClusterProvisionAction(
+        # Create a simple node group
+        node_group = engine_pb2.NodeGroupProvision(
+            name=f"baseline-{instance_types[0]}-{capacity_type}",
             instance_types=instance_types,
-            count=1,  # Conservative default
-            capacity_type=capacity_type
+            count=1,
+            capacity_type=capacity_type,
+            availability_zone="",  # Let cloud provider choose
+            labels={"futura.io/baseline": "true"},
+            taints=[],
+            reason="Baseline recommendation - add conservative capacity",
+            target_workloads=[]
+        )
+
+        provision_action = engine_pb2.ClusterProvisionAction(
+            node_groups=[node_group],
+            strategy="gradual",
+            bin_packing_strategy="first-fit"
+        )
+
+        cost_benefit = engine_pb2.CostBenefit(
+            cost_change_per_hour=0.1,  # Estimate $0.10/hour for baseline instance
+            pods_that_will_schedule=5,  # Conservative estimate
+            cluster_efficiency_gain=0.1,
+            estimated_waste_reduction=0.0,
+            disruption_risk=0.05,
+            spot_interruption_risk=0.1 if capacity_type == "spot" else 0.0
         )
 
         return engine_pb2.ClusterActionPlan(
-            confidence=0.6,
-            reason="Placeholder cluster recommendation - needs proper Karpenter algorithm",
-            details=provision_action
+            action_type="provision_nodes",
+            confidence=0.5,
+            reason="Baseline recommendation - conservative node provisioning",
+            provision=provision_action,
+            cost_benefit=cost_benefit,
+            urgency=0.3,
+            execute_within_seconds=900  # 15 minutes
         )
