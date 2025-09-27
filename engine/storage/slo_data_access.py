@@ -579,10 +579,10 @@ class TrainingDataCollector:
                         trajectory.get('error_rate', 0.01),
                         min(1.0, trajectory.get('num_replicas', 1) /
                             10.0),         # Normalize replicas
-                        0.5,  # CPU limit (normalized placeholder)
-                        0.5,  # Memory limit (normalized placeholder)
-                        0.5,  # Processing rate (placeholder)
-                        0.5   # Ingestion rate (placeholder)
+                        0.5,  # TODO: Replace with actual CPU limit from workload resource requests/limits
+                        0.5,  # TODO: Replace with actual memory limit from workload resource requests/limits
+                        0.5,  # TODO: Calculate actual processing rate from telemetry metrics
+                        0.5   # TODO: Calculate actual ingestion rate from telemetry metrics
                     ], dtype=np.float32)
 
                     # Create action vector (discrete action encoding)

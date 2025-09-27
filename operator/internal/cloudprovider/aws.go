@@ -63,7 +63,7 @@ func (p *AWSProvider) provisionSpotNodes(ctx context.Context, nodeGroup *pbeg.No
 		"count", nodeGroup.Count,
 		"zone", nodeGroup.AvailabilityZone)
 
-	// Placeholder for AWS Spot instance provisioning
+	// TODO: Implement AWS Spot instance provisioning
 	// This would typically use:
 	// - EC2 Spot Fleet or Spot Instances
 	// - EKS Managed Node Groups with spot capacity
@@ -80,11 +80,12 @@ func (p *AWSProvider) provisionOnDemandNodes(ctx context.Context, nodeGroup *pbe
 		"count", nodeGroup.Count,
 		"zone", nodeGroup.AvailabilityZone)
 
-	// Placeholder for AWS On-Demand instance provisioning
-	// This would typically use:
-	// - EKS Managed Node Groups
-	// - Auto Scaling Groups with Launch Templates
-	// - Karpenter with on-demand node pools
+	// TODO: Implement AWS On-Demand instance provisioning
+	// This should:
+	// - Create/update EKS Managed Node Groups with on-demand capacity
+	// - Configure Auto Scaling Groups with appropriate Launch Templates
+	// - Set up Karpenter NodePool and NodeClass CRs for on-demand instances
+	// - Handle node group scaling and lifecycle management
 
 	return fmt.Errorf("AWS on-demand node provisioning not yet implemented")
 }
@@ -116,17 +117,37 @@ func (p *AWSProvider) DeprovisionNodes(ctx context.Context, nodeNames []string, 
 }
 
 func (p *AWSProvider) drainAndTerminateNodes(ctx context.Context, nodeNames []string, maxParallel int32) error {
-	// Placeholder for graceful node draining and termination
+	// TODO: Implement graceful node draining and termination
+	// This should:
+	// - Cordon nodes to prevent new pod scheduling
+	// - Drain nodes by evicting pods with proper grace periods
+	// - Wait for pods to terminate or reach timeout
+	// - Terminate the underlying EC2 instances
+	// - Remove nodes from EKS cluster or ASG configuration
+	// - Respect maxParallel to control parallel operations
 	return fmt.Errorf("AWS node draining not yet implemented")
 }
 
 func (p *AWSProvider) cordonDrainAndTerminateNodes(ctx context.Context, nodeNames []string, maxParallel int32) error {
-	// Placeholder for cordon + drain + terminate
+	// TODO: Implement cordon, drain, and terminate workflow
+	// This should:
+	// - First cordon all nodes to prevent new pod scheduling
+	// - Then drain nodes by evicting all pods with proper grace periods
+	// - Wait for pods to terminate or reach timeout
+	// - Finally terminate the underlying EC2 instances
+	// - Clean up EKS cluster registration and ASG configuration
+	// - Process nodes in parallel respecting maxParallel limit
 	return fmt.Errorf("AWS node cordon and drain not yet implemented")
 }
 
 func (p *AWSProvider) forceTerminateNodes(ctx context.Context, nodeNames []string, maxParallel int32) error {
-	// Placeholder for force termination (no graceful draining)
+	// TODO: Implement force node termination without graceful draining
+	// This should:
+	// - Immediately cordon nodes to prevent new pod scheduling
+	// - Force terminate EC2 instances without waiting for pod eviction
+	// - Clean up EKS cluster registration and ASG configuration
+	// - Handle batch termination respecting maxParallel limit
+	// - Log warning about potential pod data loss due to force termination
 	return fmt.Errorf("AWS force node termination not yet implemented")
 }
 
@@ -134,7 +155,12 @@ func (p *AWSProvider) GetNodeCapacity(ctx context.Context) ([]NodeCapacity, erro
 	// In a real implementation, this would query AWS for available instance types
 	// and their specifications in the current region
 
-	// Placeholder data for common AWS instance types
+	// TODO: Replace with real AWS EC2 instance type data from AWS APIs
+	// This should query AWS EC2 DescribeInstanceTypes API to get:
+	// - Current instance types available in the region
+	// - Real-time pricing from EC2 Pricing API
+	// - Current availability in each AZ
+	// - Accurate CPU, memory, and network specifications
 	capacities := []NodeCapacity{
 		{
 			InstanceType:           "m5.large",
