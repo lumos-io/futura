@@ -3,9 +3,11 @@ package poller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	pbeg "github.com/opisvigilant/futura/proto/gen/engine"
+	"io.lumos/futura/internal/cloudprovider"
 	futurav1 "io.lumos/futura/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,12 +22,21 @@ import (
 )
 
 type Poller struct {
-	grpcClient pbeg.RecommendationServiceClient
+	grpcClient            pbeg.RecommendationServiceClient
+	cloudProviderManager  *cloudprovider.CloudProviderManager
 }
 
-func New(grpcConn *grpc.ClientConn) (*Poller, error) {
+func New(grpcConn *grpc.ClientConn, kubeClient client.Client) (*Poller, error) {
+	cloudManager := cloudprovider.NewCloudProviderManager(kubeClient)
+
+	// Register supported cloud providers
+	cloudManager.RegisterProvider(cloudprovider.NewAWSProvider("us-east-1")) // TODO: Make region configurable
+	cloudManager.RegisterProvider(cloudprovider.NewKindProvider("kind"))
+	// TODO: Add GCP, Azure, Alibaba, DigitalOcean providers
+
 	return &Poller{
-		grpcClient: pbeg.NewRecommendationServiceClient(grpcConn),
+		grpcClient:           pbeg.NewRecommendationServiceClient(grpcConn),
+		cloudProviderManager: cloudManager,
 	}, nil
 }
 
@@ -100,9 +111,13 @@ func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, sc
 	if err != nil {
 		logger.Error(err, "Failed to fetch cluster optimization decision from backend")
 	} else {
-		logger.Info("Received cluster optimization decision", "decision_id", clusterResp.DecisionId)
-		if err := p.applyClusterProvision(ctx, c, clusterResp.Plan.Details); err != nil {
-			logger.Error(err, "Failed to apply cluster provision action")
+		logger.Info("Received cluster optimization decision",
+			"decision_id", clusterResp.DecisionId,
+			"action_type", clusterResp.Plan.ActionType,
+			"confidence", clusterResp.Plan.Confidence)
+
+		if err := p.applyClusterAction(ctx, c, clusterResp.Plan); err != nil {
+			logger.Error(err, "Failed to apply cluster action", "action_type", clusterResp.Plan.ActionType)
 		}
 	}
 }
@@ -160,9 +175,177 @@ func (p *Poller) applyVPARecommendation(ctx context.Context, c client.Client, ap
 	return c.Patch(ctx, &dep, client.Apply, client.ForceOwnership, client.FieldOwner("futura-optimizer"))
 }
 
-func (p *Poller) applyClusterProvision(ctx context.Context, c client.Client, provision *pbeg.ClusterProvisionAction) error {
-	// This would create/update a Karpenter Provisioner CR
-	// For simplicity, just log
-	fmt.Printf("Would provision %d nodes of types %v (%s)\n", provision.Count, provision.InstanceTypes, provision.CapacityType)
+// applyClusterAction handles all types of cluster scaling actions
+func (p *Poller) applyClusterAction(ctx context.Context, c client.Client, plan *pbeg.ClusterActionPlan) error {
+	logger := log.FromContext(ctx)
+
+	switch plan.ActionType {
+	case "provision_nodes":
+		if provision := plan.GetProvision(); provision != nil {
+			return p.applyClusterProvision(ctx, c, provision, plan)
+		}
+	case "deprovision_nodes":
+		if deprovision := plan.GetDeprovision(); deprovision != nil {
+			return p.applyClusterDeprovision(ctx, c, deprovision, plan)
+		}
+	case "no_action":
+		if noAction := plan.GetNoAction(); noAction != nil {
+			logger.Info("No cluster action needed", "reason", noAction.Reason, "reassess_in", noAction.ReassessInSeconds)
+		}
+		return nil
+	default:
+		return fmt.Errorf("unknown cluster action type: %s", plan.ActionType)
+	}
 	return nil
+}
+
+// applyClusterProvision provisions new nodes based on the recommendation
+func (p *Poller) applyClusterProvision(ctx context.Context, c client.Client, provision *pbeg.ClusterProvisionAction, plan *pbeg.ClusterActionPlan) error {
+	logger := log.FromContext(ctx)
+
+	logger.Info("Applying cluster provisioning action",
+		"strategy", provision.Strategy,
+		"bin_packing_strategy", provision.BinPackingStrategy,
+		"node_groups", len(provision.NodeGroups),
+		"urgency", plan.Urgency,
+		"cost_change_per_hour", plan.CostBenefit.CostChangePerHour)
+
+	for i, nodeGroup := range provision.NodeGroups {
+		logger.Info("Processing node group",
+			"index", i,
+			"name", nodeGroup.Name,
+			"count", nodeGroup.Count,
+			"capacity_type", nodeGroup.CapacityType,
+			"instance_types", nodeGroup.InstanceTypes,
+			"reason", nodeGroup.Reason)
+
+		if err := p.provisionNodeGroup(ctx, c, nodeGroup); err != nil {
+			logger.Error(err, "Failed to provision node group", "name", nodeGroup.Name)
+			return fmt.Errorf("failed to provision node group %s: %w", nodeGroup.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// applyClusterDeprovision removes nodes based on the recommendation
+func (p *Poller) applyClusterDeprovision(ctx context.Context, c client.Client, deprovision *pbeg.ClusterDeprovisionAction, plan *pbeg.ClusterActionPlan) error {
+	logger := log.FromContext(ctx)
+
+	logger.Info("Applying cluster deprovisioning action",
+		"strategy", deprovision.Strategy,
+		"nodes", len(deprovision.NodeNames),
+		"max_parallel", deprovision.MaxParallel,
+		"drain_timeout", deprovision.DrainTimeoutSeconds,
+		"reason", deprovision.Reason)
+
+	return p.deprovisionNodes(ctx, c, deprovision)
+}
+
+// provisionNodeGroup provisions a specific node group
+func (p *Poller) provisionNodeGroup(ctx context.Context, c client.Client, nodeGroup *pbeg.NodeGroupProvision) error {
+	logger := log.FromContext(ctx)
+
+	// Determine cloud provider by detecting cluster environment
+	cloudProvider, err := p.detectCloudProvider(ctx, c)
+	if err != nil {
+		logger.Error(err, "Failed to detect cloud provider")
+		return fmt.Errorf("failed to detect cloud provider: %w", err)
+	}
+
+	logger.Info("Provisioning node group",
+		"name", nodeGroup.Name,
+		"instance_types", nodeGroup.InstanceTypes,
+		"count", nodeGroup.Count,
+		"capacity_type", nodeGroup.CapacityType,
+		"availability_zone", nodeGroup.AvailabilityZone,
+		"target_workloads", nodeGroup.TargetWorkloads,
+		"cloud_provider", cloudProvider)
+
+	// Use the cloud provider manager to provision the node group
+	return p.cloudProviderManager.ProvisionNodeGroup(ctx, nodeGroup, cloudProvider)
+}
+
+// deprovisionNodes removes nodes from the cluster
+func (p *Poller) deprovisionNodes(ctx context.Context, c client.Client, deprovision *pbeg.ClusterDeprovisionAction) error {
+	logger := log.FromContext(ctx)
+
+	// Determine cloud provider by detecting cluster environment
+	cloudProvider, err := p.detectCloudProvider(ctx, c)
+	if err != nil {
+		logger.Error(err, "Failed to detect cloud provider")
+		return fmt.Errorf("failed to detect cloud provider: %w", err)
+	}
+
+	logger.Info("Deprovisioning nodes",
+		"nodes", deprovision.NodeNames,
+		"strategy", deprovision.Strategy,
+		"max_parallel", deprovision.MaxParallel,
+		"cloud_provider", cloudProvider)
+
+	// Use the cloud provider manager to deprovision the nodes
+	return p.cloudProviderManager.DeprovisionNodes(ctx, deprovision.NodeNames, deprovision.Strategy, deprovision.MaxParallel, cloudProvider)
+}
+
+// detectCloudProvider detects the cloud provider by examining cluster nodes and their labels
+func (p *Poller) detectCloudProvider(ctx context.Context, c client.Client) (string, error) {
+	var nodes corev1.NodeList
+	if err := c.List(ctx, &nodes); err != nil {
+		return "", fmt.Errorf("failed to list nodes: %w", err)
+	}
+
+	if len(nodes.Items) == 0 {
+		return "kind", nil // Default to kind for empty clusters or testing
+	}
+
+	// Check the first node for cloud provider indicators
+	node := nodes.Items[0]
+
+	// Check for cloud provider specific labels
+	if _, ok := node.Labels["cloud.google.com/gke-nodepool"]; ok {
+		return "gcp", nil
+	}
+	if _, ok := node.Labels["eks.amazonaws.com/nodegroup"]; ok {
+		return "aws", nil
+	}
+	if _, ok := node.Labels["kubernetes.azure.com/agentpool"]; ok {
+		return "azure", nil
+	}
+	if _, ok := node.Labels["alibabacloud.com/nodepool"]; ok {
+		return "alibaba", nil
+	}
+	if _, ok := node.Labels["doks.digitalocean.com/node-pool"]; ok {
+		return "digitalocean", nil
+	}
+	if _, ok := node.Labels["io.x-k8s.io/kind-node"]; ok {
+		return "kind", nil
+	}
+
+	// Try to detect from provider ID
+	if node.Spec.ProviderID != "" {
+		if strings.HasPrefix(node.Spec.ProviderID, "aws://") {
+			return "aws", nil
+		}
+		if strings.HasPrefix(node.Spec.ProviderID, "gce://") {
+			return "gcp", nil
+		}
+		if strings.HasPrefix(node.Spec.ProviderID, "azure://") {
+			return "azure", nil
+		}
+	}
+
+	// Try to detect from instance type labels
+	if instanceType, ok := node.Labels["node.kubernetes.io/instance-type"]; ok {
+		// AWS instance types typically have format like m5.large
+		if strings.Contains(instanceType, ".") && len(strings.Split(instanceType, ".")) == 2 {
+			return "aws", nil
+		}
+		// GCP instance types typically have format like e2-standard-4
+		if strings.Contains(instanceType, "-") && strings.Contains(instanceType, "standard") {
+			return "gcp", nil
+		}
+	}
+
+	// Default to kind for unknown environments (useful for local testing)
+	return "kind", nil
 }

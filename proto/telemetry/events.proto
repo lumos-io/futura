@@ -33,5 +33,35 @@ message KubernetesEvent {
   APIKey apikey = 19;
   Metadata metadata = 20;
 
+  // NEW: For FailedScheduling events - capture scheduling constraints that failed
+  SchedulingConstraints scheduling_constraints = 21;
+
   EnrichmentMetadata enrichment = 100;
+}
+
+// Scheduling constraints for failed scheduling events (enables cluster scaling decisions)
+message SchedulingConstraints {
+  // Resource requirements that couldn't be satisfied
+  string required_cpu = 1;         // e.g., "2000m", "2"
+  string required_memory = 2;      // e.g., "4Gi", "4096Mi"
+  string required_storage = 3;     // e.g., "10Gi" (optional)
+
+  // Placement constraints that failed
+  repeated string node_selector_requirements = 4;    // e.g., ["node.kubernetes.io/instance-type=m5.large"]
+  repeated string affinity_requirements = 5;         // node affinity requirements that failed
+  repeated string anti_affinity_conflicts = 6;       // anti-affinity rules that prevented scheduling
+  repeated string unsatisfied_tolerations = 7;       // taints that couldn't be tolerated
+
+  // Capacity analysis from scheduler
+  string insufficient_resource = 8;   // "cpu", "memory", "pods", "storage"
+  int32 nodes_considered = 9;         // total nodes evaluated by scheduler
+  int32 nodes_rejected_resource = 10; // nodes rejected due to insufficient resources
+  int32 nodes_rejected_affinity = 11; // nodes rejected due to affinity/anti-affinity
+  int32 nodes_rejected_taints = 12;   // nodes rejected due to taints/tolerations
+  int32 nodes_rejected_selector = 13; // nodes rejected due to node selectors
+
+  // Additional context
+  string failure_domain = 14;        // zone/region where scheduling failed
+  repeated string missing_labels = 15; // required labels not found on any node
+  repeated string missing_taints = 16; // required tolerations not satisfied
 }

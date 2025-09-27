@@ -95,6 +95,9 @@ func RecordMetrics(node *corev1.Node, ts time.Time) *pb.KubernetesClusterObject 
 	}
 	obj.Allocatable = alloc
 
+	// Cloud Metadata
+	obj.CloudMetadata = extractCloudMetadata(node)
+
 	return obj
 }
 
@@ -198,4 +201,143 @@ func setNodeAllocatableValue(res corev1.ResourceName, q resource.Quantity) float
 
 func getNodeAllocatableMetric(nodeAllocatableTypeValue string) string {
 	return "k8s.node.allocatable_" + strcase.ToSnake(nodeAllocatableTypeValue)
+}
+
+// extractCloudMetadata extracts cloud provider metadata from node labels and annotations
+func extractCloudMetadata(node *corev1.Node) *pb.CloudNodeMetadata {
+	metadata := &pb.CloudNodeMetadata{}
+
+	// Extract cloud provider from common labels
+	if provider := node.Labels["cloud.google.com/gke-nodepool"]; provider != "" {
+		metadata.CloudProvider = "gcp"
+	} else if provider := node.Labels["eks.amazonaws.com/nodegroup"]; provider != "" {
+		metadata.CloudProvider = "aws"
+	} else if provider := node.Labels["kubernetes.azure.com/agentpool"]; provider != "" {
+		metadata.CloudProvider = "azure"
+	} else if provider := node.Labels["alibabacloud.com/nodepool"]; provider != "" {
+		metadata.CloudProvider = "alibaba"
+	} else if provider := node.Labels["doks.digitalocean.com/node-pool"]; provider != "" {
+		metadata.CloudProvider = "digitalocean"
+	} else if _, ok := node.Labels["io.x-k8s.io/kind-node"]; ok {
+		metadata.CloudProvider = "kind"
+	} else {
+		// Try to infer from other labels
+		if _, ok := node.Labels["node.kubernetes.io/instance-type"]; ok {
+			// This is likely a cloud node, try to detect provider
+			if zone := node.Labels["topology.kubernetes.io/zone"]; zone != "" {
+				if strings.Contains(zone, "us-") || strings.Contains(zone, "eu-") || strings.Contains(zone, "ap-") {
+					if strings.Contains(zone, "-") && len(strings.Split(zone, "-")) >= 3 {
+						metadata.CloudProvider = "aws"
+					} else if strings.Contains(zone, "-") && len(strings.Split(zone, "-")) == 2 {
+						metadata.CloudProvider = "gcp"
+					}
+				}
+			}
+		}
+	}
+
+	// Extract instance type
+	if instanceType := node.Labels["node.kubernetes.io/instance-type"]; instanceType != "" {
+		metadata.InstanceType = instanceType
+		metadata.InstanceFamily = extractInstanceFamily(instanceType)
+	} else if instanceType := node.Labels["beta.kubernetes.io/instance-type"]; instanceType != "" {
+		metadata.InstanceType = instanceType
+		metadata.InstanceFamily = extractInstanceFamily(instanceType)
+	}
+
+	// Extract availability zone
+	if zone := node.Labels["topology.kubernetes.io/zone"]; zone != "" {
+		metadata.AvailabilityZone = zone
+	} else if zone := node.Labels["failure-domain.beta.kubernetes.io/zone"]; zone != "" {
+		metadata.AvailabilityZone = zone
+	}
+
+	// Extract capacity type (spot vs on-demand)
+	if capacityType := node.Labels["karpenter.sh/capacity-type"]; capacityType != "" {
+		metadata.CapacityType = capacityType
+	} else if capacityType := node.Labels["eks.amazonaws.com/capacityType"]; capacityType != "" {
+		metadata.CapacityType = capacityType
+	} else if _, ok := node.Labels["cloud.google.com/gke-preemptible"]; ok {
+		metadata.CapacityType = "preemptible"
+	} else if _, ok := node.Labels["cloud.google.com/gke-spot"]; ok {
+		metadata.CapacityType = "spot"
+	} else {
+		metadata.CapacityType = "on-demand"
+	}
+
+	// Extract resource specifications from allocatable
+	if cpu := node.Status.Allocatable[corev1.ResourceCPU]; !cpu.IsZero() {
+		metadata.CpuCores = float64(cpu.MilliValue()) / 1000.0
+	}
+
+	if memory := node.Status.Allocatable[corev1.ResourceMemory]; !memory.IsZero() {
+		metadata.MemoryGb = float64(memory.Value()) / (1024 * 1024 * 1024)
+	}
+
+	// Extract instance ID from provider ID
+	if node.Spec.ProviderID != "" {
+		metadata.InstanceId = extractInstanceId(node.Spec.ProviderID)
+	}
+
+	// Extract launch time from node creation timestamp
+	if !node.CreationTimestamp.IsZero() {
+		metadata.LaunchTime = node.CreationTimestamp.Format(time.RFC3339)
+	}
+
+	return metadata
+}
+
+// extractInstanceFamily extracts the instance family from instance type
+func extractInstanceFamily(instanceType string) string {
+	if instanceType == "" {
+		return ""
+	}
+
+	// AWS: m5.large -> m5, c5n.xlarge -> c5n
+	if parts := strings.Split(instanceType, "."); len(parts) >= 2 {
+		return parts[0]
+	}
+
+	// GCP: e2-standard-4 -> e2-standard
+	if strings.Contains(instanceType, "-") {
+		parts := strings.Split(instanceType, "-")
+		if len(parts) >= 2 {
+			return strings.Join(parts[:2], "-")
+		}
+	}
+
+	return instanceType
+}
+
+// extractInstanceId extracts instance ID from provider ID
+func extractInstanceId(providerID string) string {
+	if providerID == "" {
+		return ""
+	}
+
+	// AWS: aws:///us-west-2a/i-1234567890abcdef0
+	if strings.HasPrefix(providerID, "aws://") {
+		parts := strings.Split(providerID, "/")
+		if len(parts) > 0 {
+			return parts[len(parts)-1]
+		}
+	}
+
+	// GCP: gce://project-id/zone/instance-name
+	if strings.HasPrefix(providerID, "gce://") {
+		parts := strings.Split(providerID, "/")
+		if len(parts) > 0 {
+			return parts[len(parts)-1]
+		}
+	}
+
+	// Azure: azure:///subscriptions/sub-id/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm-name
+	if strings.HasPrefix(providerID, "azure://") {
+		parts := strings.Split(providerID, "/")
+		if len(parts) > 0 {
+			return parts[len(parts)-1]
+		}
+	}
+
+	return providerID
 }

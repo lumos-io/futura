@@ -90,6 +90,9 @@ message KubernetesClusterObject {
   APIKey apikey = 49;
   Metadata metadata = 50;
 
+  // NEW: Cloud provider metadata (primarily for nodes)
+  CloudNodeMetadata cloud_metadata = 51;
+
   EnrichmentMetadata enrichment = 100;
 }
 
@@ -190,4 +193,29 @@ message NamespaceQuota {
 message QuotaResource {
   string resource = 1; // e.g. "cpu", "memory", "count/pods"
   int64 value = 2;     // raw string, like "500m" or "2Gi"
+}
+
+// Cloud provider metadata for nodes (enables cluster scaling decisions)
+message CloudNodeMetadata {
+  string instance_type = 1;        // e.g., "m5.large", "e2-standard-4"
+  string instance_family = 2;      // e.g., "m5", "e2-standard"
+  string capacity_type = 3;        // "on-demand", "spot", "preemptible"
+  string availability_zone = 4;    // e.g., "us-west-2a", "europe-west1-b"
+  string cloud_provider = 5;       // "aws", "gcp", "azure", "alibaba", "digitalocean", "kind"
+
+  // Resource specifications (useful for bin packing optimization)
+  double cpu_cores = 6;           // total CPU cores for this instance type
+  double memory_gb = 7;           // total memory in GB for this instance type
+  double network_gbps = 8;        // network bandwidth in Gbps (optional)
+
+  // Cost information (optional, can be enriched by engine later)
+  double cost_per_hour = 9;       // current cost per hour in USD (optional)
+
+  // Instance lifecycle info
+  string launch_time = 10;        // when this node was launched (ISO 8601)
+  string instance_id = 11;        // cloud provider instance ID
+
+  // Spot instance specific (if applicable)
+  double spot_price = 12;         // current spot price (optional)
+  double interruption_risk = 13;  // 0.0 to 1.0, risk of interruption (optional)
 }
