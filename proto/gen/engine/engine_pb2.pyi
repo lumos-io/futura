@@ -171,14 +171,43 @@ class HpaScaleAction(_message.Message):
     def __init__(self, replicas: _Optional[int] = ...) -> None: ...
 
 class ClusterProvisionAction(_message.Message):
-    __slots__ = ("instance_types", "count", "capacity_type")
+    __slots__ = ("node_groups", "strategy", "bin_packing_strategy")
+    NODE_GROUPS_FIELD_NUMBER: _ClassVar[int]
+    STRATEGY_FIELD_NUMBER: _ClassVar[int]
+    BIN_PACKING_STRATEGY_FIELD_NUMBER: _ClassVar[int]
+    node_groups: _containers.RepeatedCompositeFieldContainer[NodeGroupProvision]
+    strategy: str
+    bin_packing_strategy: str
+    def __init__(self, node_groups: _Optional[_Iterable[_Union[NodeGroupProvision, _Mapping]]] = ..., strategy: _Optional[str] = ..., bin_packing_strategy: _Optional[str] = ...) -> None: ...
+
+class NodeGroupProvision(_message.Message):
+    __slots__ = ("name", "instance_types", "count", "capacity_type", "availability_zone", "labels", "taints", "reason", "target_workloads")
+    class LabelsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+    NAME_FIELD_NUMBER: _ClassVar[int]
     INSTANCE_TYPES_FIELD_NUMBER: _ClassVar[int]
     COUNT_FIELD_NUMBER: _ClassVar[int]
     CAPACITY_TYPE_FIELD_NUMBER: _ClassVar[int]
+    AVAILABILITY_ZONE_FIELD_NUMBER: _ClassVar[int]
+    LABELS_FIELD_NUMBER: _ClassVar[int]
+    TAINTS_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    TARGET_WORKLOADS_FIELD_NUMBER: _ClassVar[int]
+    name: str
     instance_types: _containers.RepeatedScalarFieldContainer[str]
     count: int
     capacity_type: str
-    def __init__(self, instance_types: _Optional[_Iterable[str]] = ..., count: _Optional[int] = ..., capacity_type: _Optional[str] = ...) -> None: ...
+    availability_zone: str
+    labels: _containers.ScalarMap[str, str]
+    taints: _containers.RepeatedScalarFieldContainer[str]
+    reason: str
+    target_workloads: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, name: _Optional[str] = ..., instance_types: _Optional[_Iterable[str]] = ..., count: _Optional[int] = ..., capacity_type: _Optional[str] = ..., availability_zone: _Optional[str] = ..., labels: _Optional[_Mapping[str, str]] = ..., taints: _Optional[_Iterable[str]] = ..., reason: _Optional[str] = ..., target_workloads: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class VpaRecommendAction(_message.Message):
     __slots__ = ("container", "cpu_request_mcpu", "memory_mib", "mode")
@@ -207,14 +236,64 @@ class AppActionPlan(_message.Message):
     def __init__(self, type: _Optional[str] = ..., confidence: _Optional[float] = ..., reason: _Optional[str] = ..., hpa_scale: _Optional[_Union[HpaScaleAction, _Mapping]] = ..., vpa_recommend: _Optional[_Union[VpaRecommendAction, _Mapping]] = ...) -> None: ...
 
 class ClusterActionPlan(_message.Message):
-    __slots__ = ("confidence", "reason", "details")
+    __slots__ = ("action_type", "confidence", "reason", "provision", "deprovision", "no_action", "cost_benefit", "urgency", "execute_within_seconds")
+    ACTION_TYPE_FIELD_NUMBER: _ClassVar[int]
     CONFIDENCE_FIELD_NUMBER: _ClassVar[int]
     REASON_FIELD_NUMBER: _ClassVar[int]
-    DETAILS_FIELD_NUMBER: _ClassVar[int]
+    PROVISION_FIELD_NUMBER: _ClassVar[int]
+    DEPROVISION_FIELD_NUMBER: _ClassVar[int]
+    NO_ACTION_FIELD_NUMBER: _ClassVar[int]
+    COST_BENEFIT_FIELD_NUMBER: _ClassVar[int]
+    URGENCY_FIELD_NUMBER: _ClassVar[int]
+    EXECUTE_WITHIN_SECONDS_FIELD_NUMBER: _ClassVar[int]
+    action_type: str
     confidence: float
     reason: str
-    details: ClusterProvisionAction
-    def __init__(self, confidence: _Optional[float] = ..., reason: _Optional[str] = ..., details: _Optional[_Union[ClusterProvisionAction, _Mapping]] = ...) -> None: ...
+    provision: ClusterProvisionAction
+    deprovision: ClusterDeprovisionAction
+    no_action: ClusterNoAction
+    cost_benefit: CostBenefit
+    urgency: float
+    execute_within_seconds: int
+    def __init__(self, action_type: _Optional[str] = ..., confidence: _Optional[float] = ..., reason: _Optional[str] = ..., provision: _Optional[_Union[ClusterProvisionAction, _Mapping]] = ..., deprovision: _Optional[_Union[ClusterDeprovisionAction, _Mapping]] = ..., no_action: _Optional[_Union[ClusterNoAction, _Mapping]] = ..., cost_benefit: _Optional[_Union[CostBenefit, _Mapping]] = ..., urgency: _Optional[float] = ..., execute_within_seconds: _Optional[int] = ...) -> None: ...
+
+class ClusterDeprovisionAction(_message.Message):
+    __slots__ = ("node_names", "strategy", "max_parallel", "drain_timeout_seconds", "reason")
+    NODE_NAMES_FIELD_NUMBER: _ClassVar[int]
+    STRATEGY_FIELD_NUMBER: _ClassVar[int]
+    MAX_PARALLEL_FIELD_NUMBER: _ClassVar[int]
+    DRAIN_TIMEOUT_SECONDS_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    node_names: _containers.RepeatedScalarFieldContainer[str]
+    strategy: str
+    max_parallel: int
+    drain_timeout_seconds: int
+    reason: str
+    def __init__(self, node_names: _Optional[_Iterable[str]] = ..., strategy: _Optional[str] = ..., max_parallel: _Optional[int] = ..., drain_timeout_seconds: _Optional[int] = ..., reason: _Optional[str] = ...) -> None: ...
+
+class ClusterNoAction(_message.Message):
+    __slots__ = ("reason", "reassess_in_seconds")
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    REASSESS_IN_SECONDS_FIELD_NUMBER: _ClassVar[int]
+    reason: str
+    reassess_in_seconds: int
+    def __init__(self, reason: _Optional[str] = ..., reassess_in_seconds: _Optional[int] = ...) -> None: ...
+
+class CostBenefit(_message.Message):
+    __slots__ = ("cost_change_per_hour", "pods_that_will_schedule", "cluster_efficiency_gain", "estimated_waste_reduction", "disruption_risk", "spot_interruption_risk")
+    COST_CHANGE_PER_HOUR_FIELD_NUMBER: _ClassVar[int]
+    PODS_THAT_WILL_SCHEDULE_FIELD_NUMBER: _ClassVar[int]
+    CLUSTER_EFFICIENCY_GAIN_FIELD_NUMBER: _ClassVar[int]
+    ESTIMATED_WASTE_REDUCTION_FIELD_NUMBER: _ClassVar[int]
+    DISRUPTION_RISK_FIELD_NUMBER: _ClassVar[int]
+    SPOT_INTERRUPTION_RISK_FIELD_NUMBER: _ClassVar[int]
+    cost_change_per_hour: float
+    pods_that_will_schedule: int
+    cluster_efficiency_gain: float
+    estimated_waste_reduction: float
+    disruption_risk: float
+    spot_interruption_risk: float
+    def __init__(self, cost_change_per_hour: _Optional[float] = ..., pods_that_will_schedule: _Optional[int] = ..., cluster_efficiency_gain: _Optional[float] = ..., estimated_waste_reduction: _Optional[float] = ..., disruption_risk: _Optional[float] = ..., spot_interruption_risk: _Optional[float] = ...) -> None: ...
 
 class MetricSnapshot(_message.Message):
     __slots__ = ("values", "ts")
@@ -297,14 +376,16 @@ class ExecutionAppOutcome(_message.Message):
     def __init__(self, decision_id: _Optional[str] = ..., app: _Optional[_Union[AppRef, _Mapping]] = ..., success: bool = ..., note: _Optional[str] = ..., post_action_metrics: _Optional[_Union[MetricSnapshot, _Mapping]] = ..., reported_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class RecommendationClusterRequest(_message.Message):
-    __slots__ = ("cluster", "dry_run", "snapshot")
+    __slots__ = ("cluster", "dry_run", "analysis_window_hours", "snapshot")
     CLUSTER_FIELD_NUMBER: _ClassVar[int]
     DRY_RUN_FIELD_NUMBER: _ClassVar[int]
+    ANALYSIS_WINDOW_HOURS_FIELD_NUMBER: _ClassVar[int]
     SNAPSHOT_FIELD_NUMBER: _ClassVar[int]
     cluster: ClusterRef
     dry_run: bool
+    analysis_window_hours: int
     snapshot: MetricSnapshot
-    def __init__(self, cluster: _Optional[_Union[ClusterRef, _Mapping]] = ..., dry_run: bool = ..., snapshot: _Optional[_Union[MetricSnapshot, _Mapping]] = ...) -> None: ...
+    def __init__(self, cluster: _Optional[_Union[ClusterRef, _Mapping]] = ..., dry_run: bool = ..., analysis_window_hours: _Optional[int] = ..., snapshot: _Optional[_Union[MetricSnapshot, _Mapping]] = ...) -> None: ...
 
 class RecommendationClusterResponse(_message.Message):
     __slots__ = ("plan", "decision_id", "model_version", "confidence", "audit_reasons")

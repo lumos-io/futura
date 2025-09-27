@@ -217,6 +217,11 @@ func (kec *KubernetesEventsCollector) handleCoreV1Event(ev *corev1.Event, sender
 		kev.EventCount = int64(ev.Count)
 	}
 
+	// Extract scheduling constraints for failed scheduling events
+	if ev.Reason == "FailedScheduling" && ev.InvolvedObject.Kind == "Pod" {
+		kev.SchedulingConstraints = extractSchedulingConstraints(ev.Message)
+	}
+
 	log.Trace().
 		Str("event", ev.Name).
 		Str("namespace", ev.Namespace).
@@ -260,6 +265,11 @@ func (kec *KubernetesEventsCollector) handleEventsV1Event(ev *eventsv1.Event, se
 		kev.EventCount = int64(ev.DeprecatedCount)
 	}
 
+	// Extract scheduling constraints for failed scheduling events
+	if ev.Reason == "FailedScheduling" && ev.Regarding.Kind == "Pod" {
+		kev.SchedulingConstraints = extractSchedulingConstraints(ev.Note)
+	}
+
 	log.Trace().
 		Str("event", ev.Name).
 		Str("namespace", ev.Namespace).
@@ -295,4 +305,161 @@ func getEventV1EventTimestamp(evt *eventsv1.Event) time.Time {
 	default:
 		return time.Now()
 	}
+}
+
+// extractSchedulingConstraints parses failed scheduling event messages to extract constraint details
+func extractSchedulingConstraints(message string) *pb.SchedulingConstraints {
+	if message == "" {
+		return nil
+	}
+
+	constraints := &pb.SchedulingConstraints{}
+
+	// Try to extract resource requirements if the message mentions specific values
+	// Example: "pod requests: cpu=100m, memory=128Mi"
+	if strings.Contains(message, "cpu=") {
+		if cpu := extractResourceValue(message, "cpu="); cpu != "" {
+			constraints.RequiredCpu = cpu
+		}
+	}
+	if strings.Contains(message, "memory=") {
+		if memory := extractResourceValue(message, "memory="); memory != "" {
+			constraints.RequiredMemory = memory
+		}
+	}
+
+	// Parse common scheduling failure patterns
+	msgLower := strings.ToLower(message)
+
+	// Extract insufficient resource information
+	if strings.Contains(msgLower, "insufficient cpu") {
+		constraints.InsufficientResource = "cpu"
+	} else if strings.Contains(msgLower, "insufficient memory") {
+		constraints.InsufficientResource = "memory"
+	} else if strings.Contains(msgLower, "too many pods") || strings.Contains(msgLower, "insufficient pods") {
+		constraints.InsufficientResource = "pods"
+	} else if strings.Contains(msgLower, "insufficient storage") {
+		constraints.InsufficientResource = "storage"
+	}
+
+	// Extract resource requirements from messages like "0/3 nodes are available: 3 Insufficient cpu."
+	// or "0/5 nodes are available: 2 node(s) had taint {node-role.kubernetes.io/master: }, that the pod didn't tolerate"
+	if strings.Contains(message, "nodes are available") {
+		parts := strings.Split(message, ":")
+		if len(parts) >= 2 {
+			// Extract the number of nodes considered
+			if beforeColon := strings.TrimSpace(parts[0]); strings.Contains(beforeColon, "/") {
+				nodeParts := strings.Split(beforeColon, "/")
+				if len(nodeParts) >= 2 {
+					if considered := extractNumber(nodeParts[1]); considered > 0 {
+						constraints.NodesConsidered = considered
+					}
+				}
+			}
+
+			// Parse reasons after the colon
+			reasonText := strings.Join(parts[1:], ":")
+			parseSchedulingReasons(reasonText, constraints)
+		}
+	}
+
+	// Extract node selector requirements
+	if strings.Contains(msgLower, "node(s) didn't match node selector") ||
+	   strings.Contains(msgLower, "node selector") {
+		// This is a simplified extraction - in practice, you might want to parse more details
+		constraints.NodeSelectorRequirements = []string{"node-selector-constraint"}
+	}
+
+	// Extract affinity constraints
+	if strings.Contains(msgLower, "node(s) didn't match pod affinity") ||
+	   strings.Contains(msgLower, "affinity") {
+		constraints.AffinityRequirements = []string{"pod-affinity-constraint"}
+	}
+
+	// Extract anti-affinity constraints
+	if strings.Contains(msgLower, "node(s) didn't match pod anti-affinity") ||
+	   strings.Contains(msgLower, "anti-affinity") {
+		constraints.AntiAffinityConflicts = []string{"pod-anti-affinity-constraint"}
+	}
+
+	// Extract taint/toleration issues
+	if strings.Contains(msgLower, "taint") && strings.Contains(msgLower, "tolerate") {
+		constraints.UnsatisfiedTolerations = []string{"taint-toleration-constraint"}
+	}
+
+	return constraints
+}
+
+// parseSchedulingReasons parses the reason part of scheduling failure messages
+func parseSchedulingReasons(reasonText string, constraints *pb.SchedulingConstraints) {
+	reasonLower := strings.ToLower(reasonText)
+
+	// Count different types of node rejections
+	if strings.Contains(reasonLower, "insufficient cpu") || strings.Contains(reasonLower, "insufficient memory") {
+		if num := extractNodeCount(reasonText, "insufficient"); num > 0 {
+			constraints.NodesRejectedResource = num
+		}
+	}
+
+	if strings.Contains(reasonLower, "taint") {
+		if num := extractNodeCount(reasonText, "taint"); num > 0 {
+			constraints.NodesRejectedTaints = num
+		}
+	}
+
+	if strings.Contains(reasonLower, "affinity") || strings.Contains(reasonLower, "anti-affinity") {
+		if num := extractNodeCount(reasonText, "affinity"); num > 0 {
+			constraints.NodesRejectedAffinity = num
+		}
+	}
+
+	if strings.Contains(reasonLower, "node selector") {
+		if num := extractNodeCount(reasonText, "node selector"); num > 0 {
+			constraints.NodesRejectedSelector = num
+		}
+	}
+}
+
+// extractNumber extracts the first number found in a string
+func extractNumber(s string) int32 {
+	var num int32
+	for _, char := range s {
+		if char >= '0' && char <= '9' {
+			num = num*10 + int32(char-'0')
+		} else if num > 0 {
+			break
+		}
+	}
+	return num
+}
+
+// extractNodeCount extracts node count from reason text for specific constraint types
+func extractNodeCount(text string, constraintType string) int32 {
+	// Look for patterns like "3 node(s) had taint" or "2 Insufficient cpu"
+	words := strings.Fields(text)
+	for i, word := range words {
+		if num := extractNumber(word); num > 0 {
+			// Check if this number is related to our constraint type
+			remaining := strings.Join(words[i:], " ")
+			if strings.Contains(strings.ToLower(remaining), constraintType) {
+				return num
+			}
+		}
+	}
+	return 0
+}
+
+// extractResourceValue extracts resource values like "100m" from "cpu=100m" patterns
+func extractResourceValue(text, prefix string) string {
+	if idx := strings.Index(text, prefix); idx != -1 {
+		start := idx + len(prefix)
+		end := start
+		for end < len(text) && (text[end] != ',' && text[end] != ' ' && text[end] != ')' && text[end] != ']') {
+			end++
+		}
+		if end > start {
+			return text[start:end]
+		}
+	}
+	return ""
 }

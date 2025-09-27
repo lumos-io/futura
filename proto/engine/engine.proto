@@ -111,9 +111,29 @@ message HpaScaleAction {
 }
 
 message ClusterProvisionAction {
-  repeated string instance_types = 1;
-  int32 count = 2;
-  string capacity_type = 3; // on-demand / spot
+  // NEW: Support for multiple node groups with different configurations
+  repeated NodeGroupProvision node_groups = 1;
+
+  // Overall provisioning strategy
+  string strategy = 2; // "immediate", "gradual", "predictive"
+  string bin_packing_strategy = 3; // "first-fit", "best-fit", "worst-fit"
+}
+
+// Individual node group to provision
+message NodeGroupProvision {
+  string name = 1;                    // logical name for this group
+  repeated string instance_types = 2; // preference order (first = most preferred)
+  int32 count = 3;                   // number of nodes to provision
+  string capacity_type = 4;          // "on-demand", "spot", "mixed"
+
+  // Placement preferences
+  string availability_zone = 5;      // preferred zone (optional)
+  map<string, string> labels = 6;    // k8s labels to apply to nodes
+  repeated string taints = 7;        // k8s taints to apply to nodes
+
+  // Justification for this group
+  string reason = 8;                 // why this group is needed
+  repeated string target_workloads = 9; // which pending pods this serves
 }
 
 message VpaRecommendAction {
@@ -134,11 +154,51 @@ message AppActionPlan {
   }
 }
 
-message ClusterActionPlan {  
-  double confidence = 1;
-  string reason = 2;
+message ClusterActionPlan {
+  string action_type = 1; // "provision_nodes", "deprovision_nodes", "no_action"
+  double confidence = 2;
+  string reason = 3;
 
-  ClusterProvisionAction details = 3;
+  // Action details
+  oneof details {
+    ClusterProvisionAction provision = 4;
+    ClusterDeprovisionAction deprovision = 5;
+    ClusterNoAction no_action = 6;
+  }
+
+  // Cost and performance impact
+  CostBenefit cost_benefit = 7;
+
+  // Timing and urgency
+  double urgency = 8;                    // 0.0 to 1.0 (how urgent is this action)
+  int32 execute_within_seconds = 9;      // recommended execution timeframe
+}
+
+// Deprovision (remove) nodes action
+message ClusterDeprovisionAction {
+  repeated string node_names = 1;    // specific nodes to remove
+  string strategy = 2;               // "drain", "cordon_and_drain", "force"
+  int32 max_parallel = 3;           // max nodes to drain in parallel
+  int32 drain_timeout_seconds = 4;  // timeout for draining each node
+  string reason = 5;                // why these nodes should be removed
+}
+
+// No action needed
+message ClusterNoAction {
+  string reason = 1;                // why no action is recommended
+  int32 reassess_in_seconds = 2;    // when to check again
+}
+
+// Cost and performance impact of the action
+message CostBenefit {
+  double cost_change_per_hour = 1;       // USD change per hour (negative = savings)
+  int32 pods_that_will_schedule = 2;     // pending pods that will be able to schedule
+  double cluster_efficiency_gain = 3;    // 0.0 to 1.0 (improvement in resource utilization)
+  double estimated_waste_reduction = 4;  // reduction in unused resources (0.0 to 1.0)
+
+  // Risk assessment
+  double disruption_risk = 5;            // 0.0 to 1.0 (risk of workload disruption)
+  double spot_interruption_risk = 6;     // 0.0 to 1.0 (risk of spot interruptions)
 }
 
 message MetricSnapshot {
@@ -189,11 +249,12 @@ message ExecutionAppOutcome {
 
 message RecommendationClusterRequest {
   ClusterRef cluster = 1;
-  // If true, server computes and returns plan but does not execute (for
-  // testing).
+  // If true, server computes and returns plan but does not execute (for testing).
   bool dry_run = 2;
+  // Optional: time window for analysis in hours (default: engine decides)
+  int32 analysis_window_hours = 3;
   // Optional: if operator already has some recent metrics to pass through.
-  MetricSnapshot snapshot = 3;
+  MetricSnapshot snapshot = 4;
 }
 
 message RecommendationClusterResponse {

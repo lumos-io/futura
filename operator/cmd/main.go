@@ -157,7 +157,7 @@ func main() {
 		log.Fatalf("unable to create SLO controller: %v", err)
 	}
 
-	p, err := poller.New(grpcConn)
+	p, err := poller.New(grpcConn, mgr.GetClient())
 	if err != nil {
 		log.Fatalf("unable to create poller: %v", err)
 	}
