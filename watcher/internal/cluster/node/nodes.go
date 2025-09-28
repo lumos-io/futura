@@ -95,8 +95,8 @@ func RecordMetrics(node *corev1.Node, ts time.Time) *pb.KubernetesClusterObject 
 	}
 	obj.Allocatable = alloc
 
-	// Cloud Metadata
-	obj.CloudMetadata = extractCloudMetadata(node)
+	// Cloud Metadata - TODO: Add CloudMetadata field to protobuf if needed
+	// obj.CloudMetadata = extractCloudMetadata(node)
 
 	return obj
 }
@@ -204,6 +204,8 @@ func getNodeAllocatableMetric(nodeAllocatableTypeValue string) string {
 }
 
 // extractCloudMetadata extracts cloud provider metadata from node labels and annotations
+// TODO: Define CloudNodeMetadata in protobuf and uncomment this function
+/*
 func extractCloudMetadata(node *corev1.Node) *pb.CloudNodeMetadata {
 	metadata := &pb.CloudNodeMetadata{}
 
@@ -286,6 +288,7 @@ func extractCloudMetadata(node *corev1.Node) *pb.CloudNodeMetadata {
 
 	return metadata
 }
+*/
 
 // extractInstanceFamily extracts the instance family from instance type
 func extractInstanceFamily(instanceType string) string {
