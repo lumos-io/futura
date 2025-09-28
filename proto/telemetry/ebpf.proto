@@ -1,0 +1,261 @@
+syntax = "proto3";
+
+package telemetry;
+
+option go_package = "github.com/opisvigilant/futura/proto/gen/telemetry;telemetry";
+
+import "telemetry/metadata.proto";
+import "google/protobuf/timestamp.proto";
+
+// EBPFMetrics contains all eBPF-collected application metrics
+message EBPFMetrics {
+  // Container context
+  string container_id = 1;
+  string pod_name = 2;
+  string pod_uid = 3;
+  string namespace = 4;
+  string node_name = 5;
+  string app_name = 6;
+  string app_version = 7;
+  string service_name = 8;
+  uint64 cgroup_id = 9;
+
+  // Metric categories
+  HTTPMetrics http = 10;
+  MemoryPatterns memory_patterns = 11;
+  CPUPatterns cpu_patterns = 12;
+  NetworkFlow network_flow = 13;
+
+  // Metadata
+  APIKey apikey = 14;
+  Metadata metadata = 15;
+  google.protobuf.Timestamp timestamp = 16;
+
+  EnrichmentMetadata enrichment = 100;
+}
+
+// HTTPMetrics captures HTTP/gRPC application performance
+message HTTPMetrics {
+  // Request metrics
+  uint64 request_count = 1;
+  uint64 error_count = 2;
+  double error_rate = 3;
+
+  // Latency distribution (microseconds)
+  LatencyHistogram latency = 4;
+
+  // Status code distribution
+  map<uint32, uint64> status_codes = 5;
+
+  // HTTP methods
+  map<string, uint64> methods = 6;
+
+  // Endpoints (top N by request count)
+  repeated EndpointMetrics endpoints = 7;
+
+  // Connection metrics
+  uint64 active_connections = 8;
+  uint64 connection_errors = 9;
+
+  google.protobuf.Timestamp window_start = 10;
+  google.protobuf.Timestamp window_end = 11;
+}
+
+message LatencyHistogram {
+  // Percentiles in microseconds
+  double p50 = 1;
+  double p90 = 2;
+  double p95 = 3;
+  double p99 = 4;
+  double p999 = 5;
+
+  // Mean and max
+  double mean = 6;
+  double max = 7;
+  double min = 8;
+
+  // Histogram buckets (optional detailed distribution)
+  repeated HistogramBucket buckets = 9;
+}
+
+message HistogramBucket {
+  double upper_bound_us = 1;  // Upper bound in microseconds
+  uint64 count = 2;           // Number of samples in this bucket
+}
+
+message EndpointMetrics {
+  string endpoint = 1;         // e.g., "/api/users", "UserService.GetUser"
+  uint64 request_count = 2;
+  double avg_latency_us = 3;
+  double error_rate = 4;
+  double p95_latency_us = 5;
+}
+
+// MemoryPatterns captures memory allocation and usage patterns
+message MemoryPatterns {
+  // Allocation metrics
+  uint64 alloc_count = 1;
+  uint64 free_count = 2;
+  uint64 bytes_allocated = 3;
+  uint64 bytes_freed = 4;
+  uint64 net_allocated = 5;
+
+  // Allocation size distribution
+  AllocationSizeHistogram alloc_sizes = 6;
+
+  // Memory pressure indicators
+  uint64 page_faults = 7;
+  uint64 major_page_faults = 8;
+  double fragmentation_ratio = 9;
+
+  // Leak detection
+  repeated MemoryLeak potential_leaks = 10;
+
+  // GC activity (for managed languages)
+  GCMetrics gc = 11;
+
+  google.protobuf.Timestamp window_start = 12;
+  google.protobuf.Timestamp window_end = 13;
+}
+
+message AllocationSizeHistogram {
+  uint64 small_allocs = 1;    // < 1KB
+  uint64 medium_allocs = 2;   // 1KB - 64KB
+  uint64 large_allocs = 3;    // 64KB - 1MB
+  uint64 huge_allocs = 4;     // > 1MB
+  double avg_alloc_size = 5;
+  double max_alloc_size = 6;
+}
+
+message MemoryLeak {
+  uint64 address = 1;
+  uint64 size = 2;
+  uint64 age_seconds = 3;
+  string stack_trace_hash = 4;  // Hash of allocation stack trace
+}
+
+message GCMetrics {
+  uint64 gc_count = 1;
+  uint64 gc_time_us = 2;
+  uint64 bytes_collected = 3;
+  double gc_overhead_percent = 4;
+}
+
+// CPUPatterns captures CPU usage and scheduling patterns
+message CPUPatterns {
+  // CPU time distribution
+  uint64 user_time_us = 1;
+  uint64 system_time_us = 2;
+  uint64 idle_time_us = 3;
+  double cpu_utilization = 4;
+
+  // Scheduling metrics
+  uint64 context_switches = 5;
+  uint64 voluntary_switches = 6;
+  uint64 involuntary_switches = 7;
+  double runqueue_latency_us = 8;
+
+  // Thread/process activity
+  uint32 active_threads = 9;
+  uint32 blocked_threads = 10;
+
+  // CPU-intensive operations
+  repeated CPUHotspot hotspots = 11;
+
+  google.protobuf.Timestamp window_start = 12;
+  google.protobuf.Timestamp window_end = 13;
+}
+
+message CPUHotspot {
+  string function_name = 1;
+  uint64 samples = 2;
+  double cpu_percent = 3;
+  string stack_trace_hash = 4;
+}
+
+// NetworkFlow captures network I/O and service communication
+message NetworkFlow {
+  // Overall I/O metrics
+  uint64 bytes_sent = 1;
+  uint64 bytes_received = 2;
+  uint64 packets_sent = 3;
+  uint64 packets_received = 4;
+
+  // Connection metrics
+  uint64 connections_established = 5;
+  uint64 connections_closed = 6;
+  uint64 connection_failures = 7;
+
+  // Service-to-service communication
+  repeated ServiceFlow service_flows = 8;
+
+  // Network latency
+  double avg_rtt_us = 9;
+  double p95_rtt_us = 10;
+
+  // Protocol distribution
+  map<string, uint64> protocols = 11;  // tcp, udp, http, grpc, etc.
+
+  google.protobuf.Timestamp window_start = 12;
+  google.protobuf.Timestamp window_end = 13;
+}
+
+message ServiceFlow {
+  // Source service
+  string source_service = 1;
+  string source_namespace = 2;
+
+  // Destination service
+  string dest_service = 3;
+  string dest_namespace = 4;
+  string dest_endpoint = 5;
+
+  // Flow metrics
+  uint64 request_count = 6;
+  uint64 bytes_transferred = 7;
+  double avg_latency_us = 8;
+  double error_rate = 9;
+
+  // Connection details
+  string protocol = 10;
+  uint32 dest_port = 11;
+}
+
+// EBPFSystemMetrics for system-wide eBPF observability
+message EBPFSystemMetrics {
+  string node_name = 1;
+
+  // eBPF program performance
+  repeated EBPFProgramStats programs = 2;
+
+  // Overall system impact
+  double ebpf_cpu_overhead = 3;
+  uint64 ebpf_memory_usage = 4;
+
+  // Map statistics
+  repeated EBPFMapStats maps = 5;
+
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+message EBPFProgramStats {
+  string program_name = 1;
+  string program_type = 2;
+  uint64 run_count = 3;
+  uint64 run_time_ns = 4;
+  uint64 avg_run_time_ns = 5;
+  bool is_loaded = 6;
+}
+
+message EBPFMapStats {
+  string map_name = 1;
+  string map_type = 2;
+  uint32 current_entries = 3;
+  uint32 max_entries = 4;
+  double utilization = 5;
+}
+
+// EBPFMetricsBatch for batching eBPF metrics
+message EBPFMetricsBatch {
+  repeated EBPFMetrics metrics = 1;
+}

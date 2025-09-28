@@ -78,16 +78,17 @@ var File_services_collect_proto protoreflect.FileDescriptor
 
 const file_services_collect_proto_rawDesc = "" +
 	"\n" +
-	"\x16services/collect.proto\x12\acollect\x1a\x16telemetry/events.proto\x1a\x17telemetry/cluster.proto\x1a\x15telemetry/stats.proto\">\n" +
+	"\x16services/collect.proto\x12\acollect\x1a\x16telemetry/events.proto\x1a\x17telemetry/cluster.proto\x1a\x15telemetry/stats.proto\x1a\x14telemetry/ebpf.proto\">\n" +
 	"\n" +
 	"CollectAck\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xf6\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xbb\x02\n" +
 	"\x0eCollectService\x12B\n" +
 	"\n" +
 	"SendEvents\x12\x1f.telemetry.KubernetesEventBatch\x1a\x13.collect.CollectAck\x12R\n" +
 	"\x12SendClusterObjects\x12'.telemetry.KubernetesClusterObjectBatch\x1a\x13.collect.CollectAck\x12L\n" +
-	"\x12SendKubeletMetrics\x12!.telemetry.KubernetesKubeletStats\x1a\x13.collect.CollectAckB:Z8github.com/opisvigilant/futura/proto/gen/collect;collectb\x06proto3"
+	"\x12SendKubeletMetrics\x12!.telemetry.KubernetesKubeletStats\x1a\x13.collect.CollectAck\x12C\n" +
+	"\x0fSendEBPFMetrics\x12\x1b.telemetry.EBPFMetricsBatch\x1a\x13.collect.CollectAckB:Z8github.com/opisvigilant/futura/proto/gen/collect;collectb\x06proto3"
 
 var (
 	file_services_collect_proto_rawDescOnce sync.Once
@@ -107,16 +108,19 @@ var file_services_collect_proto_goTypes = []any{
 	(*telemetry.KubernetesEventBatch)(nil),         // 1: telemetry.KubernetesEventBatch
 	(*telemetry.KubernetesClusterObjectBatch)(nil), // 2: telemetry.KubernetesClusterObjectBatch
 	(*telemetry.KubernetesKubeletStats)(nil),       // 3: telemetry.KubernetesKubeletStats
+	(*telemetry.EBPFMetricsBatch)(nil),             // 4: telemetry.EBPFMetricsBatch
 }
 var file_services_collect_proto_depIdxs = []int32{
 	1, // 0: collect.CollectService.SendEvents:input_type -> telemetry.KubernetesEventBatch
 	2, // 1: collect.CollectService.SendClusterObjects:input_type -> telemetry.KubernetesClusterObjectBatch
 	3, // 2: collect.CollectService.SendKubeletMetrics:input_type -> telemetry.KubernetesKubeletStats
-	0, // 3: collect.CollectService.SendEvents:output_type -> collect.CollectAck
-	0, // 4: collect.CollectService.SendClusterObjects:output_type -> collect.CollectAck
-	0, // 5: collect.CollectService.SendKubeletMetrics:output_type -> collect.CollectAck
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	4, // 3: collect.CollectService.SendEBPFMetrics:input_type -> telemetry.EBPFMetricsBatch
+	0, // 4: collect.CollectService.SendEvents:output_type -> collect.CollectAck
+	0, // 5: collect.CollectService.SendClusterObjects:output_type -> collect.CollectAck
+	0, // 6: collect.CollectService.SendKubeletMetrics:output_type -> collect.CollectAck
+	0, // 7: collect.CollectService.SendEBPFMetrics:output_type -> collect.CollectAck
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

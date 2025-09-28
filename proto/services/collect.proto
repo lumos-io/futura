@@ -3,6 +3,7 @@ syntax = "proto3";
 import "telemetry/events.proto";
 import "telemetry/cluster.proto";
 import "telemetry/stats.proto";
+import "telemetry/ebpf.proto";
 
 package collect;
 
@@ -13,6 +14,7 @@ service CollectService {
   rpc SendClusterObjects(telemetry.KubernetesClusterObjectBatch)
       returns (CollectAck);
   rpc SendKubeletMetrics(telemetry.KubernetesKubeletStats) returns (CollectAck);
+  rpc SendEBPFMetrics(telemetry.EBPFMetricsBatch) returns (CollectAck);
 }
 
 message CollectAck {

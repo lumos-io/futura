@@ -365,20 +365,20 @@ func extractSchedulingConstraints(message string) *pb.SchedulingConstraints {
 
 	// Extract node selector requirements
 	if strings.Contains(msgLower, "node(s) didn't match node selector") ||
-	   strings.Contains(msgLower, "node selector") {
+		strings.Contains(msgLower, "node selector") {
 		// This is a simplified extraction - in practice, you might want to parse more details
 		constraints.NodeSelectorRequirements = []string{"node-selector-constraint"}
 	}
 
 	// Extract affinity constraints
 	if strings.Contains(msgLower, "node(s) didn't match pod affinity") ||
-	   strings.Contains(msgLower, "affinity") {
+		strings.Contains(msgLower, "affinity") {
 		constraints.AffinityRequirements = []string{"pod-affinity-constraint"}
 	}
 
 	// Extract anti-affinity constraints
 	if strings.Contains(msgLower, "node(s) didn't match pod anti-affinity") ||
-	   strings.Contains(msgLower, "anti-affinity") {
+		strings.Contains(msgLower, "anti-affinity") {
 		constraints.AntiAffinityConflicts = []string{"pod-anti-affinity-constraint"}
 	}
 
