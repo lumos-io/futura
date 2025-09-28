@@ -131,13 +131,8 @@ func (mt *MemoryTracker) attachKernelTracepoints() error {
 	}
 	mt.links = append(mt.links, kfreeLink)
 
-	// Attach to page fault tracepoint
-	pageFaultLink, err := link.Tracepoint("exceptions", "page_fault_user", mt.objects.TracePageFault, nil)
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to attach page fault tracepoint (may not be available)")
-	} else {
-		mt.links = append(mt.links, pageFaultLink)
-	}
+	// Note: Page fault tracking removed due to missing tracepoint in current kernel
+	// Alternative: Could use software events or kprobes for page fault tracking
 
 	log.Info().Msg("Memory tracking kernel tracepoints attached")
 	return nil

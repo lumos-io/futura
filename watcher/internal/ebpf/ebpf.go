@@ -5,8 +5,10 @@ import (
 	"sync"
 
 	pb "github.com/opisvigilant/futura/proto/gen/telemetry"
+	"github.com/opisvigilant/futura/watcher/internal/ebpf/bpf/cpu_tracker"
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/bpf/http_metrics"
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/bpf/memory_tracker"
+	"github.com/opisvigilant/futura/watcher/internal/ebpf/bpf/network_flow"
 	"github.com/opisvigilant/futura/watcher/internal/ebpf/bpf/uprobe"
 	ectx "github.com/opisvigilant/futura/watcher/internal/ebpf/context"
 	"github.com/rs/zerolog/log"
@@ -30,13 +32,15 @@ type EBPFMetricsHandler interface {
 }
 
 type EbpfCollector struct {
-	programs       []CollectorProgram
-	containerMap   *ectx.ContainerMapper
-	httpCollector  *http_metrics.HTTPMetricsCollector
-	memoryTracker  *memory_tracker.MemoryTracker
-	metricsHandler EBPFMetricsHandler
-	cancel         context.CancelFunc
-	wg             sync.WaitGroup
+	programs           []CollectorProgram
+	containerMap       *ectx.ContainerMapper
+	httpCollector      *http_metrics.HTTPMetricsCollector
+	memoryTracker      *memory_tracker.MemoryTracker
+	cpuTracker         *cpu_tracker.CPUTracker
+	networkFlowTracker *network_flow.NetworkFlowTracker
+	metricsHandler     EBPFMetricsHandler
+	cancel             context.CancelFunc
+	wg                 sync.WaitGroup
 }
 
 func NewEbpfCollector(kubeClient kubernetes.Interface, nodeName string, metricsHandler EBPFMetricsHandler) (*EbpfCollector, error) {
@@ -55,10 +59,24 @@ func NewEbpfCollector(kubeClient kubernetes.Interface, nodeName string, metricsH
 		return nil, err
 	}
 
+	// Initialize CPU tracker
+	cpuTracker, err := cpu_tracker.NewCPUTracker(containerMap)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize network flow tracker
+	networkFlowTracker, err := network_flow.NewNetworkFlowTracker(containerMap)
+	if err != nil {
+		return nil, err
+	}
+
 	// Set up event handlers
 	if metricsHandler != nil {
 		httpCollector.SetHTTPEventHandler(metricsHandler.HandleHTTPMetrics)
 		memoryTracker.SetMemoryMetricsHandler(metricsHandler.HandleMemoryMetrics)
+		cpuTracker.SetCPUMetricsHandler(metricsHandler.HandleCPUMetrics)
+		networkFlowTracker.SetNetworkMetricsHandler(metricsHandler.HandleNetworkMetrics)
 	}
 
 	// Keep the original uprobe for compatibility
@@ -68,14 +86,18 @@ func NewEbpfCollector(kubeClient kubernetes.Interface, nodeName string, metricsH
 		uprobeCollector,
 		httpCollector,
 		memoryTracker,
+		cpuTracker,
+		networkFlowTracker,
 	}
 
 	c := &EbpfCollector{
-		programs:       programs,
-		containerMap:   containerMap,
-		httpCollector:  httpCollector,
-		memoryTracker:  memoryTracker,
-		metricsHandler: metricsHandler,
+		programs:           programs,
+		containerMap:       containerMap,
+		httpCollector:      httpCollector,
+		memoryTracker:      memoryTracker,
+		cpuTracker:         cpuTracker,
+		networkFlowTracker: networkFlowTracker,
+		metricsHandler:     metricsHandler,
 	}
 	return c, nil
 }
@@ -96,6 +118,16 @@ func (e *EbpfCollector) Start(ctx context.Context) error {
 
 	// Start memory tracker
 	if err := e.memoryTracker.Start(ctx); err != nil {
+		return err
+	}
+
+	// Start CPU tracker
+	if err := e.cpuTracker.Start(ctx); err != nil {
+		return err
+	}
+
+	// Start network flow tracker
+	if err := e.networkFlowTracker.Start(ctx); err != nil {
 		return err
 	}
 
@@ -137,8 +169,8 @@ func (s *SenderMetricsHandler) HandleHTTPMetrics(httpMetrics *pb.HTTPMetrics) {
 	}
 
 	ebpfMetrics := &pb.EBPFMetrics{
-		NodeName:  s.nodeName,
-		Http:      httpMetrics,
+		NodeName: s.nodeName,
+		Http:     httpMetrics,
 		// Container context will be enriched by HTTP collector
 		// API key and metadata will be added by sender
 	}
