@@ -45,6 +45,8 @@
             fi
             set +a
 
+            export PATH="$PWD/node_modules/.bin:$HOME/.bun/bin:$PATH"
+
             ./scripts/docker-login.sh
             ./scripts/setup-tools.sh
 

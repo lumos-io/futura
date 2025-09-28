@@ -55,7 +55,7 @@ func (s *CollectServer) Close() error {
 	return nil
 }
 
-func (s *CollectServer) SendEvents(ctx context.Context, req *pb.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
+func (s *CollectServer) CollectEvents(ctx context.Context, req *pb.KubernetesEventBatch) (*pbsvc.CollectAck, error) {
 	log.Info().Msg("received events...")
 
 	for _, event := range req.Events {
@@ -75,7 +75,7 @@ func (s *CollectServer) SendEvents(ctx context.Context, req *pb.KubernetesEventB
 	return &pbsvc.CollectAck{Status: "ok", Message: "event received"}, nil
 }
 
-func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pb.KubernetesClusterObjectBatch) (*pbsvc.CollectAck, error) {
+func (s *CollectServer) CollectClusterObjects(ctx context.Context, req *pb.KubernetesClusterObjectBatch) (*pbsvc.CollectAck, error) {
 	log.Info().Msg("received cluster objects...")
 
 	for _, obj := range req.Objects {
@@ -95,7 +95,7 @@ func (s *CollectServer) SendClusterObjects(ctx context.Context, req *pb.Kubernet
 	return &pbsvc.CollectAck{Status: "ok", Message: "cluster objects received"}, nil
 }
 
-func (s *CollectServer) SendKubeletMetrics(ctx context.Context, req *pb.KubernetesKubeletStats) (*pbsvc.CollectAck, error) {
+func (s *CollectServer) CollectKubeletMetrics(ctx context.Context, req *pb.KubernetesKubeletStats) (*pbsvc.CollectAck, error) {
 	log.Info().Msg("received kubelet metrics...")
 
 	if err := s.validateAPIKey(ctx, req.Apikey.Key); err != nil {
@@ -111,6 +111,10 @@ func (s *CollectServer) SendKubeletMetrics(ctx context.Context, req *pb.Kubernet
 		return nil, err
 	}
 	return &pbsvc.CollectAck{Status: "ok", Message: "kubelet stats received"}, nil
+}
+
+func (s *CollectServer) CollectEBPFMetrics(ctx context.Context, req *pb.EBPFMetricsBatch) (*pbsvc.CollectAck, error) {
+	return nil, nil
 }
 
 func (s *CollectServer) validateAPIKey(ctx context.Context, apiKey string) error {

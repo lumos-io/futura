@@ -1,20 +1,21 @@
 syntax = "proto3";
 
+package collect;
+
+option go_package = "github.com/opisvigilant/futura/proto/gen/collect;collect";
+
 import "telemetry/events.proto";
 import "telemetry/cluster.proto";
 import "telemetry/stats.proto";
 import "telemetry/ebpf.proto";
 
-package collect;
-
-option go_package = "github.com/opisvigilant/futura/proto/gen/collect;collect";
-
 service CollectService {
-  rpc SendEvents(telemetry.KubernetesEventBatch) returns (CollectAck);
-  rpc SendClusterObjects(telemetry.KubernetesClusterObjectBatch)
+  rpc CollectEvents(telemetry.KubernetesEventBatch) returns (CollectAck);
+  rpc CollectClusterObjects(telemetry.KubernetesClusterObjectBatch)
       returns (CollectAck);
-  rpc SendKubeletMetrics(telemetry.KubernetesKubeletStats) returns (CollectAck);
-  rpc SendEBPFMetrics(telemetry.EBPFMetricsBatch) returns (CollectAck);
+  rpc CollectKubeletMetrics(telemetry.KubernetesKubeletStats)
+      returns (CollectAck);
+  rpc CollectEBPFMetrics(telemetry.EBPFMetricsBatch) returns (CollectAck);
 }
 
 message CollectAck {

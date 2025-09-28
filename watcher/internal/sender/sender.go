@@ -100,7 +100,7 @@ func (s *Sender) sendEventsInBatch(ch chan *pbtl.KubernetesEvent, interval time.
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			if _, err := s.pbc.SendEvents(ctx, payload); err != nil {
+			if _, err := s.pbc.CollectEvents(ctx, payload); err != nil {
 				log.Logger.Error().Msgf("SendEvent failed: %v", err)
 			}
 		}
@@ -148,7 +148,7 @@ func (s *Sender) sendObjectsClusterInBatch(ch chan *pbtl.KubernetesClusterObject
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			if _, err := s.pbc.SendClusterObjects(ctx, payload); err != nil {
+			if _, err := s.pbc.CollectClusterObjects(ctx, payload); err != nil {
 				log.Logger.Error().Msgf("SendEvent failed: %v", err)
 			}
 		}
@@ -168,7 +168,7 @@ func (s *Sender) sendKubeletStats(ch chan *pbtl.KubernetesKubeletStats) {
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			if _, err := s.pbc.SendKubeletMetrics(ctx, ev); err != nil {
+			if _, err := s.pbc.CollectKubeletMetrics(ctx, ev); err != nil {
 				log.Logger.Error().Msgf("SendKubeletMetrics failed: %v", err)
 			}
 			cancel()
@@ -220,7 +220,7 @@ func (s *Sender) sendEBPFMetricsInBatch(ch chan *pbtl.EBPFMetrics, interval time
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			if _, err := s.pbc.SendEBPFMetrics(ctx, payload); err != nil {
+			if _, err := s.pbc.CollectEBPFMetrics(ctx, payload); err != nil {
 				log.Logger.Error().Msgf("SendEBPFMetrics failed: %v", err)
 			}
 		}

@@ -25,6 +25,9 @@ message EBPFMetrics {
   MemoryPatterns memory_patterns = 11;
   CPUPatterns cpu_patterns = 12;
   NetworkFlow network_flow = 13;
+  FileSystemMetrics filesystem = 17;
+  ApplicationMetrics application = 18;
+  SecurityMetrics security = 19;
 
   // Metadata
   APIKey apikey = 14;
@@ -253,6 +256,397 @@ message EBPFMapStats {
   uint32 current_entries = 3;
   uint32 max_entries = 4;
   double utilization = 5;
+}
+
+// FileSystemMetrics captures file I/O patterns and disk usage
+message FileSystemMetrics {
+  // I/O operation counts
+  uint64 read_ops = 1;
+  uint64 write_ops = 2;
+  uint64 open_ops = 3;
+  uint64 close_ops = 4;
+  uint64 sync_ops = 5;
+
+  // I/O bytes
+  uint64 bytes_read = 6;
+  uint64 bytes_written = 7;
+
+  // I/O latency distribution (microseconds)
+  LatencyHistogram read_latency = 8;
+  LatencyHistogram write_latency = 9;
+  LatencyHistogram open_latency = 10;
+
+  // File access patterns
+  repeated FileAccessPattern hot_files = 11;
+  repeated DirectoryPattern hot_directories = 12;
+
+  // Disk bandwidth utilization
+  double read_bandwidth_mbps = 13;
+  double write_bandwidth_mbps = 14;
+  double disk_utilization = 15;
+
+  // I/O size distribution
+  IOSizeHistogram io_sizes = 16;
+
+  // Error metrics
+  uint64 io_errors = 17;
+  uint64 permission_errors = 18;
+
+  google.protobuf.Timestamp window_start = 19;
+  google.protobuf.Timestamp window_end = 20;
+}
+
+message FileAccessPattern {
+  string file_path = 1;
+  uint64 access_count = 2;
+  uint64 bytes_accessed = 3;
+  double avg_latency_us = 4;
+  string access_type = 5;  // "read", "write", "read_write"
+}
+
+message DirectoryPattern {
+  string directory_path = 1;
+  uint64 file_count = 2;
+  uint64 total_accesses = 3;
+  uint64 total_bytes = 4;
+}
+
+message IOSizeHistogram {
+  uint64 small_io = 1;     // < 4KB
+  uint64 medium_io = 2;    // 4KB - 64KB
+  uint64 large_io = 3;     // 64KB - 1MB
+  uint64 huge_io = 4;      // > 1MB
+  double avg_io_size = 5;
+  double max_io_size = 6;
+}
+
+// ApplicationMetrics captures application-specific performance indicators
+message ApplicationMetrics {
+  // Database metrics
+  DatabaseMetrics database = 1;
+
+  // Cache metrics
+  CacheMetrics cache = 2;
+
+  // Custom business metrics
+  repeated CustomMetric custom_metrics = 3;
+
+  // Language-specific metrics
+  LanguageMetrics language = 4;
+
+  google.protobuf.Timestamp window_start = 5;
+  google.protobuf.Timestamp window_end = 6;
+}
+
+message DatabaseMetrics {
+  // Query performance
+  uint64 query_count = 1;
+  double avg_query_time_us = 2;
+  uint64 slow_queries = 3;
+  double slow_query_threshold_us = 4;
+
+  // Query types
+  map<string, uint64> query_types = 5;  // SELECT, INSERT, UPDATE, DELETE
+
+  // Connection metrics
+  uint64 active_connections = 6;
+  uint64 connection_pool_size = 7;
+  uint64 connection_timeouts = 8;
+
+  // Transaction metrics
+  uint64 transactions = 9;
+  uint64 rollbacks = 10;
+  double avg_transaction_time_us = 11;
+
+  // Top slow queries (anonymized)
+  repeated SlowQuery slow_query_samples = 12;
+}
+
+message SlowQuery {
+  string query_hash = 1;      // Hash of the query pattern
+  double execution_time_us = 2;
+  uint64 rows_examined = 3;
+  uint64 rows_returned = 4;
+  string query_type = 5;
+}
+
+message CacheMetrics {
+  // Hit/miss statistics
+  uint64 cache_hits = 1;
+  uint64 cache_misses = 2;
+  double hit_rate = 3;
+
+  // Cache operations
+  uint64 cache_sets = 4;
+  uint64 cache_gets = 5;
+  uint64 cache_deletes = 6;
+  uint64 cache_evictions = 7;
+
+  // Latency metrics
+  double avg_get_latency_us = 8;
+  double avg_set_latency_us = 9;
+
+  // Memory usage
+  uint64 cache_size_bytes = 10;
+  uint64 cache_capacity_bytes = 11;
+  double cache_utilization = 12;
+
+  // Cache types
+  string cache_type = 13;  // "redis", "memcached", "in_memory", etc.
+}
+
+message CustomMetric {
+  string name = 1;
+  string type = 2;           // "counter", "gauge", "histogram", "timer"
+  double value = 3;
+  map<string, string> labels = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
+
+message LanguageMetrics {
+  // Go-specific metrics
+  GoMetrics go_metrics = 1;
+
+  // Java-specific metrics
+  JavaMetrics java_metrics = 2;
+
+  // Python-specific metrics
+  PythonMetrics python_metrics = 3;
+
+  // Node.js-specific metrics
+  NodeJSMetrics nodejs_metrics = 4;
+}
+
+message GoMetrics {
+  // Goroutine metrics
+  uint64 goroutines = 1;
+  uint64 goroutine_stack_size = 2;
+
+  // Garbage collection (additional to general GC metrics)
+  uint64 gc_cycles = 3;
+  double gc_pause_time_us = 4;
+  uint64 heap_size = 5;
+  uint64 heap_alloc = 6;
+  uint64 heap_idle = 7;
+
+  // Channel operations
+  uint64 channel_sends = 8;
+  uint64 channel_receives = 9;
+  uint64 blocked_channels = 10;
+}
+
+message JavaMetrics {
+  // JVM metrics
+  uint64 heap_used = 1;
+  uint64 heap_max = 2;
+  uint64 non_heap_used = 3;
+  uint64 non_heap_max = 4;
+
+  // Thread metrics
+  uint64 thread_count = 5;
+  uint64 daemon_thread_count = 6;
+  uint64 peak_thread_count = 7;
+
+  // Class loading
+  uint64 loaded_class_count = 8;
+  uint64 unloaded_class_count = 9;
+
+  // GC additional metrics
+  map<string, uint64> gc_collections = 10;  // GC algorithm -> collection count
+  map<string, uint64> gc_time = 11;         // GC algorithm -> time spent
+}
+
+message PythonMetrics {
+  // Memory metrics
+  uint64 objects_count = 1;
+  uint64 gc_collections = 2;
+  uint64 gc_collected = 3;
+
+  // Module metrics
+  uint64 loaded_modules = 4;
+
+  // Exception metrics
+  uint64 exceptions_raised = 5;
+  map<string, uint64> exception_types = 6;
+}
+
+message NodeJSMetrics {
+  // Event loop metrics
+  double event_loop_lag_us = 1;
+  uint64 event_loop_iterations = 2;
+
+  // V8 metrics
+  uint64 heap_used = 3;
+  uint64 heap_total = 4;
+  uint64 external_memory = 5;
+
+  // Async operations
+  uint64 async_resources = 6;
+  uint64 pending_async_ops = 7;
+}
+
+// SecurityMetrics captures container security and resource violations
+message SecurityMetrics {
+  // Syscall monitoring
+  SyscallMetrics syscalls = 1;
+
+  // Resource violations
+  ResourceViolations resource_violations = 2;
+
+  // Network security
+  NetworkSecurity network_security = 3;
+
+  // Process security
+  ProcessSecurity process_security = 4;
+
+  // File system security
+  FileSystemSecurity filesystem_security = 5;
+
+  google.protobuf.Timestamp window_start = 6;
+  google.protobuf.Timestamp window_end = 7;
+}
+
+message SyscallMetrics {
+  // Syscall counts and patterns
+  uint64 total_syscalls = 1;
+  map<string, uint64> syscall_counts = 2;  // syscall_name -> count
+
+  // Anomaly detection
+  repeated SyscallAnomaly anomalies = 3;
+
+  // Privilege escalation attempts
+  uint64 privilege_escalation_attempts = 4;
+
+  // Suspicious syscall patterns
+  uint64 suspicious_patterns = 5;
+
+  // Rate-based anomalies
+  double syscall_rate_per_second = 6;
+  bool high_syscall_rate_detected = 7;
+}
+
+message SyscallAnomaly {
+  string syscall_name = 1;
+  uint64 count = 2;
+  double frequency_score = 3;  // Compared to baseline
+  string anomaly_type = 4;     // "high_frequency", "unusual_pattern", "privilege_escalation"
+  google.protobuf.Timestamp detected_at = 5;
+}
+
+message ResourceViolations {
+  // Memory violations
+  uint64 memory_limit_violations = 1;
+  uint64 oom_kills = 2;
+  uint64 memory_pressure_events = 3;
+
+  // CPU violations
+  uint64 cpu_throttling_events = 4;
+  uint64 cpu_quota_violations = 5;
+  double cpu_steal_time_percent = 6;
+
+  // File descriptor violations
+  uint64 fd_limit_violations = 7;
+  uint64 max_fds_reached = 8;
+
+  // Process violations
+  uint64 process_limit_violations = 9;
+  uint64 thread_limit_violations = 10;
+
+  // Network violations
+  uint64 network_bandwidth_violations = 11;
+  uint64 connection_limit_violations = 12;
+
+  // I/O violations
+  uint64 disk_quota_violations = 13;
+  uint64 iops_limit_violations = 14;
+}
+
+message NetworkSecurity {
+  // Suspicious network activity
+  uint64 suspicious_connections = 1;
+  uint64 port_scanning_attempts = 2;
+  uint64 dns_tunneling_attempts = 3;
+
+  // Blocked connections
+  uint64 blocked_outbound_connections = 4;
+  uint64 blocked_inbound_connections = 5;
+
+  // Unusual traffic patterns
+  repeated NetworkAnomaly network_anomalies = 6;
+
+  // Protocol violations
+  uint64 protocol_violations = 7;
+  map<string, uint64> blocked_protocols = 8;  // protocol -> count
+}
+
+message NetworkAnomaly {
+  string anomaly_type = 1;      // "unusual_destination", "high_volume", "suspicious_protocol"
+  string destination_ip = 2;
+  uint32 destination_port = 3;
+  string protocol = 4;
+  uint64 bytes_transferred = 5;
+  double risk_score = 6;
+  google.protobuf.Timestamp detected_at = 7;
+}
+
+message ProcessSecurity {
+  // Process creation monitoring
+  uint64 new_processes = 1;
+  uint64 suspicious_processes = 2;
+  repeated SuspiciousProcess suspicious_process_list = 3;
+
+  // Binary execution monitoring
+  uint64 unsigned_binaries_executed = 4;
+  uint64 modified_binaries_executed = 5;
+
+  // Privilege changes
+  uint64 setuid_executions = 6;
+  uint64 setgid_executions = 7;
+  uint64 capability_changes = 8;
+
+  // Container escapes
+  uint64 container_escape_attempts = 9;
+  uint64 namespace_violations = 10;
+}
+
+message SuspiciousProcess {
+  uint32 pid = 1;
+  string command = 2;
+  string binary_path = 3;
+  string reason = 4;           // Why it's suspicious
+  double risk_score = 5;
+  google.protobuf.Timestamp started_at = 6;
+  map<string, string> attributes = 7;  // Additional context
+}
+
+message FileSystemSecurity {
+  // File access violations
+  uint64 unauthorized_file_access = 1;
+  uint64 sensitive_file_access = 2;
+  repeated SensitiveFileAccess sensitive_accesses = 3;
+
+  // File modification monitoring
+  uint64 system_file_modifications = 4;
+  uint64 config_file_modifications = 5;
+  uint64 log_file_tampering = 6;
+
+  // Permission violations
+  uint64 permission_escalations = 7;
+  uint64 acl_violations = 8;
+
+  // Suspicious patterns
+  uint64 mass_file_deletions = 9;
+  uint64 rapid_file_creation = 10;
+  uint64 hidden_file_creation = 11;
+}
+
+message SensitiveFileAccess {
+  string file_path = 1;
+  string access_type = 2;      // "read", "write", "execute", "delete"
+  uint32 accessing_pid = 3;
+  string process_name = 4;
+  string reason = 5;           // Why it's sensitive
+  google.protobuf.Timestamp accessed_at = 6;
 }
 
 // EBPFMetricsBatch for batching eBPF metrics

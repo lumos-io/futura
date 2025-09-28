@@ -36,10 +36,13 @@ type EBPFMetrics struct {
 	ServiceName string `protobuf:"bytes,8,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
 	CgroupId    uint64 `protobuf:"varint,9,opt,name=cgroup_id,json=cgroupId,proto3" json:"cgroup_id,omitempty"`
 	// Metric categories
-	Http           *HTTPMetrics    `protobuf:"bytes,10,opt,name=http,proto3" json:"http,omitempty"`
-	MemoryPatterns *MemoryPatterns `protobuf:"bytes,11,opt,name=memory_patterns,json=memoryPatterns,proto3" json:"memory_patterns,omitempty"`
-	CpuPatterns    *CPUPatterns    `protobuf:"bytes,12,opt,name=cpu_patterns,json=cpuPatterns,proto3" json:"cpu_patterns,omitempty"`
-	NetworkFlow    *NetworkFlow    `protobuf:"bytes,13,opt,name=network_flow,json=networkFlow,proto3" json:"network_flow,omitempty"`
+	Http           *HTTPMetrics        `protobuf:"bytes,10,opt,name=http,proto3" json:"http,omitempty"`
+	MemoryPatterns *MemoryPatterns     `protobuf:"bytes,11,opt,name=memory_patterns,json=memoryPatterns,proto3" json:"memory_patterns,omitempty"`
+	CpuPatterns    *CPUPatterns        `protobuf:"bytes,12,opt,name=cpu_patterns,json=cpuPatterns,proto3" json:"cpu_patterns,omitempty"`
+	NetworkFlow    *NetworkFlow        `protobuf:"bytes,13,opt,name=network_flow,json=networkFlow,proto3" json:"network_flow,omitempty"`
+	Filesystem     *FileSystemMetrics  `protobuf:"bytes,17,opt,name=filesystem,proto3" json:"filesystem,omitempty"`
+	Application    *ApplicationMetrics `protobuf:"bytes,18,opt,name=application,proto3" json:"application,omitempty"`
+	Security       *SecurityMetrics    `protobuf:"bytes,19,opt,name=security,proto3" json:"security,omitempty"`
 	// Metadata
 	Apikey        *APIKey                `protobuf:"bytes,14,opt,name=apikey,proto3" json:"apikey,omitempty"`
 	Metadata      *Metadata              `protobuf:"bytes,15,opt,name=metadata,proto3" json:"metadata,omitempty"`
@@ -166,6 +169,27 @@ func (x *EBPFMetrics) GetCpuPatterns() *CPUPatterns {
 func (x *EBPFMetrics) GetNetworkFlow() *NetworkFlow {
 	if x != nil {
 		return x.NetworkFlow
+	}
+	return nil
+}
+
+func (x *EBPFMetrics) GetFilesystem() *FileSystemMetrics {
+	if x != nil {
+		return x.Filesystem
+	}
+	return nil
+}
+
+func (x *EBPFMetrics) GetApplication() *ApplicationMetrics {
+	if x != nil {
+		return x.Application
+	}
+	return nil
+}
+
+func (x *EBPFMetrics) GetSecurity() *SecurityMetrics {
+	if x != nil {
+		return x.Security
 	}
 	return nil
 }
@@ -1669,6 +1693,2507 @@ func (x *EBPFMapStats) GetUtilization() float64 {
 	return 0
 }
 
+// FileSystemMetrics captures file I/O patterns and disk usage
+type FileSystemMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// I/O operation counts
+	ReadOps  uint64 `protobuf:"varint,1,opt,name=read_ops,json=readOps,proto3" json:"read_ops,omitempty"`
+	WriteOps uint64 `protobuf:"varint,2,opt,name=write_ops,json=writeOps,proto3" json:"write_ops,omitempty"`
+	OpenOps  uint64 `protobuf:"varint,3,opt,name=open_ops,json=openOps,proto3" json:"open_ops,omitempty"`
+	CloseOps uint64 `protobuf:"varint,4,opt,name=close_ops,json=closeOps,proto3" json:"close_ops,omitempty"`
+	SyncOps  uint64 `protobuf:"varint,5,opt,name=sync_ops,json=syncOps,proto3" json:"sync_ops,omitempty"`
+	// I/O bytes
+	BytesRead    uint64 `protobuf:"varint,6,opt,name=bytes_read,json=bytesRead,proto3" json:"bytes_read,omitempty"`
+	BytesWritten uint64 `protobuf:"varint,7,opt,name=bytes_written,json=bytesWritten,proto3" json:"bytes_written,omitempty"`
+	// I/O latency distribution (microseconds)
+	ReadLatency  *LatencyHistogram `protobuf:"bytes,8,opt,name=read_latency,json=readLatency,proto3" json:"read_latency,omitempty"`
+	WriteLatency *LatencyHistogram `protobuf:"bytes,9,opt,name=write_latency,json=writeLatency,proto3" json:"write_latency,omitempty"`
+	OpenLatency  *LatencyHistogram `protobuf:"bytes,10,opt,name=open_latency,json=openLatency,proto3" json:"open_latency,omitempty"`
+	// File access patterns
+	HotFiles       []*FileAccessPattern `protobuf:"bytes,11,rep,name=hot_files,json=hotFiles,proto3" json:"hot_files,omitempty"`
+	HotDirectories []*DirectoryPattern  `protobuf:"bytes,12,rep,name=hot_directories,json=hotDirectories,proto3" json:"hot_directories,omitempty"`
+	// Disk bandwidth utilization
+	ReadBandwidthMbps  float64 `protobuf:"fixed64,13,opt,name=read_bandwidth_mbps,json=readBandwidthMbps,proto3" json:"read_bandwidth_mbps,omitempty"`
+	WriteBandwidthMbps float64 `protobuf:"fixed64,14,opt,name=write_bandwidth_mbps,json=writeBandwidthMbps,proto3" json:"write_bandwidth_mbps,omitempty"`
+	DiskUtilization    float64 `protobuf:"fixed64,15,opt,name=disk_utilization,json=diskUtilization,proto3" json:"disk_utilization,omitempty"`
+	// I/O size distribution
+	IoSizes *IOSizeHistogram `protobuf:"bytes,16,opt,name=io_sizes,json=ioSizes,proto3" json:"io_sizes,omitempty"`
+	// Error metrics
+	IoErrors         uint64                 `protobuf:"varint,17,opt,name=io_errors,json=ioErrors,proto3" json:"io_errors,omitempty"`
+	PermissionErrors uint64                 `protobuf:"varint,18,opt,name=permission_errors,json=permissionErrors,proto3" json:"permission_errors,omitempty"`
+	WindowStart      *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=window_start,json=windowStart,proto3" json:"window_start,omitempty"`
+	WindowEnd        *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=window_end,json=windowEnd,proto3" json:"window_end,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *FileSystemMetrics) Reset() {
+	*x = FileSystemMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileSystemMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileSystemMetrics) ProtoMessage() {}
+
+func (x *FileSystemMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileSystemMetrics.ProtoReflect.Descriptor instead.
+func (*FileSystemMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *FileSystemMetrics) GetReadOps() uint64 {
+	if x != nil {
+		return x.ReadOps
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetWriteOps() uint64 {
+	if x != nil {
+		return x.WriteOps
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetOpenOps() uint64 {
+	if x != nil {
+		return x.OpenOps
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetCloseOps() uint64 {
+	if x != nil {
+		return x.CloseOps
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetSyncOps() uint64 {
+	if x != nil {
+		return x.SyncOps
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetBytesRead() uint64 {
+	if x != nil {
+		return x.BytesRead
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetBytesWritten() uint64 {
+	if x != nil {
+		return x.BytesWritten
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetReadLatency() *LatencyHistogram {
+	if x != nil {
+		return x.ReadLatency
+	}
+	return nil
+}
+
+func (x *FileSystemMetrics) GetWriteLatency() *LatencyHistogram {
+	if x != nil {
+		return x.WriteLatency
+	}
+	return nil
+}
+
+func (x *FileSystemMetrics) GetOpenLatency() *LatencyHistogram {
+	if x != nil {
+		return x.OpenLatency
+	}
+	return nil
+}
+
+func (x *FileSystemMetrics) GetHotFiles() []*FileAccessPattern {
+	if x != nil {
+		return x.HotFiles
+	}
+	return nil
+}
+
+func (x *FileSystemMetrics) GetHotDirectories() []*DirectoryPattern {
+	if x != nil {
+		return x.HotDirectories
+	}
+	return nil
+}
+
+func (x *FileSystemMetrics) GetReadBandwidthMbps() float64 {
+	if x != nil {
+		return x.ReadBandwidthMbps
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetWriteBandwidthMbps() float64 {
+	if x != nil {
+		return x.WriteBandwidthMbps
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetDiskUtilization() float64 {
+	if x != nil {
+		return x.DiskUtilization
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetIoSizes() *IOSizeHistogram {
+	if x != nil {
+		return x.IoSizes
+	}
+	return nil
+}
+
+func (x *FileSystemMetrics) GetIoErrors() uint64 {
+	if x != nil {
+		return x.IoErrors
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetPermissionErrors() uint64 {
+	if x != nil {
+		return x.PermissionErrors
+	}
+	return 0
+}
+
+func (x *FileSystemMetrics) GetWindowStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.WindowStart
+	}
+	return nil
+}
+
+func (x *FileSystemMetrics) GetWindowEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.WindowEnd
+	}
+	return nil
+}
+
+type FileAccessPattern struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FilePath      string                 `protobuf:"bytes,1,opt,name=file_path,json=filePath,proto3" json:"file_path,omitempty"`
+	AccessCount   uint64                 `protobuf:"varint,2,opt,name=access_count,json=accessCount,proto3" json:"access_count,omitempty"`
+	BytesAccessed uint64                 `protobuf:"varint,3,opt,name=bytes_accessed,json=bytesAccessed,proto3" json:"bytes_accessed,omitempty"`
+	AvgLatencyUs  float64                `protobuf:"fixed64,4,opt,name=avg_latency_us,json=avgLatencyUs,proto3" json:"avg_latency_us,omitempty"`
+	AccessType    string                 `protobuf:"bytes,5,opt,name=access_type,json=accessType,proto3" json:"access_type,omitempty"` // "read", "write", "read_write"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FileAccessPattern) Reset() {
+	*x = FileAccessPattern{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileAccessPattern) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileAccessPattern) ProtoMessage() {}
+
+func (x *FileAccessPattern) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileAccessPattern.ProtoReflect.Descriptor instead.
+func (*FileAccessPattern) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *FileAccessPattern) GetFilePath() string {
+	if x != nil {
+		return x.FilePath
+	}
+	return ""
+}
+
+func (x *FileAccessPattern) GetAccessCount() uint64 {
+	if x != nil {
+		return x.AccessCount
+	}
+	return 0
+}
+
+func (x *FileAccessPattern) GetBytesAccessed() uint64 {
+	if x != nil {
+		return x.BytesAccessed
+	}
+	return 0
+}
+
+func (x *FileAccessPattern) GetAvgLatencyUs() float64 {
+	if x != nil {
+		return x.AvgLatencyUs
+	}
+	return 0
+}
+
+func (x *FileAccessPattern) GetAccessType() string {
+	if x != nil {
+		return x.AccessType
+	}
+	return ""
+}
+
+type DirectoryPattern struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DirectoryPath string                 `protobuf:"bytes,1,opt,name=directory_path,json=directoryPath,proto3" json:"directory_path,omitempty"`
+	FileCount     uint64                 `protobuf:"varint,2,opt,name=file_count,json=fileCount,proto3" json:"file_count,omitempty"`
+	TotalAccesses uint64                 `protobuf:"varint,3,opt,name=total_accesses,json=totalAccesses,proto3" json:"total_accesses,omitempty"`
+	TotalBytes    uint64                 `protobuf:"varint,4,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DirectoryPattern) Reset() {
+	*x = DirectoryPattern{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DirectoryPattern) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DirectoryPattern) ProtoMessage() {}
+
+func (x *DirectoryPattern) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DirectoryPattern.ProtoReflect.Descriptor instead.
+func (*DirectoryPattern) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *DirectoryPattern) GetDirectoryPath() string {
+	if x != nil {
+		return x.DirectoryPath
+	}
+	return ""
+}
+
+func (x *DirectoryPattern) GetFileCount() uint64 {
+	if x != nil {
+		return x.FileCount
+	}
+	return 0
+}
+
+func (x *DirectoryPattern) GetTotalAccesses() uint64 {
+	if x != nil {
+		return x.TotalAccesses
+	}
+	return 0
+}
+
+func (x *DirectoryPattern) GetTotalBytes() uint64 {
+	if x != nil {
+		return x.TotalBytes
+	}
+	return 0
+}
+
+type IOSizeHistogram struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SmallIo       uint64                 `protobuf:"varint,1,opt,name=small_io,json=smallIo,proto3" json:"small_io,omitempty"`    // < 4KB
+	MediumIo      uint64                 `protobuf:"varint,2,opt,name=medium_io,json=mediumIo,proto3" json:"medium_io,omitempty"` // 4KB - 64KB
+	LargeIo       uint64                 `protobuf:"varint,3,opt,name=large_io,json=largeIo,proto3" json:"large_io,omitempty"`    // 64KB - 1MB
+	HugeIo        uint64                 `protobuf:"varint,4,opt,name=huge_io,json=hugeIo,proto3" json:"huge_io,omitempty"`       // > 1MB
+	AvgIoSize     float64                `protobuf:"fixed64,5,opt,name=avg_io_size,json=avgIoSize,proto3" json:"avg_io_size,omitempty"`
+	MaxIoSize     float64                `protobuf:"fixed64,6,opt,name=max_io_size,json=maxIoSize,proto3" json:"max_io_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IOSizeHistogram) Reset() {
+	*x = IOSizeHistogram{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IOSizeHistogram) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IOSizeHistogram) ProtoMessage() {}
+
+func (x *IOSizeHistogram) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IOSizeHistogram.ProtoReflect.Descriptor instead.
+func (*IOSizeHistogram) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *IOSizeHistogram) GetSmallIo() uint64 {
+	if x != nil {
+		return x.SmallIo
+	}
+	return 0
+}
+
+func (x *IOSizeHistogram) GetMediumIo() uint64 {
+	if x != nil {
+		return x.MediumIo
+	}
+	return 0
+}
+
+func (x *IOSizeHistogram) GetLargeIo() uint64 {
+	if x != nil {
+		return x.LargeIo
+	}
+	return 0
+}
+
+func (x *IOSizeHistogram) GetHugeIo() uint64 {
+	if x != nil {
+		return x.HugeIo
+	}
+	return 0
+}
+
+func (x *IOSizeHistogram) GetAvgIoSize() float64 {
+	if x != nil {
+		return x.AvgIoSize
+	}
+	return 0
+}
+
+func (x *IOSizeHistogram) GetMaxIoSize() float64 {
+	if x != nil {
+		return x.MaxIoSize
+	}
+	return 0
+}
+
+// ApplicationMetrics captures application-specific performance indicators
+type ApplicationMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Database metrics
+	Database *DatabaseMetrics `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
+	// Cache metrics
+	Cache *CacheMetrics `protobuf:"bytes,2,opt,name=cache,proto3" json:"cache,omitempty"`
+	// Custom business metrics
+	CustomMetrics []*CustomMetric `protobuf:"bytes,3,rep,name=custom_metrics,json=customMetrics,proto3" json:"custom_metrics,omitempty"`
+	// Language-specific metrics
+	Language      *LanguageMetrics       `protobuf:"bytes,4,opt,name=language,proto3" json:"language,omitempty"`
+	WindowStart   *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=window_start,json=windowStart,proto3" json:"window_start,omitempty"`
+	WindowEnd     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=window_end,json=windowEnd,proto3" json:"window_end,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApplicationMetrics) Reset() {
+	*x = ApplicationMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplicationMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplicationMetrics) ProtoMessage() {}
+
+func (x *ApplicationMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplicationMetrics.ProtoReflect.Descriptor instead.
+func (*ApplicationMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ApplicationMetrics) GetDatabase() *DatabaseMetrics {
+	if x != nil {
+		return x.Database
+	}
+	return nil
+}
+
+func (x *ApplicationMetrics) GetCache() *CacheMetrics {
+	if x != nil {
+		return x.Cache
+	}
+	return nil
+}
+
+func (x *ApplicationMetrics) GetCustomMetrics() []*CustomMetric {
+	if x != nil {
+		return x.CustomMetrics
+	}
+	return nil
+}
+
+func (x *ApplicationMetrics) GetLanguage() *LanguageMetrics {
+	if x != nil {
+		return x.Language
+	}
+	return nil
+}
+
+func (x *ApplicationMetrics) GetWindowStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.WindowStart
+	}
+	return nil
+}
+
+func (x *ApplicationMetrics) GetWindowEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.WindowEnd
+	}
+	return nil
+}
+
+type DatabaseMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Query performance
+	QueryCount           uint64  `protobuf:"varint,1,opt,name=query_count,json=queryCount,proto3" json:"query_count,omitempty"`
+	AvgQueryTimeUs       float64 `protobuf:"fixed64,2,opt,name=avg_query_time_us,json=avgQueryTimeUs,proto3" json:"avg_query_time_us,omitempty"`
+	SlowQueries          uint64  `protobuf:"varint,3,opt,name=slow_queries,json=slowQueries,proto3" json:"slow_queries,omitempty"`
+	SlowQueryThresholdUs float64 `protobuf:"fixed64,4,opt,name=slow_query_threshold_us,json=slowQueryThresholdUs,proto3" json:"slow_query_threshold_us,omitempty"`
+	// Query types
+	QueryTypes map[string]uint64 `protobuf:"bytes,5,rep,name=query_types,json=queryTypes,proto3" json:"query_types,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // SELECT, INSERT, UPDATE, DELETE
+	// Connection metrics
+	ActiveConnections  uint64 `protobuf:"varint,6,opt,name=active_connections,json=activeConnections,proto3" json:"active_connections,omitempty"`
+	ConnectionPoolSize uint64 `protobuf:"varint,7,opt,name=connection_pool_size,json=connectionPoolSize,proto3" json:"connection_pool_size,omitempty"`
+	ConnectionTimeouts uint64 `protobuf:"varint,8,opt,name=connection_timeouts,json=connectionTimeouts,proto3" json:"connection_timeouts,omitempty"`
+	// Transaction metrics
+	Transactions         uint64  `protobuf:"varint,9,opt,name=transactions,proto3" json:"transactions,omitempty"`
+	Rollbacks            uint64  `protobuf:"varint,10,opt,name=rollbacks,proto3" json:"rollbacks,omitempty"`
+	AvgTransactionTimeUs float64 `protobuf:"fixed64,11,opt,name=avg_transaction_time_us,json=avgTransactionTimeUs,proto3" json:"avg_transaction_time_us,omitempty"`
+	// Top slow queries (anonymized)
+	SlowQuerySamples []*SlowQuery `protobuf:"bytes,12,rep,name=slow_query_samples,json=slowQuerySamples,proto3" json:"slow_query_samples,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *DatabaseMetrics) Reset() {
+	*x = DatabaseMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DatabaseMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatabaseMetrics) ProtoMessage() {}
+
+func (x *DatabaseMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatabaseMetrics.ProtoReflect.Descriptor instead.
+func (*DatabaseMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *DatabaseMetrics) GetQueryCount() uint64 {
+	if x != nil {
+		return x.QueryCount
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetAvgQueryTimeUs() float64 {
+	if x != nil {
+		return x.AvgQueryTimeUs
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetSlowQueries() uint64 {
+	if x != nil {
+		return x.SlowQueries
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetSlowQueryThresholdUs() float64 {
+	if x != nil {
+		return x.SlowQueryThresholdUs
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetQueryTypes() map[string]uint64 {
+	if x != nil {
+		return x.QueryTypes
+	}
+	return nil
+}
+
+func (x *DatabaseMetrics) GetActiveConnections() uint64 {
+	if x != nil {
+		return x.ActiveConnections
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetConnectionPoolSize() uint64 {
+	if x != nil {
+		return x.ConnectionPoolSize
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetConnectionTimeouts() uint64 {
+	if x != nil {
+		return x.ConnectionTimeouts
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetTransactions() uint64 {
+	if x != nil {
+		return x.Transactions
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetRollbacks() uint64 {
+	if x != nil {
+		return x.Rollbacks
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetAvgTransactionTimeUs() float64 {
+	if x != nil {
+		return x.AvgTransactionTimeUs
+	}
+	return 0
+}
+
+func (x *DatabaseMetrics) GetSlowQuerySamples() []*SlowQuery {
+	if x != nil {
+		return x.SlowQuerySamples
+	}
+	return nil
+}
+
+type SlowQuery struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	QueryHash       string                 `protobuf:"bytes,1,opt,name=query_hash,json=queryHash,proto3" json:"query_hash,omitempty"` // Hash of the query pattern
+	ExecutionTimeUs float64                `protobuf:"fixed64,2,opt,name=execution_time_us,json=executionTimeUs,proto3" json:"execution_time_us,omitempty"`
+	RowsExamined    uint64                 `protobuf:"varint,3,opt,name=rows_examined,json=rowsExamined,proto3" json:"rows_examined,omitempty"`
+	RowsReturned    uint64                 `protobuf:"varint,4,opt,name=rows_returned,json=rowsReturned,proto3" json:"rows_returned,omitempty"`
+	QueryType       string                 `protobuf:"bytes,5,opt,name=query_type,json=queryType,proto3" json:"query_type,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SlowQuery) Reset() {
+	*x = SlowQuery{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SlowQuery) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SlowQuery) ProtoMessage() {}
+
+func (x *SlowQuery) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SlowQuery.ProtoReflect.Descriptor instead.
+func (*SlowQuery) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *SlowQuery) GetQueryHash() string {
+	if x != nil {
+		return x.QueryHash
+	}
+	return ""
+}
+
+func (x *SlowQuery) GetExecutionTimeUs() float64 {
+	if x != nil {
+		return x.ExecutionTimeUs
+	}
+	return 0
+}
+
+func (x *SlowQuery) GetRowsExamined() uint64 {
+	if x != nil {
+		return x.RowsExamined
+	}
+	return 0
+}
+
+func (x *SlowQuery) GetRowsReturned() uint64 {
+	if x != nil {
+		return x.RowsReturned
+	}
+	return 0
+}
+
+func (x *SlowQuery) GetQueryType() string {
+	if x != nil {
+		return x.QueryType
+	}
+	return ""
+}
+
+type CacheMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Hit/miss statistics
+	CacheHits   uint64  `protobuf:"varint,1,opt,name=cache_hits,json=cacheHits,proto3" json:"cache_hits,omitempty"`
+	CacheMisses uint64  `protobuf:"varint,2,opt,name=cache_misses,json=cacheMisses,proto3" json:"cache_misses,omitempty"`
+	HitRate     float64 `protobuf:"fixed64,3,opt,name=hit_rate,json=hitRate,proto3" json:"hit_rate,omitempty"`
+	// Cache operations
+	CacheSets      uint64 `protobuf:"varint,4,opt,name=cache_sets,json=cacheSets,proto3" json:"cache_sets,omitempty"`
+	CacheGets      uint64 `protobuf:"varint,5,opt,name=cache_gets,json=cacheGets,proto3" json:"cache_gets,omitempty"`
+	CacheDeletes   uint64 `protobuf:"varint,6,opt,name=cache_deletes,json=cacheDeletes,proto3" json:"cache_deletes,omitempty"`
+	CacheEvictions uint64 `protobuf:"varint,7,opt,name=cache_evictions,json=cacheEvictions,proto3" json:"cache_evictions,omitempty"`
+	// Latency metrics
+	AvgGetLatencyUs float64 `protobuf:"fixed64,8,opt,name=avg_get_latency_us,json=avgGetLatencyUs,proto3" json:"avg_get_latency_us,omitempty"`
+	AvgSetLatencyUs float64 `protobuf:"fixed64,9,opt,name=avg_set_latency_us,json=avgSetLatencyUs,proto3" json:"avg_set_latency_us,omitempty"`
+	// Memory usage
+	CacheSizeBytes     uint64  `protobuf:"varint,10,opt,name=cache_size_bytes,json=cacheSizeBytes,proto3" json:"cache_size_bytes,omitempty"`
+	CacheCapacityBytes uint64  `protobuf:"varint,11,opt,name=cache_capacity_bytes,json=cacheCapacityBytes,proto3" json:"cache_capacity_bytes,omitempty"`
+	CacheUtilization   float64 `protobuf:"fixed64,12,opt,name=cache_utilization,json=cacheUtilization,proto3" json:"cache_utilization,omitempty"`
+	// Cache types
+	CacheType     string `protobuf:"bytes,13,opt,name=cache_type,json=cacheType,proto3" json:"cache_type,omitempty"` // "redis", "memcached", "in_memory", etc.
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CacheMetrics) Reset() {
+	*x = CacheMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CacheMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CacheMetrics) ProtoMessage() {}
+
+func (x *CacheMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CacheMetrics.ProtoReflect.Descriptor instead.
+func (*CacheMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *CacheMetrics) GetCacheHits() uint64 {
+	if x != nil {
+		return x.CacheHits
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheMisses() uint64 {
+	if x != nil {
+		return x.CacheMisses
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetHitRate() float64 {
+	if x != nil {
+		return x.HitRate
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheSets() uint64 {
+	if x != nil {
+		return x.CacheSets
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheGets() uint64 {
+	if x != nil {
+		return x.CacheGets
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheDeletes() uint64 {
+	if x != nil {
+		return x.CacheDeletes
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheEvictions() uint64 {
+	if x != nil {
+		return x.CacheEvictions
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetAvgGetLatencyUs() float64 {
+	if x != nil {
+		return x.AvgGetLatencyUs
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetAvgSetLatencyUs() float64 {
+	if x != nil {
+		return x.AvgSetLatencyUs
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheSizeBytes() uint64 {
+	if x != nil {
+		return x.CacheSizeBytes
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheCapacityBytes() uint64 {
+	if x != nil {
+		return x.CacheCapacityBytes
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheUtilization() float64 {
+	if x != nil {
+		return x.CacheUtilization
+	}
+	return 0
+}
+
+func (x *CacheMetrics) GetCacheType() string {
+	if x != nil {
+		return x.CacheType
+	}
+	return ""
+}
+
+type CustomMetric struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"` // "counter", "gauge", "histogram", "timer"
+	Value         float64                `protobuf:"fixed64,3,opt,name=value,proto3" json:"value,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,4,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CustomMetric) Reset() {
+	*x = CustomMetric{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CustomMetric) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CustomMetric) ProtoMessage() {}
+
+func (x *CustomMetric) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CustomMetric.ProtoReflect.Descriptor instead.
+func (*CustomMetric) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *CustomMetric) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CustomMetric) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *CustomMetric) GetValue() float64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+func (x *CustomMetric) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *CustomMetric) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
+type LanguageMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Go-specific metrics
+	GoMetrics *GoMetrics `protobuf:"bytes,1,opt,name=go_metrics,json=goMetrics,proto3" json:"go_metrics,omitempty"`
+	// Java-specific metrics
+	JavaMetrics *JavaMetrics `protobuf:"bytes,2,opt,name=java_metrics,json=javaMetrics,proto3" json:"java_metrics,omitempty"`
+	// Python-specific metrics
+	PythonMetrics *PythonMetrics `protobuf:"bytes,3,opt,name=python_metrics,json=pythonMetrics,proto3" json:"python_metrics,omitempty"`
+	// Node.js-specific metrics
+	NodejsMetrics *NodeJSMetrics `protobuf:"bytes,4,opt,name=nodejs_metrics,json=nodejsMetrics,proto3" json:"nodejs_metrics,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LanguageMetrics) Reset() {
+	*x = LanguageMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LanguageMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LanguageMetrics) ProtoMessage() {}
+
+func (x *LanguageMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LanguageMetrics.ProtoReflect.Descriptor instead.
+func (*LanguageMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *LanguageMetrics) GetGoMetrics() *GoMetrics {
+	if x != nil {
+		return x.GoMetrics
+	}
+	return nil
+}
+
+func (x *LanguageMetrics) GetJavaMetrics() *JavaMetrics {
+	if x != nil {
+		return x.JavaMetrics
+	}
+	return nil
+}
+
+func (x *LanguageMetrics) GetPythonMetrics() *PythonMetrics {
+	if x != nil {
+		return x.PythonMetrics
+	}
+	return nil
+}
+
+func (x *LanguageMetrics) GetNodejsMetrics() *NodeJSMetrics {
+	if x != nil {
+		return x.NodejsMetrics
+	}
+	return nil
+}
+
+type GoMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Goroutine metrics
+	Goroutines         uint64 `protobuf:"varint,1,opt,name=goroutines,proto3" json:"goroutines,omitempty"`
+	GoroutineStackSize uint64 `protobuf:"varint,2,opt,name=goroutine_stack_size,json=goroutineStackSize,proto3" json:"goroutine_stack_size,omitempty"`
+	// Garbage collection (additional to general GC metrics)
+	GcCycles      uint64  `protobuf:"varint,3,opt,name=gc_cycles,json=gcCycles,proto3" json:"gc_cycles,omitempty"`
+	GcPauseTimeUs float64 `protobuf:"fixed64,4,opt,name=gc_pause_time_us,json=gcPauseTimeUs,proto3" json:"gc_pause_time_us,omitempty"`
+	HeapSize      uint64  `protobuf:"varint,5,opt,name=heap_size,json=heapSize,proto3" json:"heap_size,omitempty"`
+	HeapAlloc     uint64  `protobuf:"varint,6,opt,name=heap_alloc,json=heapAlloc,proto3" json:"heap_alloc,omitempty"`
+	HeapIdle      uint64  `protobuf:"varint,7,opt,name=heap_idle,json=heapIdle,proto3" json:"heap_idle,omitempty"`
+	// Channel operations
+	ChannelSends    uint64 `protobuf:"varint,8,opt,name=channel_sends,json=channelSends,proto3" json:"channel_sends,omitempty"`
+	ChannelReceives uint64 `protobuf:"varint,9,opt,name=channel_receives,json=channelReceives,proto3" json:"channel_receives,omitempty"`
+	BlockedChannels uint64 `protobuf:"varint,10,opt,name=blocked_channels,json=blockedChannels,proto3" json:"blocked_channels,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GoMetrics) Reset() {
+	*x = GoMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GoMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GoMetrics) ProtoMessage() {}
+
+func (x *GoMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GoMetrics.ProtoReflect.Descriptor instead.
+func (*GoMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GoMetrics) GetGoroutines() uint64 {
+	if x != nil {
+		return x.Goroutines
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetGoroutineStackSize() uint64 {
+	if x != nil {
+		return x.GoroutineStackSize
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetGcCycles() uint64 {
+	if x != nil {
+		return x.GcCycles
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetGcPauseTimeUs() float64 {
+	if x != nil {
+		return x.GcPauseTimeUs
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetHeapSize() uint64 {
+	if x != nil {
+		return x.HeapSize
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetHeapAlloc() uint64 {
+	if x != nil {
+		return x.HeapAlloc
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetHeapIdle() uint64 {
+	if x != nil {
+		return x.HeapIdle
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetChannelSends() uint64 {
+	if x != nil {
+		return x.ChannelSends
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetChannelReceives() uint64 {
+	if x != nil {
+		return x.ChannelReceives
+	}
+	return 0
+}
+
+func (x *GoMetrics) GetBlockedChannels() uint64 {
+	if x != nil {
+		return x.BlockedChannels
+	}
+	return 0
+}
+
+type JavaMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// JVM metrics
+	HeapUsed    uint64 `protobuf:"varint,1,opt,name=heap_used,json=heapUsed,proto3" json:"heap_used,omitempty"`
+	HeapMax     uint64 `protobuf:"varint,2,opt,name=heap_max,json=heapMax,proto3" json:"heap_max,omitempty"`
+	NonHeapUsed uint64 `protobuf:"varint,3,opt,name=non_heap_used,json=nonHeapUsed,proto3" json:"non_heap_used,omitempty"`
+	NonHeapMax  uint64 `protobuf:"varint,4,opt,name=non_heap_max,json=nonHeapMax,proto3" json:"non_heap_max,omitempty"`
+	// Thread metrics
+	ThreadCount       uint64 `protobuf:"varint,5,opt,name=thread_count,json=threadCount,proto3" json:"thread_count,omitempty"`
+	DaemonThreadCount uint64 `protobuf:"varint,6,opt,name=daemon_thread_count,json=daemonThreadCount,proto3" json:"daemon_thread_count,omitempty"`
+	PeakThreadCount   uint64 `protobuf:"varint,7,opt,name=peak_thread_count,json=peakThreadCount,proto3" json:"peak_thread_count,omitempty"`
+	// Class loading
+	LoadedClassCount   uint64 `protobuf:"varint,8,opt,name=loaded_class_count,json=loadedClassCount,proto3" json:"loaded_class_count,omitempty"`
+	UnloadedClassCount uint64 `protobuf:"varint,9,opt,name=unloaded_class_count,json=unloadedClassCount,proto3" json:"unloaded_class_count,omitempty"`
+	// GC additional metrics
+	GcCollections map[string]uint64 `protobuf:"bytes,10,rep,name=gc_collections,json=gcCollections,proto3" json:"gc_collections,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // GC algorithm -> collection count
+	GcTime        map[string]uint64 `protobuf:"bytes,11,rep,name=gc_time,json=gcTime,proto3" json:"gc_time,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`                      // GC algorithm -> time spent
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JavaMetrics) Reset() {
+	*x = JavaMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JavaMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JavaMetrics) ProtoMessage() {}
+
+func (x *JavaMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JavaMetrics.ProtoReflect.Descriptor instead.
+func (*JavaMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *JavaMetrics) GetHeapUsed() uint64 {
+	if x != nil {
+		return x.HeapUsed
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetHeapMax() uint64 {
+	if x != nil {
+		return x.HeapMax
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetNonHeapUsed() uint64 {
+	if x != nil {
+		return x.NonHeapUsed
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetNonHeapMax() uint64 {
+	if x != nil {
+		return x.NonHeapMax
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetThreadCount() uint64 {
+	if x != nil {
+		return x.ThreadCount
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetDaemonThreadCount() uint64 {
+	if x != nil {
+		return x.DaemonThreadCount
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetPeakThreadCount() uint64 {
+	if x != nil {
+		return x.PeakThreadCount
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetLoadedClassCount() uint64 {
+	if x != nil {
+		return x.LoadedClassCount
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetUnloadedClassCount() uint64 {
+	if x != nil {
+		return x.UnloadedClassCount
+	}
+	return 0
+}
+
+func (x *JavaMetrics) GetGcCollections() map[string]uint64 {
+	if x != nil {
+		return x.GcCollections
+	}
+	return nil
+}
+
+func (x *JavaMetrics) GetGcTime() map[string]uint64 {
+	if x != nil {
+		return x.GcTime
+	}
+	return nil
+}
+
+type PythonMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Memory metrics
+	ObjectsCount  uint64 `protobuf:"varint,1,opt,name=objects_count,json=objectsCount,proto3" json:"objects_count,omitempty"`
+	GcCollections uint64 `protobuf:"varint,2,opt,name=gc_collections,json=gcCollections,proto3" json:"gc_collections,omitempty"`
+	GcCollected   uint64 `protobuf:"varint,3,opt,name=gc_collected,json=gcCollected,proto3" json:"gc_collected,omitempty"`
+	// Module metrics
+	LoadedModules uint64 `protobuf:"varint,4,opt,name=loaded_modules,json=loadedModules,proto3" json:"loaded_modules,omitempty"`
+	// Exception metrics
+	ExceptionsRaised uint64            `protobuf:"varint,5,opt,name=exceptions_raised,json=exceptionsRaised,proto3" json:"exceptions_raised,omitempty"`
+	ExceptionTypes   map[string]uint64 `protobuf:"bytes,6,rep,name=exception_types,json=exceptionTypes,proto3" json:"exception_types,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *PythonMetrics) Reset() {
+	*x = PythonMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PythonMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PythonMetrics) ProtoMessage() {}
+
+func (x *PythonMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PythonMetrics.ProtoReflect.Descriptor instead.
+func (*PythonMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *PythonMetrics) GetObjectsCount() uint64 {
+	if x != nil {
+		return x.ObjectsCount
+	}
+	return 0
+}
+
+func (x *PythonMetrics) GetGcCollections() uint64 {
+	if x != nil {
+		return x.GcCollections
+	}
+	return 0
+}
+
+func (x *PythonMetrics) GetGcCollected() uint64 {
+	if x != nil {
+		return x.GcCollected
+	}
+	return 0
+}
+
+func (x *PythonMetrics) GetLoadedModules() uint64 {
+	if x != nil {
+		return x.LoadedModules
+	}
+	return 0
+}
+
+func (x *PythonMetrics) GetExceptionsRaised() uint64 {
+	if x != nil {
+		return x.ExceptionsRaised
+	}
+	return 0
+}
+
+func (x *PythonMetrics) GetExceptionTypes() map[string]uint64 {
+	if x != nil {
+		return x.ExceptionTypes
+	}
+	return nil
+}
+
+type NodeJSMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Event loop metrics
+	EventLoopLagUs      float64 `protobuf:"fixed64,1,opt,name=event_loop_lag_us,json=eventLoopLagUs,proto3" json:"event_loop_lag_us,omitempty"`
+	EventLoopIterations uint64  `protobuf:"varint,2,opt,name=event_loop_iterations,json=eventLoopIterations,proto3" json:"event_loop_iterations,omitempty"`
+	// V8 metrics
+	HeapUsed       uint64 `protobuf:"varint,3,opt,name=heap_used,json=heapUsed,proto3" json:"heap_used,omitempty"`
+	HeapTotal      uint64 `protobuf:"varint,4,opt,name=heap_total,json=heapTotal,proto3" json:"heap_total,omitempty"`
+	ExternalMemory uint64 `protobuf:"varint,5,opt,name=external_memory,json=externalMemory,proto3" json:"external_memory,omitempty"`
+	// Async operations
+	AsyncResources  uint64 `protobuf:"varint,6,opt,name=async_resources,json=asyncResources,proto3" json:"async_resources,omitempty"`
+	PendingAsyncOps uint64 `protobuf:"varint,7,opt,name=pending_async_ops,json=pendingAsyncOps,proto3" json:"pending_async_ops,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *NodeJSMetrics) Reset() {
+	*x = NodeJSMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeJSMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeJSMetrics) ProtoMessage() {}
+
+func (x *NodeJSMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeJSMetrics.ProtoReflect.Descriptor instead.
+func (*NodeJSMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *NodeJSMetrics) GetEventLoopLagUs() float64 {
+	if x != nil {
+		return x.EventLoopLagUs
+	}
+	return 0
+}
+
+func (x *NodeJSMetrics) GetEventLoopIterations() uint64 {
+	if x != nil {
+		return x.EventLoopIterations
+	}
+	return 0
+}
+
+func (x *NodeJSMetrics) GetHeapUsed() uint64 {
+	if x != nil {
+		return x.HeapUsed
+	}
+	return 0
+}
+
+func (x *NodeJSMetrics) GetHeapTotal() uint64 {
+	if x != nil {
+		return x.HeapTotal
+	}
+	return 0
+}
+
+func (x *NodeJSMetrics) GetExternalMemory() uint64 {
+	if x != nil {
+		return x.ExternalMemory
+	}
+	return 0
+}
+
+func (x *NodeJSMetrics) GetAsyncResources() uint64 {
+	if x != nil {
+		return x.AsyncResources
+	}
+	return 0
+}
+
+func (x *NodeJSMetrics) GetPendingAsyncOps() uint64 {
+	if x != nil {
+		return x.PendingAsyncOps
+	}
+	return 0
+}
+
+// SecurityMetrics captures container security and resource violations
+type SecurityMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Syscall monitoring
+	Syscalls *SyscallMetrics `protobuf:"bytes,1,opt,name=syscalls,proto3" json:"syscalls,omitempty"`
+	// Resource violations
+	ResourceViolations *ResourceViolations `protobuf:"bytes,2,opt,name=resource_violations,json=resourceViolations,proto3" json:"resource_violations,omitempty"`
+	// Network security
+	NetworkSecurity *NetworkSecurity `protobuf:"bytes,3,opt,name=network_security,json=networkSecurity,proto3" json:"network_security,omitempty"`
+	// Process security
+	ProcessSecurity *ProcessSecurity `protobuf:"bytes,4,opt,name=process_security,json=processSecurity,proto3" json:"process_security,omitempty"`
+	// File system security
+	FilesystemSecurity *FileSystemSecurity    `protobuf:"bytes,5,opt,name=filesystem_security,json=filesystemSecurity,proto3" json:"filesystem_security,omitempty"`
+	WindowStart        *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=window_start,json=windowStart,proto3" json:"window_start,omitempty"`
+	WindowEnd          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=window_end,json=windowEnd,proto3" json:"window_end,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SecurityMetrics) Reset() {
+	*x = SecurityMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecurityMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecurityMetrics) ProtoMessage() {}
+
+func (x *SecurityMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecurityMetrics.ProtoReflect.Descriptor instead.
+func (*SecurityMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *SecurityMetrics) GetSyscalls() *SyscallMetrics {
+	if x != nil {
+		return x.Syscalls
+	}
+	return nil
+}
+
+func (x *SecurityMetrics) GetResourceViolations() *ResourceViolations {
+	if x != nil {
+		return x.ResourceViolations
+	}
+	return nil
+}
+
+func (x *SecurityMetrics) GetNetworkSecurity() *NetworkSecurity {
+	if x != nil {
+		return x.NetworkSecurity
+	}
+	return nil
+}
+
+func (x *SecurityMetrics) GetProcessSecurity() *ProcessSecurity {
+	if x != nil {
+		return x.ProcessSecurity
+	}
+	return nil
+}
+
+func (x *SecurityMetrics) GetFilesystemSecurity() *FileSystemSecurity {
+	if x != nil {
+		return x.FilesystemSecurity
+	}
+	return nil
+}
+
+func (x *SecurityMetrics) GetWindowStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.WindowStart
+	}
+	return nil
+}
+
+func (x *SecurityMetrics) GetWindowEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.WindowEnd
+	}
+	return nil
+}
+
+type SyscallMetrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Syscall counts and patterns
+	TotalSyscalls uint64            `protobuf:"varint,1,opt,name=total_syscalls,json=totalSyscalls,proto3" json:"total_syscalls,omitempty"`
+	SyscallCounts map[string]uint64 `protobuf:"bytes,2,rep,name=syscall_counts,json=syscallCounts,proto3" json:"syscall_counts,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // syscall_name -> count
+	// Anomaly detection
+	Anomalies []*SyscallAnomaly `protobuf:"bytes,3,rep,name=anomalies,proto3" json:"anomalies,omitempty"`
+	// Privilege escalation attempts
+	PrivilegeEscalationAttempts uint64 `protobuf:"varint,4,opt,name=privilege_escalation_attempts,json=privilegeEscalationAttempts,proto3" json:"privilege_escalation_attempts,omitempty"`
+	// Suspicious syscall patterns
+	SuspiciousPatterns uint64 `protobuf:"varint,5,opt,name=suspicious_patterns,json=suspiciousPatterns,proto3" json:"suspicious_patterns,omitempty"`
+	// Rate-based anomalies
+	SyscallRatePerSecond    float64 `protobuf:"fixed64,6,opt,name=syscall_rate_per_second,json=syscallRatePerSecond,proto3" json:"syscall_rate_per_second,omitempty"`
+	HighSyscallRateDetected bool    `protobuf:"varint,7,opt,name=high_syscall_rate_detected,json=highSyscallRateDetected,proto3" json:"high_syscall_rate_detected,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *SyscallMetrics) Reset() {
+	*x = SyscallMetrics{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyscallMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyscallMetrics) ProtoMessage() {}
+
+func (x *SyscallMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyscallMetrics.ProtoReflect.Descriptor instead.
+func (*SyscallMetrics) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *SyscallMetrics) GetTotalSyscalls() uint64 {
+	if x != nil {
+		return x.TotalSyscalls
+	}
+	return 0
+}
+
+func (x *SyscallMetrics) GetSyscallCounts() map[string]uint64 {
+	if x != nil {
+		return x.SyscallCounts
+	}
+	return nil
+}
+
+func (x *SyscallMetrics) GetAnomalies() []*SyscallAnomaly {
+	if x != nil {
+		return x.Anomalies
+	}
+	return nil
+}
+
+func (x *SyscallMetrics) GetPrivilegeEscalationAttempts() uint64 {
+	if x != nil {
+		return x.PrivilegeEscalationAttempts
+	}
+	return 0
+}
+
+func (x *SyscallMetrics) GetSuspiciousPatterns() uint64 {
+	if x != nil {
+		return x.SuspiciousPatterns
+	}
+	return 0
+}
+
+func (x *SyscallMetrics) GetSyscallRatePerSecond() float64 {
+	if x != nil {
+		return x.SyscallRatePerSecond
+	}
+	return 0
+}
+
+func (x *SyscallMetrics) GetHighSyscallRateDetected() bool {
+	if x != nil {
+		return x.HighSyscallRateDetected
+	}
+	return false
+}
+
+type SyscallAnomaly struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	SyscallName    string                 `protobuf:"bytes,1,opt,name=syscall_name,json=syscallName,proto3" json:"syscall_name,omitempty"`
+	Count          uint64                 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	FrequencyScore float64                `protobuf:"fixed64,3,opt,name=frequency_score,json=frequencyScore,proto3" json:"frequency_score,omitempty"` // Compared to baseline
+	AnomalyType    string                 `protobuf:"bytes,4,opt,name=anomaly_type,json=anomalyType,proto3" json:"anomaly_type,omitempty"`            // "high_frequency", "unusual_pattern", "privilege_escalation"
+	DetectedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SyscallAnomaly) Reset() {
+	*x = SyscallAnomaly{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyscallAnomaly) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyscallAnomaly) ProtoMessage() {}
+
+func (x *SyscallAnomaly) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyscallAnomaly.ProtoReflect.Descriptor instead.
+func (*SyscallAnomaly) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *SyscallAnomaly) GetSyscallName() string {
+	if x != nil {
+		return x.SyscallName
+	}
+	return ""
+}
+
+func (x *SyscallAnomaly) GetCount() uint64 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+func (x *SyscallAnomaly) GetFrequencyScore() float64 {
+	if x != nil {
+		return x.FrequencyScore
+	}
+	return 0
+}
+
+func (x *SyscallAnomaly) GetAnomalyType() string {
+	if x != nil {
+		return x.AnomalyType
+	}
+	return ""
+}
+
+func (x *SyscallAnomaly) GetDetectedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DetectedAt
+	}
+	return nil
+}
+
+type ResourceViolations struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Memory violations
+	MemoryLimitViolations uint64 `protobuf:"varint,1,opt,name=memory_limit_violations,json=memoryLimitViolations,proto3" json:"memory_limit_violations,omitempty"`
+	OomKills              uint64 `protobuf:"varint,2,opt,name=oom_kills,json=oomKills,proto3" json:"oom_kills,omitempty"`
+	MemoryPressureEvents  uint64 `protobuf:"varint,3,opt,name=memory_pressure_events,json=memoryPressureEvents,proto3" json:"memory_pressure_events,omitempty"`
+	// CPU violations
+	CpuThrottlingEvents uint64  `protobuf:"varint,4,opt,name=cpu_throttling_events,json=cpuThrottlingEvents,proto3" json:"cpu_throttling_events,omitempty"`
+	CpuQuotaViolations  uint64  `protobuf:"varint,5,opt,name=cpu_quota_violations,json=cpuQuotaViolations,proto3" json:"cpu_quota_violations,omitempty"`
+	CpuStealTimePercent float64 `protobuf:"fixed64,6,opt,name=cpu_steal_time_percent,json=cpuStealTimePercent,proto3" json:"cpu_steal_time_percent,omitempty"`
+	// File descriptor violations
+	FdLimitViolations uint64 `protobuf:"varint,7,opt,name=fd_limit_violations,json=fdLimitViolations,proto3" json:"fd_limit_violations,omitempty"`
+	MaxFdsReached     uint64 `protobuf:"varint,8,opt,name=max_fds_reached,json=maxFdsReached,proto3" json:"max_fds_reached,omitempty"`
+	// Process violations
+	ProcessLimitViolations uint64 `protobuf:"varint,9,opt,name=process_limit_violations,json=processLimitViolations,proto3" json:"process_limit_violations,omitempty"`
+	ThreadLimitViolations  uint64 `protobuf:"varint,10,opt,name=thread_limit_violations,json=threadLimitViolations,proto3" json:"thread_limit_violations,omitempty"`
+	// Network violations
+	NetworkBandwidthViolations uint64 `protobuf:"varint,11,opt,name=network_bandwidth_violations,json=networkBandwidthViolations,proto3" json:"network_bandwidth_violations,omitempty"`
+	ConnectionLimitViolations  uint64 `protobuf:"varint,12,opt,name=connection_limit_violations,json=connectionLimitViolations,proto3" json:"connection_limit_violations,omitempty"`
+	// I/O violations
+	DiskQuotaViolations uint64 `protobuf:"varint,13,opt,name=disk_quota_violations,json=diskQuotaViolations,proto3" json:"disk_quota_violations,omitempty"`
+	IopsLimitViolations uint64 `protobuf:"varint,14,opt,name=iops_limit_violations,json=iopsLimitViolations,proto3" json:"iops_limit_violations,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ResourceViolations) Reset() {
+	*x = ResourceViolations{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResourceViolations) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResourceViolations) ProtoMessage() {}
+
+func (x *ResourceViolations) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResourceViolations.ProtoReflect.Descriptor instead.
+func (*ResourceViolations) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ResourceViolations) GetMemoryLimitViolations() uint64 {
+	if x != nil {
+		return x.MemoryLimitViolations
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetOomKills() uint64 {
+	if x != nil {
+		return x.OomKills
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetMemoryPressureEvents() uint64 {
+	if x != nil {
+		return x.MemoryPressureEvents
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetCpuThrottlingEvents() uint64 {
+	if x != nil {
+		return x.CpuThrottlingEvents
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetCpuQuotaViolations() uint64 {
+	if x != nil {
+		return x.CpuQuotaViolations
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetCpuStealTimePercent() float64 {
+	if x != nil {
+		return x.CpuStealTimePercent
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetFdLimitViolations() uint64 {
+	if x != nil {
+		return x.FdLimitViolations
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetMaxFdsReached() uint64 {
+	if x != nil {
+		return x.MaxFdsReached
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetProcessLimitViolations() uint64 {
+	if x != nil {
+		return x.ProcessLimitViolations
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetThreadLimitViolations() uint64 {
+	if x != nil {
+		return x.ThreadLimitViolations
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetNetworkBandwidthViolations() uint64 {
+	if x != nil {
+		return x.NetworkBandwidthViolations
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetConnectionLimitViolations() uint64 {
+	if x != nil {
+		return x.ConnectionLimitViolations
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetDiskQuotaViolations() uint64 {
+	if x != nil {
+		return x.DiskQuotaViolations
+	}
+	return 0
+}
+
+func (x *ResourceViolations) GetIopsLimitViolations() uint64 {
+	if x != nil {
+		return x.IopsLimitViolations
+	}
+	return 0
+}
+
+type NetworkSecurity struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Suspicious network activity
+	SuspiciousConnections uint64 `protobuf:"varint,1,opt,name=suspicious_connections,json=suspiciousConnections,proto3" json:"suspicious_connections,omitempty"`
+	PortScanningAttempts  uint64 `protobuf:"varint,2,opt,name=port_scanning_attempts,json=portScanningAttempts,proto3" json:"port_scanning_attempts,omitempty"`
+	DnsTunnelingAttempts  uint64 `protobuf:"varint,3,opt,name=dns_tunneling_attempts,json=dnsTunnelingAttempts,proto3" json:"dns_tunneling_attempts,omitempty"`
+	// Blocked connections
+	BlockedOutboundConnections uint64 `protobuf:"varint,4,opt,name=blocked_outbound_connections,json=blockedOutboundConnections,proto3" json:"blocked_outbound_connections,omitempty"`
+	BlockedInboundConnections  uint64 `protobuf:"varint,5,opt,name=blocked_inbound_connections,json=blockedInboundConnections,proto3" json:"blocked_inbound_connections,omitempty"`
+	// Unusual traffic patterns
+	NetworkAnomalies []*NetworkAnomaly `protobuf:"bytes,6,rep,name=network_anomalies,json=networkAnomalies,proto3" json:"network_anomalies,omitempty"`
+	// Protocol violations
+	ProtocolViolations uint64            `protobuf:"varint,7,opt,name=protocol_violations,json=protocolViolations,proto3" json:"protocol_violations,omitempty"`
+	BlockedProtocols   map[string]uint64 `protobuf:"bytes,8,rep,name=blocked_protocols,json=blockedProtocols,proto3" json:"blocked_protocols,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // protocol -> count
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *NetworkSecurity) Reset() {
+	*x = NetworkSecurity{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NetworkSecurity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NetworkSecurity) ProtoMessage() {}
+
+func (x *NetworkSecurity) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NetworkSecurity.ProtoReflect.Descriptor instead.
+func (*NetworkSecurity) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *NetworkSecurity) GetSuspiciousConnections() uint64 {
+	if x != nil {
+		return x.SuspiciousConnections
+	}
+	return 0
+}
+
+func (x *NetworkSecurity) GetPortScanningAttempts() uint64 {
+	if x != nil {
+		return x.PortScanningAttempts
+	}
+	return 0
+}
+
+func (x *NetworkSecurity) GetDnsTunnelingAttempts() uint64 {
+	if x != nil {
+		return x.DnsTunnelingAttempts
+	}
+	return 0
+}
+
+func (x *NetworkSecurity) GetBlockedOutboundConnections() uint64 {
+	if x != nil {
+		return x.BlockedOutboundConnections
+	}
+	return 0
+}
+
+func (x *NetworkSecurity) GetBlockedInboundConnections() uint64 {
+	if x != nil {
+		return x.BlockedInboundConnections
+	}
+	return 0
+}
+
+func (x *NetworkSecurity) GetNetworkAnomalies() []*NetworkAnomaly {
+	if x != nil {
+		return x.NetworkAnomalies
+	}
+	return nil
+}
+
+func (x *NetworkSecurity) GetProtocolViolations() uint64 {
+	if x != nil {
+		return x.ProtocolViolations
+	}
+	return 0
+}
+
+func (x *NetworkSecurity) GetBlockedProtocols() map[string]uint64 {
+	if x != nil {
+		return x.BlockedProtocols
+	}
+	return nil
+}
+
+type NetworkAnomaly struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	AnomalyType      string                 `protobuf:"bytes,1,opt,name=anomaly_type,json=anomalyType,proto3" json:"anomaly_type,omitempty"` // "unusual_destination", "high_volume", "suspicious_protocol"
+	DestinationIp    string                 `protobuf:"bytes,2,opt,name=destination_ip,json=destinationIp,proto3" json:"destination_ip,omitempty"`
+	DestinationPort  uint32                 `protobuf:"varint,3,opt,name=destination_port,json=destinationPort,proto3" json:"destination_port,omitempty"`
+	Protocol         string                 `protobuf:"bytes,4,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	BytesTransferred uint64                 `protobuf:"varint,5,opt,name=bytes_transferred,json=bytesTransferred,proto3" json:"bytes_transferred,omitempty"`
+	RiskScore        float64                `protobuf:"fixed64,6,opt,name=risk_score,json=riskScore,proto3" json:"risk_score,omitempty"`
+	DetectedAt       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *NetworkAnomaly) Reset() {
+	*x = NetworkAnomaly{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NetworkAnomaly) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NetworkAnomaly) ProtoMessage() {}
+
+func (x *NetworkAnomaly) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NetworkAnomaly.ProtoReflect.Descriptor instead.
+func (*NetworkAnomaly) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *NetworkAnomaly) GetAnomalyType() string {
+	if x != nil {
+		return x.AnomalyType
+	}
+	return ""
+}
+
+func (x *NetworkAnomaly) GetDestinationIp() string {
+	if x != nil {
+		return x.DestinationIp
+	}
+	return ""
+}
+
+func (x *NetworkAnomaly) GetDestinationPort() uint32 {
+	if x != nil {
+		return x.DestinationPort
+	}
+	return 0
+}
+
+func (x *NetworkAnomaly) GetProtocol() string {
+	if x != nil {
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *NetworkAnomaly) GetBytesTransferred() uint64 {
+	if x != nil {
+		return x.BytesTransferred
+	}
+	return 0
+}
+
+func (x *NetworkAnomaly) GetRiskScore() float64 {
+	if x != nil {
+		return x.RiskScore
+	}
+	return 0
+}
+
+func (x *NetworkAnomaly) GetDetectedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DetectedAt
+	}
+	return nil
+}
+
+type ProcessSecurity struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Process creation monitoring
+	NewProcesses          uint64               `protobuf:"varint,1,opt,name=new_processes,json=newProcesses,proto3" json:"new_processes,omitempty"`
+	SuspiciousProcesses   uint64               `protobuf:"varint,2,opt,name=suspicious_processes,json=suspiciousProcesses,proto3" json:"suspicious_processes,omitempty"`
+	SuspiciousProcessList []*SuspiciousProcess `protobuf:"bytes,3,rep,name=suspicious_process_list,json=suspiciousProcessList,proto3" json:"suspicious_process_list,omitempty"`
+	// Binary execution monitoring
+	UnsignedBinariesExecuted uint64 `protobuf:"varint,4,opt,name=unsigned_binaries_executed,json=unsignedBinariesExecuted,proto3" json:"unsigned_binaries_executed,omitempty"`
+	ModifiedBinariesExecuted uint64 `protobuf:"varint,5,opt,name=modified_binaries_executed,json=modifiedBinariesExecuted,proto3" json:"modified_binaries_executed,omitempty"`
+	// Privilege changes
+	SetuidExecutions  uint64 `protobuf:"varint,6,opt,name=setuid_executions,json=setuidExecutions,proto3" json:"setuid_executions,omitempty"`
+	SetgidExecutions  uint64 `protobuf:"varint,7,opt,name=setgid_executions,json=setgidExecutions,proto3" json:"setgid_executions,omitempty"`
+	CapabilityChanges uint64 `protobuf:"varint,8,opt,name=capability_changes,json=capabilityChanges,proto3" json:"capability_changes,omitempty"`
+	// Container escapes
+	ContainerEscapeAttempts uint64 `protobuf:"varint,9,opt,name=container_escape_attempts,json=containerEscapeAttempts,proto3" json:"container_escape_attempts,omitempty"`
+	NamespaceViolations     uint64 `protobuf:"varint,10,opt,name=namespace_violations,json=namespaceViolations,proto3" json:"namespace_violations,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *ProcessSecurity) Reset() {
+	*x = ProcessSecurity{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProcessSecurity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProcessSecurity) ProtoMessage() {}
+
+func (x *ProcessSecurity) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProcessSecurity.ProtoReflect.Descriptor instead.
+func (*ProcessSecurity) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *ProcessSecurity) GetNewProcesses() uint64 {
+	if x != nil {
+		return x.NewProcesses
+	}
+	return 0
+}
+
+func (x *ProcessSecurity) GetSuspiciousProcesses() uint64 {
+	if x != nil {
+		return x.SuspiciousProcesses
+	}
+	return 0
+}
+
+func (x *ProcessSecurity) GetSuspiciousProcessList() []*SuspiciousProcess {
+	if x != nil {
+		return x.SuspiciousProcessList
+	}
+	return nil
+}
+
+func (x *ProcessSecurity) GetUnsignedBinariesExecuted() uint64 {
+	if x != nil {
+		return x.UnsignedBinariesExecuted
+	}
+	return 0
+}
+
+func (x *ProcessSecurity) GetModifiedBinariesExecuted() uint64 {
+	if x != nil {
+		return x.ModifiedBinariesExecuted
+	}
+	return 0
+}
+
+func (x *ProcessSecurity) GetSetuidExecutions() uint64 {
+	if x != nil {
+		return x.SetuidExecutions
+	}
+	return 0
+}
+
+func (x *ProcessSecurity) GetSetgidExecutions() uint64 {
+	if x != nil {
+		return x.SetgidExecutions
+	}
+	return 0
+}
+
+func (x *ProcessSecurity) GetCapabilityChanges() uint64 {
+	if x != nil {
+		return x.CapabilityChanges
+	}
+	return 0
+}
+
+func (x *ProcessSecurity) GetContainerEscapeAttempts() uint64 {
+	if x != nil {
+		return x.ContainerEscapeAttempts
+	}
+	return 0
+}
+
+func (x *ProcessSecurity) GetNamespaceViolations() uint64 {
+	if x != nil {
+		return x.NamespaceViolations
+	}
+	return 0
+}
+
+type SuspiciousProcess struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pid           uint32                 `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
+	Command       string                 `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	BinaryPath    string                 `protobuf:"bytes,3,opt,name=binary_path,json=binaryPath,proto3" json:"binary_path,omitempty"`
+	Reason        string                 `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"` // Why it's suspicious
+	RiskScore     float64                `protobuf:"fixed64,5,opt,name=risk_score,json=riskScore,proto3" json:"risk_score,omitempty"`
+	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	Attributes    map[string]string      `protobuf:"bytes,7,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional context
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuspiciousProcess) Reset() {
+	*x = SuspiciousProcess{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuspiciousProcess) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuspiciousProcess) ProtoMessage() {}
+
+func (x *SuspiciousProcess) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuspiciousProcess.ProtoReflect.Descriptor instead.
+func (*SuspiciousProcess) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *SuspiciousProcess) GetPid() uint32 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+func (x *SuspiciousProcess) GetCommand() string {
+	if x != nil {
+		return x.Command
+	}
+	return ""
+}
+
+func (x *SuspiciousProcess) GetBinaryPath() string {
+	if x != nil {
+		return x.BinaryPath
+	}
+	return ""
+}
+
+func (x *SuspiciousProcess) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *SuspiciousProcess) GetRiskScore() float64 {
+	if x != nil {
+		return x.RiskScore
+	}
+	return 0
+}
+
+func (x *SuspiciousProcess) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *SuspiciousProcess) GetAttributes() map[string]string {
+	if x != nil {
+		return x.Attributes
+	}
+	return nil
+}
+
+type FileSystemSecurity struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// File access violations
+	UnauthorizedFileAccess uint64                 `protobuf:"varint,1,opt,name=unauthorized_file_access,json=unauthorizedFileAccess,proto3" json:"unauthorized_file_access,omitempty"`
+	SensitiveFileAccess    uint64                 `protobuf:"varint,2,opt,name=sensitive_file_access,json=sensitiveFileAccess,proto3" json:"sensitive_file_access,omitempty"`
+	SensitiveAccesses      []*SensitiveFileAccess `protobuf:"bytes,3,rep,name=sensitive_accesses,json=sensitiveAccesses,proto3" json:"sensitive_accesses,omitempty"`
+	// File modification monitoring
+	SystemFileModifications uint64 `protobuf:"varint,4,opt,name=system_file_modifications,json=systemFileModifications,proto3" json:"system_file_modifications,omitempty"`
+	ConfigFileModifications uint64 `protobuf:"varint,5,opt,name=config_file_modifications,json=configFileModifications,proto3" json:"config_file_modifications,omitempty"`
+	LogFileTampering        uint64 `protobuf:"varint,6,opt,name=log_file_tampering,json=logFileTampering,proto3" json:"log_file_tampering,omitempty"`
+	// Permission violations
+	PermissionEscalations uint64 `protobuf:"varint,7,opt,name=permission_escalations,json=permissionEscalations,proto3" json:"permission_escalations,omitempty"`
+	AclViolations         uint64 `protobuf:"varint,8,opt,name=acl_violations,json=aclViolations,proto3" json:"acl_violations,omitempty"`
+	// Suspicious patterns
+	MassFileDeletions  uint64 `protobuf:"varint,9,opt,name=mass_file_deletions,json=massFileDeletions,proto3" json:"mass_file_deletions,omitempty"`
+	RapidFileCreation  uint64 `protobuf:"varint,10,opt,name=rapid_file_creation,json=rapidFileCreation,proto3" json:"rapid_file_creation,omitempty"`
+	HiddenFileCreation uint64 `protobuf:"varint,11,opt,name=hidden_file_creation,json=hiddenFileCreation,proto3" json:"hidden_file_creation,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *FileSystemSecurity) Reset() {
+	*x = FileSystemSecurity{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileSystemSecurity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileSystemSecurity) ProtoMessage() {}
+
+func (x *FileSystemSecurity) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FileSystemSecurity.ProtoReflect.Descriptor instead.
+func (*FileSystemSecurity) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *FileSystemSecurity) GetUnauthorizedFileAccess() uint64 {
+	if x != nil {
+		return x.UnauthorizedFileAccess
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetSensitiveFileAccess() uint64 {
+	if x != nil {
+		return x.SensitiveFileAccess
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetSensitiveAccesses() []*SensitiveFileAccess {
+	if x != nil {
+		return x.SensitiveAccesses
+	}
+	return nil
+}
+
+func (x *FileSystemSecurity) GetSystemFileModifications() uint64 {
+	if x != nil {
+		return x.SystemFileModifications
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetConfigFileModifications() uint64 {
+	if x != nil {
+		return x.ConfigFileModifications
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetLogFileTampering() uint64 {
+	if x != nil {
+		return x.LogFileTampering
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetPermissionEscalations() uint64 {
+	if x != nil {
+		return x.PermissionEscalations
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetAclViolations() uint64 {
+	if x != nil {
+		return x.AclViolations
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetMassFileDeletions() uint64 {
+	if x != nil {
+		return x.MassFileDeletions
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetRapidFileCreation() uint64 {
+	if x != nil {
+		return x.RapidFileCreation
+	}
+	return 0
+}
+
+func (x *FileSystemSecurity) GetHiddenFileCreation() uint64 {
+	if x != nil {
+		return x.HiddenFileCreation
+	}
+	return 0
+}
+
+type SensitiveFileAccess struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FilePath      string                 `protobuf:"bytes,1,opt,name=file_path,json=filePath,proto3" json:"file_path,omitempty"`
+	AccessType    string                 `protobuf:"bytes,2,opt,name=access_type,json=accessType,proto3" json:"access_type,omitempty"` // "read", "write", "execute", "delete"
+	AccessingPid  uint32                 `protobuf:"varint,3,opt,name=accessing_pid,json=accessingPid,proto3" json:"accessing_pid,omitempty"`
+	ProcessName   string                 `protobuf:"bytes,4,opt,name=process_name,json=processName,proto3" json:"process_name,omitempty"`
+	Reason        string                 `protobuf:"bytes,5,opt,name=reason,proto3" json:"reason,omitempty"` // Why it's sensitive
+	AccessedAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=accessed_at,json=accessedAt,proto3" json:"accessed_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SensitiveFileAccess) Reset() {
+	*x = SensitiveFileAccess{}
+	mi := &file_telemetry_ebpf_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SensitiveFileAccess) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SensitiveFileAccess) ProtoMessage() {}
+
+func (x *SensitiveFileAccess) ProtoReflect() protoreflect.Message {
+	mi := &file_telemetry_ebpf_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SensitiveFileAccess.ProtoReflect.Descriptor instead.
+func (*SensitiveFileAccess) Descriptor() ([]byte, []int) {
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *SensitiveFileAccess) GetFilePath() string {
+	if x != nil {
+		return x.FilePath
+	}
+	return ""
+}
+
+func (x *SensitiveFileAccess) GetAccessType() string {
+	if x != nil {
+		return x.AccessType
+	}
+	return ""
+}
+
+func (x *SensitiveFileAccess) GetAccessingPid() uint32 {
+	if x != nil {
+		return x.AccessingPid
+	}
+	return 0
+}
+
+func (x *SensitiveFileAccess) GetProcessName() string {
+	if x != nil {
+		return x.ProcessName
+	}
+	return ""
+}
+
+func (x *SensitiveFileAccess) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *SensitiveFileAccess) GetAccessedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AccessedAt
+	}
+	return nil
+}
+
 // EBPFMetricsBatch for batching eBPF metrics
 type EBPFMetricsBatch struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1679,7 +4204,7 @@ type EBPFMetricsBatch struct {
 
 func (x *EBPFMetricsBatch) Reset() {
 	*x = EBPFMetricsBatch{}
-	mi := &file_telemetry_ebpf_proto_msgTypes[16]
+	mi := &file_telemetry_ebpf_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1691,7 +4216,7 @@ func (x *EBPFMetricsBatch) String() string {
 func (*EBPFMetricsBatch) ProtoMessage() {}
 
 func (x *EBPFMetricsBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_telemetry_ebpf_proto_msgTypes[16]
+	mi := &file_telemetry_ebpf_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1704,7 +4229,7 @@ func (x *EBPFMetricsBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EBPFMetricsBatch.ProtoReflect.Descriptor instead.
 func (*EBPFMetricsBatch) Descriptor() ([]byte, []int) {
-	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{16}
+	return file_telemetry_ebpf_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *EBPFMetricsBatch) GetMetrics() []*EBPFMetrics {
@@ -1718,7 +4243,7 @@ var File_telemetry_ebpf_proto protoreflect.FileDescriptor
 
 const file_telemetry_ebpf_proto_rawDesc = "" +
 	"\n" +
-	"\x14telemetry/ebpf.proto\x12\ttelemetry\x1a\x18telemetry/metadata.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd6\x05\n" +
+	"\x14telemetry/ebpf.proto\x12\ttelemetry\x1a\x18telemetry/metadata.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8d\a\n" +
 	"\vEBPFMetrics\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
 	"\bpod_name\x18\x02 \x01(\tR\apodName\x12\x17\n" +
@@ -1734,7 +4259,12 @@ const file_telemetry_ebpf_proto_rawDesc = "" +
 	" \x01(\v2\x16.telemetry.HTTPMetricsR\x04http\x12B\n" +
 	"\x0fmemory_patterns\x18\v \x01(\v2\x19.telemetry.MemoryPatternsR\x0ememoryPatterns\x129\n" +
 	"\fcpu_patterns\x18\f \x01(\v2\x16.telemetry.CPUPatternsR\vcpuPatterns\x129\n" +
-	"\fnetwork_flow\x18\r \x01(\v2\x16.telemetry.NetworkFlowR\vnetworkFlow\x12)\n" +
+	"\fnetwork_flow\x18\r \x01(\v2\x16.telemetry.NetworkFlowR\vnetworkFlow\x12<\n" +
+	"\n" +
+	"filesystem\x18\x11 \x01(\v2\x1c.telemetry.FileSystemMetricsR\n" +
+	"filesystem\x12?\n" +
+	"\vapplication\x18\x12 \x01(\v2\x1d.telemetry.ApplicationMetricsR\vapplication\x126\n" +
+	"\bsecurity\x18\x13 \x01(\v2\x1a.telemetry.SecurityMetricsR\bsecurity\x12)\n" +
 	"\x06apikey\x18\x0e \x01(\v2\x11.telemetry.APIKeyR\x06apikey\x12/\n" +
 	"\bmetadata\x18\x0f \x01(\v2\x13.telemetry.MetadataR\bmetadata\x128\n" +
 	"\ttimestamp\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12=\n" +
@@ -1906,7 +4436,290 @@ const file_telemetry_ebpf_proto_rawDesc = "" +
 	"\x0fcurrent_entries\x18\x03 \x01(\rR\x0ecurrentEntries\x12\x1f\n" +
 	"\vmax_entries\x18\x04 \x01(\rR\n" +
 	"maxEntries\x12 \n" +
-	"\vutilization\x18\x05 \x01(\x01R\vutilization\"D\n" +
+	"\vutilization\x18\x05 \x01(\x01R\vutilization\"\xad\a\n" +
+	"\x11FileSystemMetrics\x12\x19\n" +
+	"\bread_ops\x18\x01 \x01(\x04R\areadOps\x12\x1b\n" +
+	"\twrite_ops\x18\x02 \x01(\x04R\bwriteOps\x12\x19\n" +
+	"\bopen_ops\x18\x03 \x01(\x04R\aopenOps\x12\x1b\n" +
+	"\tclose_ops\x18\x04 \x01(\x04R\bcloseOps\x12\x19\n" +
+	"\bsync_ops\x18\x05 \x01(\x04R\asyncOps\x12\x1d\n" +
+	"\n" +
+	"bytes_read\x18\x06 \x01(\x04R\tbytesRead\x12#\n" +
+	"\rbytes_written\x18\a \x01(\x04R\fbytesWritten\x12>\n" +
+	"\fread_latency\x18\b \x01(\v2\x1b.telemetry.LatencyHistogramR\vreadLatency\x12@\n" +
+	"\rwrite_latency\x18\t \x01(\v2\x1b.telemetry.LatencyHistogramR\fwriteLatency\x12>\n" +
+	"\fopen_latency\x18\n" +
+	" \x01(\v2\x1b.telemetry.LatencyHistogramR\vopenLatency\x129\n" +
+	"\thot_files\x18\v \x03(\v2\x1c.telemetry.FileAccessPatternR\bhotFiles\x12D\n" +
+	"\x0fhot_directories\x18\f \x03(\v2\x1b.telemetry.DirectoryPatternR\x0ehotDirectories\x12.\n" +
+	"\x13read_bandwidth_mbps\x18\r \x01(\x01R\x11readBandwidthMbps\x120\n" +
+	"\x14write_bandwidth_mbps\x18\x0e \x01(\x01R\x12writeBandwidthMbps\x12)\n" +
+	"\x10disk_utilization\x18\x0f \x01(\x01R\x0fdiskUtilization\x125\n" +
+	"\bio_sizes\x18\x10 \x01(\v2\x1a.telemetry.IOSizeHistogramR\aioSizes\x12\x1b\n" +
+	"\tio_errors\x18\x11 \x01(\x04R\bioErrors\x12+\n" +
+	"\x11permission_errors\x18\x12 \x01(\x04R\x10permissionErrors\x12=\n" +
+	"\fwindow_start\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\vwindowStart\x129\n" +
+	"\n" +
+	"window_end\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\twindowEnd\"\xc1\x01\n" +
+	"\x11FileAccessPattern\x12\x1b\n" +
+	"\tfile_path\x18\x01 \x01(\tR\bfilePath\x12!\n" +
+	"\faccess_count\x18\x02 \x01(\x04R\vaccessCount\x12%\n" +
+	"\x0ebytes_accessed\x18\x03 \x01(\x04R\rbytesAccessed\x12$\n" +
+	"\x0eavg_latency_us\x18\x04 \x01(\x01R\favgLatencyUs\x12\x1f\n" +
+	"\vaccess_type\x18\x05 \x01(\tR\n" +
+	"accessType\"\xa0\x01\n" +
+	"\x10DirectoryPattern\x12%\n" +
+	"\x0edirectory_path\x18\x01 \x01(\tR\rdirectoryPath\x12\x1d\n" +
+	"\n" +
+	"file_count\x18\x02 \x01(\x04R\tfileCount\x12%\n" +
+	"\x0etotal_accesses\x18\x03 \x01(\x04R\rtotalAccesses\x12\x1f\n" +
+	"\vtotal_bytes\x18\x04 \x01(\x04R\n" +
+	"totalBytes\"\xbd\x01\n" +
+	"\x0fIOSizeHistogram\x12\x19\n" +
+	"\bsmall_io\x18\x01 \x01(\x04R\asmallIo\x12\x1b\n" +
+	"\tmedium_io\x18\x02 \x01(\x04R\bmediumIo\x12\x19\n" +
+	"\blarge_io\x18\x03 \x01(\x04R\alargeIo\x12\x17\n" +
+	"\ahuge_io\x18\x04 \x01(\x04R\x06hugeIo\x12\x1e\n" +
+	"\vavg_io_size\x18\x05 \x01(\x01R\tavgIoSize\x12\x1e\n" +
+	"\vmax_io_size\x18\x06 \x01(\x01R\tmaxIoSize\"\xed\x02\n" +
+	"\x12ApplicationMetrics\x126\n" +
+	"\bdatabase\x18\x01 \x01(\v2\x1a.telemetry.DatabaseMetricsR\bdatabase\x12-\n" +
+	"\x05cache\x18\x02 \x01(\v2\x17.telemetry.CacheMetricsR\x05cache\x12>\n" +
+	"\x0ecustom_metrics\x18\x03 \x03(\v2\x17.telemetry.CustomMetricR\rcustomMetrics\x126\n" +
+	"\blanguage\x18\x04 \x01(\v2\x1a.telemetry.LanguageMetricsR\blanguage\x12=\n" +
+	"\fwindow_start\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vwindowStart\x129\n" +
+	"\n" +
+	"window_end\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\twindowEnd\"\x92\x05\n" +
+	"\x0fDatabaseMetrics\x12\x1f\n" +
+	"\vquery_count\x18\x01 \x01(\x04R\n" +
+	"queryCount\x12)\n" +
+	"\x11avg_query_time_us\x18\x02 \x01(\x01R\x0eavgQueryTimeUs\x12!\n" +
+	"\fslow_queries\x18\x03 \x01(\x04R\vslowQueries\x125\n" +
+	"\x17slow_query_threshold_us\x18\x04 \x01(\x01R\x14slowQueryThresholdUs\x12K\n" +
+	"\vquery_types\x18\x05 \x03(\v2*.telemetry.DatabaseMetrics.QueryTypesEntryR\n" +
+	"queryTypes\x12-\n" +
+	"\x12active_connections\x18\x06 \x01(\x04R\x11activeConnections\x120\n" +
+	"\x14connection_pool_size\x18\a \x01(\x04R\x12connectionPoolSize\x12/\n" +
+	"\x13connection_timeouts\x18\b \x01(\x04R\x12connectionTimeouts\x12\"\n" +
+	"\ftransactions\x18\t \x01(\x04R\ftransactions\x12\x1c\n" +
+	"\trollbacks\x18\n" +
+	" \x01(\x04R\trollbacks\x125\n" +
+	"\x17avg_transaction_time_us\x18\v \x01(\x01R\x14avgTransactionTimeUs\x12B\n" +
+	"\x12slow_query_samples\x18\f \x03(\v2\x14.telemetry.SlowQueryR\x10slowQuerySamples\x1a=\n" +
+	"\x0fQueryTypesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x01\"\xbf\x01\n" +
+	"\tSlowQuery\x12\x1d\n" +
+	"\n" +
+	"query_hash\x18\x01 \x01(\tR\tqueryHash\x12*\n" +
+	"\x11execution_time_us\x18\x02 \x01(\x01R\x0fexecutionTimeUs\x12#\n" +
+	"\rrows_examined\x18\x03 \x01(\x04R\frowsExamined\x12#\n" +
+	"\rrows_returned\x18\x04 \x01(\x04R\frowsReturned\x12\x1d\n" +
+	"\n" +
+	"query_type\x18\x05 \x01(\tR\tqueryType\"\xf9\x03\n" +
+	"\fCacheMetrics\x12\x1d\n" +
+	"\n" +
+	"cache_hits\x18\x01 \x01(\x04R\tcacheHits\x12!\n" +
+	"\fcache_misses\x18\x02 \x01(\x04R\vcacheMisses\x12\x19\n" +
+	"\bhit_rate\x18\x03 \x01(\x01R\ahitRate\x12\x1d\n" +
+	"\n" +
+	"cache_sets\x18\x04 \x01(\x04R\tcacheSets\x12\x1d\n" +
+	"\n" +
+	"cache_gets\x18\x05 \x01(\x04R\tcacheGets\x12#\n" +
+	"\rcache_deletes\x18\x06 \x01(\x04R\fcacheDeletes\x12'\n" +
+	"\x0fcache_evictions\x18\a \x01(\x04R\x0ecacheEvictions\x12+\n" +
+	"\x12avg_get_latency_us\x18\b \x01(\x01R\x0favgGetLatencyUs\x12+\n" +
+	"\x12avg_set_latency_us\x18\t \x01(\x01R\x0favgSetLatencyUs\x12(\n" +
+	"\x10cache_size_bytes\x18\n" +
+	" \x01(\x04R\x0ecacheSizeBytes\x120\n" +
+	"\x14cache_capacity_bytes\x18\v \x01(\x04R\x12cacheCapacityBytes\x12+\n" +
+	"\x11cache_utilization\x18\f \x01(\x01R\x10cacheUtilization\x12\x1d\n" +
+	"\n" +
+	"cache_type\x18\r \x01(\tR\tcacheType\"\xfe\x01\n" +
+	"\fCustomMetric\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x14\n" +
+	"\x05value\x18\x03 \x01(\x01R\x05value\x12;\n" +
+	"\x06labels\x18\x04 \x03(\v2#.telemetry.CustomMetric.LabelsEntryR\x06labels\x128\n" +
+	"\ttimestamp\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x83\x02\n" +
+	"\x0fLanguageMetrics\x123\n" +
+	"\n" +
+	"go_metrics\x18\x01 \x01(\v2\x14.telemetry.GoMetricsR\tgoMetrics\x129\n" +
+	"\fjava_metrics\x18\x02 \x01(\v2\x16.telemetry.JavaMetricsR\vjavaMetrics\x12?\n" +
+	"\x0epython_metrics\x18\x03 \x01(\v2\x18.telemetry.PythonMetricsR\rpythonMetrics\x12?\n" +
+	"\x0enodejs_metrics\x18\x04 \x01(\v2\x18.telemetry.NodeJSMetricsR\rnodejsMetrics\"\xf7\x02\n" +
+	"\tGoMetrics\x12\x1e\n" +
+	"\n" +
+	"goroutines\x18\x01 \x01(\x04R\n" +
+	"goroutines\x120\n" +
+	"\x14goroutine_stack_size\x18\x02 \x01(\x04R\x12goroutineStackSize\x12\x1b\n" +
+	"\tgc_cycles\x18\x03 \x01(\x04R\bgcCycles\x12'\n" +
+	"\x10gc_pause_time_us\x18\x04 \x01(\x01R\rgcPauseTimeUs\x12\x1b\n" +
+	"\theap_size\x18\x05 \x01(\x04R\bheapSize\x12\x1d\n" +
+	"\n" +
+	"heap_alloc\x18\x06 \x01(\x04R\theapAlloc\x12\x1b\n" +
+	"\theap_idle\x18\a \x01(\x04R\bheapIdle\x12#\n" +
+	"\rchannel_sends\x18\b \x01(\x04R\fchannelSends\x12)\n" +
+	"\x10channel_receives\x18\t \x01(\x04R\x0fchannelReceives\x12)\n" +
+	"\x10blocked_channels\x18\n" +
+	" \x01(\x04R\x0fblockedChannels\"\xf6\x04\n" +
+	"\vJavaMetrics\x12\x1b\n" +
+	"\theap_used\x18\x01 \x01(\x04R\bheapUsed\x12\x19\n" +
+	"\bheap_max\x18\x02 \x01(\x04R\aheapMax\x12\"\n" +
+	"\rnon_heap_used\x18\x03 \x01(\x04R\vnonHeapUsed\x12 \n" +
+	"\fnon_heap_max\x18\x04 \x01(\x04R\n" +
+	"nonHeapMax\x12!\n" +
+	"\fthread_count\x18\x05 \x01(\x04R\vthreadCount\x12.\n" +
+	"\x13daemon_thread_count\x18\x06 \x01(\x04R\x11daemonThreadCount\x12*\n" +
+	"\x11peak_thread_count\x18\a \x01(\x04R\x0fpeakThreadCount\x12,\n" +
+	"\x12loaded_class_count\x18\b \x01(\x04R\x10loadedClassCount\x120\n" +
+	"\x14unloaded_class_count\x18\t \x01(\x04R\x12unloadedClassCount\x12P\n" +
+	"\x0egc_collections\x18\n" +
+	" \x03(\v2).telemetry.JavaMetrics.GcCollectionsEntryR\rgcCollections\x12;\n" +
+	"\agc_time\x18\v \x03(\v2\".telemetry.JavaMetrics.GcTimeEntryR\x06gcTime\x1a@\n" +
+	"\x12GcCollectionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x01\x1a9\n" +
+	"\vGcTimeEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x01\"\xec\x02\n" +
+	"\rPythonMetrics\x12#\n" +
+	"\robjects_count\x18\x01 \x01(\x04R\fobjectsCount\x12%\n" +
+	"\x0egc_collections\x18\x02 \x01(\x04R\rgcCollections\x12!\n" +
+	"\fgc_collected\x18\x03 \x01(\x04R\vgcCollected\x12%\n" +
+	"\x0eloaded_modules\x18\x04 \x01(\x04R\rloadedModules\x12+\n" +
+	"\x11exceptions_raised\x18\x05 \x01(\x04R\x10exceptionsRaised\x12U\n" +
+	"\x0fexception_types\x18\x06 \x03(\v2,.telemetry.PythonMetrics.ExceptionTypesEntryR\x0eexceptionTypes\x1aA\n" +
+	"\x13ExceptionTypesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x01\"\xa8\x02\n" +
+	"\rNodeJSMetrics\x12)\n" +
+	"\x11event_loop_lag_us\x18\x01 \x01(\x01R\x0eeventLoopLagUs\x122\n" +
+	"\x15event_loop_iterations\x18\x02 \x01(\x04R\x13eventLoopIterations\x12\x1b\n" +
+	"\theap_used\x18\x03 \x01(\x04R\bheapUsed\x12\x1d\n" +
+	"\n" +
+	"heap_total\x18\x04 \x01(\x04R\theapTotal\x12'\n" +
+	"\x0fexternal_memory\x18\x05 \x01(\x04R\x0eexternalMemory\x12'\n" +
+	"\x0fasync_resources\x18\x06 \x01(\x04R\x0easyncResources\x12*\n" +
+	"\x11pending_async_ops\x18\a \x01(\x04R\x0fpendingAsyncOps\"\xf0\x03\n" +
+	"\x0fSecurityMetrics\x125\n" +
+	"\bsyscalls\x18\x01 \x01(\v2\x19.telemetry.SyscallMetricsR\bsyscalls\x12N\n" +
+	"\x13resource_violations\x18\x02 \x01(\v2\x1d.telemetry.ResourceViolationsR\x12resourceViolations\x12E\n" +
+	"\x10network_security\x18\x03 \x01(\v2\x1a.telemetry.NetworkSecurityR\x0fnetworkSecurity\x12E\n" +
+	"\x10process_security\x18\x04 \x01(\v2\x1a.telemetry.ProcessSecurityR\x0fprocessSecurity\x12N\n" +
+	"\x13filesystem_security\x18\x05 \x01(\v2\x1d.telemetry.FileSystemSecurityR\x12filesystemSecurity\x12=\n" +
+	"\fwindow_start\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vwindowStart\x129\n" +
+	"\n" +
+	"window_end\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\twindowEnd\"\xf0\x03\n" +
+	"\x0eSyscallMetrics\x12%\n" +
+	"\x0etotal_syscalls\x18\x01 \x01(\x04R\rtotalSyscalls\x12S\n" +
+	"\x0esyscall_counts\x18\x02 \x03(\v2,.telemetry.SyscallMetrics.SyscallCountsEntryR\rsyscallCounts\x127\n" +
+	"\tanomalies\x18\x03 \x03(\v2\x19.telemetry.SyscallAnomalyR\tanomalies\x12B\n" +
+	"\x1dprivilege_escalation_attempts\x18\x04 \x01(\x04R\x1bprivilegeEscalationAttempts\x12/\n" +
+	"\x13suspicious_patterns\x18\x05 \x01(\x04R\x12suspiciousPatterns\x125\n" +
+	"\x17syscall_rate_per_second\x18\x06 \x01(\x01R\x14syscallRatePerSecond\x12;\n" +
+	"\x1ahigh_syscall_rate_detected\x18\a \x01(\bR\x17highSyscallRateDetected\x1a@\n" +
+	"\x12SyscallCountsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x01\"\xd2\x01\n" +
+	"\x0eSyscallAnomaly\x12!\n" +
+	"\fsyscall_name\x18\x01 \x01(\tR\vsyscallName\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\x04R\x05count\x12'\n" +
+	"\x0ffrequency_score\x18\x03 \x01(\x01R\x0efrequencyScore\x12!\n" +
+	"\fanomaly_type\x18\x04 \x01(\tR\vanomalyType\x12;\n" +
+	"\vdetected_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"detectedAt\"\xee\x05\n" +
+	"\x12ResourceViolations\x126\n" +
+	"\x17memory_limit_violations\x18\x01 \x01(\x04R\x15memoryLimitViolations\x12\x1b\n" +
+	"\toom_kills\x18\x02 \x01(\x04R\boomKills\x124\n" +
+	"\x16memory_pressure_events\x18\x03 \x01(\x04R\x14memoryPressureEvents\x122\n" +
+	"\x15cpu_throttling_events\x18\x04 \x01(\x04R\x13cpuThrottlingEvents\x120\n" +
+	"\x14cpu_quota_violations\x18\x05 \x01(\x04R\x12cpuQuotaViolations\x123\n" +
+	"\x16cpu_steal_time_percent\x18\x06 \x01(\x01R\x13cpuStealTimePercent\x12.\n" +
+	"\x13fd_limit_violations\x18\a \x01(\x04R\x11fdLimitViolations\x12&\n" +
+	"\x0fmax_fds_reached\x18\b \x01(\x04R\rmaxFdsReached\x128\n" +
+	"\x18process_limit_violations\x18\t \x01(\x04R\x16processLimitViolations\x126\n" +
+	"\x17thread_limit_violations\x18\n" +
+	" \x01(\x04R\x15threadLimitViolations\x12@\n" +
+	"\x1cnetwork_bandwidth_violations\x18\v \x01(\x04R\x1anetworkBandwidthViolations\x12>\n" +
+	"\x1bconnection_limit_violations\x18\f \x01(\x04R\x19connectionLimitViolations\x122\n" +
+	"\x15disk_quota_violations\x18\r \x01(\x04R\x13diskQuotaViolations\x122\n" +
+	"\x15iops_limit_violations\x18\x0e \x01(\x04R\x13iopsLimitViolations\"\xd3\x04\n" +
+	"\x0fNetworkSecurity\x125\n" +
+	"\x16suspicious_connections\x18\x01 \x01(\x04R\x15suspiciousConnections\x124\n" +
+	"\x16port_scanning_attempts\x18\x02 \x01(\x04R\x14portScanningAttempts\x124\n" +
+	"\x16dns_tunneling_attempts\x18\x03 \x01(\x04R\x14dnsTunnelingAttempts\x12@\n" +
+	"\x1cblocked_outbound_connections\x18\x04 \x01(\x04R\x1ablockedOutboundConnections\x12>\n" +
+	"\x1bblocked_inbound_connections\x18\x05 \x01(\x04R\x19blockedInboundConnections\x12F\n" +
+	"\x11network_anomalies\x18\x06 \x03(\v2\x19.telemetry.NetworkAnomalyR\x10networkAnomalies\x12/\n" +
+	"\x13protocol_violations\x18\a \x01(\x04R\x12protocolViolations\x12]\n" +
+	"\x11blocked_protocols\x18\b \x03(\v20.telemetry.NetworkSecurity.BlockedProtocolsEntryR\x10blockedProtocols\x1aC\n" +
+	"\x15BlockedProtocolsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x01\"\xaa\x02\n" +
+	"\x0eNetworkAnomaly\x12!\n" +
+	"\fanomaly_type\x18\x01 \x01(\tR\vanomalyType\x12%\n" +
+	"\x0edestination_ip\x18\x02 \x01(\tR\rdestinationIp\x12)\n" +
+	"\x10destination_port\x18\x03 \x01(\rR\x0fdestinationPort\x12\x1a\n" +
+	"\bprotocol\x18\x04 \x01(\tR\bprotocol\x12+\n" +
+	"\x11bytes_transferred\x18\x05 \x01(\x04R\x10bytesTransferred\x12\x1d\n" +
+	"\n" +
+	"risk_score\x18\x06 \x01(\x01R\triskScore\x12;\n" +
+	"\vdetected_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"detectedAt\"\xb3\x04\n" +
+	"\x0fProcessSecurity\x12#\n" +
+	"\rnew_processes\x18\x01 \x01(\x04R\fnewProcesses\x121\n" +
+	"\x14suspicious_processes\x18\x02 \x01(\x04R\x13suspiciousProcesses\x12T\n" +
+	"\x17suspicious_process_list\x18\x03 \x03(\v2\x1c.telemetry.SuspiciousProcessR\x15suspiciousProcessList\x12<\n" +
+	"\x1aunsigned_binaries_executed\x18\x04 \x01(\x04R\x18unsignedBinariesExecuted\x12<\n" +
+	"\x1amodified_binaries_executed\x18\x05 \x01(\x04R\x18modifiedBinariesExecuted\x12+\n" +
+	"\x11setuid_executions\x18\x06 \x01(\x04R\x10setuidExecutions\x12+\n" +
+	"\x11setgid_executions\x18\a \x01(\x04R\x10setgidExecutions\x12-\n" +
+	"\x12capability_changes\x18\b \x01(\x04R\x11capabilityChanges\x12:\n" +
+	"\x19container_escape_attempts\x18\t \x01(\x04R\x17containerEscapeAttempts\x121\n" +
+	"\x14namespace_violations\x18\n" +
+	" \x01(\x04R\x13namespaceViolations\"\xdf\x02\n" +
+	"\x11SuspiciousProcess\x12\x10\n" +
+	"\x03pid\x18\x01 \x01(\rR\x03pid\x12\x18\n" +
+	"\acommand\x18\x02 \x01(\tR\acommand\x12\x1f\n" +
+	"\vbinary_path\x18\x03 \x01(\tR\n" +
+	"binaryPath\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\x12\x1d\n" +
+	"\n" +
+	"risk_score\x18\x05 \x01(\x01R\triskScore\x129\n" +
+	"\n" +
+	"started_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12L\n" +
+	"\n" +
+	"attributes\x18\a \x03(\v2,.telemetry.SuspiciousProcess.AttributesEntryR\n" +
+	"attributes\x1a=\n" +
+	"\x0fAttributesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe7\x04\n" +
+	"\x12FileSystemSecurity\x128\n" +
+	"\x18unauthorized_file_access\x18\x01 \x01(\x04R\x16unauthorizedFileAccess\x122\n" +
+	"\x15sensitive_file_access\x18\x02 \x01(\x04R\x13sensitiveFileAccess\x12M\n" +
+	"\x12sensitive_accesses\x18\x03 \x03(\v2\x1e.telemetry.SensitiveFileAccessR\x11sensitiveAccesses\x12:\n" +
+	"\x19system_file_modifications\x18\x04 \x01(\x04R\x17systemFileModifications\x12:\n" +
+	"\x19config_file_modifications\x18\x05 \x01(\x04R\x17configFileModifications\x12,\n" +
+	"\x12log_file_tampering\x18\x06 \x01(\x04R\x10logFileTampering\x125\n" +
+	"\x16permission_escalations\x18\a \x01(\x04R\x15permissionEscalations\x12%\n" +
+	"\x0eacl_violations\x18\b \x01(\x04R\raclViolations\x12.\n" +
+	"\x13mass_file_deletions\x18\t \x01(\x04R\x11massFileDeletions\x12.\n" +
+	"\x13rapid_file_creation\x18\n" +
+	" \x01(\x04R\x11rapidFileCreation\x120\n" +
+	"\x14hidden_file_creation\x18\v \x01(\x04R\x12hiddenFileCreation\"\xf0\x01\n" +
+	"\x13SensitiveFileAccess\x12\x1b\n" +
+	"\tfile_path\x18\x01 \x01(\tR\bfilePath\x12\x1f\n" +
+	"\vaccess_type\x18\x02 \x01(\tR\n" +
+	"accessType\x12#\n" +
+	"\raccessing_pid\x18\x03 \x01(\rR\faccessingPid\x12!\n" +
+	"\fprocess_name\x18\x04 \x01(\tR\vprocessName\x12\x16\n" +
+	"\x06reason\x18\x05 \x01(\tR\x06reason\x12;\n" +
+	"\vaccessed_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"accessedAt\"D\n" +
 	"\x10EBPFMetricsBatch\x120\n" +
 	"\ametrics\x18\x01 \x03(\v2\x16.telemetry.EBPFMetricsR\ametricsB>Z<github.com/opisvigilant/futura/proto/gen/telemetry;telemetryb\x06proto3"
 
@@ -1922,7 +4735,7 @@ func file_telemetry_ebpf_proto_rawDescGZIP() []byte {
 	return file_telemetry_ebpf_proto_rawDescData
 }
 
-var file_telemetry_ebpf_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_telemetry_ebpf_proto_msgTypes = make([]protoimpl.MessageInfo, 52)
 var file_telemetry_ebpf_proto_goTypes = []any{
 	(*EBPFMetrics)(nil),             // 0: telemetry.EBPFMetrics
 	(*HTTPMetrics)(nil),             // 1: telemetry.HTTPMetrics
@@ -1940,52 +4753,130 @@ var file_telemetry_ebpf_proto_goTypes = []any{
 	(*EBPFSystemMetrics)(nil),       // 13: telemetry.EBPFSystemMetrics
 	(*EBPFProgramStats)(nil),        // 14: telemetry.EBPFProgramStats
 	(*EBPFMapStats)(nil),            // 15: telemetry.EBPFMapStats
-	(*EBPFMetricsBatch)(nil),        // 16: telemetry.EBPFMetricsBatch
-	nil,                             // 17: telemetry.HTTPMetrics.StatusCodesEntry
-	nil,                             // 18: telemetry.HTTPMetrics.MethodsEntry
-	nil,                             // 19: telemetry.NetworkFlow.ProtocolsEntry
-	(*APIKey)(nil),                  // 20: telemetry.APIKey
-	(*Metadata)(nil),                // 21: telemetry.Metadata
-	(*timestamppb.Timestamp)(nil),   // 22: google.protobuf.Timestamp
-	(*EnrichmentMetadata)(nil),      // 23: telemetry.EnrichmentMetadata
+	(*FileSystemMetrics)(nil),       // 16: telemetry.FileSystemMetrics
+	(*FileAccessPattern)(nil),       // 17: telemetry.FileAccessPattern
+	(*DirectoryPattern)(nil),        // 18: telemetry.DirectoryPattern
+	(*IOSizeHistogram)(nil),         // 19: telemetry.IOSizeHistogram
+	(*ApplicationMetrics)(nil),      // 20: telemetry.ApplicationMetrics
+	(*DatabaseMetrics)(nil),         // 21: telemetry.DatabaseMetrics
+	(*SlowQuery)(nil),               // 22: telemetry.SlowQuery
+	(*CacheMetrics)(nil),            // 23: telemetry.CacheMetrics
+	(*CustomMetric)(nil),            // 24: telemetry.CustomMetric
+	(*LanguageMetrics)(nil),         // 25: telemetry.LanguageMetrics
+	(*GoMetrics)(nil),               // 26: telemetry.GoMetrics
+	(*JavaMetrics)(nil),             // 27: telemetry.JavaMetrics
+	(*PythonMetrics)(nil),           // 28: telemetry.PythonMetrics
+	(*NodeJSMetrics)(nil),           // 29: telemetry.NodeJSMetrics
+	(*SecurityMetrics)(nil),         // 30: telemetry.SecurityMetrics
+	(*SyscallMetrics)(nil),          // 31: telemetry.SyscallMetrics
+	(*SyscallAnomaly)(nil),          // 32: telemetry.SyscallAnomaly
+	(*ResourceViolations)(nil),      // 33: telemetry.ResourceViolations
+	(*NetworkSecurity)(nil),         // 34: telemetry.NetworkSecurity
+	(*NetworkAnomaly)(nil),          // 35: telemetry.NetworkAnomaly
+	(*ProcessSecurity)(nil),         // 36: telemetry.ProcessSecurity
+	(*SuspiciousProcess)(nil),       // 37: telemetry.SuspiciousProcess
+	(*FileSystemSecurity)(nil),      // 38: telemetry.FileSystemSecurity
+	(*SensitiveFileAccess)(nil),     // 39: telemetry.SensitiveFileAccess
+	(*EBPFMetricsBatch)(nil),        // 40: telemetry.EBPFMetricsBatch
+	nil,                             // 41: telemetry.HTTPMetrics.StatusCodesEntry
+	nil,                             // 42: telemetry.HTTPMetrics.MethodsEntry
+	nil,                             // 43: telemetry.NetworkFlow.ProtocolsEntry
+	nil,                             // 44: telemetry.DatabaseMetrics.QueryTypesEntry
+	nil,                             // 45: telemetry.CustomMetric.LabelsEntry
+	nil,                             // 46: telemetry.JavaMetrics.GcCollectionsEntry
+	nil,                             // 47: telemetry.JavaMetrics.GcTimeEntry
+	nil,                             // 48: telemetry.PythonMetrics.ExceptionTypesEntry
+	nil,                             // 49: telemetry.SyscallMetrics.SyscallCountsEntry
+	nil,                             // 50: telemetry.NetworkSecurity.BlockedProtocolsEntry
+	nil,                             // 51: telemetry.SuspiciousProcess.AttributesEntry
+	(*APIKey)(nil),                  // 52: telemetry.APIKey
+	(*Metadata)(nil),                // 53: telemetry.Metadata
+	(*timestamppb.Timestamp)(nil),   // 54: google.protobuf.Timestamp
+	(*EnrichmentMetadata)(nil),      // 55: telemetry.EnrichmentMetadata
 }
 var file_telemetry_ebpf_proto_depIdxs = []int32{
 	1,  // 0: telemetry.EBPFMetrics.http:type_name -> telemetry.HTTPMetrics
 	5,  // 1: telemetry.EBPFMetrics.memory_patterns:type_name -> telemetry.MemoryPatterns
 	9,  // 2: telemetry.EBPFMetrics.cpu_patterns:type_name -> telemetry.CPUPatterns
 	11, // 3: telemetry.EBPFMetrics.network_flow:type_name -> telemetry.NetworkFlow
-	20, // 4: telemetry.EBPFMetrics.apikey:type_name -> telemetry.APIKey
-	21, // 5: telemetry.EBPFMetrics.metadata:type_name -> telemetry.Metadata
-	22, // 6: telemetry.EBPFMetrics.timestamp:type_name -> google.protobuf.Timestamp
-	23, // 7: telemetry.EBPFMetrics.enrichment:type_name -> telemetry.EnrichmentMetadata
-	2,  // 8: telemetry.HTTPMetrics.latency:type_name -> telemetry.LatencyHistogram
-	17, // 9: telemetry.HTTPMetrics.status_codes:type_name -> telemetry.HTTPMetrics.StatusCodesEntry
-	18, // 10: telemetry.HTTPMetrics.methods:type_name -> telemetry.HTTPMetrics.MethodsEntry
-	4,  // 11: telemetry.HTTPMetrics.endpoints:type_name -> telemetry.EndpointMetrics
-	22, // 12: telemetry.HTTPMetrics.window_start:type_name -> google.protobuf.Timestamp
-	22, // 13: telemetry.HTTPMetrics.window_end:type_name -> google.protobuf.Timestamp
-	3,  // 14: telemetry.LatencyHistogram.buckets:type_name -> telemetry.HistogramBucket
-	6,  // 15: telemetry.MemoryPatterns.alloc_sizes:type_name -> telemetry.AllocationSizeHistogram
-	7,  // 16: telemetry.MemoryPatterns.potential_leaks:type_name -> telemetry.MemoryLeak
-	8,  // 17: telemetry.MemoryPatterns.gc:type_name -> telemetry.GCMetrics
-	22, // 18: telemetry.MemoryPatterns.window_start:type_name -> google.protobuf.Timestamp
-	22, // 19: telemetry.MemoryPatterns.window_end:type_name -> google.protobuf.Timestamp
-	10, // 20: telemetry.CPUPatterns.hotspots:type_name -> telemetry.CPUHotspot
-	22, // 21: telemetry.CPUPatterns.window_start:type_name -> google.protobuf.Timestamp
-	22, // 22: telemetry.CPUPatterns.window_end:type_name -> google.protobuf.Timestamp
-	12, // 23: telemetry.NetworkFlow.service_flows:type_name -> telemetry.ServiceFlow
-	19, // 24: telemetry.NetworkFlow.protocols:type_name -> telemetry.NetworkFlow.ProtocolsEntry
-	22, // 25: telemetry.NetworkFlow.window_start:type_name -> google.protobuf.Timestamp
-	22, // 26: telemetry.NetworkFlow.window_end:type_name -> google.protobuf.Timestamp
-	14, // 27: telemetry.EBPFSystemMetrics.programs:type_name -> telemetry.EBPFProgramStats
-	15, // 28: telemetry.EBPFSystemMetrics.maps:type_name -> telemetry.EBPFMapStats
-	22, // 29: telemetry.EBPFSystemMetrics.timestamp:type_name -> google.protobuf.Timestamp
-	0,  // 30: telemetry.EBPFMetricsBatch.metrics:type_name -> telemetry.EBPFMetrics
-	31, // [31:31] is the sub-list for method output_type
-	31, // [31:31] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	16, // 4: telemetry.EBPFMetrics.filesystem:type_name -> telemetry.FileSystemMetrics
+	20, // 5: telemetry.EBPFMetrics.application:type_name -> telemetry.ApplicationMetrics
+	30, // 6: telemetry.EBPFMetrics.security:type_name -> telemetry.SecurityMetrics
+	52, // 7: telemetry.EBPFMetrics.apikey:type_name -> telemetry.APIKey
+	53, // 8: telemetry.EBPFMetrics.metadata:type_name -> telemetry.Metadata
+	54, // 9: telemetry.EBPFMetrics.timestamp:type_name -> google.protobuf.Timestamp
+	55, // 10: telemetry.EBPFMetrics.enrichment:type_name -> telemetry.EnrichmentMetadata
+	2,  // 11: telemetry.HTTPMetrics.latency:type_name -> telemetry.LatencyHistogram
+	41, // 12: telemetry.HTTPMetrics.status_codes:type_name -> telemetry.HTTPMetrics.StatusCodesEntry
+	42, // 13: telemetry.HTTPMetrics.methods:type_name -> telemetry.HTTPMetrics.MethodsEntry
+	4,  // 14: telemetry.HTTPMetrics.endpoints:type_name -> telemetry.EndpointMetrics
+	54, // 15: telemetry.HTTPMetrics.window_start:type_name -> google.protobuf.Timestamp
+	54, // 16: telemetry.HTTPMetrics.window_end:type_name -> google.protobuf.Timestamp
+	3,  // 17: telemetry.LatencyHistogram.buckets:type_name -> telemetry.HistogramBucket
+	6,  // 18: telemetry.MemoryPatterns.alloc_sizes:type_name -> telemetry.AllocationSizeHistogram
+	7,  // 19: telemetry.MemoryPatterns.potential_leaks:type_name -> telemetry.MemoryLeak
+	8,  // 20: telemetry.MemoryPatterns.gc:type_name -> telemetry.GCMetrics
+	54, // 21: telemetry.MemoryPatterns.window_start:type_name -> google.protobuf.Timestamp
+	54, // 22: telemetry.MemoryPatterns.window_end:type_name -> google.protobuf.Timestamp
+	10, // 23: telemetry.CPUPatterns.hotspots:type_name -> telemetry.CPUHotspot
+	54, // 24: telemetry.CPUPatterns.window_start:type_name -> google.protobuf.Timestamp
+	54, // 25: telemetry.CPUPatterns.window_end:type_name -> google.protobuf.Timestamp
+	12, // 26: telemetry.NetworkFlow.service_flows:type_name -> telemetry.ServiceFlow
+	43, // 27: telemetry.NetworkFlow.protocols:type_name -> telemetry.NetworkFlow.ProtocolsEntry
+	54, // 28: telemetry.NetworkFlow.window_start:type_name -> google.protobuf.Timestamp
+	54, // 29: telemetry.NetworkFlow.window_end:type_name -> google.protobuf.Timestamp
+	14, // 30: telemetry.EBPFSystemMetrics.programs:type_name -> telemetry.EBPFProgramStats
+	15, // 31: telemetry.EBPFSystemMetrics.maps:type_name -> telemetry.EBPFMapStats
+	54, // 32: telemetry.EBPFSystemMetrics.timestamp:type_name -> google.protobuf.Timestamp
+	2,  // 33: telemetry.FileSystemMetrics.read_latency:type_name -> telemetry.LatencyHistogram
+	2,  // 34: telemetry.FileSystemMetrics.write_latency:type_name -> telemetry.LatencyHistogram
+	2,  // 35: telemetry.FileSystemMetrics.open_latency:type_name -> telemetry.LatencyHistogram
+	17, // 36: telemetry.FileSystemMetrics.hot_files:type_name -> telemetry.FileAccessPattern
+	18, // 37: telemetry.FileSystemMetrics.hot_directories:type_name -> telemetry.DirectoryPattern
+	19, // 38: telemetry.FileSystemMetrics.io_sizes:type_name -> telemetry.IOSizeHistogram
+	54, // 39: telemetry.FileSystemMetrics.window_start:type_name -> google.protobuf.Timestamp
+	54, // 40: telemetry.FileSystemMetrics.window_end:type_name -> google.protobuf.Timestamp
+	21, // 41: telemetry.ApplicationMetrics.database:type_name -> telemetry.DatabaseMetrics
+	23, // 42: telemetry.ApplicationMetrics.cache:type_name -> telemetry.CacheMetrics
+	24, // 43: telemetry.ApplicationMetrics.custom_metrics:type_name -> telemetry.CustomMetric
+	25, // 44: telemetry.ApplicationMetrics.language:type_name -> telemetry.LanguageMetrics
+	54, // 45: telemetry.ApplicationMetrics.window_start:type_name -> google.protobuf.Timestamp
+	54, // 46: telemetry.ApplicationMetrics.window_end:type_name -> google.protobuf.Timestamp
+	44, // 47: telemetry.DatabaseMetrics.query_types:type_name -> telemetry.DatabaseMetrics.QueryTypesEntry
+	22, // 48: telemetry.DatabaseMetrics.slow_query_samples:type_name -> telemetry.SlowQuery
+	45, // 49: telemetry.CustomMetric.labels:type_name -> telemetry.CustomMetric.LabelsEntry
+	54, // 50: telemetry.CustomMetric.timestamp:type_name -> google.protobuf.Timestamp
+	26, // 51: telemetry.LanguageMetrics.go_metrics:type_name -> telemetry.GoMetrics
+	27, // 52: telemetry.LanguageMetrics.java_metrics:type_name -> telemetry.JavaMetrics
+	28, // 53: telemetry.LanguageMetrics.python_metrics:type_name -> telemetry.PythonMetrics
+	29, // 54: telemetry.LanguageMetrics.nodejs_metrics:type_name -> telemetry.NodeJSMetrics
+	46, // 55: telemetry.JavaMetrics.gc_collections:type_name -> telemetry.JavaMetrics.GcCollectionsEntry
+	47, // 56: telemetry.JavaMetrics.gc_time:type_name -> telemetry.JavaMetrics.GcTimeEntry
+	48, // 57: telemetry.PythonMetrics.exception_types:type_name -> telemetry.PythonMetrics.ExceptionTypesEntry
+	31, // 58: telemetry.SecurityMetrics.syscalls:type_name -> telemetry.SyscallMetrics
+	33, // 59: telemetry.SecurityMetrics.resource_violations:type_name -> telemetry.ResourceViolations
+	34, // 60: telemetry.SecurityMetrics.network_security:type_name -> telemetry.NetworkSecurity
+	36, // 61: telemetry.SecurityMetrics.process_security:type_name -> telemetry.ProcessSecurity
+	38, // 62: telemetry.SecurityMetrics.filesystem_security:type_name -> telemetry.FileSystemSecurity
+	54, // 63: telemetry.SecurityMetrics.window_start:type_name -> google.protobuf.Timestamp
+	54, // 64: telemetry.SecurityMetrics.window_end:type_name -> google.protobuf.Timestamp
+	49, // 65: telemetry.SyscallMetrics.syscall_counts:type_name -> telemetry.SyscallMetrics.SyscallCountsEntry
+	32, // 66: telemetry.SyscallMetrics.anomalies:type_name -> telemetry.SyscallAnomaly
+	54, // 67: telemetry.SyscallAnomaly.detected_at:type_name -> google.protobuf.Timestamp
+	35, // 68: telemetry.NetworkSecurity.network_anomalies:type_name -> telemetry.NetworkAnomaly
+	50, // 69: telemetry.NetworkSecurity.blocked_protocols:type_name -> telemetry.NetworkSecurity.BlockedProtocolsEntry
+	54, // 70: telemetry.NetworkAnomaly.detected_at:type_name -> google.protobuf.Timestamp
+	37, // 71: telemetry.ProcessSecurity.suspicious_process_list:type_name -> telemetry.SuspiciousProcess
+	54, // 72: telemetry.SuspiciousProcess.started_at:type_name -> google.protobuf.Timestamp
+	51, // 73: telemetry.SuspiciousProcess.attributes:type_name -> telemetry.SuspiciousProcess.AttributesEntry
+	39, // 74: telemetry.FileSystemSecurity.sensitive_accesses:type_name -> telemetry.SensitiveFileAccess
+	54, // 75: telemetry.SensitiveFileAccess.accessed_at:type_name -> google.protobuf.Timestamp
+	0,  // 76: telemetry.EBPFMetricsBatch.metrics:type_name -> telemetry.EBPFMetrics
+	77, // [77:77] is the sub-list for method output_type
+	77, // [77:77] is the sub-list for method input_type
+	77, // [77:77] is the sub-list for extension type_name
+	77, // [77:77] is the sub-list for extension extendee
+	0,  // [0:77] is the sub-list for field type_name
 }
 
 func init() { file_telemetry_ebpf_proto_init() }
@@ -2000,7 +4891,7 @@ func file_telemetry_ebpf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_telemetry_ebpf_proto_rawDesc), len(file_telemetry_ebpf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   52,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
