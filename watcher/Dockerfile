@@ -17,12 +17,15 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 RUN go install github.com/cilium/ebpf/cmd/bpf2go@latest
 
 WORKDIR /src
-# Pre-copy go.mod/go.sum to speed up dependency resolve
-COPY go.mod go.sum ./
+# Copy proto module for local dependency
+COPY proto/ ./proto/
+COPY watcher/go.mod watcher/go.sum ./watcher/
+WORKDIR /src/watcher
 RUN go env -w GOPROXY=https://proxy.golang.org,direct
 RUN go mod download
 
-COPY . .
+# Copy watcher source
+COPY watcher/ ./
 
 # Run the container-only build (this will run go generate -> bpf2go + go build)
 # container-build is a Makefile target (no docker commands)

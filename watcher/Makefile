@@ -7,10 +7,10 @@ BUILDER_IMAGE := $(IMAGE_NAME)-builder
 
 # Host-level build: builds the builder image, then runs it to create local artifacts
 build:
-	@echo "==> Building builder image..."
-	docker build --target builder -t $(BUILDER_IMAGE) -f Dockerfile .
+	@echo "==> Building builder image from project root..."
+	cd .. && docker build --target builder -t $(BUILDER_IMAGE) -f watcher/Dockerfile .
 	@echo "==> Running builder container to produce artifacts on host..."
-	docker run --rm -v $(PWD):/src -w /src $(BUILDER_IMAGE) make container-build
+	docker run --rm -v $(PWD):/src/watcher -w /src/watcher $(BUILDER_IMAGE) make container-build
 	@echo "==> Artifacts produced: $(BIN_DIR)/$(BINARY)"
 
 # Container-only build (runs inside builder image). This target must NOT run docker.
@@ -31,7 +31,7 @@ build-binary:
 
 # Build final runtime Docker image (multi-stage Dockerfile)
 docker-image:
-	docker build -t $(IMAGE_NAME):latest .
+	cd .. && docker build -t $(IMAGE_NAME):latest -f watcher/Dockerfile .
 
 clean:
 	@echo "==> Cleaning bin/"

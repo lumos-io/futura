@@ -73,6 +73,9 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
+// For Docker build - use local proto module
+replace github.com/opisvigilant/futura/proto => ../proto
+
 require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
