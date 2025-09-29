@@ -19,6 +19,7 @@ const (
 	RawEventsTopic  = "raw.k8s.events"
 	RawStatsTopic   = "raw.k8s.stats"
 	RawObjectsTopic = "raw.k8s.objects"
+	RawEBPFTopic    = "raw.ebpf.metrics"
 )
 
 type CollectServer struct {
@@ -114,7 +115,23 @@ func (s *CollectServer) CollectKubeletMetrics(ctx context.Context, req *pb.Kuber
 }
 
 func (s *CollectServer) CollectEBPFMetrics(ctx context.Context, req *pb.EBPFMetricsBatch) (*pbsvc.CollectAck, error) {
-	return nil, nil
+	log.Info().Msg("received eBPF metrics...")
+
+	for _, metric := range req.Metrics {
+		if err := s.validateAPIKey(ctx, metric.Apikey.Key); err != nil {
+			log.Error().Err(err)
+			return &pbsvc.CollectAck{Status: "failed", Message: err.Error()}, nil
+		}
+		bytes, err := proto.Marshal(metric)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal eBPF metrics: %w", err)
+		}
+		if err := s.streamClient.Publish(ctx, RawEBPFTopic, bytes); err != nil {
+			log.Error().Err(err)
+			return nil, err
+		}
+	}
+	return &pbsvc.CollectAck{Status: "ok", Message: "eBPF metrics received"}, nil
 }
 
 func (s *CollectServer) validateAPIKey(ctx context.Context, apiKey string) error {

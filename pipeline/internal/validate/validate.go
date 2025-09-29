@@ -19,10 +19,12 @@ const (
 	RawEventsTopic  = "raw.k8s.events"
 	RawStatsTopic   = "raw.k8s.stats"
 	RawObjectsTopic = "raw.k8s.objects"
+	RawEBPFTopic    = "raw.ebpf.metrics"
 
 	ValidatedEventsTopic  = "validate.k8s.events"
 	ValidatedStatsTopic   = "validate.k8s.stats"
 	ValidatedObjectsTopic = "validate.k8s.objects"
+	ValidatedEBPFTopic    = "validate.ebpf.metrics"
 )
 
 type Validator struct {
@@ -45,7 +47,7 @@ func New(config *config.Configuration) (*Validator, error) {
 }
 
 func (v *Validator) Start(ctx context.Context) error {
-	v.wg.Add(3)
+	v.wg.Add(4)
 
 	// Read event messages
 	go func() {
@@ -128,6 +130,34 @@ func (v *Validator) Start(ctx context.Context) error {
 			}
 		}); err != nil {
 			log.Error().Err(err).Msgf("failed to subscribe to stream `%s`", RawObjectsTopic)
+		}
+	}()
+
+	// Read eBPF metrics messages
+	go func() {
+		defer v.wg.Done()
+
+		kc, err := stream.NewKafkaClient(v.config.Kafka.Brokers, "validation_group_ebpf")
+		if err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Start consuming eBPF Metrics...")
+		if err := kc.Subscribe(ctx, RawEBPFTopic, func(msg stream.Message, ack func() error) {
+			m := &pb.EBPFMetrics{}
+			if err := proto.Unmarshal(msg.Data(), m); err != nil {
+				log.Error().Err(err).Msg("failed to proto-unmarshal the raw eBPF metrics message")
+				return
+			}
+			if err := v.ValidateEBPFMetrics(m); err != nil {
+				v.dlq.StoreInvalidEBPFMessage(msg.Data(), err)
+				return
+			}
+			if err := kc.Publish(ctx, ValidatedEBPFTopic, msg.Data()); err != nil {
+				log.Error().Err(err).Msg("failed to publish the validated eBPF metrics message to the enrichment topic")
+				return
+			}
+		}); err != nil {
+			log.Error().Err(err).Msgf("failed to subscribe to stream `%s`", RawEBPFTopic)
 		}
 	}()
 
@@ -247,5 +277,35 @@ func (v *Validator) validateContainerStats(c *pb.ContainerStats, path string) er
 	if c.Name == "" {
 		return fmt.Errorf("%s.name is required", path)
 	}
+	return nil
+}
+
+// ValidateEBPFMetrics performs sanity checks on EBPFMetrics
+func (v *Validator) ValidateEBPFMetrics(m *pb.EBPFMetrics) error {
+	if m == nil {
+		return errors.New("eBPF metrics message is nil")
+	}
+
+	if m.Timestamp == nil {
+		return errors.New("timestamp is required")
+	}
+
+	if m.ContainerId == "" {
+		return errors.New("container_id is required")
+	}
+
+	// Validate that at least one metric type is present
+	hasMetrics := m.CpuPatterns != nil ||
+		m.MemoryPatterns != nil ||
+		m.NetworkFlow != nil ||
+		m.Filesystem != nil ||
+		m.Http != nil ||
+		m.Application != nil ||
+		m.Security != nil
+
+	if !hasMetrics {
+		return errors.New("at least one metric type is required")
+	}
+
 	return nil
 }

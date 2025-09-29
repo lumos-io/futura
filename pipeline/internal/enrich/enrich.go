@@ -20,10 +20,12 @@ const (
 	ValidatedEventsTopic  = "validate.k8s.events"
 	ValidatedStatsTopic   = "validate.k8s.stats"
 	ValidatedObjectsTopic = "validate.k8s.objects"
+	ValidatedEBPFTopic    = "validate.ebpf.metrics"
 
 	EnrichedEventsTopic  = "enrich.k8s.events"
 	EnrichedStatsTopic   = "enrich.k8s.stats"
 	EnrichedObjectsTopic = "enrich.k8s.objects"
+	EnrichedEBPFTopic    = "enrich.ebpf.metrics"
 )
 
 type Enricher struct {
@@ -52,7 +54,7 @@ func New(config *config.Configuration) (*Enricher, error) {
 }
 
 func (e *Enricher) Start(ctx context.Context) error {
-	e.wg.Add(3)
+	e.wg.Add(4)
 
 	// Read event messages
 	go func() {
@@ -157,6 +159,40 @@ func (e *Enricher) Start(ctx context.Context) error {
 		}
 	}()
 
+	// Read eBPF metrics messages
+	go func() {
+		defer e.wg.Done()
+
+		kc, err := stream.NewKafkaClient(e.config.Kafka.Brokers, "enrichment_group_ebpf")
+		if err != nil {
+			panic(err)
+		}
+		log.Info().Msg("Start consuming Validated eBPF Metrics...")
+		if err := kc.Subscribe(ctx, ValidatedEBPFTopic, func(msg stream.Message, ack func() error) {
+			var m pb.EBPFMetrics
+			if err := proto.Unmarshal(msg.Data(), &m); err != nil {
+				log.Error().Err(err).Msg("failed to proto-unmarshal the validated eBPF metrics message")
+				return
+			}
+			enrichedMetrics, err := e.EnrichEBPFMessage(&m)
+			if err != nil {
+				e.dlq.StoreInvalidEBPFMessage(msg.Data(), err)
+				return
+			}
+			b, err := proto.Marshal(enrichedMetrics)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to proto-marshal the enriched eBPF metrics message")
+				return
+			}
+			if err := kc.Publish(ctx, EnrichedEBPFTopic, b); err != nil {
+				log.Error().Err(err).Msg("failed to publish the enriched eBPF metrics message to the store topic")
+				return
+			}
+		}); err != nil {
+			log.Error().Err(err).Msgf("failed to subscribe to stream `%s`", ValidatedEBPFTopic)
+		}
+	}()
+
 	e.wg.Wait()
 
 	log.Info().Msg("Ready to say goodbye...")
@@ -204,6 +240,26 @@ func (e *Enricher) EnrichStatsMessage(m *pb.KubernetesKubeletStats) (*pb.Kuberne
 }
 
 func (e *Enricher) EnrichObjectMessage(m *pb.KubernetesClusterObject) (*pb.KubernetesClusterObject, error) {
+	b, err := e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
+	if err != nil {
+		return nil, err
+	}
+	var apiKeyInfo pb.ApiKeyInfo
+	if err := protojson.Unmarshal(b, &apiKeyInfo); err != nil {
+		return nil, err
+	}
+	if m.Enrichment == nil {
+		m.Enrichment = &pb.EnrichmentMetadata{
+			ClusterId:      int64(apiKeyInfo.ClusterId),
+			OrganizationId: apiKeyInfo.OrganizationId,
+			K8SVersion:     apiKeyInfo.KubernetesVersion,
+			ReceivedAtUnix: time.Now().Unix(),
+		}
+	}
+	return m, nil
+}
+
+func (e *Enricher) EnrichEBPFMessage(m *pb.EBPFMetrics) (*pb.EBPFMetrics, error) {
 	b, err := e.rc.Get(context.Background(), "apikeys", m.Apikey.Key)
 	if err != nil {
 		return nil, err

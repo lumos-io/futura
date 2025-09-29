@@ -46,3 +46,10 @@ func safeMap(m map[string]string) map[string]string {
 	}
 	return m
 }
+
+func safeTimestampPtr(ts *timestamppb.Timestamp) int64 {
+	if ts == nil {
+		return 0
+	}
+	return ts.AsTime().Unix()
+}

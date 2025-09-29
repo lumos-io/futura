@@ -15,6 +15,7 @@ const (
 	invalidEventsMessagesTopic  string = "invalid.k8s.events"
 	invalidStatsMessagesTopic   string = "invalid.k8s.stats"
 	invalidObjectsMessagesTopic string = "invalid.k8s.objects"
+	invalidEBPFMessagesTopic    string = "invalid.ebpf.metrics"
 )
 
 // invalidEvent represents the DLQ event
@@ -68,4 +69,14 @@ func (d *DLQHandler) StoreInvalidObjectMessage(msg []byte, err error) {
 		Timestamp:  time.Now().Unix(),
 	})
 	d.kc.Publish(context.Background(), invalidObjectsMessagesTopic, b)
+}
+
+func (d *DLQHandler) StoreInvalidEBPFMessage(msg []byte, err error) {
+	log.Error().Err(err)
+	b, _ := json.Marshal(invalidEvent{
+		RawMessage: string(msg),
+		Error:      err.Error(),
+		Timestamp:  time.Now().Unix(),
+	})
+	d.kc.Publish(context.Background(), invalidEBPFMessagesTopic, b)
 }
