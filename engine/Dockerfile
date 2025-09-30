@@ -17,9 +17,6 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Create app user
-RUN useradd --create-home --shell /bin/bash app
-
 # Set work directory
 WORKDIR /app
 
@@ -27,7 +24,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 # Install UV for fast dependency management
-RUN pip install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Install dependencies
 RUN uv sync --frozen --no-dev
@@ -38,15 +35,17 @@ FROM python:3.13-slim as production
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/app/.venv/bin:$PATH" \
-    FUTURA_LOG_LEVEL=INFO
+    PATH="/app/.venv/bin:$PATH"
 
-# Install runtime dependencies
+# Install runtime dependencies and uv
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
+
+# Copy uv from official image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Create app user
 RUN useradd --create-home --shell /bin/bash app
@@ -69,15 +68,11 @@ USER app
 # Create directories for logs and data
 RUN mkdir -p /app/logs /app/data
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD futura-engine health --endpoint localhost:8080 || exit 1
-
 # Expose default port
 EXPOSE 8080
 
-# Default command - start all services
-CMD ["futura-engine", "all-services", "--port", "8080", "--host", "0.0.0.0"]
+# Default command - start with config file
+CMD ["uv", "run", "main.py", "--config", "config.toml"]
 
 # Labels for metadata
 LABEL \

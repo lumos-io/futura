@@ -37,10 +37,11 @@ spec:
         image: futura/engine:latest
         imagePullPolicy: IfNotPresent
         command:
-          - "futura-engine"
-          - "agent-coordinator"
-          - "--port=8082"
-          - "--host=0.0.0.0"
+          - "uv"
+          - "run"
+          - "main.py"
+          - "--config"
+          - "/config/config-agent-coordinator.toml"
         ports:
         - name: grpc
           containerPort: 8082
@@ -54,11 +55,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: GRPC_PORT
-          value: "8082"
         envFrom:
-        - configMapRef:
-            name: futura-engine-config
         - secretRef:
             name: futura-engine-secrets
         resources:
@@ -69,21 +66,15 @@ spec:
             cpu: "300m"
             memory: "256Mi"
         livenessProbe:
-          exec:
-            command:
-            - futura-engine
-            - health
-            - --endpoint=localhost:8082
+          tcpSocket:
+            port: grpc
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 10
           failureThreshold: 3
         readinessProbe:
-          exec:
-            command:
-            - futura-engine
-            - health
-            - --endpoint=localhost:8082
+          tcpSocket:
+            port: grpc
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
@@ -99,11 +90,17 @@ spec:
           mountPath: /tmp
         - name: logs
           mountPath: /app/logs
+        - name: config
+          mountPath: /config
+          readOnly: true
       volumes:
       - name: tmp
         emptyDir: {}
       - name: logs
         emptyDir: {}
+      - name: config
+        configMap:
+          name: futura-engine-config
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---

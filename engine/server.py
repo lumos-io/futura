@@ -16,7 +16,6 @@ from proto.gen.engine import engine_pb2_grpc
 from services.agent_coordinator import AgentCoordinator
 from services.rl_server import RLServer
 from services.recommendation_service import RecommendationService
-import argparse
 from typing import Optional
 import logging
 import time
@@ -25,10 +24,6 @@ import signal
 from concurrent import futures
 import grpc
 
-
-# Import our service implementations
-
-# Import generated gRPC code
 
 # Configure logging
 logging.basicConfig(
@@ -242,58 +237,17 @@ class FuturaEngineServer:
             logger.error(f"Training monitor task failed: {str(e)}")
 
 
-def main():
-    """Main entry point for the server."""
-    parser = argparse.ArgumentParser(description='Futura Engine Server')
+if __name__ == '__main__':
+    # For backward compatibility, but prefer using cli.py
+    logger.warning(
+        "Running server directly is deprecated. Use cli.py instead.")
 
-    parser.add_argument(
-        '--port',
-        type=int,
-        default=50051,
-        help='Server port (default: 50051)'
-    )
-
-    parser.add_argument(
-        '--services',
-        type=str,
-        default='all',
-        choices=['all', 'recommendation', 'rl',
-                 'coordinator', 'recommendation+rl'],
-        help='Which services to enable (default: all)'
-    )
-
-    parser.add_argument(
-        '--rl-server-address',
-        type=str,
-        help='Address of external RL Server (e.g., localhost:50052)'
-    )
-
-    parser.add_argument(
-        '--log-level',
-        type=str,
-        default='INFO',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        help='Log level (default: INFO)'
-    )
-
-    args = parser.parse_args()
-
-    # Configure logging level
-    logging.getLogger().setLevel(getattr(logging, args.log_level))
-
-    # Determine which services to enable
-    enable_recommendation = args.services in [
-        'all', 'recommendation', 'recommendation+rl']
-    enable_rl = args.services in ['all', 'rl', 'recommendation+rl']
-    enable_coordinator = args.services in ['all', 'coordinator']
-
-    # Create and start server
+    # Create a simple default server
     server = FuturaEngineServer(
-        port=args.port,
-        enable_recommendation_service=enable_recommendation,
-        enable_rl_server=enable_rl,
-        enable_agent_coordinator=enable_coordinator,
-        rl_server_address=args.rl_server_address
+        port=8080,
+        enable_recommendation_service=True,
+        enable_rl_server=True,
+        enable_agent_coordinator=True
     )
 
     try:
@@ -301,10 +255,4 @@ def main():
         server.wait_for_termination()
     except Exception as e:
         logger.error(f"Server error: {str(e)}")
-        return 1
-
-    return 0
-
-
-if __name__ == '__main__':
-    exit(main())
+        exit(1)
