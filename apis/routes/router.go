@@ -96,11 +96,13 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 			{
 				orgClusters.GET("/", clusterController.GetClusters)
 				orgClusters.DELETE("/:cluster_id", clusterController.DeleteCluster)
+			}
 
-				cluster := orgClusters.Group("/:cluster_id/")
-				{
-					cluster.GET("/events", clusterController.GetEvents)
-				}
+			// Cluster-specific endpoints (direct access by cluster ID)
+			clusters := org.Group("/:org_id/clusters")
+			{
+				clusters.GET("/:cluster_id/metrics", clusterController.GetMetrics)
+				clusters.GET("/:cluster_id/events", clusterController.GetEvents)
 			}
 		}
 	}
