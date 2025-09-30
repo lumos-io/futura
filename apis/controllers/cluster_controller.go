@@ -127,6 +127,115 @@ func (cc *ClusterController) GetEvents(c *gin.Context) {
 	utils.RespondOK(c, events)
 }
 
+type ClusterMetricsResponse struct {
+	Nodes struct {
+		Total    int `json:"total"`
+		Ready    int `json:"ready"`
+		NotReady int `json:"notReady"`
+	} `json:"nodes"`
+	Workloads struct {
+		Deployments  int `json:"deployments"`
+		StatefulSets int `json:"statefulSets"`
+		DaemonSets   int `json:"daemonSets"`
+		Jobs         int `json:"jobs"`
+		CronJobs     int `json:"cronJobs"`
+	} `json:"workloads"`
+	Pods struct {
+		Total   int `json:"total"`
+		Running int `json:"running"`
+		Pending int `json:"pending"`
+		Failed  int `json:"failed"`
+	} `json:"pods"`
+	Resources struct {
+		CPUCapacity    string `json:"cpuCapacity"`
+		CPUUsage       string `json:"cpuUsage"`
+		MemoryCapacity string `json:"memoryCapacity"`
+		MemoryUsage    string `json:"memoryUsage"`
+	} `json:"resources"`
+	Namespaces int `json:"namespaces"`
+	Services   int `json:"services"`
+	Events     struct {
+		Total    int `json:"total"`
+		Warnings int `json:"warnings"`
+		Errors   int `json:"errors"`
+	} `json:"events"`
+	Storage struct {
+		PVCs          int    `json:"pvcs"`
+		TotalCapacity string `json:"totalCapacity"`
+	} `json:"storage"`
+	Cost struct {
+		Estimated string `json:"estimated"`
+		Currency  string `json:"currency"`
+	} `json:"cost"`
+}
+
+func (cc *ClusterController) GetMetrics(c *gin.Context) {
+	orgID, err := parseOrgID(c)
+	if err != nil {
+		return
+	}
+
+	clusterID, err := strconv.Atoi(c.Param("cluster_id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id")
+		return
+	}
+
+	// Verify cluster belongs to organization
+	var cluster models.ClusterMetadata
+	if err := models.GetDB().Where("id = ? AND organization_id = ?", clusterID, orgID).First(&cluster).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Cluster not found in this organization")
+		return
+	}
+
+	// TODO: Query actual metrics from ClickHouse/Analytics service
+	// For now, return mock data that the frontend expects
+	metrics := ClusterMetricsResponse{}
+
+	// Nodes metrics
+	metrics.Nodes.Total = 3
+	metrics.Nodes.Ready = 3
+	metrics.Nodes.NotReady = 0
+
+	// Workloads metrics
+	metrics.Workloads.Deployments = 12
+	metrics.Workloads.StatefulSets = 3
+	metrics.Workloads.DaemonSets = 5
+	metrics.Workloads.Jobs = 8
+	metrics.Workloads.CronJobs = 2
+
+	// Pods metrics
+	metrics.Pods.Total = 45
+	metrics.Pods.Running = 42
+	metrics.Pods.Pending = 2
+	metrics.Pods.Failed = 1
+
+	// Resources metrics
+	metrics.Resources.CPUCapacity = "12 cores"
+	metrics.Resources.CPUUsage = "8.4 cores (70%)"
+	metrics.Resources.MemoryCapacity = "48 GB"
+	metrics.Resources.MemoryUsage = "32 GB (67%)"
+
+	// Other metrics
+	metrics.Namespaces = 8
+	metrics.Services = 15
+
+	// Events metrics
+	metrics.Events.Total = 124
+	metrics.Events.Warnings = 3
+	metrics.Events.Errors = 1
+
+	// Storage metrics
+	metrics.Storage.PVCs = 10
+	metrics.Storage.TotalCapacity = "500 GB"
+
+	// Cost metrics
+	metrics.Cost.Estimated = "1,245.00"
+	metrics.Cost.Currency = "USD"
+
+	utils.RespondOK(c, metrics)
+}
+
 // helper to extract connect ID
 func parseConnectID(c *gin.Context) (uint, error) {
 	connectID, err := strconv.Atoi(c.Param("connect_id"))
