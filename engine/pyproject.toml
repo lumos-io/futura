@@ -83,8 +83,7 @@ dependencies = [
 ]
 
 [project.scripts]
-futura-engine = "cli:main"
-futura-server = "server:main"
+futura-engine = "main:main"
 
 [project.optional-dependencies]
 dev = [

@@ -1,0 +1,40 @@
+# Service to run: "all", "recommendation", "rl", "agent-coordinator"
+service = "all"
+
+[server]
+host = "0.0.0.0"
+port = 8080
+max_workers = 50
+log_level = "INFO"
+
+[clickhouse]
+url = "http://localhost:8123"
+engine_db = "engine"
+analytics_db = "analytics"
+
+# External RL server address (only used when service = "recommendation" and RL is external)
+# rl_server_address = "localhost:8081"
+
+[training]
+namespace = "futura-training"
+image = "futura/rl-trainer:latest"
+model_storage_uri = "s3://futura-models"
+default_timeout_hours = 12
+
+[rl]
+default_horizon_hours = 24
+model_cleanup_hours = 168  # 7 days
+enable_drift_detection = true
+drift_check_interval_hours = 6
+
+[agent_coordinator]
+max_training_job_age_hours = 24
+cleanup_interval_hours = 1
+heartbeat_timeout_minutes = 10
+
+[recommendation]
+default_cpu_request_mcpu = 1000  # 1 CPU
+default_memory_request_mib = 512  # 512 MiB
+max_scale_up_ratio = 2.0
+max_scale_down_ratio = 0.5
+min_cooldown_seconds = 300  # 5 minutes

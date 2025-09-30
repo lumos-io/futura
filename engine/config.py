@@ -3,6 +3,7 @@ Configuration management for Futura Engine.
 """
 
 import os
+import tomllib
 from dataclasses import dataclass
 from typing import Optional
 
@@ -10,19 +11,34 @@ from typing import Optional
 @dataclass
 class ServerConfig:
     """Main server configuration."""
-    port: int = 50051
+    host: str = "0.0.0.0"
+    port: int = 8080
     max_workers: int = 50
-    enable_reflection: bool = True
-    enable_health_check: bool = True
+    log_level: str = "INFO"
 
 
 @dataclass
-class RLServerConfig:
+class ClickHouseConfig:
+    """ClickHouse database configuration."""
+    url: str = "http://localhost:8123"
+    engine_db: str = "engine"
+    analytics_db: str = "analytics"
+
+
+@dataclass
+class TrainingConfig:
+    """Training job configuration."""
+    namespace: str = "futura-training"
+    image: str = "futura/rl-trainer:latest"
+    model_storage_uri: str = "s3://futura-models"
+    default_timeout_hours: int = 12
+
+
+@dataclass
+class RLConfig:
     """RL Server specific configuration."""
-    model_store_base_uri: str = "s3://futura-models"
-    clickhouse_dsn: str = "clickhouse://localhost:9000/default"
     default_horizon_hours: int = 24
-    model_cleanup_hours: int = 168  # 7 days
+    model_cleanup_hours: int = 168
     enable_drift_detection: bool = True
     drift_check_interval_hours: int = 6
 
@@ -33,66 +49,58 @@ class AgentCoordinatorConfig:
     max_training_job_age_hours: int = 24
     cleanup_interval_hours: int = 1
     heartbeat_timeout_minutes: int = 10
-    default_training_timeout_hours: int = 12
 
 
 @dataclass
-class RecommendationServiceConfig:
+class RecommendationConfig:
     """Recommendation Service specific configuration."""
-    default_cpu_request_mcpu: int = 1000  # 1 CPU
-    default_memory_request_mib: int = 512  # 512 MiB
+    default_cpu_request_mcpu: int = 1000
+    default_memory_request_mib: int = 512
     max_scale_up_ratio: float = 2.0
     max_scale_down_ratio: float = 0.5
-    min_cooldown_seconds: int = 300  # 5 minutes
+    min_cooldown_seconds: int = 300
 
 
 @dataclass
-class FuturaEngineConfig:
+class EngineConfig:
     """Complete engine configuration."""
-    server: ServerConfig
-    rl_server: RLServerConfig
-    agent_coordinator: AgentCoordinatorConfig
-    recommendation_service: RecommendationServiceConfig
+    service: str = "all"  # "all", "recommendation", "rl", "agent-coordinator"
+    rl_server_address: Optional[str] = None
+    server: ServerConfig = None
+    clickhouse: ClickHouseConfig = None
+    training: TrainingConfig = None
+    rl: RLConfig = None
+    agent_coordinator: AgentCoordinatorConfig = None
+    recommendation: RecommendationConfig = None
 
     @classmethod
-    def from_env(cls) -> 'FuturaEngineConfig':
-        """Create configuration from environment variables."""
+    def from_toml(cls, path: str = "config.toml") -> 'EngineConfig':
+        """Load configuration from TOML file."""
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+
         return cls(
-            server=ServerConfig(
-                port=int(os.getenv('FUTURA_PORT', 50051)),
-                max_workers=int(os.getenv('FUTURA_MAX_WORKERS', 50)),
-                enable_reflection=os.getenv('FUTURA_ENABLE_REFLECTION', 'true').lower() == 'true',
-                enable_health_check=os.getenv('FUTURA_ENABLE_HEALTH_CHECK', 'true').lower() == 'true'
-            ),
-            rl_server=RLServerConfig(
-                model_store_base_uri=os.getenv('FUTURA_MODEL_STORE_URI', 's3://futura-models'),
-                clickhouse_dsn=os.getenv('FUTURA_CLICKHOUSE_DSN', 'clickhouse://localhost:9000/default'),
-                default_horizon_hours=int(os.getenv('FUTURA_DEFAULT_HORIZON_HOURS', 24)),
-                model_cleanup_hours=int(os.getenv('FUTURA_MODEL_CLEANUP_HOURS', 168)),
-                enable_drift_detection=os.getenv('FUTURA_ENABLE_DRIFT_DETECTION', 'true').lower() == 'true',
-                drift_check_interval_hours=int(os.getenv('FUTURA_DRIFT_CHECK_INTERVAL_HOURS', 6))
-            ),
+            service=data.get("service", "all"),
+            rl_server_address=data.get("rl_server_address"),
+            server=ServerConfig(**data.get("server", {})),
+            clickhouse=ClickHouseConfig(**data.get("clickhouse", {})),
+            training=TrainingConfig(**data.get("training", {})),
+            rl=RLConfig(**data.get("rl", {})),
             agent_coordinator=AgentCoordinatorConfig(
-                max_training_job_age_hours=int(os.getenv('FUTURA_MAX_TRAINING_JOB_AGE_HOURS', 24)),
-                cleanup_interval_hours=int(os.getenv('FUTURA_CLEANUP_INTERVAL_HOURS', 1)),
-                heartbeat_timeout_minutes=int(os.getenv('FUTURA_HEARTBEAT_TIMEOUT_MINUTES', 10)),
-                default_training_timeout_hours=int(os.getenv('FUTURA_DEFAULT_TRAINING_TIMEOUT_HOURS', 12))
-            ),
-            recommendation_service=RecommendationServiceConfig(
-                default_cpu_request_mcpu=int(os.getenv('FUTURA_DEFAULT_CPU_REQUEST_MCPU', 1000)),
-                default_memory_request_mib=int(os.getenv('FUTURA_DEFAULT_MEMORY_REQUEST_MIB', 512)),
-                max_scale_up_ratio=float(os.getenv('FUTURA_MAX_SCALE_UP_RATIO', 2.0)),
-                max_scale_down_ratio=float(os.getenv('FUTURA_MAX_SCALE_DOWN_RATIO', 0.5)),
-                min_cooldown_seconds=int(os.getenv('FUTURA_MIN_COOLDOWN_SECONDS', 300))
-            )
+                **data.get("agent_coordinator", {})),
+            recommendation=RecommendationConfig(
+                **data.get("recommendation", {}))
         )
 
     @classmethod
-    def default(cls) -> 'FuturaEngineConfig':
+    def default(cls) -> 'EngineConfig':
         """Create default configuration."""
         return cls(
+            service="all",
             server=ServerConfig(),
-            rl_server=RLServerConfig(),
+            clickhouse=ClickHouseConfig(),
+            training=TrainingConfig(),
+            rl=RLConfig(),
             agent_coordinator=AgentCoordinatorConfig(),
-            recommendation_service=RecommendationServiceConfig()
+            recommendation=RecommendationConfig()
         )

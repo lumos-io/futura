@@ -8,33 +8,158 @@ metadata:
     app.kubernetes.io/component: config
     app.kubernetes.io/part-of: futura
 data:
-  # ClickHouse Configuration
-  CLICKHOUSE_URL: "http://clickhouse.futura-engine.svc.cluster.local:8123"
-  CLICKHOUSE_ENGINE_DB: "engine"
-  CLICKHOUSE_ANALYTICS_DB: "analytics"
+  config-all.toml: |
+    service = "all"
 
-  # Training Configuration
-  TRAINING_NAMESPACE: "futura-training"
-  TRAINING_IMAGE: "futura/rl-trainer:latest"
-  MODEL_STORAGE_URI: "s3://futura-models"
+    [server]
+    host = "0.0.0.0"
+    port = 8080
+    max_workers = 50
+    log_level = "INFO"
 
-  # Service Configuration
-  LOG_LEVEL: "INFO"
-  GRPC_PORT: "8080"
-  GRPC_HOST: "0.0.0.0"
+    [clickhouse]
+    url = "http://clickhouse.futura-engine.svc.cluster.local:8123"
+    engine_db = "engine"
+    analytics_db = "analytics"
 
-  # RL Configuration
-  RL_ALPHA: "0.3"
-  RL_SLO_WEIGHT: "0.2"
-  MAX_INSTANCES: "20"
-  MAX_CPU_LIMIT: "4000"
-  MAX_MEMORY_LIMIT: "8192"
+    [training]
+    namespace = "futura-training"
+    image = "futura/rl-trainer:latest"
+    model_storage_uri = "s3://futura-models"
+    default_timeout_hours = 12
 
-  # Scaling Configuration
-  VERTICAL_CPU_STEP: "256"
-  VERTICAL_MEMORY_STEP: "256"
-  HORIZONTAL_COOLDOWN_SECONDS: "300"
-  VERTICAL_COOLDOWN_SECONDS: "180"
+    [rl]
+    default_horizon_hours = 24
+    model_cleanup_hours = 168
+    enable_drift_detection = true
+    drift_check_interval_hours = 6
+
+    [agent_coordinator]
+    max_training_job_age_hours = 24
+    cleanup_interval_hours = 1
+    heartbeat_timeout_minutes = 10
+
+    [recommendation]
+    default_cpu_request_mcpu = 1000
+    default_memory_request_mib = 512
+    max_scale_up_ratio = 2.0
+    max_scale_down_ratio = 0.5
+    min_cooldown_seconds = 300
+
+  config-recommendation.toml: |
+    service = "recommendation"
+    rl_server_address = "futura-rl-server.futura-engine.svc.cluster.local:8081"
+
+    [server]
+    host = "0.0.0.0"
+    port = 8080
+    max_workers = 50
+    log_level = "INFO"
+
+    [clickhouse]
+    url = "http://clickhouse.futura-engine.svc.cluster.local:8123"
+    engine_db = "engine"
+    analytics_db = "analytics"
+
+    [training]
+    namespace = "futura-training"
+    image = "futura/rl-trainer:latest"
+    model_storage_uri = "s3://futura-models"
+    default_timeout_hours = 12
+
+    [rl]
+    default_horizon_hours = 24
+    model_cleanup_hours = 168
+    enable_drift_detection = true
+    drift_check_interval_hours = 6
+
+    [agent_coordinator]
+    max_training_job_age_hours = 24
+    cleanup_interval_hours = 1
+    heartbeat_timeout_minutes = 10
+
+    [recommendation]
+    default_cpu_request_mcpu = 1000
+    default_memory_request_mib = 512
+    max_scale_up_ratio = 2.0
+    max_scale_down_ratio = 0.5
+    min_cooldown_seconds = 300
+
+  config-rl.toml: |
+    service = "rl"
+
+    [server]
+    host = "0.0.0.0"
+    port = 8081
+    max_workers = 50
+    log_level = "INFO"
+
+    [clickhouse]
+    url = "http://clickhouse.futura-engine.svc.cluster.local:8123"
+    engine_db = "engine"
+    analytics_db = "analytics"
+
+    [training]
+    namespace = "futura-training"
+    image = "futura/rl-trainer:latest"
+    model_storage_uri = "s3://futura-models"
+    default_timeout_hours = 12
+
+    [rl]
+    default_horizon_hours = 24
+    model_cleanup_hours = 168
+    enable_drift_detection = true
+    drift_check_interval_hours = 6
+
+    [agent_coordinator]
+    max_training_job_age_hours = 24
+    cleanup_interval_hours = 1
+    heartbeat_timeout_minutes = 10
+
+    [recommendation]
+    default_cpu_request_mcpu = 1000
+    default_memory_request_mib = 512
+    max_scale_up_ratio = 2.0
+    max_scale_down_ratio = 0.5
+    min_cooldown_seconds = 300
+
+  config-agent-coordinator.toml: |
+    service = "agent-coordinator"
+
+    [server]
+    host = "0.0.0.0"
+    port = 8082
+    max_workers = 50
+    log_level = "INFO"
+
+    [clickhouse]
+    url = "http://clickhouse.futura-engine.svc.cluster.local:8123"
+    engine_db = "engine"
+    analytics_db = "analytics"
+
+    [training]
+    namespace = "futura-training"
+    image = "futura/rl-trainer:latest"
+    model_storage_uri = "s3://futura-models"
+    default_timeout_hours = 12
+
+    [rl]
+    default_horizon_hours = 24
+    model_cleanup_hours = 168
+    enable_drift_detection = true
+    drift_check_interval_hours = 6
+
+    [agent_coordinator]
+    max_training_job_age_hours = 24
+    cleanup_interval_hours = 1
+    heartbeat_timeout_minutes = 10
+
+    [recommendation]
+    default_cpu_request_mcpu = 1000
+    default_memory_request_mib = 512
+    max_scale_up_ratio = 2.0
+    max_scale_down_ratio = 0.5
+    min_cooldown_seconds = 300
 ---
 apiVersion: v1
 kind: ConfigMap
