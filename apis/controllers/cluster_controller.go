@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/opisvigilant/futura/apis/internal/config"
@@ -234,6 +236,70 @@ func (cc *ClusterController) GetMetrics(c *gin.Context) {
 	metrics.Cost.Currency = "USD"
 
 	utils.RespondOK(c, metrics)
+}
+
+func (cc *ClusterController) GetSLOMetricsSSE(c *gin.Context) {
+	orgID, err := parseOrgID(c)
+	if err != nil {
+		return
+	}
+
+	clusterID, err := strconv.Atoi(c.Param("cluster_id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id")
+		return
+	}
+
+	// Verify cluster belongs to organization
+	var cluster models.ClusterMetadata
+	if err := models.GetDB().Where("id = ? AND organization_id = ?", clusterID, orgID).First(&cluster).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Cluster not found in this organization")
+		return
+	}
+
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		http.Error(c.Writer, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	// Heartbeat ticker - send metrics every 5 seconds
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	// Send initial data immediately
+	sendMetrics := func() {
+		// TODO: Query actual SLO metrics from ClickHouse/Analytics service
+		// For now, return empty array as we don't have real data yet
+		mockData := map[string]interface{}{
+			"data": []interface{}{},
+		}
+
+		b, err := json.Marshal(mockData)
+		if err != nil {
+			return
+		}
+		c.SSEvent("slo-metrics", string(b))
+		flusher.Flush()
+	}
+
+	// Send initial data
+	sendMetrics()
+
+	// Loop and stream metrics
+	for {
+		select {
+		case <-ticker.C:
+			sendMetrics()
+		case <-c.Request.Context().Done():
+			// Client disconnected
+			return
+		}
+	}
 }
 
 // helper to extract connect ID
