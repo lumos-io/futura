@@ -25,24 +25,20 @@ import {
 import { DeleteUserDialog } from "./components/delete-user-dialog";
 import { InviteUserSheet } from "./components/invite-user-sheet";
 import { Search, UserPlus, Mail, Calendar, Clock, Trash2 } from "lucide-react";
+import {
+  User,
+  UserRole,
+  UserStatus,
+  userRoleFromJSON,
+  userRoleToNumber,
+  userStatusFromJSON,
+  userStatusToNumber,
+} from "@proto/backend/user";
+import { Team } from "@proto/backend/team";
 
 interface UsersProps {
   title: string;
 }
-
-type UserRole = "admin" | "developer" | "viewer" | "manager";
-
-type User = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  teams: string[];
-  createdAt: string; // ISO date string
-  lastAccess: string; // ISO date string
-  status: "active" | "inactive" | "invited";
-};
 
 const Users: React.FC<UsersProps> = ({ title }) => {
   const { user: currentUser } = useAuth();
@@ -62,9 +58,9 @@ const Users: React.FC<UsersProps> = ({ title }) => {
     firstName: "",
     lastName: "",
     email: "",
-    role: "" as UserRole,
-    teams: [] as string[],
-    status: "" as User["status"],
+    role: UserRole.USER_DEVELOPER,
+    teamIds: [] as number[],
+    status: UserStatus.USER_ACTIVE,
   });
 
   // Delete confirmation state
@@ -78,21 +74,10 @@ const Users: React.FC<UsersProps> = ({ title }) => {
 
   const orgId = currentUser?.organizationId;
 
-  // Available teams for selection
-  const availableTeams = [
-    "Engineering",
-    "Product",
-    "Design",
-    "Marketing",
-    "Sales",
-    "Operations",
-    "DevOps",
-    "Security",
-    "Data",
-    "Support",
-    "Finance",
-    "HR",
-  ];
+  // Available teams (fetched from backend)
+  const [availableTeams, setAvailableTeams] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
 
   // Fetch users from API
   useEffect(() => {
@@ -104,8 +89,14 @@ const Users: React.FC<UsersProps> = ({ title }) => {
         if (!res.ok) throw new Error("Failed to fetch users");
 
         const data = await res.json();
-        setUsers(data.data || []);
-        setFilteredUsers(data.data || []);
+        // Convert role and status integers to enum strings
+        const users = (data.data || []).map((user: any) => ({
+          ...user,
+          role: userRoleFromJSON(user.role),
+          status: userStatusFromJSON(user.status),
+        }));
+        setUsers(users);
+        setFilteredUsers(users);
       } catch (err) {
         console.error("Error fetching users:", err);
         setUsers([]);
@@ -114,6 +105,30 @@ const Users: React.FC<UsersProps> = ({ title }) => {
     };
 
     fetchUsers();
+  }, [orgId]);
+
+  // Fetch available teams
+  useEffect(() => {
+    if (!orgId) return;
+
+    const fetchTeams = async () => {
+      try {
+        const res = await fetch(`/api/organizations/${orgId}/teams`);
+        if (!res.ok) throw new Error("Failed to fetch teams");
+
+        const data = await res.json();
+        const teams = (data.data || []).map((team: Team) => ({
+          id: team.id,
+          name: team.name,
+        }));
+        setAvailableTeams(teams);
+      } catch (err) {
+        console.error("Error fetching teams:", err);
+        setAvailableTeams([]);
+      }
+    };
+
+    fetchTeams();
   }, [orgId]);
 
   // Cleanup effect for scroll locks when component unmounts
@@ -136,10 +151,10 @@ const Users: React.FC<UsersProps> = ({ title }) => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (u) =>
-          u.firstName.toLowerCase().includes(query) ||
-          u.lastName.toLowerCase().includes(query) ||
+          (u.first_name?.toLowerCase() || "").includes(query) ||
+          (u.last_name?.toLowerCase() || "").includes(query) ||
           u.email.toLowerCase().includes(query) ||
-          u.teams.some((t) => t.toLowerCase().includes(query))
+          (u.teams || []).some((t) => t.toLowerCase().includes(query))
       );
     }
 
@@ -163,27 +178,32 @@ const Users: React.FC<UsersProps> = ({ title }) => {
 
   const getRoleBadge = (role: UserRole) => {
     const variants: Record<UserRole, { color: string; label: string }> = {
-      admin: { color: "bg-red-500 text-white", label: "Admin" },
-      manager: { color: "bg-blue-500 text-white", label: "Manager" },
-      developer: { color: "bg-green-500 text-white", label: "Developer" },
-      viewer: { color: "bg-gray-500 text-white", label: "Viewer" },
+      [UserRole.USER_ADMIN]: { color: "bg-red-500 text-white", label: "Admin" },
+      [UserRole.USER_MANAGER]: { color: "bg-blue-500 text-white", label: "Manager" },
+      [UserRole.USER_DEVELOPER]: { color: "bg-green-500 text-white", label: "Developer" },
+      [UserRole.USER_VIEWER]: { color: "bg-gray-500 text-white", label: "Viewer" },
+      [UserRole.UNDEFINED_USER_ROLE]: {
+        color: "bg-gray-500 text-white",
+        label: "Undefined",
+      },
+      [UserRole.UNRECOGNIZED]: { color: "bg-gray-500 text-white", label: "Unrecognized" },
     };
 
-    const variant = variants[role];
+    const variant = variants[role] || { color: "bg-gray-500 text-white", label: "Unknown" };
     return <Badge className={variant.color}>{variant.label}</Badge>;
   };
 
   const getStatusBadge = (status: User["status"]) => {
     switch (status) {
-      case "active":
+      case UserStatus.USER_ACTIVE:
         return <Badge className="bg-green-500 text-white">Active</Badge>;
-      case "inactive":
+      case UserStatus.USER_INACTIVE:
         return (
           <Badge variant="outline" className="text-gray-500">
             Inactive
           </Badge>
         );
-      case "invited":
+      case UserStatus.USER_INVITED:
         return <Badge className="bg-yellow-500 text-white">Invited</Badge>;
     }
   };
@@ -219,9 +239,12 @@ const Users: React.FC<UsersProps> = ({ title }) => {
   const getUserStats = () => {
     return {
       total: filteredUsers.length,
-      active: filteredUsers.filter((u) => u.status === "active").length,
-      invited: filteredUsers.filter((u) => u.status === "invited").length,
-      admins: filteredUsers.filter((u) => u.role === "admin").length,
+      active: filteredUsers.filter((u) => u.status === UserStatus.USER_ACTIVE)
+        .length,
+      invited: filteredUsers.filter((u) => u.status === UserStatus.USER_INVITED)
+        .length,
+      admins: filteredUsers.filter((u) => u.role === UserRole.USER_ADMIN)
+        .length,
     };
   };
 
@@ -230,12 +253,19 @@ const Users: React.FC<UsersProps> = ({ title }) => {
   // Handle edit user
   const handleEditUser = (user: User) => {
     setEditingUser(user);
+
+    // Convert team names to team IDs
+    const userTeamNames = user.teams || [];
+    const teamIds = availableTeams
+      .filter((team) => userTeamNames.includes(team.name))
+      .map((team) => team.id);
+
     setEditForm({
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstName: user.first_name || "",
+      lastName: user.last_name || "",
       email: user.email,
       role: user.role,
-      teams: [...user.teams],
+      teamIds: teamIds,
       status: user.status,
     });
     setEditSheetOpen(true);
@@ -252,14 +282,25 @@ const Users: React.FC<UsersProps> = ({ title }) => {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editForm),
+          body: JSON.stringify({
+            first_name: editForm.firstName,
+            last_name: editForm.lastName,
+            email: editForm.email,
+            role: userRoleToNumber(editForm.role),
+            team_ids: editForm.teamIds,
+            status: userStatusToNumber(editForm.status),
+          }),
         }
       );
 
       if (!res.ok) throw new Error("Failed to update user");
 
       const data = await res.json();
-      const updatedUser = data.data;
+      const updatedUser = {
+        ...data.data,
+        role: userRoleFromJSON(data.data.role),
+        status: userStatusFromJSON(data.data.status),
+      };
 
       // Update local state
       setUsers((prev) =>
@@ -340,12 +381,12 @@ const Users: React.FC<UsersProps> = ({ title }) => {
   };
 
   // Toggle team selection
-  const toggleTeam = (team: string) => {
+  const toggleTeam = (teamId: number) => {
     setEditForm((prev) => ({
       ...prev,
-      teams: prev.teams.includes(team)
-        ? prev.teams.filter((t) => t !== team)
-        : [...prev.teams, team],
+      teamIds: prev.teamIds.includes(teamId)
+        ? prev.teamIds.filter((id) => id !== teamId)
+        : [...prev.teamIds, teamId],
     }));
   };
 
@@ -355,7 +396,7 @@ const Users: React.FC<UsersProps> = ({ title }) => {
     lastName: string;
     email: string;
     role: UserRole;
-    teams: string[];
+    teamIds: number[];
   }) => {
     if (!orgId) return;
 
@@ -364,13 +405,23 @@ const Users: React.FC<UsersProps> = ({ title }) => {
       const res = await fetch(`/api/organizations/${orgId}/users/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          role: userRoleToNumber(data.role),
+          team_ids: data.teamIds,
+        }),
       });
 
       if (!res.ok) throw new Error("Failed to invite user");
 
       const result = await res.json();
-      const newUser = result.data;
+      const newUser = {
+        ...result.data,
+        role: userRoleFromJSON(result.data.role),
+        status: userStatusFromJSON(result.data.status),
+      };
 
       setUsers((prev) => [...prev, newUser]);
       setInviteSheetOpen(false);
@@ -554,12 +605,12 @@ const Users: React.FC<UsersProps> = ({ title }) => {
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                          {user.firstName[0]}
-                          {user.lastName[0]}
+                          {user.first_name?.[0] || ""}
+                          {user.last_name?.[0] || ""}
                         </div>
                         <div>
                           <div className="font-medium">
-                            {user.firstName} {user.lastName}
+                            {user.first_name} {user.last_name}
                           </div>
                         </div>
                       </div>
@@ -593,13 +644,13 @@ const Users: React.FC<UsersProps> = ({ title }) => {
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3" />
-                        {formatDate(user.createdAt)}
+                        {formatDate(user.created_at || "")}
                       </div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-3 w-3" />
-                        {formatLastAccess(user.lastAccess)}
+                        {formatLastAccess(user.last_access || "")}
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -693,12 +744,12 @@ const Users: React.FC<UsersProps> = ({ title }) => {
               <div className="px-6 py-5 border-b">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-lg">
-                    {editingUser.firstName[0]}
-                    {editingUser.lastName[0]}
+                    {editingUser.first_name?.[0] || ""}
+                    {editingUser.last_name?.[0] || ""}
                   </div>
                   <div>
                     <SheetTitle className="text-xl">
-                      {editingUser.firstName} {editingUser.lastName}
+                      {editingUser.first_name} {editingUser.last_name}
                     </SheetTitle>
                     <SheetDescription className="text-sm">
                       Update user information and permissions
@@ -779,25 +830,25 @@ const Users: React.FC<UsersProps> = ({ title }) => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="admin">
+                            <SelectItem value={UserRole.USER_ADMIN}>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-red-500" />
                                 Admin
                               </div>
                             </SelectItem>
-                            <SelectItem value="manager">
+                            <SelectItem value={UserRole.USER_MANAGER}>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-blue-500" />
                                 Manager
                               </div>
                             </SelectItem>
-                            <SelectItem value="developer">
+                            <SelectItem value={UserRole.USER_DEVELOPER}>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-green-500" />
                                 Developer
                               </div>
                             </SelectItem>
-                            <SelectItem value="viewer">
+                            <SelectItem value={UserRole.USER_VIEWER}>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-gray-500" />
                                 Viewer
@@ -813,7 +864,7 @@ const Users: React.FC<UsersProps> = ({ title }) => {
                           onValueChange={(value) =>
                             setEditForm({
                               ...editForm,
-                              status: value as User["status"],
+                              status: value as UserStatus,
                             })
                           }
                         >
@@ -821,19 +872,19 @@ const Users: React.FC<UsersProps> = ({ title }) => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="active">
+                            <SelectItem value={UserStatus.USER_ACTIVE}>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-green-500" />
                                 Active
                               </div>
                             </SelectItem>
-                            <SelectItem value="inactive">
+                            <SelectItem value={UserStatus.USER_INACTIVE}>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-gray-400" />
                                 Inactive
                               </div>
                             </SelectItem>
-                            <SelectItem value="invited">
+                            <SelectItem value={UserStatus.USER_INVITED}>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-yellow-500" />
                                 Invited
@@ -852,23 +903,25 @@ const Users: React.FC<UsersProps> = ({ title }) => {
                         Team Membership
                       </h3>
                       <span className="text-xs text-muted-foreground">
-                        {editForm.teams.length} of {availableTeams.length}{" "}
+                        {editForm.teamIds.length} of {availableTeams.length}{" "}
                         selected
                       </span>
                     </div>
                     <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
                       {availableTeams.map((team) => (
                         <label
-                          key={team}
+                          key={team.id}
                           className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
                         >
                           <input
                             type="checkbox"
-                            checked={editForm.teams.includes(team)}
-                            onChange={() => toggleTeam(team)}
+                            checked={editForm.teamIds.includes(team.id)}
+                            onChange={() => toggleTeam(team.id)}
                             className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                           />
-                          <span className="text-sm font-medium">{team}</span>
+                          <span className="text-sm font-medium">
+                            {team.name}
+                          </span>
                         </label>
                       ))}
                     </div>
@@ -924,7 +977,9 @@ const Users: React.FC<UsersProps> = ({ title }) => {
             }, 300);
           }
         }}
-        userName={`${deletingUser?.firstName} ${deletingUser?.lastName}`}
+        userName={`${deletingUser?.first_name || ""} ${
+          deletingUser?.last_name || ""
+        }`}
         onConfirm={confirmDelete}
         onCancel={() => {
           setDeletingUser(null);

@@ -92,52 +92,83 @@ func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Conf
 	var user models.User
 	db := models.GetDB()
 
-	// Check if user exists
+	// Check if user exists by provider ID
 	if err := db.Where("provider = ? AND provider_id = ?", provider, userInfo.ID).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// Create new user
-			user = models.User{
-				Name:       userInfo.Name,
-				Email:      userInfo.Email,
-				Provider:   provider,
-				ProviderID: userInfo.ID,
-				Avatar:     userInfo.Avatar,
+			// Check if user was invited (exists with email but no provider ID)
+			var invitedUser models.User
+			if err := db.Where("email = ? AND status = ?", userInfo.Email, models.UserStatusInvited).First(&invitedUser).Error; err == nil {
+				// User was invited! Link OAuth account to existing user record
+				now := time.Now()
+				invitedUser.Provider = provider
+				invitedUser.ProviderID = userInfo.ID
+				invitedUser.Avatar = userInfo.Avatar
+				invitedUser.Status = models.UserStatusActive
+				invitedUser.LastAccess = &now
+
+				// Update name if not set
+				if invitedUser.Name == "" || invitedUser.Name == invitedUser.FirstName+" "+invitedUser.LastName {
+					invitedUser.Name = userInfo.Name
+				}
+
+				if err := db.Save(&invitedUser).Error; err != nil {
+					utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to activate invited user")
+					return
+				}
+
+				user = invitedUser
+			} else {
+				// Not invited - create new user with personal org
+				user = models.User{
+					Name:       userInfo.Name,
+					Email:      userInfo.Email,
+					Provider:   provider,
+					ProviderID: userInfo.ID,
+					Avatar:     userInfo.Avatar,
+					Status:     models.UserStatusActive,
+					Role:       models.UserRoleDeveloper,
+				}
+
+				// Create personal/default organization
+				personalOrg := models.Organization{
+					Name: fmt.Sprintf("%s's Personal Organization", userInfo.Name),
+				}
+
+				tx := db.Begin()
+				if err := tx.Create(&personalOrg).Error; err != nil {
+					tx.Rollback()
+					utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_CREATION", "Failed to create personal organization")
+					return
+				}
+
+				// Set user's default org ID
+				user.OrganizationID = personalOrg.ID
+
+				// Save user
+				if err := tx.Create(&user).Error; err != nil {
+					tx.Rollback()
+					utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_CREATION", "Failed to create user")
+					return
+				}
+
+				// Add user to organization members via many2many join
+				if err := tx.Model(&personalOrg).Association("Members").Append(&user); err != nil {
+					tx.Rollback()
+					utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_MEMBERSHIP", "Failed to assign user to personal organization")
+					return
+				}
+
+				tx.Commit()
 			}
-
-			// Create personal/default organization
-			personalOrg := models.Organization{
-				Name: fmt.Sprintf("%s's Personal Organization", userInfo.Name),
-			}
-
-			tx := db.Begin()
-			if err := tx.Create(&personalOrg).Error; err != nil {
-				tx.Rollback()
-				utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_CREATION", "Failed to create personal organization")
-				return
-			}
-
-			// Set user's default org ID (optional, if you keep this pointer)
-			user.OrganizationID = personalOrg.ID
-
-			// Save user
-			if err := tx.Create(&user).Error; err != nil {
-				tx.Rollback()
-				utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_CREATION", "Failed to create user")
-				return
-			}
-
-			// Add user to organization members via many2many join
-			if err := tx.Model(&personalOrg).Association("Members").Append(&user); err != nil {
-				tx.Rollback()
-				utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_MEMBERSHIP", "Failed to assign user to personal organization")
-				return
-			}
-
-			tx.Commit()
 		} else {
 			utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_QUERY", "Failed to query user")
 			return
 		}
+	} else {
+		// Existing user - update last access
+		now := time.Now()
+		user.LastAccess = &now
+		db.Save(&user)
 	}
 
 	accessToken, err := utils.GenerateAccessToken(user.ID)

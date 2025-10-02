@@ -14,8 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
-
-type UserRole = "admin" | "developer" | "viewer" | "manager";
+import { UserRole } from "@proto/backend/user";
 
 interface InviteUserSheetProps {
   open: boolean;
@@ -25,10 +24,10 @@ interface InviteUserSheetProps {
     lastName: string;
     email: string;
     role: UserRole;
-    teams: string[];
+    teamIds: number[];
   }) => void;
   saving: boolean;
-  availableTeams: string[];
+  availableTeams: Array<{ id: number; name: string }>;
 }
 
 export const InviteUserSheet: React.FC<InviteUserSheetProps> = ({
@@ -41,8 +40,8 @@ export const InviteUserSheet: React.FC<InviteUserSheetProps> = ({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>("developer");
-  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [role, setRole] = useState<UserRole>(UserRole.USER_DEVELOPER);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<number[]>([]);
 
   const handleInvite = () => {
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {
@@ -57,7 +56,13 @@ export const InviteUserSheet: React.FC<InviteUserSheetProps> = ({
       return;
     }
 
-    onInviteUser({ firstName, lastName, email, role, teams: selectedTeams });
+    onInviteUser({
+      firstName,
+      lastName,
+      email,
+      role,
+      teamIds: selectedTeamIds,
+    });
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -66,15 +71,15 @@ export const InviteUserSheet: React.FC<InviteUserSheetProps> = ({
       setFirstName("");
       setLastName("");
       setEmail("");
-      setRole("developer");
-      setSelectedTeams([]);
+      setRole(UserRole.USER_DEVELOPER);
+      setSelectedTeamIds([]);
     }
     onOpenChange(newOpen);
   };
 
-  const toggleTeam = (team: string) => {
-    setSelectedTeams((prev) =>
-      prev.includes(team) ? prev.filter((t) => t !== team) : [...prev, team]
+  const toggleTeam = (teamId: number) => {
+    setSelectedTeamIds((prev) =>
+      prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId]
     );
   };
 
@@ -159,25 +164,25 @@ export const InviteUserSheet: React.FC<InviteUserSheetProps> = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">
+                      <SelectItem value={UserRole.USER_ADMIN}>
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-2 rounded-full bg-red-500" />
                           Admin
                         </div>
                       </SelectItem>
-                      <SelectItem value="manager">
+                      <SelectItem value={UserRole.USER_MANAGER}>
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-2 rounded-full bg-blue-500" />
                           Manager
                         </div>
                       </SelectItem>
-                      <SelectItem value="developer">
+                      <SelectItem value={UserRole.USER_DEVELOPER}>
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-2 rounded-full bg-green-500" />
                           Developer
                         </div>
                       </SelectItem>
-                      <SelectItem value="viewer">
+                      <SelectItem value={UserRole.USER_VIEWER}>
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-2 rounded-full bg-gray-500" />
                           Viewer
@@ -195,23 +200,23 @@ export const InviteUserSheet: React.FC<InviteUserSheetProps> = ({
                     Team Membership
                   </h3>
                   <span className="text-xs text-muted-foreground">
-                    {selectedTeams.length} of {availableTeams.length} selected
+                    {selectedTeamIds.length} of {availableTeams.length} selected
                   </span>
                 </div>
                 <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
                   {availableTeams.map((team) => (
                     <label
-                      key={team}
+                      key={team.id}
                       className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
                     >
                       <input
                         type="checkbox"
-                        checked={selectedTeams.includes(team)}
-                        onChange={() => toggleTeam(team)}
+                        checked={selectedTeamIds.includes(team.id)}
+                        onChange={() => toggleTeam(team.id)}
                         disabled={saving}
                         className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
                       />
-                      <span className="text-sm font-medium">{team}</span>
+                      <span className="text-sm font-medium">{team.name}</span>
                     </label>
                   ))}
                 </div>

@@ -18,26 +18,11 @@ import {
 import { DeleteTeamDialog } from "./components/delete-team-dialog";
 import { CreateTeamSheet } from "./components/create-team-sheet";
 import { Search, Users as UsersIcon, Plus, Trash2 } from "lucide-react";
+import type { Team, TeamMember } from "@proto/backend/team";
 
 interface TeamsProps {
   title: string;
 }
-
-type Team = {
-  id: number;
-  name: string;
-  description: string;
-  memberCount: number;
-  createdAt: string;
-  members: TeamMember[];
-};
-
-type TeamMember = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-};
 
 const Teams: React.FC<TeamsProps> = ({ title }) => {
   const { user: currentUser } = useAuth();
@@ -143,7 +128,7 @@ const Teams: React.FC<TeamsProps> = ({ title }) => {
   };
 
   const getTeamStats = () => {
-    const totalMembers = teams.reduce((acc, t) => acc + t.memberCount, 0);
+    const totalMembers = teams.reduce((acc, t) => acc + t.member_count, 0);
     const avgMembers =
       teams.length > 0 ? Math.round(totalMembers / teams.length) : 0;
     return {
@@ -151,7 +136,7 @@ const Teams: React.FC<TeamsProps> = ({ title }) => {
       totalMembers,
       avgMembers,
       largest: teams.reduce(
-        (max, t) => (t.memberCount > max ? t.memberCount : max),
+        (max, t) => (t.member_count > max ? t.member_count : max),
         0
       ),
     };
@@ -423,11 +408,11 @@ const Teams: React.FC<TeamsProps> = ({ title }) => {
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant="outline" className="font-mono">
-                        {team.memberCount}
+                        {team.member_count}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-sm text-muted-foreground">
-                      {formatDate(team.createdAt)}
+                      {formatDate(team.created_at)}
                     </td>
                     <td className="py-3 px-4">
                       <button
@@ -671,7 +656,7 @@ const Teams: React.FC<TeamsProps> = ({ title }) => {
           }
         }}
         teamName={deletingTeam?.name || ""}
-        memberCount={deletingTeam?.memberCount || 0}
+        memberCount={deletingTeam?.member_count || 0}
         onConfirm={confirmDelete}
         onCancel={() => {
           setDeletingTeam(null);
