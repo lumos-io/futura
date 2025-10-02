@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/opisvigilant/futura/apis/internal/config"
 	"github.com/opisvigilant/futura/apis/models"
 	"github.com/opisvigilant/futura/apis/utils"
@@ -51,7 +50,14 @@ func NewAuthController(config *config.Configuration) *AuthController {
 }
 
 func (a *AuthController) GoogleLogin(c *gin.Context) {
-	url := a.googleOAuthConfig.AuthCodeURL(a.oauthStateString)
+	utils.LogOAuthStart(c, "google")
+
+	state, err := a.generateOAuthState("google")
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "STATE_ERROR", "Failed to generate OAuth state")
+		return
+	}
+	url := a.googleOAuthConfig.AuthCodeURL(state)
 	c.Redirect(http.StatusFound, url)
 }
 
@@ -60,7 +66,14 @@ func (a *AuthController) GoogleCallback(c *gin.Context) {
 }
 
 func (a *AuthController) GithubLogin(c *gin.Context) {
-	url := a.githubOAuthConfig.AuthCodeURL(a.oauthStateString)
+	utils.LogOAuthStart(c, "github")
+
+	state, err := a.generateOAuthState("github")
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "STATE_ERROR", "Failed to generate OAuth state")
+		return
+	}
+	url := a.githubOAuthConfig.AuthCodeURL(state)
 	c.Redirect(http.StatusFound, url)
 }
 
@@ -68,23 +81,87 @@ func (a *AuthController) GithubCallback(c *gin.Context) {
 	a.handleOAuthCallback(c, a.githubOAuthConfig, "github")
 }
 
+// generateOAuthState creates a unique, time-limited state token for CSRF protection
+func (a *AuthController) generateOAuthState(provider string) (string, error) {
+	// Generate cryptographically secure random state
+	state, err := utils.GenerateSecureRandomString(32)
+	if err != nil {
+		return "", err
+	}
+
+	// Store state in database with 10 minute expiration
+	db := models.GetDB()
+	oauthState := models.OAuthState{
+		State:     state,
+		Provider:  provider,
+		ExpiresAt: time.Now().Add(10 * time.Minute),
+	}
+
+	if err := db.Create(&oauthState).Error; err != nil {
+		return "", err
+	}
+
+	return state, nil
+}
+
+// validateOAuthState verifies and consumes the state token
+func (a *AuthController) validateOAuthState(state, provider string) error {
+	db := models.GetDB()
+
+	var oauthState models.OAuthState
+	if err := db.Where("state = ? AND provider = ?", state, provider).First(&oauthState).Error; err != nil {
+		return fmt.Errorf("invalid state token")
+	}
+
+	// Check expiration
+	if time.Now().After(oauthState.ExpiresAt) {
+		// Clean up expired token
+		db.Delete(&oauthState)
+		return fmt.Errorf("state token expired")
+	}
+
+	// Delete state token after use (one-time use)
+	db.Delete(&oauthState)
+
+	return nil
+}
+
 func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Config, provider string) {
 	state := c.Query("state")
-	if state != a.oauthStateString {
-		utils.RespondError(c, http.StatusUnauthorized, "INVALID_STATE", "Invalid OAuth state")
+
+	// Validate state token (CSRF protection)
+	if err := a.validateOAuthState(state, provider); err != nil {
+		utils.LogOAuthCallback(c, provider, false, nil, "", "INVALID_STATE", err.Error())
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_STATE", "Invalid OAuth state: "+err.Error())
 		return
 	}
 
 	code := c.Query("code")
-	token, err := config.Exchange(context.Background(), code)
+
+	// Create context with timeout for OAuth token exchange
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	token, err := config.Exchange(ctx, code)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "INVALID_CODE", "Failed to exchange token")
+		if ctx.Err() == context.DeadlineExceeded {
+			utils.LogOAuthCallback(c, provider, false, nil, "", "OAUTH_TIMEOUT", "Request timed out")
+			utils.RespondError(c, http.StatusRequestTimeout, "OAUTH_TIMEOUT", "OAuth provider request timed out")
+		} else {
+			utils.LogOAuthCallback(c, provider, false, nil, "", "INVALID_CODE", err.Error())
+			utils.RespondError(c, http.StatusInternalServerError, "INVALID_CODE", "Failed to exchange token")
+		}
 		return
 	}
 
-	client := config.Client(context.Background(), token)
+	// Create context with timeout for fetching user info
+	userCtx, userCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer userCancel()
+
+	client := config.Client(userCtx, token)
 	userInfo, err := fetchUserInfo(client, provider)
 	if err != nil {
+		utils.LogOAuthCallback(c, provider, false, nil, "", "FAILED_USER_OPERATION", err.Error())
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to fetch user info")
 		return
 	}
@@ -177,12 +254,26 @@ func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Conf
 		return
 	}
 
-	refreshToken, _, err := utils.GenerateRefreshToken(user.ID)
+	refreshToken, jti, err := utils.GenerateRefreshToken(user.ID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token")
 		return
 	}
 
+	// Store refresh token in database
+	refreshTokenRecord := models.RefreshToken{
+		TokenHash: models.HashToken(refreshToken),
+		JTI:       jti,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		Revoked:   false,
+	}
+	if err := db.Create(&refreshTokenRecord).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_TOKEN_STORAGE", "Failed to store refresh token")
+		return
+	}
+
+	// Set cookies with enhanced security (SameSite=Strict)
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "access_token",
 		Value:    accessToken,
@@ -190,7 +281,7 @@ func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Conf
 		HttpOnly: true,
 		Secure:   a.environment == "production",
 		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode, // Upgraded from Lax
 	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
@@ -199,9 +290,13 @@ func (a *AuthController) handleOAuthCallback(c *gin.Context, config *oauth2.Conf
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HttpOnly: true,
 		Secure:   a.environment == "production",
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/auth/refresh", // limit cookie to refresh endpoint
+		SameSite: http.SameSiteStrictMode, // Upgraded from Lax
+		Path:     "/auth/refresh",         // limit cookie to refresh endpoint
 	})
+
+	// Log successful OAuth login
+	utils.LogOAuthCallback(c, provider, true, &user.ID, user.Email, "", "")
+	utils.LogSuccessfulLogin(c, user.ID, user.Email, provider)
 
 	c.Redirect(http.StatusTemporaryRedirect, a.frontendURL)
 }
@@ -297,44 +392,83 @@ func (a *AuthController) RefreshToken(c *gin.Context) {
 	}
 
 	refreshTokenStr := cookie.Value
-	token, err := jwt.Parse(refreshTokenStr, func(t *jwt.Token) (any, error) {
-		return utils.GetJWTSecret(), nil
-	})
-	if err != nil || !token.Valid {
-		utils.RespondError(c, http.StatusUnauthorized, "INVALID_TOKEN", "Invalid refresh token")
+
+	// Verify JWT structure
+	userID, jti, err := utils.VerifyRefreshToken(refreshTokenStr)
+	if err != nil {
+		utils.LogTokenRefresh(c, 0, "", false, "INVALID_TOKEN", err.Error())
+		utils.RespondError(c, http.StatusUnauthorized, "INVALID_TOKEN", err.Error())
 		return
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["type"] != "refresh" {
-		utils.RespondError(c, http.StatusUnauthorized, "INVALID_CLAIMS", "Invalid refresh claims")
+	db := models.GetDB()
+
+	// Check if token exists in database and is not revoked
+	var storedToken models.RefreshToken
+	tokenHash := models.HashToken(refreshTokenStr)
+	if err := db.Where("token_hash = ? AND jti = ?", tokenHash, jti).First(&storedToken).Error; err != nil {
+		utils.LogTokenRefresh(c, userID, "", false, "TOKEN_NOT_FOUND", "Token not found or already used")
+		utils.RespondError(c, http.StatusUnauthorized, "TOKEN_NOT_FOUND", "Refresh token not found or already used")
 		return
 	}
 
-	userID, ok := claims["user_id"].(float64)
-	if !ok {
-		utils.RespondError(c, http.StatusUnauthorized, "INVALID_USER", "Invalid user in token")
+	// Check if token is revoked
+	if storedToken.Revoked {
+		utils.LogTokenRefresh(c, userID, "", false, "TOKEN_REVOKED", "Token has been revoked")
+		utils.RespondError(c, http.StatusUnauthorized, "TOKEN_REVOKED", "Refresh token has been revoked")
 		return
 	}
 
+	// Check if token is expired
+	if time.Now().After(storedToken.ExpiresAt) {
+		// Clean up expired token
+		db.Delete(&storedToken)
+		utils.LogTokenRefresh(c, userID, "", false, "TOKEN_EXPIRED", "Token expired")
+		utils.RespondError(c, http.StatusUnauthorized, "TOKEN_EXPIRED", "Refresh token expired")
+		return
+	}
+
+	// Verify user still exists
 	var user models.User
-	if err := models.GetDB().First(&user, uint(userID)).Error; err != nil {
+	if err := db.First(&user, userID).Error; err != nil {
+		utils.LogTokenRefresh(c, userID, "", false, "USER_NOT_FOUND", "User not found")
 		utils.RespondError(c, http.StatusUnauthorized, "USER_NOT_FOUND", "User not found")
 		return
 	}
 
+	// REVOKE OLD TOKEN (token rotation)
+	now := time.Now()
+	storedToken.Revoked = true
+	storedToken.RevokedAt = &now
+	db.Save(&storedToken)
+
+	// Generate new tokens
 	newAccessToken, err := utils.GenerateAccessToken(user.ID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "TOKEN_ERROR", "Failed to generate new access token")
 		return
 	}
 
-	newRefreshToken, _, err := utils.GenerateRefreshToken(user.ID)
+	newRefreshToken, newJTI, err := utils.GenerateRefreshToken(user.ID)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_OAUTH_OPERATION", "Failed to generate refresh token")
 		return
 	}
 
+	// Store new refresh token in database
+	newRefreshTokenRecord := models.RefreshToken{
+		TokenHash: models.HashToken(newRefreshToken),
+		JTI:       newJTI,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		Revoked:   false,
+	}
+	if err := db.Create(&newRefreshTokenRecord).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_TOKEN_STORAGE", "Failed to store refresh token")
+		return
+	}
+
+	// Set new cookies with enhanced security
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "access_token",
 		Value:    newAccessToken,
@@ -342,7 +476,7 @@ func (a *AuthController) RefreshToken(c *gin.Context) {
 		HttpOnly: true,
 		Secure:   a.environment == "production",
 		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode, // Upgraded from Lax
 	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
@@ -351,14 +485,37 @@ func (a *AuthController) RefreshToken(c *gin.Context) {
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HttpOnly: true,
 		Secure:   a.environment == "production",
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/auth/refresh", // limit cookie to refresh endpoint
+		SameSite: http.SameSiteStrictMode, // Upgraded from Lax
+		Path:     "/auth/refresh",         // limit cookie to refresh endpoint
 	})
+
+	// Log successful token refresh
+	utils.LogTokenRefresh(c, user.ID, user.Email, true, "", "")
 
 	c.JSON(http.StatusOK, gin.H{"refresh": "ok"})
 }
 
 func (a *AuthController) Logout(c *gin.Context) {
+	// Get user from context (set by auth middleware)
+	userInterface, exists := c.Get("user")
+	if exists {
+		if user, ok := userInterface.(models.User); ok {
+			// Revoke all refresh tokens for this user
+			db := models.GetDB()
+			now := time.Now()
+			db.Model(&models.RefreshToken{}).
+				Where("user_id = ? AND revoked = ?", user.ID, false).
+				Updates(map[string]interface{}{
+					"revoked":    true,
+					"revoked_at": now,
+				})
+
+			// Log successful logout
+			utils.LogLogout(c, user.ID, user.Email)
+		}
+	}
+
+	// Clear cookies with enhanced security settings
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "access_token",
 		Value:    "",
@@ -366,7 +523,7 @@ func (a *AuthController) Logout(c *gin.Context) {
 		HttpOnly: true,
 		Secure:   a.environment == "production",
 		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode, // Upgraded from Lax
 	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
@@ -375,8 +532,8 @@ func (a *AuthController) Logout(c *gin.Context) {
 		Expires:  time.Now().Add(-1),
 		HttpOnly: true,
 		Secure:   a.environment == "production",
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/auth/refresh", // limit cookie to refresh endpoint
+		SameSite: http.SameSiteStrictMode, // Upgraded from Lax
+		Path:     "/auth/refresh",         // limit cookie to refresh endpoint
 	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out"})

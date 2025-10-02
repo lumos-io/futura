@@ -1,14 +1,13 @@
 package utils
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"io"
-	"math/rand"
 	"net/textproto"
 	"strings"
-	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -312,23 +311,21 @@ func isIgnored(arr []string, value string) bool {
 	return ignore
 }
 
-var src = rand.NewSource(time.Now().UnixNano())
-
-// randStr generates random string.
+// randStr generates cryptographically secure random string
 func randStr(n int) string {
+	// Use crypto/rand for cryptographically secure randomness
+	bytes := make([]byte, n)
+	if _, err := rand.Read(bytes); err != nil {
+		// Fallback to base64 encoding if direct conversion fails
+		return base64.URLEncoding.EncodeToString(bytes)[:n]
+	}
+
 	sb := strings.Builder{}
 	sb.Grow(n)
-	// A rand.Int63() generates 63 random bits, enough for letterIdMax letters
-	for i, cache, remain := n-1, src.Int63(), letterIdMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdMax
-		}
-		if idx := int(cache & letterIdMask); idx < len(letters) {
-			sb.WriteByte(letters[idx])
-			i--
-		}
-		cache >>= letterIdBits
-		remain--
+
+	for i := 0; i < n; i++ {
+		sb.WriteByte(letters[int(bytes[i])%len(letters)])
 	}
+
 	return sb.String()
 }

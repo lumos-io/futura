@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"os"
 	"time"
@@ -13,6 +15,15 @@ var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 func GetJWTSecret() []byte {
 	return jwtSecret
+}
+
+// GenerateSecureRandomString generates a cryptographically secure random string
+func GenerateSecureRandomString(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes)[:length], nil
 }
 
 func VerifyRefreshToken(tokenStr string) (userID uint, jti string, err error) {
