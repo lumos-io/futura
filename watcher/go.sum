@@ -90,8 +90,6 @@ github.com/openshift/api v0.0.0-20250620092249-a8cbc218cd2c h1:0Np840IRyzpvHLWxc
 github.com/openshift/api v0.0.0-20250620092249-a8cbc218cd2c/go.mod h1:yk60tHAmHhtVpJQo3TwVYq2zpuP70iJIFDCmeKMIzPw=
 github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277 h1:iju9VTJDaw6MjjuCid8BY31ammn0GbWs80u2ZH54XmY=
 github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277/go.mod h1:XdbrTCqQWLe1qJ/LgU5jcqJ2OX3VbhtZzgDjzlcbyzA=
-github.com/opisvigilant/futura/proto v0.0.0-20250927180740-025885b65b03 h1:mbl0t8H5bRMulHnrXlY49PP5SVranQyz7kVESx3k7Ao=
-github.com/opisvigilant/futura/proto v0.0.0-20250927180740-025885b65b03/go.mod h1:DwCrPCcGJHGr580SiF3qqJs/ZuSBBE8N4NrNDlaUK/4=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
 github.com/pelletier/go-toml/v2 v2.2.4/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

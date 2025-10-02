@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,15 +11,77 @@ import (
 )
 
 type UserResponse struct {
-	ID         int       `json:"id"`
-	FirstName  string    `json:"firstName"`
-	LastName   string    `json:"lastName"`
-	Email      string    `json:"email"`
-	Role       string    `json:"role"`
-	Teams      []string  `json:"teams"`
-	CreatedAt  time.Time `json:"createdAt"`
-	LastAccess time.Time `json:"lastAccess"`
-	Status     string    `json:"status"`
+	ID         int      `json:"id"`
+	FirstName  string   `json:"first_name"`
+	LastName   string   `json:"last_name"`
+	Email      string   `json:"email"`
+	Role       int      `json:"role"`
+	Teams      []string `json:"teams"`
+	CreatedAt  string   `json:"created_at"`
+	LastAccess string   `json:"last_access"`
+	Status     int      `json:"status"`
+	Avatar     string   `json:"avatar"`
+	Provider   string   `json:"provider"`
+}
+
+// Convert string role to proto enum
+func roleToProtoEnum(role models.UserRole) int {
+	switch role {
+	case models.UserRoleAdmin:
+		return 1 // USER_ADMIN
+	case models.UserRoleManager:
+		return 2 // USER_MANAGER
+	case models.UserRoleDeveloper:
+		return 3 // USER_DEVELOPER
+	case models.UserRoleViewer:
+		return 4 // USER_VIEWER
+	default:
+		return 0 // UNDEFINED_USER_ROLE
+	}
+}
+
+// Convert proto enum to string role
+func protoEnumToRole(roleEnum int) models.UserRole {
+	switch roleEnum {
+	case 1:
+		return models.UserRoleAdmin
+	case 2:
+		return models.UserRoleManager
+	case 3:
+		return models.UserRoleDeveloper
+	case 4:
+		return models.UserRoleViewer
+	default:
+		return models.UserRoleDeveloper
+	}
+}
+
+// Convert string status to proto enum
+func statusToProtoEnum(status models.UserStatus) int {
+	switch status {
+	case models.UserStatusActive:
+		return 1 // USER_ACTIVE
+	case models.UserStatusInvited:
+		return 2 // USER_INVITED
+	case models.UserStatusInactive:
+		return 3 // USER_INACTIVE
+	default:
+		return 0 // UNDEFINED_USER_STATUS
+	}
+}
+
+// Convert proto enum to string status
+func protoEnumToStatus(statusEnum int) models.UserStatus {
+	switch statusEnum {
+	case 1:
+		return models.UserStatusActive
+	case 2:
+		return models.UserStatusInvited
+	case 3:
+		return models.UserStatusInactive
+	default:
+		return models.UserStatusInvited
+	}
 }
 
 func GetUsers(c *gin.Context) {
@@ -30,161 +90,140 @@ func GetUsers(c *gin.Context) {
 		return
 	}
 
-	// TODO: Query actual users from database with roles, teams, etc.
-	// For now, generate 50 mock users
-	users := generateMockUsers(int(orgID), 50)
+	db := models.GetDB()
+	var users []models.User
 
-	utils.RespondOK(c, users)
-}
-
-func generateMockUsers(orgID, count int) []UserResponse {
-	firstNames := []string{
-		"John", "Jane", "Michael", "Sarah", "David", "Emily", "Robert", "Lisa",
-		"William", "Jessica", "James", "Ashley", "Christopher", "Amanda", "Daniel",
-		"Melissa", "Matthew", "Jennifer", "Joseph", "Stephanie", "Ryan", "Nicole",
-		"Andrew", "Laura", "Brian", "Brittany", "Kevin", "Samantha", "Thomas",
-		"Rachel", "Justin", "Elizabeth", "Brandon", "Megan", "Jacob", "Kayla",
-		"Nicholas", "Lauren", "Tyler", "Anna", "Eric", "Olivia", "Aaron", "Emma",
-		"Adam", "Sophia", "Jason", "Isabella", "Nathan", "Ava",
+	// Fetch users with preloaded teams
+	if err := db.Preload("Teams").Where("organization_id = ?", orgID).Find(&users).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to fetch users")
+		return
 	}
 
-	lastNames := []string{
-		"Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller",
-		"Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez",
-		"Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
-		"Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark",
-		"Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King",
-		"Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores", "Green",
-		"Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell",
-		"Carter", "Roberts",
-	}
-
-	teams := []string{
-		"Engineering", "Product", "Design", "Marketing", "Sales", "Operations",
-		"DevOps", "Security", "Data", "Support", "Finance", "HR",
-	}
-
-	users := make([]UserResponse, count)
-	rand.Seed(int64(orgID)) // Use orgID as seed for consistent results per org
-
-	for i := 0; i < count; i++ {
-		firstName := firstNames[i%len(firstNames)]
-		lastName := lastNames[(i/len(firstNames))%len(lastNames)]
-		email := fmt.Sprintf("%s.%s@company.com",
-			toLower(firstName),
-			toLower(lastName))
-
-		// Role distribution: more developers, fewer admins
-		var role string
-		roleRand := rand.Float64()
-		if roleRand < 0.1 {
-			role = "admin"
-		} else if roleRand < 0.25 {
-			role = "manager"
-		} else if roleRand < 0.8 {
-			role = "developer"
-		} else {
-			role = "viewer"
+	// Convert to response format
+	response := make([]UserResponse, len(users))
+	for i, user := range users {
+		teams := make([]string, len(user.Teams))
+		for j, team := range user.Teams {
+			teams[j] = team.Name
 		}
 
-		// Status distribution: mostly active
-		var status string
-		statusRand := rand.Float64()
-		if statusRand < 0.75 {
-			status = "active"
-		} else if statusRand < 0.9 {
-			status = "invited"
-		} else {
-			status = "inactive"
+		lastAccess := ""
+		if user.LastAccess != nil {
+			lastAccess = user.LastAccess.Format(time.RFC3339)
 		}
 
-		// Random 1-3 teams
-		numTeams := rand.Intn(3) + 1
-		userTeams := make([]string, numTeams)
-		for j := 0; j < numTeams; j++ {
-			userTeams[j] = teams[(i*3+j)%len(teams)]
-		}
-
-		// Random creation date in last 2 years
-		now := time.Now()
-		createdAt := now.AddDate(0, 0, -rand.Intn(730))
-
-		// Last access: active users recently, inactive users long ago
-		var lastAccess time.Time
-		if status == "active" {
-			// Last 7 days
-			lastAccess = now.Add(-time.Minute * time.Duration(rand.Intn(10080)))
-		} else if status == "invited" {
-			// Never accessed (set to creation date)
-			lastAccess = createdAt
-		} else {
-			// 30-90 days ago
-			lastAccess = now.AddDate(0, 0, -(30 + rand.Intn(60)))
-		}
-
-		users[i] = UserResponse{
-			ID:         i + 1,
-			FirstName:  firstName,
-			LastName:   lastName,
-			Email:      email,
-			Role:       role,
-			Teams:      userTeams,
-			CreatedAt:  createdAt,
+		response[i] = UserResponse{
+			ID:         int(user.ID),
+			FirstName:  user.FirstName,
+			LastName:   user.LastName,
+			Email:      user.Email,
+			Role:       roleToProtoEnum(user.Role),
+			Teams:      teams,
+			CreatedAt:  user.CreatedAt.Format(time.RFC3339),
 			LastAccess: lastAccess,
-			Status:     status,
+			Status:     statusToProtoEnum(user.Status),
+			Avatar:     user.Avatar,
+			Provider:   user.Provider,
 		}
 	}
 
-	return users
+	utils.RespondOK(c, response)
 }
 
-func toLower(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	// Convert first character to lowercase
-	first := s[0]
-	if first >= 'A' && first <= 'Z' {
-		first = first + 32
-	}
-	return string(first) + s[1:]
+type InviteUserRequest struct {
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Email     string `json:"email" binding:"required,email"`
+	Role      int    `json:"role"`
+	TeamIDs   []int  `json:"team_ids"`
 }
 
-func CreateUser(c *gin.Context) {
+func InviteUser(c *gin.Context) {
 	orgID, err := parseOrgID(c)
 	if err != nil {
 		return
 	}
 
-	var input struct {
-		Name  string `json:"name" binding:"required"`
-		Email string `json:"email" binding:"required,email"`
-	}
+	var input InviteUserRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", err.Error())
 		return
 	}
 
+	db := models.GetDB()
+
+	// Check if user already exists
+	var existingUser models.User
+	if err := db.Where("email = ? AND organization_id = ?", input.Email, orgID).First(&existingUser).Error; err == nil {
+		utils.RespondError(c, http.StatusConflict, "USER_EXISTS", "User with this email already exists in the organization")
+		return
+	}
+
+	// Convert proto enum to role
+	role := protoEnumToRole(input.Role)
+
+	// Create invited user
 	user := models.User{
-		Name:           input.Name,
+		FirstName:      input.FirstName,
+		LastName:       input.LastName,
+		Name:           input.FirstName + " " + input.LastName,
 		Email:          input.Email,
+		Role:           role,
+		Status:         models.UserStatusInvited,
 		OrganizationID: orgID,
 	}
 
-	if err := models.GetDB().Create(&user).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to create user")
+	if err := db.Create(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to invite user")
 		return
 	}
-	utils.RespondCreated(c, user)
+
+	// Add user to teams if specified
+	if len(input.TeamIDs) > 0 {
+		var teams []models.Team
+		teamIDs := make([]uint, len(input.TeamIDs))
+		for i, id := range input.TeamIDs {
+			teamIDs[i] = uint(id)
+		}
+
+		if err := db.Where("id IN ? AND organization_id = ?", teamIDs, orgID).Find(&teams).Error; err == nil {
+			db.Model(&user).Association("Teams").Append(&teams)
+		}
+	}
+
+	// Reload user with teams
+	db.Preload("Teams").First(&user, user.ID)
+
+	// Convert to response
+	teams := make([]string, len(user.Teams))
+	for i, team := range user.Teams {
+		teams[i] = team.Name
+	}
+
+	response := UserResponse{
+		ID:         int(user.ID),
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Email:      user.Email,
+		Role:       roleToProtoEnum(user.Role),
+		Teams:      teams,
+		CreatedAt:  user.CreatedAt.Format(time.RFC3339),
+		LastAccess: "",
+		Status:     statusToProtoEnum(user.Status),
+		Avatar:     user.Avatar,
+		Provider:   user.Provider,
+	}
+
+	utils.RespondCreated(c, response)
 }
 
 type UpdateUserRequest struct {
-	FirstName string   `json:"firstName"`
-	LastName  string   `json:"lastName"`
-	Email     string   `json:"email" binding:"omitempty,email"`
-	Role      string   `json:"role"`
-	Teams     []string `json:"teams"`
-	Status    string   `json:"status"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email" binding:"omitempty,email"`
+	Role      int    `json:"role"`
+	TeamIDs   []int  `json:"team_ids"`
+	Status    int    `json:"status"`
 }
 
 func UpdateUser(c *gin.Context) {
@@ -205,37 +244,91 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Validate role
-	validRoles := map[string]bool{"admin": true, "manager": true, "developer": true, "viewer": true}
-	if input.Role != "" && !validRoles[input.Role] {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid role")
+	db := models.GetDB()
+
+	// Verify user exists and belongs to organization
+	var user models.User
+	if err := db.Where("id = ? AND organization_id = ?", userID, orgID).First(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "User not found in this organization")
 		return
 	}
 
-	// Validate status
-	validStatuses := map[string]bool{"active": true, "inactive": true, "invited": true}
-	if input.Status != "" && !validStatuses[input.Status] {
-		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid status")
+	// Update fields
+	if input.FirstName != "" {
+		user.FirstName = input.FirstName
+	}
+	if input.LastName != "" {
+		user.LastName = input.LastName
+	}
+	if user.FirstName != "" && user.LastName != "" {
+		user.Name = user.FirstName + " " + user.LastName
+	}
+	if input.Email != "" {
+		user.Email = input.Email
+	}
+	if input.Role != 0 {
+		user.Role = protoEnumToRole(input.Role)
+	}
+	if input.Status != 0 {
+		user.Status = protoEnumToStatus(input.Status)
+	}
+
+	if err := db.Save(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to update user")
 		return
 	}
 
-	// TODO: Update in database with new fields (using orgID for validation)
-	// For now, return updated mock user
-	_ = orgID // Will be used when implementing real database operations
+	// Update teams if specified
+	if input.TeamIDs != nil {
+		// Clear existing teams
+		if err := db.Model(&user).Association("Teams").Clear(); err != nil {
+			utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to update user teams")
+			return
+		}
 
-	updatedUser := UserResponse{
-		ID:         userID,
-		FirstName:  input.FirstName,
-		LastName:   input.LastName,
-		Email:      input.Email,
-		Role:       input.Role,
-		Teams:      input.Teams,
-		Status:     input.Status,
-		CreatedAt:  time.Now().AddDate(0, 0, -100), // Mock data
-		LastAccess: time.Now().Add(-time.Hour * 2),
+		// Add new teams
+		if len(input.TeamIDs) > 0 {
+			var teams []models.Team
+			teamIDs := make([]uint, len(input.TeamIDs))
+			for i, id := range input.TeamIDs {
+				teamIDs[i] = uint(id)
+			}
+
+			if err := db.Where("id IN ? AND organization_id = ?", teamIDs, orgID).Find(&teams).Error; err == nil {
+				db.Model(&user).Association("Teams").Append(&teams)
+			}
+		}
 	}
 
-	utils.RespondOK(c, updatedUser)
+	// Reload user with teams
+	db.Preload("Teams").First(&user, userID)
+
+	// Convert to response
+	teams := make([]string, len(user.Teams))
+	for i, team := range user.Teams {
+		teams[i] = team.Name
+	}
+
+	lastAccess := ""
+	if user.LastAccess != nil {
+		lastAccess = user.LastAccess.Format(time.RFC3339)
+	}
+
+	response := UserResponse{
+		ID:         int(user.ID),
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Email:      user.Email,
+		Role:       roleToProtoEnum(user.Role),
+		Teams:      teams,
+		CreatedAt:  user.CreatedAt.Format(time.RFC3339),
+		LastAccess: lastAccess,
+		Status:     statusToProtoEnum(user.Status),
+		Avatar:     user.Avatar,
+		Provider:   user.Provider,
+	}
+
+	utils.RespondOK(c, response)
 }
 
 func DeleteUser(c *gin.Context) {
@@ -250,19 +343,26 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// TODO: Delete user from database
-	// For now, just verify the user exists in this org (mock validation)
-	if userID < 1 || userID > 50 {
+	db := models.GetDB()
+
+	// Verify user exists and belongs to organization
+	var user models.User
+	if err := db.Where("id = ? AND organization_id = ?", userID, orgID).First(&user).Error; err != nil {
 		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "User not found in this organization")
 		return
 	}
 
-	// In production, you would:
-	// - Check if user exists and belongs to organization (using orgID)
-	// - Remove user from organization (soft delete or hard delete)
-	// - Optionally remove from all teams
-	// - Log the deletion for audit
-	_ = orgID // Will be used when implementing real database operations
+	// Clear team associations
+	if err := db.Model(&user).Association("Teams").Clear(); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to remove user from teams")
+		return
+	}
+
+	// Delete the user
+	if err := db.Delete(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "FAILED_USER_OPERATION", "Failed to delete user")
+		return
+	}
 
 	utils.RespondOK(c, gin.H{"message": "User removed from organization successfully"})
 }

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package backend;
+
+option go_package = "github.com/opisvigilant/futura/proto/gen/backend;backend";
+
+message TeamMember {
+  int64 id = 1;
+  string name = 2;
+  string email = 3;
+  string role = 4;
+}
+
+message Team {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  int32 member_count = 4;
+  string created_at = 5;
+  repeated TeamMember members = 6;
+}
+
+message GetTeamsResponse {
+  repeated Team teams = 1;
+}
+
+message CreateTeamRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message UpdateTeamRequest {
+  string name = 1;
+  string description = 2;
+  repeated int64 member_ids = 3;
+}

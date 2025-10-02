@@ -40,6 +40,8 @@ func AutoMigrate(dbConfig *config.Database) error {
 	if err := db.AutoMigrate(
 		&Organization{},
 		&User{},
+		&Team{},
+		&TeamMember{},
 		&ProviderConnection{},
 		&ClusterMetadata{},
 		&EKSClusterMetadata{},

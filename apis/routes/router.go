@@ -63,7 +63,7 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 			orgUsers := org.Group("/:org_id/users")
 			{
 				orgUsers.GET("/", controllers.GetUsers)
-				orgUsers.POST("/", controllers.CreateUser)
+				orgUsers.POST("/invite", controllers.InviteUser)
 				orgUsers.PUT("/:user_id", controllers.UpdateUser)
 				orgUsers.DELETE("/:user_id", controllers.DeleteUser)
 			}
@@ -71,6 +71,7 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 			orgTeams := org.Group("/:org_id/teams")
 			{
 				orgTeams.GET("/", controllers.GetTeams)
+				orgTeams.POST("/", controllers.CreateTeam)
 				orgTeams.PUT("/:team_id", controllers.UpdateTeam)
 				orgTeams.DELETE("/:team_id", controllers.DeleteTeam)
 			}
