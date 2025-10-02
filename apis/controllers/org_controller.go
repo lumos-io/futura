@@ -11,7 +11,7 @@ import (
 
 func GetOrganizations(c *gin.Context) {
 	var orgs []models.Organization
-	if err := models.GetDB().Preload("Users").Find(&orgs).Error; err != nil {
+	if err := models.GetDB().Preload("Members").Find(&orgs).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "FAILED_ORG_OPERATION", "Failed to fetch organizations")
 		return
 	}
@@ -38,14 +38,14 @@ func CreateOrganization(c *gin.Context) {
 }
 
 func GetOrganization(c *gin.Context) {
-	id, err := parseID(c.Param("id"))
+	id, err := parseID(c.Param("org_id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid organization ID")
 		return
 	}
 
 	var org models.Organization
-	if err := models.GetDB().Preload("Users").First(&org, id).Error; err != nil {
+	if err := models.GetDB().Preload("Members").First(&org, id).Error; err != nil {
 		utils.RespondError(c, http.StatusNotFound, "NOT_FOUND", "Organization not found")
 		return
 	}
@@ -53,7 +53,7 @@ func GetOrganization(c *gin.Context) {
 }
 
 func UpdateOrganization(c *gin.Context) {
-	id, err := parseID(c.Param("id"))
+	id, err := parseID(c.Param("org_id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid organization ID")
 		return
@@ -82,7 +82,7 @@ func UpdateOrganization(c *gin.Context) {
 }
 
 func DeleteOrganization(c *gin.Context) {
-	id, err := parseID(c.Param("id"))
+	id, err := parseID(c.Param("org_id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid organization ID")
 		return

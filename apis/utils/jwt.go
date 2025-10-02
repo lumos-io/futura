@@ -17,6 +17,11 @@ func GetJWTSecret() []byte {
 	return jwtSecret
 }
 
+// SetJWTSecret sets the JWT secret (for testing)
+func SetJWTSecret(secret string) {
+	jwtSecret = []byte(secret)
+}
+
 // GenerateSecureRandomString generates a cryptographically secure random string
 func GenerateSecureRandomString(length int) (string, error) {
 	bytes := make([]byte, length)

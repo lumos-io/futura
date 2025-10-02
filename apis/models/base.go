@@ -70,6 +70,11 @@ func GetDB() *gorm.DB {
 	return db
 }
 
+// SetDB sets the database instance (for testing)
+func SetDB(database *gorm.DB) {
+	db = database
+}
+
 type BaseModel struct {
 	ID        uint `gorm:"primaryKey"`
 	CreatedAt time.Time

@@ -44,10 +44,10 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 	// Create a channel to receive messages
 	msgCh := make(chan *workflowsignals.WorkflowFetchClustersStatusSignal)
 
-	if err := s.rs.Subscribe(context.Background(), workflowsignals.NatsWorkflowFetchClusterTopic, func(msg stream.Message, ack func() error) {
+	if err := s.rs.Subscribe(context.Background(), workflowsignals.WorkflowFetchClusterTopic, func(msg stream.Message, ack func() error) {
 		var result *workflowsignals.WorkflowFetchClustersStatusSignal
 		if err := json.Unmarshal(msg.Data(), &result); err != nil {
-			log.Logger.Error().Err(err).Msg("invalid NATS message")
+			log.Logger.Error().Err(err).Msg("invalid message")
 			return
 		}
 		// push message to the channel
@@ -56,7 +56,7 @@ func (s *SSEController) FetchClustersResultHandler(c *gin.Context) {
 			log.Logger.Error().Err(err).Msg("failed to ack message")
 		}
 	}); err != nil {
-		log.Logger.Error().Err(err).Msgf("failed to subscribe to topic `%s`", workflowsignals.NatsWorkflowFetchClusterTopic)
+		log.Logger.Error().Err(err).Msgf("failed to subscribe to topic `%s`", workflowsignals.WorkflowFetchClusterTopic)
 	}
 
 	// Heartbeat ticker

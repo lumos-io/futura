@@ -57,7 +57,7 @@ func (w *WorkflowFetchClustersWorker) Work(ctx context.Context, job *river.Job[W
 			Status:               workflowsignals.StatusFailed,
 			Error:                "",
 		})
-		return js.Publish(ctx, workflowsignals.NatsWorkflowFetchClusterTopic, b)
+		return js.Publish(ctx, workflowsignals.WorkflowFetchClusterTopic, b)
 	}
 
 	allClusters, err := client.FetchClusters(ctx)
@@ -136,7 +136,7 @@ func publishResult(ctx context.Context, js stream.Stream, result workflowsignals
 	if err != nil {
 		return err
 	}
-	return js.Publish(ctx, workflowsignals.NatsWorkflowFetchClusterTopic, b)
+	return js.Publish(ctx, workflowsignals.WorkflowFetchClusterTopic, b)
 
 }
 

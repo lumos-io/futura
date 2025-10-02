@@ -18,9 +18,22 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: test
+test: ## Run all tests
+	go test -v -race -timeout=30s ./...
+
+.PHONY: test-coverage
+test-coverage: ## Run tests with coverage report
+	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+	go tool cover -html=coverage.out -o coverage.html
+
+.PHONY: test-short
+test-short: ## Run tests without verbose output
+	go test -race -timeout=30s ./...
+
 
 .PHONY: run
-run: 
+run:
 	go run -ldflags="-X 'github.com/opisvigilant/futura/apis/version.Version=dev' \
                  -X 'github.com/opisvigilant/futura/apis/version.CommitSHA=$(git rev-parse HEAD)' \
                  -X 'github.com/opisvigilant/futura/apis/version.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
