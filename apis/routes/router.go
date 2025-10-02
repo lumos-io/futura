@@ -68,6 +68,13 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 				orgUsers.DELETE("/:user_id", controllers.DeleteUser)
 			}
 
+			orgTeams := org.Group("/:org_id/teams")
+			{
+				orgTeams.GET("/", controllers.GetTeams)
+				orgTeams.PUT("/:team_id", controllers.UpdateTeam)
+				orgTeams.DELETE("/:team_id", controllers.DeleteTeam)
+			}
+
 			cc, err := controllers.NewConnectController(config)
 			if err != nil {
 				return nil, err

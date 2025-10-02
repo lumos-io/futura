@@ -22,16 +22,8 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteUserDialog } from "./components/delete-user-dialog";
+import { InviteUserSheet } from "./components/invite-user-sheet";
 import { Search, UserPlus, Mail, Calendar, Clock, Trash2 } from "lucide-react";
 
 interface UsersProps {
@@ -79,6 +71,10 @@ const Users: React.FC<UsersProps> = ({ title }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dialogKey, setDialogKey] = useState(0);
+
+  // Invite user state
+  const [inviteSheetOpen, setInviteSheetOpen] = useState(false);
 
   const orgId = currentUser?.organizationId;
 
@@ -119,6 +115,18 @@ const Users: React.FC<UsersProps> = ({ title }) => {
 
     fetchUsers();
   }, [orgId]);
+
+  // Cleanup effect for scroll locks when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      document.body.style.pointerEvents = "";
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      document.body.removeAttribute("data-scroll-locked");
+      document.documentElement.removeAttribute("data-scroll-locked");
+    };
+  }, []);
 
   // Filter users
   useEffect(() => {
@@ -279,6 +287,18 @@ const Users: React.FC<UsersProps> = ({ title }) => {
     }, 200);
   };
 
+  // Force cleanup function - only reset styles, don't remove DOM nodes
+  const forceCleanupScrollLock = () => {
+    // Reset body styles
+    document.body.style.pointerEvents = "";
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+
+    // Remove inert attributes
+    document.body.removeAttribute("data-scroll-locked");
+    document.documentElement.removeAttribute("data-scroll-locked");
+  };
+
   // Confirm delete
   const confirmDelete = async () => {
     if (!deletingUser || !orgId) return;
@@ -298,27 +318,23 @@ const Users: React.FC<UsersProps> = ({ title }) => {
 
       // Close dialog and clear state
       setDeleteDialogOpen(false);
-      setDeletingUser(null);
-      setEditingUser(null);
 
-      // Force cleanup of any lingering scroll locks and focus traps
+      // Wait for dialog to fully close before cleanup
       setTimeout(() => {
-        document.body.style.pointerEvents = "";
-        document.body.style.overflow = "";
-        document.body.style.paddingRight = "";
-        // Remove any Radix UI data attributes that might be stuck
-        const inertElements = document.querySelectorAll('[data-radix-focus-guard]');
-        inertElements.forEach(el => el.remove());
-      }, 100);
+        setDeletingUser(null);
+        setEditingUser(null);
+        // Increment key to force remount on next open
+        setDialogKey((prev) => prev + 1);
+        // Force cleanup
+        forceCleanupScrollLock();
+      }, 300);
     } catch (err) {
       console.error("Error deleting user:", err);
       setDeleteDialogOpen(false);
-      // Also cleanup on error
       setTimeout(() => {
-        document.body.style.pointerEvents = "";
-        document.body.style.overflow = "";
-        document.body.style.paddingRight = "";
-      }, 100);
+        setDialogKey((prev) => prev + 1);
+        forceCleanupScrollLock();
+      }, 300);
       alert("Failed to delete user. Please try again.");
     }
   };
@@ -333,6 +349,39 @@ const Users: React.FC<UsersProps> = ({ title }) => {
     }));
   };
 
+  // Handle invite user
+  const handleInviteUser = async (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: UserRole;
+    teams: string[];
+  }) => {
+    if (!orgId) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/organizations/${orgId}/users/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) throw new Error("Failed to invite user");
+
+      const result = await res.json();
+      const newUser = result.data;
+
+      setUsers((prev) => [...prev, newUser]);
+      setInviteSheetOpen(false);
+    } catch (err) {
+      console.error("Error inviting user:", err);
+      alert("Failed to invite user. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="p-10 space-y-6">
       <div className="flex items-center justify-between">
@@ -342,7 +391,10 @@ const Users: React.FC<UsersProps> = ({ title }) => {
             Manage user access, roles, and team memberships
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+        <button
+          onClick={() => setInviteSheetOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+        >
           <UserPlus className="h-4 w-4" />
           Invite User
         </button>
@@ -859,47 +911,35 @@ const Users: React.FC<UsersProps> = ({ title }) => {
       </Sheet>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
+      <DeleteUserDialog
+        key={dialogKey}
         open={deleteDialogOpen}
         onOpenChange={(open) => {
           setDeleteDialogOpen(open);
           if (!open) {
-            setDeletingUser(null);
-            // Force cleanup when dialog closes by any means
             setTimeout(() => {
-              document.body.style.pointerEvents = "";
-              document.body.style.overflow = "";
-              document.body.style.paddingRight = "";
-              const inertElements = document.querySelectorAll('[data-radix-focus-guard]');
-              inertElements.forEach(el => el.remove());
-            }, 100);
+              setDeletingUser(null);
+              setDialogKey((prev) => prev + 1);
+              forceCleanupScrollLock();
+            }, 300);
           }
         }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove{" "}
-              <span className="font-semibold">
-                {deletingUser?.firstName} {deletingUser?.lastName}
-              </span>{" "}
-              from the organization? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeletingUser(null)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              Remove User
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        userName={`${deletingUser?.firstName} ${deletingUser?.lastName}`}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setDeletingUser(null);
+          setDeleteDialogOpen(false);
+        }}
+      />
+
+      {/* Invite User Sheet */}
+      <InviteUserSheet
+        open={inviteSheetOpen}
+        onOpenChange={setInviteSheetOpen}
+        onInviteUser={handleInviteUser}
+        saving={saving}
+        availableTeams={availableTeams}
+      />
     </div>
   );
 };
