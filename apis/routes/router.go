@@ -17,6 +17,9 @@ import (
 func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Engine, error) {
 	router := gin.Default()
 
+	// Security headers
+	router.Use(middleware.SecurityHeadersMiddleware())
+
 	// observability
 	router.Use(middleware.TraceIDMiddleware())
 
@@ -39,12 +42,12 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 	auth := router.Group("/auth")
 	{
 		auth.GET("/google/login", a.GoogleLogin)
-		auth.GET("/google/callback", a.GoogleCallback)
+		auth.GET("/google/callback", middleware.OAuthCallbackRateLimiter.Middleware(), a.GoogleCallback)
 		auth.GET("/github/login", a.GithubLogin)
-		auth.GET("/github/callback", a.GithubCallback)
+		auth.GET("/github/callback", middleware.OAuthCallbackRateLimiter.Middleware(), a.GithubCallback)
 		auth.GET("/me", middleware.AuthMiddleware(), a.MeHandler)
 		auth.POST("/logout", middleware.AuthMiddleware(), a.Logout)
-		auth.POST("/refresh", a.RefreshToken)
+		auth.POST("/refresh", middleware.RefreshTokenRateLimiter.Middleware(), a.RefreshToken)
 	}
 
 	// Protected routes
