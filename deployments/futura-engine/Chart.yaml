@@ -1,0 +1,16 @@
+apiVersion: v2
+name: futura-engine
+description: Optimization engine for Futura - RL-based recommendation and scaling services
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - optimization
+  - reinforcement-learning
+  - autoscaling
+  - recommendations
+  - grpc
+home: https://github.com/opisvigilant/futura
+maintainers:
+  - name: Futura Team
+    email: support@opisvigilant.com

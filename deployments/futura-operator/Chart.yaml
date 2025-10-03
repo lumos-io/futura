@@ -1,0 +1,17 @@
+apiVersion: v2
+name: futura-operator
+description: Kubernetes operator for intelligent workload optimization with eBPF-based observability
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - kubernetes
+  - operator
+  - autoscaling
+  - ebpf
+  - observability
+  - slo
+home: https://github.com/opisvigilant/futura
+maintainers:
+  - name: Futura Team
+    email: support@opisvigilant.com

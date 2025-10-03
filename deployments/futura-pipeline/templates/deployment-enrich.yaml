@@ -1,0 +1,78 @@
+{{- if .Values.enrich.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-enrich
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: enrich
+spec:
+  replicas: {{ .Values.enrich.replicas }}
+  selector:
+    matchLabels:
+      {{- include "futura-pipeline.enrichSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "futura-pipeline.labels" . | nindent 8 }}
+        app.kubernetes.io/component: enrich
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "futura-pipeline.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: enrich
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args: ["enrich"]
+        resources:
+          {{- toYaml .Values.enrich.resources | nindent 12 }}
+        volumeMounts:
+        - name: config
+          mountPath: /opt/pipeline
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        {{- with .Values.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.env }}
+        env:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "futura-pipeline.fullname" . }}-config
+      - name: tmp
+        emptyDir: {}
+      {{- with .Values.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

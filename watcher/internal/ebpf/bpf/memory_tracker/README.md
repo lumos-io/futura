@@ -1,17 +1,20 @@
 # Memory Tracker Program
 
 ## Overview
+
 The Memory Tracker eBPF program provides comprehensive memory allocation and usage monitoring at the container level. It tracks memory allocations, deallocations, page faults, garbage collection events, and identifies potential memory leaks by intercepting kernel memory management functions and user-space allocation patterns.
 
 ## Program Details
 
 ### File Structure
+
 - **memory_tracker.bpf.c**: eBPF C source code for kernel-space memory monitoring
 - **memory_tracker.go**: Go wrapper providing user-space management and metric aggregation
 - **memory_tracker_bpf.go**: Auto-generated Go bindings (created by bpf2go)
 - **memory_tracker_bpf.o**: Compiled eBPF bytecode object
 
 ### Attach Points
+
 - **Tracepoints**: `kmem:kmalloc`, `kmem:kfree`, `kmem:mm_page_alloc`, `kmem:mm_page_free`
 - **Kprobes**: `__kmalloc`, `kfree`, `__get_free_pages`, `free_pages`
 - **Uprobes**: `malloc`, `free`, `calloc`, `realloc` (user-space allocators)
@@ -20,6 +23,7 @@ The Memory Tracker eBPF program provides comprehensive memory allocation and usa
 ### Data Structures
 
 #### Allocation Tracking
+
 ```c
 struct alloc_info {
     __u64 size;
@@ -31,6 +35,7 @@ struct alloc_info {
 ```
 
 #### Memory Metrics Aggregation
+
 ```c
 struct memory_metrics {
     __u64 alloc_count;
@@ -49,6 +54,7 @@ struct memory_metrics {
 ```
 
 #### Memory Leak Detection
+
 ```c
 struct leak_candidate {
     __u64 address;
@@ -60,6 +66,7 @@ struct leak_candidate {
 ```
 
 #### Garbage Collection Metrics
+
 ```c
 struct gc_metrics {
     __u64 gc_count;
@@ -72,6 +79,7 @@ struct gc_metrics {
 ## Maps and Storage
 
 ### Active Allocation Tracking
+
 - **active_allocs**: Hash map tracking live memory allocations
 - **Key**: Memory address (pointer)
 - **Value**: alloc_info with allocation metadata
@@ -79,6 +87,7 @@ struct gc_metrics {
 - **Purpose**: Track allocation lifecycle and detect leaks
 
 ### Memory Metrics Aggregation
+
 - **memory_metrics_map**: Per-container memory statistics
 - **Key**: cgroup_id
 - **Value**: memory_metrics with allocation counters
@@ -86,24 +95,28 @@ struct gc_metrics {
 - **Update**: Real-time atomic increments
 
 ### Memory Leak Detection
+
 - **leak_candidates**: Potential memory leaks per container
 - **Key**: cgroup_id
 - **Value**: Array of 100 top leak candidates
 - **Criteria**: Long-lived allocations without corresponding free
 
 ### Garbage Collection Tracking
+
 - **gc_metrics_map**: GC statistics for managed language runtimes
 - **Key**: cgroup_id
 - **Value**: gc_metrics with collection statistics
 - **Languages**: Java, Go, Python, .NET support
 
 ### Stack Trace Collection
+
 - **stack_traces**: Call stack information for allocations
 - **Type**: BPF_MAP_TYPE_STACK_TRACE
 - **Depth**: 16 stack frames maximum
 - **Usage**: Root cause analysis for memory issues
 
 ### Real-time Events
+
 - **memory_events**: Ring buffer for immediate notifications
 - **Size**: 256KB circular buffer
 - **Events**: Large allocations, potential leaks, OOM conditions
@@ -111,6 +124,7 @@ struct gc_metrics {
 ## Functionality
 
 ### Memory Allocation Lifecycle
+
 1. **Allocation Detection**: Kernel/user-space malloc interception
 2. **Metadata Recording**: Size, timestamp, container attribution
 3. **Stack Capture**: Call stack for debugging purposes
@@ -118,12 +132,14 @@ struct gc_metrics {
 5. **Leak Analysis**: Long-term allocation tracking
 
 ### Memory Pattern Analysis
+
 - **Allocation Size Distribution**: Categorization by size buckets
 - **Temporal Patterns**: Allocation rate over time
 - **Fragment Analysis**: Memory fragmentation detection
 - **Growth Trends**: Container memory usage trajectories
 
 ### Leak Detection Algorithm
+
 ```c
 // Identify leak candidates
 if (allocation_age > LEAK_THRESHOLD_MS && !has_corresponding_free) {
@@ -137,6 +153,7 @@ leak_score = (allocation_age * size) / average_allocation_lifetime;
 ## Implementation Details
 
 ### Kernel Space Monitoring
+
 ```c
 SEC("tracepoint/kmem/kmalloc")
 int trace_kmalloc(struct trace_event_raw_kmalloc *ctx) {
@@ -160,6 +177,7 @@ int trace_kmalloc(struct trace_event_raw_kmalloc *ctx) {
 ```
 
 ### User Space Monitoring
+
 ```c
 SEC("uprobe/malloc")
 int trace_malloc(struct pt_regs *ctx) {
@@ -175,6 +193,7 @@ int trace_malloc_ret(struct pt_regs *ctx) {
 ```
 
 ### Page Fault Monitoring
+
 ```c
 SEC("tracepoint/exceptions/page_fault_user")
 int trace_page_fault(struct trace_event_raw_page_fault_user *ctx) {
@@ -186,12 +205,14 @@ int trace_page_fault(struct trace_event_raw_page_fault_user *ctx) {
 ## Performance Characteristics
 
 ### Overhead Analysis
+
 - **Allocation Overhead**: ~200ns per malloc/free operation
 - **Memory Usage**: ~3MB for all maps combined
 - **CPU Impact**: 1-2% additional CPU load under heavy allocation
 - **Network Overhead**: Zero network impact
 
 ### Scalability Metrics
+
 - **Active Allocations**: 16,384 concurrent tracked allocations
 - **Containers**: 16,384 containers maximum
 - **Stack Traces**: 1,024 unique call stacks
@@ -200,12 +221,14 @@ int trace_page_fault(struct trace_event_raw_page_fault_user *ctx) {
 ## Container Integration
 
 ### Memory Cgroup Integration
+
 - **Attribution**: Uses cgroup_id for container mapping
 - **Limits**: Respects container memory limits
 - **OOM Detection**: Early warning before OOM killer
 - **Resource Monitoring**: Real-time memory pressure detection
 
 ### Kubernetes Integration
+
 - **Pod Memory**: Per-pod allocation tracking
 - **Namespace Aggregation**: Namespace-level memory metrics
 - **Resource Quotas**: Compliance monitoring with resource limits
@@ -214,6 +237,7 @@ int trace_page_fault(struct trace_event_raw_page_fault_user *ctx) {
 ## Data Output and Integration
 
 ### Protobuf Schema
+
 ```protobuf
 message MemoryPatterns {
     ContainerInfo container = 1;
@@ -227,6 +251,7 @@ message MemoryPatterns {
 ```
 
 ### Real-time Alerts
+
 - **Memory Leaks**: Immediate notification of potential leaks
 - **Large Allocations**: Alerts for unusually large memory requests
 - **OOM Warnings**: Early detection of memory exhaustion
@@ -235,18 +260,21 @@ message MemoryPatterns {
 ## Memory Leak Detection
 
 ### Detection Strategies
+
 1. **Age-based Analysis**: Long-lived allocations without free
 2. **Growth Pattern**: Continuously increasing memory usage
 3. **Stack Correlation**: Repeated allocations from same call site
 4. **Reference Analysis**: Unreachable object detection (future)
 
 ### Leak Scoring
+
 - **Allocation Age Weight**: Older allocations score higher
 - **Size Weight**: Larger allocations score higher
 - **Frequency Weight**: Repeated patterns increase score
 - **Context Weight**: Certain call patterns are more suspicious
 
 ### False Positive Reduction
+
 - **Cache Exclusion**: Known long-term cache allocations
 - **Static Allocation**: Program initialization allocations
 - **Pool Management**: Memory pool and buffer management
@@ -255,12 +283,14 @@ message MemoryPatterns {
 ## Garbage Collection Monitoring
 
 ### Supported Runtimes
+
 - **Go Runtime**: Goroutine and GC statistics
 - **JVM**: Heap generations and GC algorithms
 - **Python**: Reference counting and cycle collection
 - **.NET**: Generational garbage collection
 
 ### GC Metrics
+
 - **Collection Frequency**: GC events per second
 - **Collection Duration**: Time spent in GC pauses
 - **Memory Reclaimed**: Bytes freed per collection
@@ -269,18 +299,21 @@ message MemoryPatterns {
 ## Troubleshooting
 
 ### Common Issues
+
 1. **High Memory Overhead**: Too many tracked allocations
 2. **Missing Free Events**: User-space free not intercepted
 3. **Stack Trace Failures**: Insufficient privileges or symbols
 4. **False Leak Reports**: Long-term legitimate allocations
 
 ### Debug Features
+
 - **Allocation Timeline**: Time-ordered allocation history
 - **Stack Trace Analysis**: Root cause identification
 - **Memory Maps**: Process memory layout visualization
 - **Container Attribution**: Verification of cgroup mapping
 
 ### Performance Tuning
+
 - **Sampling**: Statistical sampling to reduce overhead
 - **Size Filters**: Track only allocations above threshold
 - **Time Windows**: Sliding window for leak detection
@@ -289,18 +322,21 @@ message MemoryPatterns {
 ## Use Cases
 
 ### Application Performance Monitoring
+
 - **Memory Profiling**: Application memory usage patterns
 - **Leak Detection**: Automated memory leak identification
 - **Optimization**: Memory allocation optimization opportunities
 - **Capacity Planning**: Memory growth trend analysis
 
 ### Container Resource Management
+
 - **Memory Quotas**: Enforcement and compliance monitoring
 - **Resource Scaling**: Memory-based scaling decisions
 - **Cost Optimization**: Right-sizing container memory limits
 - **Multi-tenancy**: Fair resource sharing verification
 
 ### DevOps and SRE
+
 - **Incident Response**: Memory-related outage investigation
 - **Performance Regression**: Memory usage change detection
 - **Code Review**: Memory impact assessment of changes
@@ -309,12 +345,14 @@ message MemoryPatterns {
 ## Security Considerations
 
 ### Data Privacy
+
 - **Address Masking**: Optional memory address anonymization
 - **Content Protection**: No actual memory content accessed
 - **Container Isolation**: Strict memory metric separation
 - **Privilege Minimization**: Least privilege for monitoring
 
 ### Security Monitoring
+
 - **Buffer Overflows**: Unusual allocation pattern detection
 - **Memory Exhaustion Attacks**: DoS attempt identification
 - **Privilege Escalation**: Memory-based exploit detection
@@ -323,24 +361,28 @@ message MemoryPatterns {
 ## Future Enhancements
 
 ### Advanced Analytics
+
 - **Machine Learning**: Anomaly detection in allocation patterns
 - **Predictive Analysis**: Memory exhaustion prediction
 - **Pattern Recognition**: Automatic leak pattern identification
 - **Benchmark Comparison**: Historical performance comparison
 
 ### Extended Platform Support
+
 - **NUMA Awareness**: Non-uniform memory architecture support
 - **GPU Memory**: Graphics memory allocation tracking
 - **Persistent Memory**: Storage-class memory monitoring
 - **Memory Compression**: Compressed memory usage tracking
 
 ### Integration Improvements
+
 - **APM Tools**: Integration with application performance monitoring
 - **Debuggers**: Live debugging tool integration
 - **Profilers**: Memory profiler data correlation
 - **Alerting**: Intelligent alerting rule engine
 
 ## Dependencies
+
 - **cilium/ebpf**: Go eBPF library for program management
 - **ringbuf**: Real-time event streaming mechanism
 - **vmlinux.h**: Kernel memory management structures

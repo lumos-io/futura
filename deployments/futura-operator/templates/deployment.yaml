@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "futura-operator.fullname" . }}-controller-manager
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    control-plane: controller-manager
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: kube-rbac-proxy
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.18.0
+        args:
+        - --secure-listen-address=0.0.0.0:{{ .Values.metricsService.port }}
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=0
+        ports:
+        - containerPort: {{ .Values.metricsService.port }}
+          name: https
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 5m
+            memory: 64Mi
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+      - name: manager
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - /manager
+        args:
+        - --leader-elect={{ .Values.leaderElection.enabled }}
+        - --health-probe-bind-address=:{{ .Values.healthProbe.port }}
+        - --metrics-bind-address=127.0.0.1:8080
+        env:
+        - name: OPERATOR_LOG_LEVEL
+          value: {{ .Values.operator.logLevel }}
+        - name: ANALYTICS_ENDPOINT
+          value: {{ .Values.operator.analytics.endpoint }}
+        - name: EBPF_ENABLED
+          value: "{{ .Values.operator.ebpf.enabled }}"
+        - name: EBPF_METRICS_INTERVAL
+          value: {{ .Values.operator.ebpf.metricsInterval }}
+        ports:
+        - containerPort: {{ .Values.healthProbe.port }}
+          name: health
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.healthProbe.port }}
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: {{ .Values.healthProbe.port }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: 10

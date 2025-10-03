@@ -1,0 +1,187 @@
+# Pipeline has 4 microservices: collect, validate, enrich, store
+# Each can be scaled independently
+
+# Common image configuration
+image:
+  repository: davideberdin/futura-pipeline
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  fsGroup: 65532
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+# Individual service configurations
+collect:
+  enabled: true
+  replicas: 1
+  endpoint: ":50051"
+  service:
+    type: ClusterIP
+    port: 50051
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+validate:
+  enabled: true
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+enrich:
+  enabled: true
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+store:
+  enabled: true
+  replicas: 2
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Shared configuration for all pipeline services
+config:
+  redis:
+    servers:
+      - redis:6379
+    namespace: api_keys
+    password: ""
+    existingSecret: ""
+    existingSecretPasswordKey: redis-password
+
+  kafka:
+    brokers:
+      - kafka:9092
+    saslEnabled: false
+    saslMechanism: PLAIN
+    saslUsername: ""
+    saslPassword: ""
+    existingSecret: ""
+    existingSecretUsernameKey: kafka-username
+    existingSecretPasswordKey: kafka-password
+
+  clickhouse:
+    url: "http://clickhouse:8123"
+    database: "events"
+    username: "user"
+    password: "password"
+    existingSecret: ""
+    existingSecretUsernameKey: clickhouse-username
+    existingSecretPasswordKey: clickhouse-password
+
+  log:
+    level: info
+
+# Health probes
+livenessProbe:
+  tcpSocket:
+    port: 50051
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  tcpSocket:
+    port: 50051
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Autoscaling per service
+autoscaling:
+  validate:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+  enrich:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+  store:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+
+# Environment variables
+env: []
+# - name: CUSTOM_VAR
+#   value: "value"
+
+# Additional volumes
+volumes: []
+# - name: custom-config
+#   configMap:
+#     name: custom-config
+
+# Volume mounts
+volumeMounts: []
+# - name: custom-config
+#   mountPath: /custom
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Pod disruption budgets
+podDisruptionBudget:
+  collect:
+    enabled: true
+    minAvailable: 1
+  validate:
+    enabled: true
+    minAvailable: 1
+  enrich:
+    enabled: true
+    minAvailable: 1
+  store:
+    enabled: true
+    minAvailable: 1

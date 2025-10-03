@@ -1,0 +1,16 @@
+apiVersion: v2
+name: futura-pipeline
+description: Data ingestion pipeline for Futura - Kafka consumers processing events into ClickHouse
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - pipeline
+  - kafka
+  - clickhouse
+  - data-ingestion
+  - stream-processing
+home: https://github.com/opisvigilant/futura
+maintainers:
+  - name: Futura Team
+    email: support@opisvigilant.com

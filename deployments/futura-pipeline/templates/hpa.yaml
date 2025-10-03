@@ -1,0 +1,71 @@
+{{- if .Values.autoscaling.validate.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-validate
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: validate
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "futura-pipeline.fullname" . }}-validate
+  minReplicas: {{ .Values.autoscaling.validate.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.validate.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.autoscaling.validate.targetCPUUtilizationPercentage }}
+{{- end }}
+---
+{{- if .Values.autoscaling.enrich.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-enrich
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: enrich
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "futura-pipeline.fullname" . }}-enrich
+  minReplicas: {{ .Values.autoscaling.enrich.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.enrich.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.autoscaling.enrich.targetCPUUtilizationPercentage }}
+{{- end }}
+---
+{{- if .Values.autoscaling.store.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-store
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: store
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "futura-pipeline.fullname" . }}-store
+  minReplicas: {{ .Values.autoscaling.store.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.store.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.autoscaling.store.targetCPUUtilizationPercentage }}
+{{- end }}

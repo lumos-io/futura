@@ -1,0 +1,98 @@
+# Default values for futura-operator
+
+# Operator image configuration
+image:
+  repository: davideberdin/operator
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Image pull secrets for private registries
+imagePullSecrets: []
+
+# Operator deployment configuration
+replicaCount: 1
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "futura-operator-controller-manager"
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Metrics service configuration
+metricsService:
+  enabled: true
+  port: 8443
+  type: ClusterIP
+
+# Health probe configuration
+healthProbe:
+  enabled: true
+  port: 8081
+
+# Leader election configuration
+leaderElection:
+  enabled: true
+
+# Webhook configuration
+webhook:
+  enabled: false
+  port: 9443
+
+# Operator configuration
+operator:
+  # Log level: debug, info, warn, error
+  logLevel: info
+
+  # eBPF configuration
+  ebpf:
+    enabled: true
+    # Metrics collection interval
+    metricsInterval: "30s"
+
+  # Analytics backend configuration
+  analytics:
+    enabled: true
+    endpoint: "analytics-service.futura-system.svc.cluster.local:50051"
+
+  # Default cluster optimization settings
+  clusterOptimization:
+    syncPeriodSeconds: 60
+    clusterScalingMode: "recommend"
+
+# Namespace where operator will be installed
+namespace: futura-system

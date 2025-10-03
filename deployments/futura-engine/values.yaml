@@ -1,0 +1,202 @@
+# Service deployment mode: "all" runs all services in one pod, "split" runs separate deployments
+deploymentMode: all
+
+# Common image configuration
+image:
+  repository: davideberdin/futura-engine
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+# RBAC for training job creation
+rbac:
+  create: true
+  rules:
+    - apiGroups: ["batch"]
+      resources: ["jobs"]
+      verbs: ["create", "get", "list", "watch", "delete"]
+    - apiGroups: [""]
+      resources: ["pods", "pods/log"]
+      verbs: ["get", "list", "watch"]
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+# Service configuration
+service:
+  type: ClusterIP
+  grpcPort: 8080
+  annotations: {}
+
+# External LoadBalancer service (optional)
+externalService:
+  enabled: false
+  type: LoadBalancer
+  annotations: {}
+    # service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
+# Resource configuration for "all" mode
+resources:
+  limits:
+    cpu: 4000m
+    memory: 8Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+# Resource configuration for split mode services
+recommendationService:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+rlServer:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+
+agentCoordinator:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+# Health probes
+livenessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Autoscaling (only for split mode)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Engine configuration
+config:
+  # Service to run: "all", "recommendation", "rl", "agent-coordinator"
+  service: "all"
+
+  server:
+    host: "0.0.0.0"
+    port: 8080
+    maxWorkers: 50
+    logLevel: "INFO"
+
+  clickhouse:
+    url: "http://clickhouse:8123"
+    engineDb: "engine"
+    analyticsDb: "analytics"
+
+  training:
+    namespace: "futura-training"
+    image: "futura/rl-trainer:latest"
+    modelStorageUri: "s3://futura-models"
+    defaultTimeoutHours: 12
+
+  rl:
+    defaultHorizonHours: 24
+    modelCleanupHours: 168  # 7 days
+    enableDriftDetection: true
+    driftCheckIntervalHours: 6
+
+  agentCoordinator:
+    maxTrainingJobAgeHours: 24
+    cleanupIntervalHours: 1
+    heartbeatTimeoutMinutes: 10
+
+  recommendation:
+    defaultCpuRequestMcpu: 1000  # 1 CPU
+    defaultMemoryRequestMib: 512  # 512 MiB
+    maxScaleUpRatio: 2.0
+    maxScaleDownRatio: 0.5
+    minCooldownSeconds: 300  # 5 minutes
+
+# Volume configuration
+persistence:
+  modelCache:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+
+# Environment variables
+env: []
+# - name: CUSTOM_VAR
+#   value: "value"
+
+# Additional volumes
+volumes: []
+# - name: custom-config
+#   configMap:
+#     name: custom-config
+
+# Volume mounts
+volumeMounts: []
+# - name: custom-config
+#   mountPath: /custom
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

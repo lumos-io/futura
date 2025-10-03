@@ -1,0 +1,35 @@
+apiVersion: futura.opisvigilant.com/v1
+kind: ClusterOptimizationConfig
+metadata:
+  name: cluster-optimization-config
+  namespace: futura-system
+spec:
+  # Unique API key for this cluster
+  apiKey: "test-cluster-12345"
+
+  # Cluster scaling mode: "auto" for automatic scaling, "recommend" for recommendations only
+  clusterScalingMode: "recommend"
+
+  # How often the optimization loop runs (in seconds)
+  syncPeriodSeconds: 60
+
+  # Cost optimization settings
+  costOptimization:
+    costSensitivity: "balanced"  # Options: low, balanced, aggressive
+    maxMonthlyBudgetUSD: "5000"
+    spotInstanceAllowed: true
+    maxSpotPercentage: "30%"
+    preferredInstanceTypes:
+      - "t3.medium"
+      - "t3.large"
+
+  # Resource quotas for the cluster
+  quotas:
+    maxCPU: 100
+    maxMemory: 200
+
+  # Enable/disable scaling mechanisms
+  scalingPolicies:
+    enableHPA: true   # Horizontal Pod Autoscaling
+    enableVPA: true   # Vertical Pod Autoscaling
+    enableNodeHandler: true  # Node-level optimizations

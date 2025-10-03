@@ -1,0 +1,17 @@
+{{- if and (eq .Values.deploymentMode "all") .Values.persistence.modelCache.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "futura-engine.fullname" . }}-model-cache
+  labels:
+    {{- include "futura-engine.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.persistence.modelCache.storageClass }}
+  storageClassName: {{ .Values.persistence.modelCache.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.modelCache.size }}
+{{- end }}

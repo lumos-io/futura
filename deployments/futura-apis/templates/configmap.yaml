@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "futura-apis.fullname" . }}-config
+  labels:
+    {{- include "futura-apis.labels" . | nindent 4 }}
+data:
+  config.toml: |
+    environment = "{{ .Values.environment }}"
+
+    [analytics]
+    endpoint = "{{ .Values.analytics.endpoint }}"
+
+    [database]
+    host = "{{ .Values.database.host }}"
+    port = "{{ .Values.database.port }}"
+    user = "{{ .Values.database.user }}"
+    password = "{{ .Values.database.password }}"
+    name = "{{ .Values.database.name }}"
+    sslmode = "{{ .Values.database.sslmode }}"
+
+    [oauth]
+    [oauth.google]
+    client_id = "{{ .Values.oauth.google.clientId }}"
+    client_secret = "{{ .Values.oauth.google.clientSecret }}"
+    callback_url = "{{ .Values.oauth.google.callbackUrl }}"
+
+    [oauth.github]
+    client_id = "{{ .Values.oauth.github.clientId }}"
+    client_secret = "{{ .Values.oauth.github.clientSecret }}"
+    callback_url = "{{ .Values.oauth.github.callbackUrl }}"
+
+    [secrets]
+    jwt_secret = "{{ .Values.secrets.jwtSecret }}"
+    cookie_store_secret = "{{ .Values.secrets.cookieStoreSecret }}"
+    csfr_secret = "{{ .Values.secrets.csrfSecret }}"
+
+    [frontend]
+    url = "{{ .Values.frontend.url }}"
+
+    [redis]
+    servers = [{{ range $index, $server := .Values.redis.servers }}{{if $index}}, {{end}}"{{ $server }}"{{ end }}]
+    namespace = "{{ .Values.redis.namespace }}"
+
+    {{- if .Values.unleash.enabled }}
+    [unleash]
+    app_name = "{{ .Values.unleash.appName }}"
+    url = "{{ .Values.unleash.url }}"
+    api_token = "{{ .Values.unleash.apiToken }}"
+    {{- end }}

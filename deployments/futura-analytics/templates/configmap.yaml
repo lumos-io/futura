@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "futura-analytics.fullname" . }}-config
+  labels:
+    {{- include "futura-analytics.labels" . | nindent 4 }}
+data:
+  config.toml: |
+    [clickhouse]
+    servers = [{{ range $index, $server := .Values.clickhouse.servers }}{{if $index}}, {{end}}"{{ $server }}"{{ end }}]
+    database = "{{ .Values.clickhouse.database }}"
+    username = "{{ .Values.clickhouse.username }}"
+    password = "{{ .Values.clickhouse.password }}"
+
+    [analytics]
+    endpoint = "{{ .Values.analytics.endpoint }}"
+
+    [log]
+    level = "{{ .Values.analytics.logLevel }}"

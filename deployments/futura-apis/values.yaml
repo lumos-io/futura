@@ -1,0 +1,181 @@
+replicaCount: 2
+
+image:
+  repository: davideberdin/futura-apis
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  fsGroup: 65532
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: futura.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: futura-tls
+  #    hosts:
+  #      - futura.example.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Environment configuration
+environment: production
+
+# Analytics gRPC service configuration
+analytics:
+  endpoint: futura-analytics:50061
+
+# PostgreSQL database configuration
+database:
+  host: postgres
+  port: 5432
+  user: postgres
+  password: postgres
+  name: futura
+  sslmode: require
+  existingSecret: ""
+  existingSecretPasswordKey: postgres-password
+
+# OAuth configuration
+oauth:
+  google:
+    clientId: ""
+    clientSecret: ""
+    callbackUrl: ""
+    existingSecret: ""
+    existingSecretClientIdKey: google-client-id
+    existingSecretClientSecretKey: google-client-secret
+  github:
+    clientId: ""
+    clientSecret: ""
+    callbackUrl: ""
+    existingSecret: ""
+    existingSecretClientIdKey: github-client-id
+    existingSecretClientSecretKey: github-client-secret
+
+# Application secrets
+secrets:
+  jwtSecret: ""
+  cookieStoreSecret: ""
+  csrfSecret: ""
+  existingSecret: ""
+  existingSecretJWTKey: jwt-secret
+  existingSecretCookieKey: cookie-store-secret
+  existingSecretCSRFKey: csrf-secret
+
+# Frontend configuration
+frontend:
+  url: http://localhost:8080/
+
+# Redis configuration
+redis:
+  servers:
+    - redis:6379
+  namespace: api_keys
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: redis-password
+
+# Unleash feature flags configuration
+unleash:
+  enabled: true
+  appName: futura-apis
+  url: http://unleash:4242/api/
+  apiToken: ""
+  existingSecret: ""
+  existingSecretTokenKey: unleash-api-token
+
+# Environment variables
+env: []
+# - name: CUSTOM_VAR
+#   value: "value"
+
+# Additional volumes
+volumes: []
+# - name: config
+#   configMap:
+#     name: apis-config
+
+# Volume mounts
+volumeMounts: []
+# - name: config
+#   mountPath: /opt/apis/config.toml
+#   subPath: config.toml
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1

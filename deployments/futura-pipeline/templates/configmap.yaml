@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-config
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+data:
+  config.toml: |
+    [redis]
+    servers = [{{ range $index, $server := .Values.config.redis.servers }}{{if $index}}, {{end}}"{{ $server }}"{{ end }}]
+    namespace = "{{ .Values.config.redis.namespace }}"
+
+    [kafka]
+    brokers = [{{ range $index, $broker := .Values.config.kafka.brokers }}{{if $index}}, {{end}}"{{ $broker }}"{{ end }}]
+    {{- if .Values.config.kafka.saslEnabled }}
+    sasl_enabled = true
+    sasl_mechanism = "{{ .Values.config.kafka.saslMechanism }}"
+    sasl_username = "{{ .Values.config.kafka.saslUsername }}"
+    sasl_password = "{{ .Values.config.kafka.saslPassword }}"
+    {{- end }}
+
+    [clickhouse]
+    url = "{{ .Values.config.clickhouse.url }}"
+    database = "{{ .Values.config.clickhouse.database }}"
+    username = "{{ .Values.config.clickhouse.username }}"
+    password = "{{ .Values.config.clickhouse.password }}"
+
+    [collect]
+    endpoint = "{{ .Values.collect.endpoint }}"
+
+    [log]
+    level = "{{ .Values.config.log.level }}"

@@ -1,0 +1,122 @@
+arch: "aarch64"
+images:
+  - location: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
+    arch: "x86_64"
+  - location: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-arm64.qcow2"
+    arch: "aarch64"
+
+memory: "8GiB"
+cpus: 4
+disk: "50GiB"
+
+vmType: "vz"
+mountType: "virtiofs"
+mounts:
+  - location: "/Users/davideberdin/Documents/github/opisvigilant/futura"
+    mountPoint: "/home/davideberdin.linux/futura"
+    writable: true
+
+ssh:
+  localPort: 2223
+
+containerd:
+  system: false
+  user: false
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      export GOLANG_VERSION=1.24.1
+      export KIND_VERSION=0.25.0
+      export KUBECTL_VERSION=1.32.0
+
+      # Install basic dependencies
+      apt-get update && apt-get install -y \
+        curl wget ca-certificates apt-transport-https \
+        gnupg lsb-release
+
+      # Install Docker
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+      echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        tee /etc/apt/sources.list.d/docker.list > /dev/null
+      apt-get update
+      apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+      # Install Go
+      wget -q https://golang.org/dl/go${GOLANG_VERSION}.linux-arm64.tar.gz && \
+        tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-arm64.tar.gz && \
+        rm go${GOLANG_VERSION}.linux-arm64.tar.gz
+
+      echo 'export PATH="/usr/local/go/bin:$PATH"' >> /etc/profile
+
+      # Install kubectl
+      curl -LO "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/arm64/kubectl"
+      install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+      rm kubectl
+
+      # Install Kind
+      curl -Lo ./kind https://kind.sigs.k8s.io/dl/v${KIND_VERSION}/kind-linux-arm64
+      install -o root -g root -m 0755 kind /usr/local/bin/kind
+      rm kind
+
+      # Install Helm
+      curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+
+      # Get the actual username that will be used
+      LIMA_USER=$(ls /home | head -n 1)
+
+      # Add user to docker group
+      if [ -n "$LIMA_USER" ]; then
+        usermod -aG docker "$LIMA_USER"
+        echo "Added $LIMA_USER to docker group"
+      fi
+
+      # Ensure docker socket has correct permissions
+      chmod 666 /var/run/docker.sock || true
+
+      # Create systemd service to fix docker socket permissions on every boot
+      cat > /etc/systemd/system/docker-socket-permissions.service <<'EOF'
+[Unit]
+Description=Fix Docker socket permissions
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/chmod 666 /var/run/docker.sock
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+      # Enable the service
+      systemctl daemon-reload
+      systemctl enable docker-socket-permissions.service
+
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+
+      # Setup SSH for root access
+      sudo mkdir -p /root/.ssh
+      sudo cp /home/$(whoami)/.ssh/authorized_keys /root/.ssh/authorized_keys
+      sudo chown root:root /root/.ssh/authorized_keys
+      sudo chmod 600 /root/.ssh/authorized_keys
+
+      # Verify docker group membership
+      echo "Current user: $(whoami)"
+      echo "Docker group members:"
+      getent group docker || echo "Docker group not found"

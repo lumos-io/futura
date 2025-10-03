@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "futura-engine.fullname" . }}-config
+  labels:
+    {{- include "futura-engine.labels" . | nindent 4 }}
+data:
+  config.toml: |
+    service = "{{ .Values.config.service }}"
+
+    [server]
+    host = "{{ .Values.config.server.host }}"
+    port = {{ .Values.config.server.port }}
+    max_workers = {{ .Values.config.server.maxWorkers }}
+    log_level = "{{ .Values.config.server.logLevel }}"
+
+    [clickhouse]
+    url = "{{ .Values.config.clickhouse.url }}"
+    engine_db = "{{ .Values.config.clickhouse.engineDb }}"
+    analytics_db = "{{ .Values.config.clickhouse.analyticsDb }}"
+
+    [training]
+    namespace = "{{ .Values.config.training.namespace }}"
+    image = "{{ .Values.config.training.image }}"
+    model_storage_uri = "{{ .Values.config.training.modelStorageUri }}"
+    default_timeout_hours = {{ .Values.config.training.defaultTimeoutHours }}
+
+    [rl]
+    default_horizon_hours = {{ .Values.config.rl.defaultHorizonHours }}
+    model_cleanup_hours = {{ .Values.config.rl.modelCleanupHours }}
+    enable_drift_detection = {{ .Values.config.rl.enableDriftDetection }}
+    drift_check_interval_hours = {{ .Values.config.rl.driftCheckIntervalHours }}
+
+    [agent_coordinator]
+    max_training_job_age_hours = {{ .Values.config.agentCoordinator.maxTrainingJobAgeHours }}
+    cleanup_interval_hours = {{ .Values.config.agentCoordinator.cleanupIntervalHours }}
+    heartbeat_timeout_minutes = {{ .Values.config.agentCoordinator.heartbeatTimeoutMinutes }}
+
+    [recommendation]
+    default_cpu_request_mcpu = {{ .Values.config.recommendation.defaultCpuRequestMcpu }}
+    default_memory_request_mib = {{ .Values.config.recommendation.defaultMemoryRequestMib }}
+    max_scale_up_ratio = {{ .Values.config.recommendation.maxScaleUpRatio }}
+    max_scale_down_ratio = {{ .Values.config.recommendation.maxScaleDownRatio }}
+    min_cooldown_seconds = {{ .Values.config.recommendation.minCooldownSeconds }}

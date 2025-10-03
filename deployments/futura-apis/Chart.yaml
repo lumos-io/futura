@@ -1,0 +1,16 @@
+apiVersion: v2
+name: futura-apis
+description: REST API backend for Futura with embedded frontend
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - rest-api
+  - gin
+  - backend
+  - frontend
+  - sse
+home: https://github.com/opisvigilant/futura
+maintainers:
+  - name: Futura Team
+    email: support@opisvigilant.com

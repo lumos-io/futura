@@ -1,0 +1,59 @@
+{{- if .Values.podDisruptionBudget.collect.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-collect
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: collect
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.collect.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "futura-pipeline.collectSelectorLabels" . | nindent 6 }}
+{{- end }}
+---
+{{- if .Values.podDisruptionBudget.validate.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-validate
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: validate
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.validate.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "futura-pipeline.validateSelectorLabels" . | nindent 6 }}
+{{- end }}
+---
+{{- if .Values.podDisruptionBudget.enrich.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-enrich
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: enrich
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.enrich.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "futura-pipeline.enrichSelectorLabels" . | nindent 6 }}
+{{- end }}
+---
+{{- if .Values.podDisruptionBudget.store.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "futura-pipeline.fullname" . }}-store
+  labels:
+    {{- include "futura-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: store
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.store.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "futura-pipeline.storeSelectorLabels" . | nindent 6 }}
+{{- end }}

@@ -1,0 +1,43 @@
+{{- if eq .Values.deploymentMode "all" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "futura-engine.fullname" . }}
+  labels:
+    {{- include "futura-engine.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.grpcPort }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    {{- include "futura-engine.selectorLabels" . | nindent 4 }}
+{{- end }}
+---
+{{- if .Values.externalService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "futura-engine.fullname" . }}-external
+  labels:
+    {{- include "futura-engine.labels" . | nindent 4 }}
+  {{- with .Values.externalService.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.externalService.type }}
+  ports:
+    - port: {{ .Values.service.grpcPort }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    {{- include "futura-engine.selectorLabels" . | nindent 4 }}
+{{- end }}

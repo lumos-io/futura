@@ -1,0 +1,113 @@
+{{- if eq .Values.deploymentMode "all" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "futura-engine.fullname" . }}
+  labels:
+    {{- include "futura-engine.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "futura-engine.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "futura-engine.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "futura-engine.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+          - "uv"
+          - "run"
+          - "main.py"
+          - "--config"
+          - "/config/config.toml"
+        ports:
+        - name: grpc
+          containerPort: {{ .Values.service.grpcPort }}
+          protocol: TCP
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        {{- with .Values.env }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 12 }}
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 12 }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+        - name: model-cache
+          mountPath: /app/models
+        - name: config
+          mountPath: /config
+          readOnly: true
+        {{- with .Values.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      - name: model-cache
+        {{- if .Values.persistence.modelCache.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "futura-engine.fullname" . }}-model-cache
+        {{- else }}
+        emptyDir:
+          sizeLimit: {{ .Values.persistence.modelCache.size }}
+        {{- end }}
+      - name: config
+        configMap:
+          name: {{ include "futura-engine.fullname" . }}-config
+      {{- with .Values.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
