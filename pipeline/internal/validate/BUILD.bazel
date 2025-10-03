@@ -1,0 +1,27 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "validate",
+    srcs = ["validate.go"],
+    importpath = "github.com/opisvigilant/futura/pipeline/internal/validate",
+    visibility = ["//pipeline:__subpackages__"],
+    deps = [
+        "//go-lib/stream",
+        "//pipeline/internal/config",
+        "//pipeline/internal/dlq",
+        "//proto/gen/telemetry",
+        "@com_github_rs_zerolog//log",
+        "@org_golang_google_protobuf//proto",
+    ],
+)
+
+go_test(
+    name = "validate_test",
+    srcs = ["validate_test.go"],
+    deps = [
+        ":validate",
+        "//proto/gen/telemetry",
+        "@com_github_stretchr_testify//require",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

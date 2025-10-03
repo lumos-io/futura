@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "enrich",
+    srcs = ["enrich.go"],
+    importpath = "github.com/opisvigilant/futura/pipeline/internal/enrich",
+    visibility = ["//pipeline:__subpackages__"],
+    deps = [
+        "//go-lib/kv",
+        "//go-lib/stream",
+        "//pipeline/internal/config",
+        "//pipeline/internal/dlq",
+        "//proto/gen/telemetry",
+        "@com_github_rs_zerolog//log",
+        "@org_golang_google_protobuf//encoding/protojson",
+        "@org_golang_google_protobuf//proto",
+    ],
+)

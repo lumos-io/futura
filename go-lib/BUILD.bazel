@@ -1,0 +1,9 @@
+"""
+Go-lib - Shared Go libraries for Futura services
+Common utilities for ClickHouse, KV stores, and streaming
+"""
+
+# ============================================================================
+# Gazelle Configuration for go-lib
+# ============================================================================
+# This is a library-only package, no binaries or images

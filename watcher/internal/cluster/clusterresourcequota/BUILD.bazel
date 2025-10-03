@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "clusterresourcequota",
+    srcs = ["clusterresourcequotas.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/cluster/clusterresourcequota",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/telemetry",
+        "@com_github_openshift_api//quota/v1:quota",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/api/resource",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

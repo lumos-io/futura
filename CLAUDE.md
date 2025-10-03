@@ -96,6 +96,67 @@ docker compose --profile dev-tools up -d
 
 **Network:** All services connect to external `kind` network for local K8s integration.
 
+## Building with Bazel
+
+This project uses **Bazel 8.4** with Bzlmod for building and containerizing all services. **Gazelle** auto-generates BUILD files for Go code.
+
+### Quick Start
+
+```bash
+# Install Bazelisk (manages Bazel versions automatically)
+brew install bazelisk  # macOS
+# or download from https://github.com/bazelbuild/bazelisk
+
+# Auto-generate/update BUILD files for Go packages
+bazel run //:gazelle
+
+# Update external Go dependencies from go.work
+bazel run //:gazelle-update-repos
+
+# Build all services
+bazel build //...
+
+# Build specific service
+bazel build //apis:apis_image
+
+# Push to Docker Hub (requires docker login)
+bazel run //apis:push
+```
+
+### Gazelle Workflow
+
+**Gazelle** eliminates manual BUILD file maintenance for Go projects:
+
+```bash
+# After adding new .go files or imports
+bazel run //:gazelle
+
+# After modifying go.mod or go.work
+bazel run //:gazelle-update-repos
+bazel run //:gazelle
+
+# Verify BUILD files are up-to-date (CI)
+bazel run //:gazelle -- --mode=diff
+```
+
+**When to run Gazelle:**
+- Added new Go files → Run `//:gazelle`
+- Changed imports → Run `//:gazelle`
+- Modified go.mod → Run `//:gazelle-update-repos` then `//:gazelle`
+- New Go package → Run `//:gazelle` (auto-creates BUILD.bazel)
+
+### Build Targets
+
+- `//frontend:frontend_bundle` - Frontend Vite bundle (tarball)
+- `//apis:apis_image` - APIs service with embedded frontend
+- `//analytics:analytics_image` - Analytics gRPC service
+- `//pipeline:pipeline_image` - Pipeline with subcommands (collect/validate/enrich/store)
+- `//operator:operator_image` - Kubernetes operator
+- `//watcher:watcher_image` - eBPF watcher (requires Docker)
+- `//engine:engine_image` - Python optimization engine (requires Docker)
+
+**See [BAZEL.md](./BAZEL.md) for comprehensive build documentation and Gazelle workflow.**
+
 ## Common Commands
 
 ### Protocol Buffers

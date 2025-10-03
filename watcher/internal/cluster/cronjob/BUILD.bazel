@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cronjob",
+    srcs = ["cronjobs.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/cluster/cronjob",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/telemetry",
+        "//watcher/internal/cluster/constants",
+        "//watcher/internal/cluster/metadata",
+        "@io_k8s_api//batch/v1:batch",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

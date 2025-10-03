@@ -1,0 +1,67 @@
+"""
+Operator build configuration
+Kubernetes operator managing SLOs and cluster optimization
+Uses Kubebuilder framework with proto dependencies
+"""
+
+# ============================================================================
+# Gazelle Configuration for Operator service
+# ============================================================================
+# gazelle:resolve proto go github.com/opisvigilant/futura/proto //proto:futura_go_proto
+# gazelle:prefix io.lumos/futura
+
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+# Alias to the actual binary built in cmd/
+alias(
+    name = "manager",
+    actual = "//operator/cmd:cmd",
+    visibility = ["//visibility:public"],
+)
+
+# Package binary for containerization
+pkg_tar(
+    name = "manager_tar",
+    srcs = [":manager"],
+    mode = "0755",
+    package_dir = "/",
+)
+
+# OCI image (linux/amd64)
+oci_image(
+    name = "operator_image_amd64",
+    base = "@distroless_static",
+    entrypoint = ["/manager"],
+    tars = [":manager_tar"],
+    user = "65532:65532",
+    workdir = "/",
+)
+
+# OCI image (linux/arm64)
+oci_image(
+    name = "operator_image_arm64",
+    base = "@distroless_static",
+    entrypoint = ["/manager"],
+    tars = [":manager_tar"],
+    user = "65532:65532",
+    workdir = "/",
+)
+
+# Multi-platform image index
+oci_image_index(
+    name = "operator_image",
+    images = [
+        ":operator_image_amd64",
+        ":operator_image_arm64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Push to Docker Hub
+oci_push(
+    name = "push",
+    image = ":operator_image",
+    repository = "docker.io/davideberdin/futura-operator",
+    tags = ["latest"],
+)

@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "routes",
+    srcs = ["router.go"],
+    importpath = "github.com/opisvigilant/futura/apis/routes",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//apis/controllers",
+        "//apis/internal/config",
+        "//apis/middleware",
+        "@com_github_gin_contrib_static//:static",
+        "@com_github_gin_gonic_gin//:gin",
+    ],
+)

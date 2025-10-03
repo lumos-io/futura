@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cloudprovider",
+    srcs = [
+        "aws.go",
+        "errors.go",
+        "interface.go",
+        "kind.go",
+    ],
+    importpath = "io.lumos/futura/internal/cloudprovider",
+    visibility = ["//operator:__subpackages__"],
+    deps = [
+        "//proto/gen/engine",
+        "@io_k8s_sigs_controller_runtime//pkg/client",
+        "@io_k8s_sigs_controller_runtime//pkg/log",
+    ],
+)

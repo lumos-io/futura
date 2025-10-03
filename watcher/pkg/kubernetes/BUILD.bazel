@@ -1,0 +1,32 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "kubernetes",
+    srcs = [
+        "client.go",
+        "kubelet.go",
+        "leader.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/watcher/pkg/kubernetes",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//watcher/internal/config",
+        "//watcher/utils",
+        "@com_github_openshift_client_go//quota/clientset/versioned",
+        "@com_github_rs_zerolog//log",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/fields",
+        "@io_k8s_apimachinery//pkg/runtime",
+        "@io_k8s_apimachinery//pkg/util/runtime",
+        "@io_k8s_apimachinery//pkg/watch",
+        "@io_k8s_client_go//dynamic",
+        "@io_k8s_client_go//kubernetes",
+        "@io_k8s_client_go//rest",
+        "@io_k8s_client_go//tools/cache",
+        "@io_k8s_client_go//tools/clientcmd",
+        "@io_k8s_client_go//tools/leaderelection",
+        "@io_k8s_client_go//tools/leaderelection/resourcelock",
+        "@io_k8s_client_go//transport",
+    ],
+)

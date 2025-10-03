@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "service",
+    srcs = ["service.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/cluster/service",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//watcher/internal/cluster/constants",
+        "//watcher/internal/cluster/metadata",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/labels",
+        "@io_k8s_client_go//tools/cache",
+    ],
+)

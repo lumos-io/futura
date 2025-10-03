@@ -1,0 +1,99 @@
+"""
+Frontend build configuration
+Builds React/TypeScript app with Bun + Vite and packages as tarball for APIs consumption
+"""
+
+load("@aspect_rules_js//js:defs.bzl", "js_run_binary")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+# Git commit SHA for build metadata
+genrule(
+    name = "git_commit_sha",
+    outs = ["commit_sha.txt"],
+    cmd = "git rev-parse --short HEAD > $@",
+    stamp = 1,
+    tags = ["local"],
+)
+
+# Build timestamp
+genrule(
+    name = "build_timestamp",
+    outs = ["build_time.txt"],
+    cmd = "date -u +%Y-%m-%dT%H:%M:%SZ > $@",
+    stamp = 1,
+    tags = ["local"],
+)
+
+# TypeScript compilation
+ts_project(
+    name = "typecheck",
+    srcs = glob(
+        [
+            "src/**/*.ts",
+            "src/**/*.tsx",
+        ],
+        exclude = [
+            "**/*.test.ts",
+            "**/*.test.tsx",
+        ],
+    ),
+    tsconfig = "tsconfig.app.json",
+    deps = [
+        "//:node_modules",
+    ],
+)
+
+# Vite build via Bun
+js_run_binary(
+    name = "vite_build",
+    srcs = glob(
+        [
+            "src/**/*",
+            "index.html",
+            "vite.config.ts",
+            "tsconfig*.json",
+            "postcss.config.cjs",
+            ".env",
+        ],
+    ) + [
+        ":build_timestamp",
+        ":git_commit_sha",
+        "//:node_modules",
+    ],
+    outs = [
+        "dist/assets",
+        "dist/index.html",
+    ],
+    args = [
+        "build",
+        "--outDir",
+        "$(RULEDIR)/dist",
+    ],
+    chdir = package_name(),
+    env = {
+        "NODE_ENV": "production",
+        "VITE_COMMIT_SHA": "$(cat $(location :git_commit_sha))",
+        "VITE_BUILD_TIME": "$(cat $(location :build_timestamp))",
+        "VITE_ENV": "production",
+    },
+    tool = "@npm//:vite",
+)
+
+# Package frontend dist as tarball for APIs to consume
+pkg_tar(
+    name = "frontend_bundle",
+    srcs = [":vite_build"],
+    extension = "tar.gz",
+    mode = "0644",
+    package_dir = "public",
+    strip_prefix = "dist",
+    visibility = ["//apis:__pkg__"],
+)
+
+# Filegroup for local development (non-Bazel)
+filegroup(
+    name = "dist",
+    srcs = [":vite_build"],
+    visibility = ["//visibility:public"],
+)

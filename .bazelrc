@@ -1,0 +1,91 @@
+# Futura Bazel Configuration
+# https://bazel.build/run/bazelrc
+
+# ============================================================================
+# Common flags for all commands
+# ============================================================================
+
+# Enable Bzlmod (MODULE.bazel) - default in 8.x but explicit is better
+common --enable_bzlmod
+
+# Use strict action environments for reproducibility
+build --incompatible_strict_action_env
+
+# Show detailed errors
+build --verbose_failures
+
+# Use worker processes for better performance
+build --worker_sandboxing
+
+# ============================================================================
+# Performance optimizations
+# ============================================================================
+
+# Auto-detect CPU count for parallel jobs
+build --jobs=auto
+
+# Enable disk cache for local builds
+build --disk_cache=~/.cache/bazel
+
+# Experimental remote cache compression
+build --experimental_remote_cache_compression
+
+# Fetch all external repos concurrently
+build --experimental_repository_cache_hardlinks
+
+# ============================================================================
+# Output and logging
+# ============================================================================
+
+# Colorize output
+common --color=yes
+
+# Show test output on failure
+test --test_output=errors
+
+# Keep test outputs for debugging
+test --test_keep_going
+
+# ============================================================================
+# CI-specific configuration
+# ============================================================================
+
+# CI build configuration (use with --config=ci)
+build:ci --announce_rc
+build:ci --show_timestamps
+build:ci --noshow_progress
+build:ci --noshow_loading_progress
+build:ci --keep_going
+build:ci --test_output=errors
+build:ci --flaky_test_attempts=2
+
+# GitHub Actions remote cache
+# Note: BAZEL_REMOTE_CACHE_URL should be set via env var in CI
+build:ci --remote_cache=${BAZEL_REMOTE_CACHE_URL:-}
+build:ci --remote_upload_local_results=true
+build:ci --remote_timeout=60s
+
+# ============================================================================
+# Developer experience
+# ============================================================================
+
+# Show target completion in real-time
+build:dev --show_result=100
+
+# Show more detailed test summary
+test:dev --test_summary=detailed
+
+# ============================================================================
+# Go-specific optimizations
+# ============================================================================
+
+# Use Go race detector in tests (slower but catches concurrency bugs)
+# Usage: bazel test --config=race //...
+test:race --features=race
+
+# ============================================================================
+# User-specific overrides
+# ============================================================================
+
+# Load user-specific settings if they exist
+try-import %workspace%/.bazelrc.user

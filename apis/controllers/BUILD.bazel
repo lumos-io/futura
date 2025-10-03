@@ -1,0 +1,59 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "controllers",
+    srcs = [
+        "auth_controller.go",
+        "base_controller.go",
+        "cluster_controller.go",
+        "connect_controller.go",
+        "org_controller.go",
+        "sse_controller.go",
+        "team_controller.go",
+        "user_controller.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/apis/controllers",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//apis/internal/config",
+        "//apis/internal/providers",
+        "//apis/internal/workflow",
+        "//apis/internal/workflow/clusters",
+        "//apis/internal/workflow/signals",
+        "//apis/models",
+        "//apis/pkg/analytics",
+        "//apis/utils",
+        "//apis/version",
+        "//go-lib/stream",
+        "//proto/gen/analytics",
+        "//proto/gen/backend",
+        "@com_github_gin_gonic_gin//:gin",
+        "@com_github_rs_zerolog//log",
+        "@io_gorm_gorm//:gorm",
+        "@org_golang_google_protobuf//encoding/protojson",
+        "@org_golang_x_oauth2//:oauth2",
+        "@org_golang_x_oauth2//github",
+        "@org_golang_x_oauth2//google",
+    ],
+)
+
+go_test(
+    name = "controllers_test",
+    srcs = [
+        "auth_controller_test.go",
+        "base_controller_test.go",
+        "org_controller_test.go",
+        "team_controller_test.go",
+        "user_controller_test.go",
+    ],
+    embed = [":controllers"],
+    deps = [
+        "//apis/internal/config",
+        "//apis/models",
+        "//apis/version",
+        "@com_github_gin_gonic_gin//:gin",
+        "@com_github_opisvigilant_futura_apis//test:go_default_library",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

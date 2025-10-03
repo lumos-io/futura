@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "stream",
+    srcs = [
+        "kafka.go",
+        "redis.go",
+        "stream.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/go-lib/stream",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_ibm_sarama//:sarama",
+        "@com_github_redis_go_redis_v9//:go-redis",
+    ],
+)

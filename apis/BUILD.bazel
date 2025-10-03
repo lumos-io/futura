@@ -1,0 +1,102 @@
+"""
+APIs backend build configuration
+Go binary with embedded frontend static files served via Gin
+"""
+
+# ============================================================================
+# Gazelle Configuration for APIs service
+# ============================================================================
+# gazelle:exclude public
+# gazelle:exclude node_modules
+# gazelle:exclude test
+# gazelle:resolve proto go github.com/opisvigilant/futura/proto //proto:futura_go_proto
+# gazelle:resolve proto go github.com/opisvigilant/futura/proto/analytics //proto:futura_go_proto
+
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+# Go library with embedded frontend files
+# Note: embedsrcs allows go:embed to work with Bazel-generated files
+go_library(
+    name = "apis_lib",
+    srcs = ["main.go"],
+    embedsrcs = glob(["public/**/*"]),  # Embed pre-built frontend from public/
+    importpath = "github.com/opisvigilant/futura/apis",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//apis/internal/config",
+        "//apis/internal/workflow",
+        "//apis/models",
+        "//apis/routes",
+        "@com_github_fsnotify_fsnotify//:fsnotify",
+        "@com_github_rs_zerolog//log",
+        "@com_github_spf13_viper//:viper",
+        "@com_github_unleash_unleash_client_go_v4//:unleash-client-go",
+    ],
+)
+
+# Binary
+go_binary(
+    name = "apis",
+    embed = [":apis_lib"],
+    visibility = ["//visibility:public"],
+)
+
+# Package binary for containerization
+pkg_tar(
+    name = "apis_tar",
+    srcs = [":apis"],
+    mode = "0755",
+    package_dir = "/app",
+)
+
+# Package config file
+pkg_tar(
+    name = "config_tar",
+    srcs = ["config.toml"],
+    mode = "0644",
+    package_dir = "/app",
+)
+
+# OCI image (linux/amd64)
+oci_image(
+    name = "apis_image_amd64",
+    base = "@distroless_base",
+    entrypoint = ["/app/apis"],
+    tars = [
+        ":apis_tar",
+        ":config_tar",
+    ],
+    workdir = "/app",
+)
+
+# OCI image (linux/arm64)
+oci_image(
+    name = "apis_image_arm64",
+    base = "@distroless_base",
+    entrypoint = ["/app/apis"],
+    tars = [
+        ":apis_tar",
+        ":config_tar",
+    ],
+    workdir = "/app",
+)
+
+# Multi-platform image index
+oci_image_index(
+    name = "apis_image",
+    images = [
+        ":apis_image_amd64",
+        ":apis_image_arm64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Push to Docker Hub
+oci_push(
+    name = "push",
+    image = ":apis_image",
+    repository = "docker.io/davideberdin/futura-apis",
+    tags = ["latest"],
+)

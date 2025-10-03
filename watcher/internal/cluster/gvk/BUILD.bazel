@@ -1,0 +1,9 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gvk",
+    srcs = ["gvk.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/cluster/gvk",
+    visibility = ["//watcher:__subpackages__"],
+    deps = ["@io_k8s_apimachinery//pkg/runtime/schema"],
+)

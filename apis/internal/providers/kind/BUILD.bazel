@@ -1,0 +1,12 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "kind",
+    srcs = ["kind.go"],
+    importpath = "github.com/opisvigilant/futura/apis/internal/providers/kind",
+    visibility = ["//apis:__subpackages__"],
+    deps = [
+        "//apis/models",
+        "@io_gorm_datatypes//:datatypes",
+    ],
+)

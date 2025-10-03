@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "hpa",
+    srcs = ["hpa.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/cluster/hpa",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/telemetry",
+        "//watcher/internal/cluster/metadata",
+        "@io_k8s_api//autoscaling/v2:autoscaling",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

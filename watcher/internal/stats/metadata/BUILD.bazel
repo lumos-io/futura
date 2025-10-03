@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "metadata",
+    srcs = [
+        "container_builder.go",
+        "general_builders.go",
+        "metadata.go",
+        "node_builder.go",
+        "pod_builder.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/stats/metadata",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/telemetry",
+        "//watcher/utils",
+        "@io_k8s_kubelet//pkg/apis/stats/v1alpha1",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

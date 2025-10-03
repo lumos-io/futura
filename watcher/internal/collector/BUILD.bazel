@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "collector",
+    srcs = ["collector.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/collector",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//watcher/internal/cluster",
+        "//watcher/internal/config",
+        "//watcher/internal/ebpf",
+        "//watcher/internal/events",
+        "//watcher/internal/sender",
+        "//watcher/internal/stats",
+        "//watcher/pkg/kubernetes",
+        "@com_github_rs_zerolog//log",
+    ],
+)

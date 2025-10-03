@@ -1,0 +1,21 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "utils",
+    srcs = [
+        "images.go",
+        "kube.go",
+        "maps.go",
+        "set.go",
+        "url.go",
+        "utils.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/watcher/utils",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_distribution_reference//:reference",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/runtime",
+        "@io_k8s_apimachinery//pkg/types",
+    ],
+)

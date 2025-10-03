@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "collect",
+    srcs = ["collect.go"],
+    importpath = "github.com/opisvigilant/futura/pipeline/internal/collect",
+    visibility = ["//pipeline:__subpackages__"],
+    deps = [
+        "//go-lib/kv",
+        "//go-lib/stream",
+        "//pipeline/internal/config",
+        "//proto/gen/services",
+        "//proto/gen/telemetry",
+        "@com_github_rs_zerolog//log",
+        "@org_golang_google_protobuf//proto",
+    ],
+)

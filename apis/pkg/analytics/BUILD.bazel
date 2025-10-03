@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "analytics",
+    srcs = ["client.go"],
+    importpath = "github.com/opisvigilant/futura/apis/pkg/analytics",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//apis/internal/config",
+        "//proto/gen/analytics",
+        "//proto/gen/telemetry",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
+    ],
+)

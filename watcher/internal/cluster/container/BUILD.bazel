@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "container",
+    srcs = ["containers.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/cluster/container",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/telemetry",
+        "//watcher/internal/cluster/constants",
+        "//watcher/internal/cluster/metadata",
+        "//watcher/utils",
+        "@com_github_rs_zerolog//log",
+        "@io_k8s_api//core/v1:core",
+        "@io_opentelemetry_go_otel//semconv/v1.6.1:v1_6_1",
+    ],
+)

@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "providers",
+    srcs = [
+        "auth.go",
+        "provider.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/apis/internal/providers",
+    visibility = ["//apis:__subpackages__"],
+    deps = [
+        "//apis/internal/config",
+        "//apis/internal/providers/alibaba",
+        "//apis/internal/providers/aws",
+        "//apis/internal/providers/azure",
+        "//apis/internal/providers/digitalocean",
+        "//apis/internal/providers/gcp",
+        "//apis/internal/providers/kind",
+        "//apis/internal/secrets",
+        "//apis/models",
+        "//proto/gen/backend",
+        "@com_github_google_uuid//:uuid",
+    ],
+)

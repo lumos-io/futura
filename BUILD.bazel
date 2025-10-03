@@ -1,0 +1,61 @@
+"""
+Futura monorepo root BUILD file
+Gazelle-enabled for automatic Go BUILD file generation
+"""
+
+load("@gazelle//:def.bzl", "gazelle")
+
+# ============================================================================
+# Gazelle Configuration
+# ============================================================================
+
+# Gazelle prefix - tells Gazelle the import path for this repository
+# gazelle:prefix github.com/opisvigilant/futura
+
+# Protocol buffers - we handle protos separately via Makefile
+# gazelle:proto disable
+
+# Exclude directories that aren't part of the build
+# gazelle:exclude .git
+# gazelle:exclude .github
+# gazelle:exclude deployments
+# gazelle:exclude node_modules
+# gazelle:exclude .venv
+# gazelle:exclude dist
+# gazelle:exclude bazel-*
+
+# Main Gazelle target - generates/updates BUILD.bazel files for Go code
+gazelle(
+    name = "gazelle",
+    # "fix" mode = create new BUILD files + update existing ones
+    command = "fix",
+)
+
+# With Bzlmod, dependencies are auto-managed by go_deps extension
+# Just run //:gazelle to update BUILD files after go.mod changes
+
+# ============================================================================
+# Documentation and Configuration Files
+# ============================================================================
+
+filegroup(
+    name = "docs",
+    srcs = [
+        "BAZEL.md",
+        "CLAUDE.md",
+        "README.md",
+        "VERSION",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "configs",
+    srcs = [
+        ".bazelrc",
+        ".bazelversion",
+        "MODULE.bazel",
+        "go.work",
+    ],
+    visibility = ["//visibility:public"],
+)

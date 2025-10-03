@@ -1,0 +1,22 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "kubelet",
+    srcs = [
+        "metadata.go",
+        "metadata_provider.go",
+        "metrics.go",
+        "rest_client.go",
+        "stats_provider.go",
+        "volume.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/stats/kubelet",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/telemetry",
+        "//watcher/internal/stats/metadata",
+        "//watcher/pkg/kubernetes",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_kubelet//pkg/apis/stats/v1alpha1",
+    ],
+)

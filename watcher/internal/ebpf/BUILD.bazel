@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ebpf",
+    srcs = [
+        "ebpf.go",
+        "generate.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/ebpf",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/telemetry",
+        "//watcher/internal/ebpf/context",
+        "@com_github_opisvigilant_futura_watcher//internal/ebpf/bpf/app_specific:go_default_library",
+        "@com_github_opisvigilant_futura_watcher//internal/ebpf/bpf/cpu_tracker:go_default_library",
+        "@com_github_opisvigilant_futura_watcher//internal/ebpf/bpf/fs_tracker:go_default_library",
+        "@com_github_opisvigilant_futura_watcher//internal/ebpf/bpf/http_metrics:go_default_library",
+        "@com_github_opisvigilant_futura_watcher//internal/ebpf/bpf/memory_tracker:go_default_library",
+        "@com_github_opisvigilant_futura_watcher//internal/ebpf/bpf/network_flow:go_default_library",
+        "@com_github_opisvigilant_futura_watcher//internal/ebpf/bpf/security_monitor:go_default_library",
+        "@com_github_opisvigilant_futura_watcher//internal/ebpf/bpf/uprobe:go_default_library",
+        "@com_github_rs_zerolog//log",
+        "@io_k8s_client_go//kubernetes",
+    ],
+)

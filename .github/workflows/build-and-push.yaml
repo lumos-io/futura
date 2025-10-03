@@ -1,0 +1,265 @@
+name: Build and Push Images
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  BAZEL_VERSION: 8.4.0
+  REGISTRY: docker.io
+  REGISTRY_USERNAME: davideberdin
+
+jobs:
+  # Detect which services changed to optimize builds
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      apis: ${{ steps.filter.outputs.apis }}
+      analytics: ${{ steps.filter.outputs.analytics }}
+      pipeline: ${{ steps.filter.outputs.pipeline }}
+      operator: ${{ steps.filter.outputs.operator }}
+      watcher: ${{ steps.filter.outputs.watcher }}
+      engine: ${{ steps.filter.outputs.engine }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'MODULE.bazel'
+              - '.bazelrc'
+              - 'VERSION'
+            apis:
+              - 'apis/**'
+              - 'frontend/**'
+              - 'proto/**'
+              - 'MODULE.bazel'
+              - '.bazelrc'
+              - 'VERSION'
+            analytics:
+              - 'analytics/**'
+              - 'proto/**'
+              - 'MODULE.bazel'
+              - '.bazelrc'
+              - 'VERSION'
+            pipeline:
+              - 'pipeline/**'
+              - 'proto/**'
+              - 'MODULE.bazel'
+              - '.bazelrc'
+              - 'VERSION'
+            operator:
+              - 'operator/**'
+              - 'proto/**'
+              - 'MODULE.bazel'
+              - '.bazelrc'
+              - 'VERSION'
+            watcher:
+              - 'watcher/**'
+              - 'proto/**'
+              - 'MODULE.bazel'
+              - '.bazelrc'
+              - 'VERSION'
+            engine:
+              - 'engine/**'
+              - 'MODULE.bazel'
+              - '.bazelrc'
+              - 'VERSION'
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+  # Build and push images
+  build-push:
+    name: Build & Push
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: frontend
+            changed: ${{ needs.detect-changes.outputs.frontend }}
+            target: //frontend:frontend_bundle
+            image: ""
+          - name: apis
+            changed: ${{ needs.detect-changes.outputs.apis }}
+            target: //apis:push
+            image: futura-apis
+          - name: analytics
+            changed: ${{ needs.detect-changes.outputs.analytics }}
+            target: //analytics:push
+            image: futura-analytics
+          - name: pipeline
+            changed: ${{ needs.detect-changes.outputs.pipeline }}
+            target: //pipeline:push
+            image: futura-pipeline
+          - name: operator
+            changed: ${{ needs.detect-changes.outputs.operator }}
+            target: //operator:push
+            image: futura-operator
+          - name: watcher
+            changed: ${{ needs.detect-changes.outputs.watcher }}
+            target: //watcher:push
+            image: futura-watcher
+          - name: engine
+            changed: ${{ needs.detect-changes.outputs.engine }}
+            target: //engine:push
+            image: futura-engine
+
+    steps:
+      - name: Skip unchanged service
+        if: matrix.service.changed == 'false'
+        run: |
+          echo "Service ${{ matrix.service.name }} unchanged, skipping"
+          exit 0
+
+      - name: Checkout code
+        if: matrix.service.changed == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Bazelisk
+        if: matrix.service.changed == 'true'
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          bazelisk-version: 1.x
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Configure Bazel remote cache
+        if: matrix.service.changed == 'true'
+        run: |
+          echo "build --remote_cache=https://bazel-cache.github.com/${{ github.repository }}" >> .bazelrc.user
+          echo "build --remote_upload_local_results=true" >> .bazelrc.user
+          echo "build --google_default_credentials=false" >> .bazelrc.user
+
+      - name: Log in to Docker Hub
+        if: matrix.service.changed == 'true' && matrix.service.image != ''
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        if: matrix.service.changed == 'true' && (matrix.service.name == 'watcher' || matrix.service.name == 'engine')
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push ${{ matrix.service.name }}
+        if: matrix.service.changed == 'true'
+        run: |
+          if [ "${{ matrix.service.name }}" == "frontend" ]; then
+            # Frontend only builds bundle (no image)
+            bazel build ${{ matrix.service.target }}
+          else
+            # Build and push OCI image
+            bazel run ${{ matrix.service.target }} \
+              --stamp \
+              --embed_label=version=${{ needs.detect-changes.outputs.version }} \
+              --embed_label=git_commit=${{ github.sha }} \
+              --embed_label=git_branch=${{ github.ref_name }} \
+              -- \
+              --tag ${{ env.REGISTRY }}/${{ env.REGISTRY_USERNAME }}/${{ matrix.service.image }}:${{ needs.detect-changes.outputs.version }} \
+              --tag ${{ env.REGISTRY }}/${{ env.REGISTRY_USERNAME }}/${{ matrix.service.image }}:latest
+          fi
+
+      - name: Image digest
+        if: matrix.service.changed == 'true' && matrix.service.image != ''
+        run: |
+          echo "Image pushed: ${{ env.REGISTRY }}/${{ env.REGISTRY_USERNAME }}/${{ matrix.service.image }}:${{ needs.detect-changes.outputs.version }}"
+
+  # Verify builds (for PRs)
+  verify-build:
+    name: Verify Build
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: frontend
+            changed: ${{ needs.detect-changes.outputs.frontend }}
+            target: //frontend:frontend_bundle
+          - name: apis
+            changed: ${{ needs.detect-changes.outputs.apis }}
+            target: //apis:apis_image
+          - name: analytics
+            changed: ${{ needs.detect-changes.outputs.analytics }}
+            target: //analytics:analytics_image
+          - name: pipeline
+            changed: ${{ needs.detect-changes.outputs.pipeline }}
+            target: //pipeline:pipeline_image
+          - name: operator
+            changed: ${{ needs.detect-changes.outputs.operator }}
+            target: //operator:operator_image
+          - name: watcher
+            changed: ${{ needs.detect-changes.outputs.watcher }}
+            target: //watcher:watcher_image
+          - name: engine
+            changed: ${{ needs.detect-changes.outputs.engine }}
+            target: //engine:engine_image
+
+    steps:
+      - name: Skip unchanged service
+        if: matrix.service.changed == 'false'
+        run: |
+          echo "Service ${{ matrix.service.name }} unchanged, skipping"
+          exit 0
+
+      - name: Checkout code
+        if: matrix.service.changed == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Bazelisk
+        if: matrix.service.changed == 'true'
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          bazelisk-version: 1.x
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Configure Bazel remote cache
+        if: matrix.service.changed == 'true'
+        run: |
+          echo "build --remote_cache=https://bazel-cache.github.com/${{ github.repository }}" >> .bazelrc.user
+          echo "build --google_default_credentials=false" >> .bazelrc.user
+
+      - name: Set up Docker Buildx
+        if: matrix.service.changed == 'true' && (matrix.service.name == 'watcher' || matrix.service.name == 'engine')
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify build ${{ matrix.service.name }}
+        if: matrix.service.changed == 'true'
+        run: |
+          bazel build ${{ matrix.service.target }} \
+            --stamp \
+            --embed_label=version=${{ needs.detect-changes.outputs.version }} \
+            --embed_label=git_commit=${{ github.sha }} \
+            --embed_label=git_branch=${{ github.ref_name }}
+
+      - name: Build successful
+        if: matrix.service.changed == 'true'
+        run: |
+          echo "✅ ${{ matrix.service.name }} build verified successfully"

@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sender",
+    srcs = ["sender.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/sender",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/services",
+        "//proto/gen/telemetry",
+        "//watcher/internal/config",
+        "//watcher/utils",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_rs_zerolog//log",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
+    ],
+)

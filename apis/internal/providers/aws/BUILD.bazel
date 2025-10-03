@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "aws",
+    srcs = ["aws.go"],
+    importpath = "github.com/opisvigilant/futura/apis/internal/providers/aws",
+    visibility = ["//apis:__subpackages__"],
+    deps = [
+        "//apis/models",
+        "//apis/utils",
+        "@com_github_aws_aws_sdk_go_v2//aws",
+        "@com_github_aws_aws_sdk_go_v2_config//:config",
+        "@com_github_aws_aws_sdk_go_v2_credentials//:credentials",
+        "@com_github_aws_aws_sdk_go_v2_service_eks//:eks",
+        "@io_gorm_datatypes//:datatypes",
+    ],
+)

@@ -1,0 +1,29 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "models",
+    srcs = [
+        "audit_log.go",
+        "base.go",
+        "cloud_provider.go",
+        "cluster.go",
+        "oauth_state.go",
+        "organization.go",
+        "refresh_token.go",
+        "team.go",
+        "user.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/apis/models",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//apis/internal/config",
+        "//proto/gen/backend",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_rs_zerolog//log",
+        "@com_github_unleash_unleash_client_go_v4//:unleash-client-go",
+        "@io_gorm_datatypes//:datatypes",
+        "@io_gorm_driver_postgres//:postgres",
+        "@io_gorm_gorm//:gorm",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

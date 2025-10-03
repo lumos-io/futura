@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "context",
+    srcs = ["container_mapping.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/ebpf/context",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "@com_github_rs_zerolog//log",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_client_go//kubernetes",
+    ],
+)

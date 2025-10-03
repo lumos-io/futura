@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "utils",
+    srcs = [
+        "audit.go",
+        "cleanup.go",
+        "csfr.go",
+        "data.go",
+        "jwt.go",
+        "response.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/apis/utils",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//apis/models",
+        "@com_github_gin_contrib_sessions//:sessions",
+        "@com_github_gin_gonic_gin//:gin",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_rs_zerolog//log",
+    ],
+)

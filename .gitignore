@@ -47,3 +47,9 @@ __pycache__
 .pytest_cache
 
 .claude
+
+# Bazel build artifacts
+bazel-*
+.bazel
+.bazelrc.user
+MODULE.bazel.lock

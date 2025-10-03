@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "workflow",
+    srcs = ["workflow.go"],
+    importpath = "github.com/opisvigilant/futura/apis/internal/workflow",
+    visibility = ["//apis:__subpackages__"],
+    deps = [
+        "//apis/internal/config",
+        "//apis/internal/workflow/clusters",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_riverqueue_river//:river",
+        "@com_github_riverqueue_river//rivermigrate",
+        "@com_github_riverqueue_river_riverdriver_riverpgxv5//:riverpgxv5",
+    ],
+)

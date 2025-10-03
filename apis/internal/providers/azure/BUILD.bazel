@@ -1,0 +1,9 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "azure",
+    srcs = ["azure.go"],
+    importpath = "github.com/opisvigilant/futura/apis/internal/providers/azure",
+    visibility = ["//apis:__subpackages__"],
+    deps = ["//apis/models"],
+)

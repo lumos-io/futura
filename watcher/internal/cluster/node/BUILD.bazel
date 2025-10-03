@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "node",
+    srcs = ["nodes.go"],
+    importpath = "github.com/opisvigilant/futura/watcher/internal/cluster/node",
+    visibility = ["//watcher:__subpackages__"],
+    deps = [
+        "//proto/gen/telemetry",
+        "//watcher/internal/cluster/metadata",
+        "//watcher/pkg/strcase",
+        "//watcher/utils",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/api/resource",
+        "@io_opentelemetry_go_otel//semconv/v1.18.0:v1_18_0",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

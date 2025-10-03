@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "clusters",
+    srcs = [
+        "delete_clusters.go",
+        "fetch_clusters.go",
+        "utils.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/apis/internal/workflow/clusters",
+    visibility = ["//apis:__subpackages__"],
+    deps = [
+        "//apis/internal/config",
+        "//apis/internal/providers",
+        "//apis/internal/workflow/signals",
+        "//apis/models",
+        "//go-lib/kv",
+        "//go-lib/stream",
+        "//proto/gen/backend",
+        "//proto/gen/telemetry",
+        "@com_github_riverqueue_river//:river",
+        "@io_gorm_driver_postgres//:postgres",
+        "@io_gorm_gorm//:gorm",
+    ],
+)

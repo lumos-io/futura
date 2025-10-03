@@ -1,0 +1,28 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cmd",
+    srcs = [
+        "collect.go",
+        "enrich.go",
+        "root.go",
+        "store.go",
+        "validate.go",
+    ],
+    importpath = "github.com/opisvigilant/futura/pipeline/cmd",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pipeline/internal/collect",
+        "//pipeline/internal/config",
+        "//pipeline/internal/enrich",
+        "//pipeline/internal/store",
+        "//pipeline/internal/validate",
+        "//proto/gen/services",
+        "@com_github_fsnotify_fsnotify//:fsnotify",
+        "@com_github_rs_zerolog//:zerolog",
+        "@com_github_rs_zerolog//log",
+        "@com_github_spf13_cobra//:cobra",
+        "@com_github_spf13_viper//:viper",
+        "@org_golang_google_grpc//:grpc",
+    ],
+)
