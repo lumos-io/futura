@@ -18,10 +18,14 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 # Go library with embedded frontend files
 # Note: embedsrcs allows go:embed to work with Bazel-generated files
+# Frontend must be pre-built: cd frontend && bun run build
 go_library(
     name = "apis_lib",
     srcs = ["main.go"],
-    embedsrcs = glob(["public/**/*"]),  # Embed pre-built frontend from public/
+    embedsrcs = glob(
+        ["public/**/*"],
+        allow_empty = True,  # Allow empty in CI when frontend isn't built
+    ),
     importpath = "github.com/opisvigilant/futura/apis",
     visibility = ["//visibility:private"],
     deps = [

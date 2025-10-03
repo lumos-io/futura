@@ -165,6 +165,15 @@ jobs:
         if: matrix.service.changed == 'true' && (matrix.service.name == 'watcher' || matrix.service.name == 'engine')
         uses: docker/setup-buildx-action@v3
 
+      - name: Build frontend (for APIs)
+        if: matrix.service.changed == 'true' && matrix.service.name == 'apis'
+        run: |
+          # APIs needs frontend to be built first for embedsrcs
+          bazel build //frontend:frontend_bundle
+          # Extract frontend to apis/public
+          mkdir -p apis/public
+          tar -xzf bazel-bin/frontend/frontend_bundle.tar.gz -C apis/ --strip-components=1
+
       - name: Build and push ${{ matrix.service.name }}
         if: matrix.service.changed == 'true'
         run: |
@@ -249,6 +258,15 @@ jobs:
       - name: Set up Docker Buildx
         if: matrix.service.changed == 'true' && (matrix.service.name == 'watcher' || matrix.service.name == 'engine')
         uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend (for APIs)
+        if: matrix.service.changed == 'true' && matrix.service.name == 'apis'
+        run: |
+          # APIs needs frontend to be built first for embedsrcs
+          bazel build //frontend:frontend_bundle
+          # Extract frontend to apis/public
+          mkdir -p apis/public
+          tar -xzf bazel-bin/frontend/frontend_bundle.tar.gz -C apis/ --strip-components=1
 
       - name: Verify build ${{ matrix.service.name }}
         if: matrix.service.changed == 'true'
