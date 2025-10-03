@@ -53,8 +53,7 @@ js_run_binary(
             "index.html",
             "vite.config.ts",
             "tsconfig*.json",
-            "postcss.config.cjs",
-            ".env",
+            "postcss.config.cjs",            
         ],
     ) + [
         ":build_timestamp",
