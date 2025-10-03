@@ -13,6 +13,7 @@ import (
 
 type Client struct {
 	pban.AnalyticsServiceClient
+	conn *grpc.ClientConn
 }
 
 func New(config *config.Configuration) (*Client, error) {
@@ -21,7 +22,10 @@ func New(config *config.Configuration) (*Client, error) {
 		return nil, err
 	}
 	client := pban.NewAnalyticsServiceClient(conn)
-	return &Client{client}, nil
+	return &Client{
+		AnalyticsServiceClient: client,
+		conn:                   conn,
+	}, nil
 }
 
 func (c *Client) GetEvents(req *pban.GetEventsByClusterIdRequest) ([]*pbtl.KubernetesEvent, error) {
@@ -34,5 +38,8 @@ func (c *Client) GetEvents(req *pban.GetEventsByClusterIdRequest) ([]*pbtl.Kuber
 }
 
 func (c *Client) Close() error {
-	return c.Close()
+	if c.conn != nil {
+		return c.conn.Close()
+	}
+	return nil
 }

@@ -6,9 +6,7 @@ import MainDashboard from "@/app/dashboard/dashboard";
 import LoginPage from "@/app/login/login";
 import PrivateRoute from "@/components/private-route";
 import ClustersOverview from "@/app/clusters/overview";
-import ClusterWorkloadsHealth from "./app/clusters/workloads-health";
 import ClusterEvents from "./app/clusters/events";
-import ClusterJobs from "./app/clusters/jobs";
 import InfrastructureHealthOverview from "./app/infrastructure/health-overview";
 import CostOptimization from "./app/infrastructure/cost-optimization";
 import Vulnerabilities from "./app/infrastructure/vulnerabilities";
@@ -46,14 +44,6 @@ const allRoutes: RouteObject[] = [
         element: <PrivateRoute element={<ClustersOverview />} />,
       },
       {
-        path: "clusters/workloads-health",
-        element: (
-          <PrivateRoute
-            element={<ClusterWorkloadsHealth title="Workloads Health" />}
-          />
-        ),
-      },
-      {
         path: "clusters/services",
         element: (
           <PrivateRoute
@@ -67,13 +57,6 @@ const allRoutes: RouteObject[] = [
           <PrivateRoute element={<ClusterEvents title="Cluster Events" />} />
         ),
       },
-      {
-        path: "clusters/jobs",
-        element: (
-          <PrivateRoute element={<ClusterJobs title="Cluster Jobs" />} />
-        ),
-      },
-
       {
         path: "infrastructure/health-overview",
         element: (

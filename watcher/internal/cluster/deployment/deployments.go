@@ -26,6 +26,14 @@ func Transform(deployment *appsv1.Deployment) *appsv1.Deployment {
 }
 
 func RecordMetrics(dep *appsv1.Deployment, ts time.Time) *pb.KubernetesClusterObject {
+	// Extract scaling mode from labels, default to "recommend" if not present
+	scalingMode := "recommend"
+	if mode, exists := dep.Labels["futura.io/scaling-mode"]; exists {
+		if mode == "auto" || mode == "recommend" {
+			scalingMode = mode
+		}
+	}
+
 	obj := &pb.KubernetesClusterObject{
 		Timestamp:         timestamppb.New(ts),
 		Namespace:         dep.Namespace,
@@ -33,6 +41,7 @@ func RecordMetrics(dep *appsv1.Deployment, ts time.Time) *pb.KubernetesClusterOb
 		Uid:               string(dep.UID),
 		Replicas:          int64(*dep.Spec.Replicas),
 		AvailableReplicas: int64(dep.Status.AvailableReplicas),
+		ScalingMode:       scalingMode,
 	}
 	return obj
 }

@@ -37,6 +37,14 @@ func RecordMetrics(ss *appsv1.StatefulSet, ts time.Time) *pb.KubernetesClusterOb
 		return nil
 	}
 
+	// Extract scaling mode from labels, default to "recommend" if not present
+	scalingMode := "recommend"
+	if mode, exists := ss.Labels["futura.io/scaling-mode"]; exists {
+		if mode == "auto" || mode == "recommend" {
+			scalingMode = mode
+		}
+	}
+
 	obj := &pb.KubernetesClusterObject{
 		Timestamp:       timestamppb.New(ts),
 		Replicas:        int64(*ss.Spec.Replicas),
@@ -46,6 +54,7 @@ func RecordMetrics(ss *appsv1.StatefulSet, ts time.Time) *pb.KubernetesClusterOb
 		Uid:             string(ss.UID),
 		Name:            ss.Name,
 		Namespace:       ss.Namespace,
+		ScalingMode:     scalingMode,
 	}
 
 	return obj

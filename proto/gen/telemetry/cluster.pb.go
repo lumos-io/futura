@@ -128,7 +128,9 @@ type KubernetesClusterObject struct {
 	Apikey                          *APIKey   `protobuf:"bytes,49,opt,name=apikey,proto3" json:"apikey,omitempty"`
 	Metadata                        *Metadata `protobuf:"bytes,50,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	// NEW: Cloud provider metadata (primarily for nodes)
-	CloudMetadata *CloudNodeMetadata  `protobuf:"bytes,51,opt,name=cloud_metadata,json=cloudMetadata,proto3" json:"cloud_metadata,omitempty"`
+	CloudMetadata *CloudNodeMetadata `protobuf:"bytes,51,opt,name=cloud_metadata,json=cloudMetadata,proto3" json:"cloud_metadata,omitempty"`
+	// Scaling mode for deployments/statefulsets: "auto", "recommend", or empty (defaults to "recommend")
+	ScalingMode   string              `protobuf:"bytes,52,opt,name=scaling_mode,json=scalingMode,proto3" json:"scaling_mode,omitempty"`
 	Enrichment    *EnrichmentMetadata `protobuf:"bytes,100,opt,name=enrichment,proto3" json:"enrichment,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -519,6 +521,13 @@ func (x *KubernetesClusterObject) GetCloudMetadata() *CloudNodeMetadata {
 		return x.CloudMetadata
 	}
 	return nil
+}
+
+func (x *KubernetesClusterObject) GetScalingMode() string {
+	if x != nil {
+		return x.ScalingMode
+	}
+	return ""
 }
 
 func (x *KubernetesClusterObject) GetEnrichment() *EnrichmentMetadata {
@@ -1586,7 +1595,7 @@ const file_telemetry_cluster_proto_rawDesc = "" +
 	"\n" +
 	"\x17telemetry/cluster.proto\x12\ttelemetry\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18telemetry/metadata.proto\"\\\n" +
 	"\x1cKubernetesClusterObjectBatch\x12<\n" +
-	"\aobjects\x18\x03 \x03(\v2\".telemetry.KubernetesClusterObjectR\aobjects\"\xa8\x14\n" +
+	"\aobjects\x18\x03 \x03(\v2\".telemetry.KubernetesClusterObjectR\aobjects\"\xcb\x14\n" +
 	"\x17KubernetesClusterObject\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
@@ -1649,7 +1658,8 @@ const file_telemetry_cluster_proto_rawDesc = "" +
 	"\x16daemonset_number_ready\x180 \x01(\x03R\x14daemonsetNumberReady\x12)\n" +
 	"\x06apikey\x181 \x01(\v2\x11.telemetry.APIKeyR\x06apikey\x12/\n" +
 	"\bmetadata\x182 \x01(\v2\x13.telemetry.MetadataR\bmetadata\x12C\n" +
-	"\x0ecloud_metadata\x183 \x01(\v2\x1c.telemetry.CloudNodeMetadataR\rcloudMetadata\x12=\n" +
+	"\x0ecloud_metadata\x183 \x01(\v2\x1c.telemetry.CloudNodeMetadataR\rcloudMetadata\x12!\n" +
+	"\fscaling_mode\x184 \x01(\tR\vscalingMode\x12=\n" +
 	"\n" +
 	"enrichment\x18d \x01(\v2\x1d.telemetry.EnrichmentMetadataR\n" +
 	"enrichment\x1a9\n" +

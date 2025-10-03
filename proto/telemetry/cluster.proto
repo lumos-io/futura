@@ -93,6 +93,9 @@ message KubernetesClusterObject {
   // NEW: Cloud provider metadata (primarily for nodes)
   CloudNodeMetadata cloud_metadata = 51;
 
+  // Scaling mode for deployments/statefulsets: "auto", "recommend", or empty (defaults to "recommend")
+  string scaling_mode = 52;
+
   EnrichmentMetadata enrichment = 100;
 }
 
