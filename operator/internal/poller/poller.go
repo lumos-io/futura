@@ -70,7 +70,14 @@ func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, sc
 		return
 	}
 
-	apiKey := configs.Items[0].Spec.ApiKey
+	config := configs.Items[0]
+	apiKey := config.Spec.ApiKey
+
+	// Get cluster scaling mode, default to "recommend" if not set
+	clusterScalingMode := config.Spec.ClusterScalingMode
+	if clusterScalingMode == "" {
+		clusterScalingMode = "recommend"
+	}
 
 	// Call gRPC for app recommendations
 	req := &pbeg.RecommendationAppRequest{App: &pbeg.AppRef{
@@ -114,10 +121,19 @@ func (p *Poller) fetchAndApplyDecisions(ctx context.Context, c client.Client, sc
 		logger.Info("Received cluster optimization decision",
 			"decision_id", clusterResp.DecisionId,
 			"action_type", clusterResp.Plan.ActionType,
-			"confidence", clusterResp.Plan.Confidence)
+			"confidence", clusterResp.Plan.Confidence,
+			"cluster_scaling_mode", clusterScalingMode)
 
-		if err := p.applyClusterAction(ctx, c, clusterResp.Plan); err != nil {
-			logger.Error(err, "Failed to apply cluster action", "action_type", clusterResp.Plan.ActionType)
+		// Only apply cluster actions if mode is "auto"
+		if clusterScalingMode == "auto" {
+			if err := p.applyClusterAction(ctx, c, clusterResp.Plan); err != nil {
+				logger.Error(err, "Failed to apply cluster action", "action_type", clusterResp.Plan.ActionType)
+			}
+		} else {
+			logger.Info("Cluster scaling mode is 'recommend' - skipping automatic cluster scaling",
+				"action_type", clusterResp.Plan.ActionType,
+				"would_provision", clusterResp.Plan.GetProvision() != nil,
+				"would_deprovision", clusterResp.Plan.GetDeprovision() != nil)
 		}
 	}
 }

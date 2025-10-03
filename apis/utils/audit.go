@@ -14,10 +14,14 @@ func LogAuditEvent(c *gin.Context, eventType models.AuditEventType, userID *uint
 
 	// Serialize metadata to JSON
 	var metadataJSON string
-	if metadata != nil {
+	if metadata != nil && len(metadata) > 0 {
 		if bytes, err := json.Marshal(metadata); err == nil {
 			metadataJSON = string(bytes)
+		} else {
+			metadataJSON = "{}"
 		}
+	} else {
+		metadataJSON = "{}"
 	}
 
 	auditLog := models.AuditLog{

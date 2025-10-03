@@ -21,6 +21,7 @@ import KubernetesStorage from "./app/kubernetes/storage";
 import KubernetesWorkloads from "./app/kubernetes/workloads";
 import CloudProviders from "./app/connect/cloud-providers";
 import ClusterServices from "./app/clusters/services";
+import ClusterNodes from "./app/clusters/nodes";
 
 const allRoutes: RouteObject[] = [
   {
@@ -49,6 +50,12 @@ const allRoutes: RouteObject[] = [
           <PrivateRoute
             element={<ClusterServices title="Cluster Services" />}
           />
+        ),
+      },
+      {
+        path: "clusters/nodes",
+        element: (
+          <PrivateRoute element={<ClusterNodes title="Cluster Nodes" />} />
         ),
       },
       {

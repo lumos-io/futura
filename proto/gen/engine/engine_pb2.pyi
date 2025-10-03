@@ -27,7 +27,7 @@ JOB: WorkloadKind
 CRON_JOB: WorkloadKind
 
 class ClusterOptimizationConfigRequest(_message.Message):
-    __slots__ = ("api_key", "cloud_provider", "region", "cost_sensitivity", "monthly_budget", "preferred_instance_types", "allow_spot", "max_spot_percentage")
+    __slots__ = ("api_key", "cloud_provider", "region", "cost_sensitivity", "monthly_budget", "preferred_instance_types", "allow_spot", "max_spot_percentage", "cluster_scaling_mode")
     API_KEY_FIELD_NUMBER: _ClassVar[int]
     CLOUD_PROVIDER_FIELD_NUMBER: _ClassVar[int]
     REGION_FIELD_NUMBER: _ClassVar[int]
@@ -36,6 +36,7 @@ class ClusterOptimizationConfigRequest(_message.Message):
     PREFERRED_INSTANCE_TYPES_FIELD_NUMBER: _ClassVar[int]
     ALLOW_SPOT_FIELD_NUMBER: _ClassVar[int]
     MAX_SPOT_PERCENTAGE_FIELD_NUMBER: _ClassVar[int]
+    CLUSTER_SCALING_MODE_FIELD_NUMBER: _ClassVar[int]
     api_key: str
     cloud_provider: str
     region: str
@@ -44,7 +45,8 @@ class ClusterOptimizationConfigRequest(_message.Message):
     preferred_instance_types: _containers.RepeatedScalarFieldContainer[str]
     allow_spot: bool
     max_spot_percentage: str
-    def __init__(self, api_key: _Optional[str] = ..., cloud_provider: _Optional[str] = ..., region: _Optional[str] = ..., cost_sensitivity: _Optional[str] = ..., monthly_budget: _Optional[str] = ..., preferred_instance_types: _Optional[_Iterable[str]] = ..., allow_spot: bool = ..., max_spot_percentage: _Optional[str] = ...) -> None: ...
+    cluster_scaling_mode: str
+    def __init__(self, api_key: _Optional[str] = ..., cloud_provider: _Optional[str] = ..., region: _Optional[str] = ..., cost_sensitivity: _Optional[str] = ..., monthly_budget: _Optional[str] = ..., preferred_instance_types: _Optional[_Iterable[str]] = ..., allow_spot: bool = ..., max_spot_percentage: _Optional[str] = ..., cluster_scaling_mode: _Optional[str] = ...) -> None: ...
 
 class ClusterOptimizationConfigResponse(_message.Message):
     __slots__ = ("success", "message")

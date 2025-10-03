@@ -190,52 +190,81 @@ func (cc *ClusterController) GetMetrics(c *gin.Context) {
 		return
 	}
 
-	// TODO: Query actual metrics from ClickHouse/Analytics service
-	// For now, return mock data that the frontend expects
-	metrics := ClusterMetricsResponse{}
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
 
-	// Nodes metrics
-	metrics.Nodes.Total = 3
-	metrics.Nodes.Ready = 3
-	metrics.Nodes.NotReady = 0
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		http.Error(c.Writer, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
 
-	// Workloads metrics
-	metrics.Workloads.Deployments = 12
-	metrics.Workloads.StatefulSets = 3
-	metrics.Workloads.DaemonSets = 5
-	metrics.Workloads.Jobs = 8
-	metrics.Workloads.CronJobs = 2
+	// Ticker to query analytics every 5 seconds for real-time updates
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 
-	// Pods metrics
-	metrics.Pods.Total = 45
-	metrics.Pods.Running = 42
-	metrics.Pods.Pending = 2
-	metrics.Pods.Failed = 1
+	sendOverviewData := func() {
+		// Query analytics service for overview metrics
+		overviewResp, err := cc.AnalyticsClient.GetOverviewMetrics(&pban.GetOverviewMetricsRequest{
+			OrganizationId: uint32(orgID),
+			ClusterId:      int64(clusterID),
+		})
+		if err != nil {
+			// Log error but continue streaming
+			return
+		}
 
-	// Resources metrics
-	metrics.Resources.CPUCapacity = "12 cores"
-	metrics.Resources.CPUUsage = "8.4 cores (70%)"
-	metrics.Resources.MemoryCapacity = "48 GB"
-	metrics.Resources.MemoryUsage = "32 GB (67%)"
+		// Transform to match frontend's ClusterMetricsResponse structure
+		metrics := ClusterMetricsResponse{}
+		metrics.Nodes.Total = int(overviewResp.NodesTotal)
+		metrics.Nodes.Ready = int(overviewResp.NodesReady)
+		metrics.Nodes.NotReady = int(overviewResp.NodesNotReady)
+		metrics.Workloads.Deployments = int(overviewResp.Deployments)
+		metrics.Workloads.StatefulSets = int(overviewResp.StatefulSets)
+		metrics.Workloads.DaemonSets = int(overviewResp.DaemonSets)
+		metrics.Workloads.Jobs = int(overviewResp.Jobs)
+		metrics.Workloads.CronJobs = int(overviewResp.CronJobs)
+		metrics.Pods.Total = int(overviewResp.PodsTotal)
+		metrics.Pods.Running = int(overviewResp.PodsRunning)
+		metrics.Pods.Pending = int(overviewResp.PodsPending)
+		metrics.Pods.Failed = int(overviewResp.PodsFailed)
+		metrics.Resources.CPUCapacity = overviewResp.CpuCapacity
+		metrics.Resources.CPUUsage = overviewResp.CpuUsage
+		metrics.Resources.MemoryCapacity = overviewResp.MemoryCapacity
+		metrics.Resources.MemoryUsage = overviewResp.MemoryUsage
+		metrics.Namespaces = int(overviewResp.Namespaces)
+		metrics.Services = int(overviewResp.Services)
+		metrics.Events.Total = int(overviewResp.EventsTotal)
+		metrics.Events.Warnings = int(overviewResp.EventsWarnings)
+		metrics.Events.Errors = int(overviewResp.EventsErrors)
+		metrics.Storage.PVCs = int(overviewResp.Pvcs)
+		metrics.Storage.TotalCapacity = overviewResp.StorageTotalCapacity
+		metrics.Cost.Estimated = overviewResp.EstimatedCost
+		metrics.Cost.Currency = overviewResp.Currency
 
-	// Other metrics
-	metrics.Namespaces = 8
-	metrics.Services = 15
+		b, err := json.Marshal(metrics)
+		if err != nil {
+			return
+		}
 
-	// Events metrics
-	metrics.Events.Total = 124
-	metrics.Events.Warnings = 3
-	metrics.Events.Errors = 1
+		c.SSEvent("overview-metrics", string(b))
+		flusher.Flush()
+	}
 
-	// Storage metrics
-	metrics.Storage.PVCs = 10
-	metrics.Storage.TotalCapacity = "500 GB"
+	// Send initial data immediately
+	sendOverviewData()
 
-	// Cost metrics
-	metrics.Cost.Estimated = "1,245.00"
-	metrics.Cost.Currency = "USD"
-
-	utils.RespondOK(c, metrics)
+	// Loop and stream data every 5 seconds
+	for {
+		select {
+		case <-ticker.C:
+			sendOverviewData()
+		case <-c.Request.Context().Done():
+			// Client disconnected
+			return
+		}
+	}
 }
 
 func (cc *ClusterController) GetSLOMetricsSSE(c *gin.Context) {
@@ -267,34 +296,126 @@ func (cc *ClusterController) GetSLOMetricsSSE(c *gin.Context) {
 		return
 	}
 
-	// Heartbeat ticker - send metrics every 5 seconds
+	// Ticker to query analytics every 5 seconds for real-time updates
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	// Send initial data immediately
-	sendMetrics := func() {
-		// TODO: Query actual SLO metrics from ClickHouse/Analytics service
-		// For now, return empty array as we don't have real data yet
-		mockData := map[string]interface{}{
-			"data": []interface{}{},
+	sendServicesData := func() {
+		// Query analytics service for services/SLO metrics
+		servicesResp, err := cc.AnalyticsClient.GetServices(&pban.GetServicesByClusterIdRequest{
+			OrganizationId: uint32(orgID),
+			ClusterId:      int64(clusterID),
+		})
+		if err != nil {
+			// Log error but continue streaming
+			return
 		}
 
-		b, err := json.Marshal(mockData)
+		response := map[string]interface{}{
+			"data": servicesResp.Services,
+		}
+
+		b, err := json.Marshal(response)
 		if err != nil {
 			return
 		}
+
 		c.SSEvent("slo-metrics", string(b))
 		flusher.Flush()
 	}
 
-	// Send initial data
-	sendMetrics()
+	// Send initial data immediately
+	sendServicesData()
 
-	// Loop and stream metrics
+	// Loop and stream data every 5 seconds
 	for {
 		select {
 		case <-ticker.C:
-			sendMetrics()
+			sendServicesData()
+		case <-c.Request.Context().Done():
+			// Client disconnected
+			return
+		}
+	}
+}
+
+func (cc *ClusterController) GetNodesSSE(c *gin.Context) {
+	orgID, err := parseOrgID(c)
+	if err != nil {
+		return
+	}
+
+	clusterID, err := strconv.Atoi(c.Param("cluster_id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "BAD_INPUT", "Invalid cluster_id")
+		return
+	}
+
+	// Verify cluster belongs to organization
+	var cluster models.ClusterMetadata
+	if err := models.GetDB().Where("id = ? AND organization_id = ?", clusterID, orgID).First(&cluster).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "BAD_INPUT", "Cluster not found in this organization")
+		return
+	}
+
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		http.Error(c.Writer, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	// Ticker to query analytics every minute
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	sendNodesData := func() {
+		// Query analytics service for nodes
+		nodesResp, err := cc.AnalyticsClient.GetNodes(&pban.GetNodesByClusterIdRequest{
+			OrganizationId: uint32(orgID),
+			ClusterId:      int64(clusterID),
+		})
+		if err != nil {
+			// Log error but continue streaming
+			return
+		}
+
+		// Query analytics service for cluster config
+		configResp, err := cc.AnalyticsClient.GetClusterConfig(&pban.GetClusterConfigRequest{
+			OrganizationId: uint32(orgID),
+			ClusterId:      int64(clusterID),
+		})
+		if err != nil {
+			// Log error but continue streaming
+			return
+		}
+
+		response := map[string]interface{}{
+			"nodes":  nodesResp.Nodes,
+			"config": configResp,
+		}
+
+		b, err := json.Marshal(response)
+		if err != nil {
+			return
+		}
+
+		c.SSEvent("nodes-data", string(b))
+		flusher.Flush()
+	}
+
+	// Send initial data immediately
+	sendNodesData()
+
+	// Loop and stream data every minute
+	for {
+		select {
+		case <-ticker.C:
+			sendNodesData()
 		case <-c.Request.Context().Done():
 			// Client disconnected
 			return

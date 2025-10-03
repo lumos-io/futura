@@ -56,16 +56,12 @@ const data = {
           url: "/dashboard/clusters/overview",
         },
         {
-          title: "Workloads Health",
-          url: "/dashboard/clusters/workloads-health",
+          title: "Nodes",
+          url: "/dashboard/clusters/nodes",
         },
         {
           title: "Services",
           url: "/dashboard/clusters/services",
-        },
-        {
-          title: "Jobs",
-          url: "/dashboard/clusters/jobs",
         },
         {
           title: "Events",

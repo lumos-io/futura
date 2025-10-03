@@ -75,6 +75,12 @@ func (r *ClusterOptimizationConfigReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Get cluster scaling mode, default to "recommend" if not set
+	clusterScalingMode := config.Spec.ClusterScalingMode
+	if clusterScalingMode == "" {
+		clusterScalingMode = "recommend"
+	}
+
 	grpcReq := &pbeg.ClusterOptimizationConfigRequest{
 		ApiKey:                 config.Spec.ApiKey,
 		CloudProvider:          "aws", // TODO: Make this configurable
@@ -84,6 +90,7 @@ func (r *ClusterOptimizationConfigReconciler) Reconcile(ctx context.Context, req
 		PreferredInstanceTypes: config.Spec.CostOptimization.PreferredInstanceTypes,
 		AllowSpot:              config.Spec.CostOptimization.SpotInstanceAllowed,
 		MaxSpotPercentage:      config.Spec.CostOptimization.MaxSpotPercentage,
+		ClusterScalingMode:     clusterScalingMode,
 	}
 
 	resp, err := r.grpcClient.SyncClusterOptimizationConfig(ctx, grpcReq)

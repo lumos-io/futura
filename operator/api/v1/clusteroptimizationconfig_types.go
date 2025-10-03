@@ -34,6 +34,13 @@ type ClusterOptimizationConfigSpec struct {
 	// ScalingPolicies defines which scaling mechanisms to enable.
 	ScalingPolicies ScalingPolicies `json:"scalingPolicies"`
 
+	// ClusterScalingMode controls whether the operator automatically scales the cluster or only provides recommendations.
+	// Valid values: "auto" (automatic scaling), "recommend" (recommendations only).
+	// Defaults to "recommend" if not specified.
+	// +kubebuilder:validation:Enum=auto;recommend
+	// +kubebuilder:default=recommend
+	ClusterScalingMode string `json:"clusterScalingMode,omitempty"`
+
 	// SyncPeriodSeconds defines how often the optimization loop runs.
 	// +kubebuilder:validation:Minimum=10
 	SyncPeriodSeconds int `json:"syncPeriodSeconds,omitempty"`

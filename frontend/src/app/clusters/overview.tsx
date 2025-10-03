@@ -31,6 +31,7 @@ import {
   Network,
   Server,
 } from "lucide-react";
+import { useSSE } from "@/hooks/sse-handler";
 
 type ClusterMetrics = {
   nodes: {
@@ -86,7 +87,7 @@ const ClustersOverview: React.FC = () => {
   const [selectedCluster, setSelectedCluster] = useState<Cluster>();
   const [metrics, setMetrics] = useState<ClusterMetrics | null>(null);
   const [loading, setLoading] = useState(false);
-  const [metricsLoading, setMetricsLoading] = useState(false);
+  const [metricsLoading, setMetricsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const orgId = user?.organizationId;
@@ -149,56 +150,35 @@ const ClustersOverview: React.FC = () => {
     fetchClusters();
   }, [selectedProvider, orgId]);
 
-  // Fetch cluster metrics when cluster is selected
+  // SSE endpoint for real-time metrics
+  const sseUrl = selectedCluster && orgId
+    ? `/api/organizations/${orgId}/clusters/${selectedCluster.id}/metrics`
+    : "";
+
+  const { latest: sseData } = useSSE<ClusterMetrics>(sseUrl, {
+    event: "overview-metrics",
+    withCredentials: false,
+  });
+
+  // Handle SSE data updates
   useEffect(() => {
-    if (!selectedCluster || !orgId) {
+    if (!sseData) return;
+
+    setMetricsLoading(false);
+
+    // Check if all values are zeros (no data)
+    if (
+      sseData.nodes.total === 0 &&
+      sseData.pods.total === 0 &&
+      sseData.workloads.deployments === 0
+    ) {
+      // Set metrics with zero values
+      setMetrics(sseData);
       return;
     }
 
-    const fetchMetrics = async () => {
-      setMetricsLoading(true);
-      try {
-        const res = await fetch(
-          `/api/organizations/${orgId}/clusters/${selectedCluster.id}/metrics`
-        );
-        if (!res.ok) {
-          throw new Error("Failed to fetch metrics");
-        }
-
-        const data = await res.json();
-        setMetrics(data.data);
-      } catch (err) {
-        console.error("Error fetching metrics:", err);
-        // Set mock data for development
-        setMetrics({
-          nodes: { total: 3, ready: 3, notReady: 0 },
-          workloads: {
-            deployments: 12,
-            statefulSets: 3,
-            daemonSets: 5,
-            jobs: 8,
-            cronJobs: 2,
-          },
-          pods: { total: 45, running: 42, pending: 2, failed: 1 },
-          resources: {
-            cpuCapacity: "12 cores",
-            cpuUsage: "8.4 cores (70%)",
-            memoryCapacity: "48 GB",
-            memoryUsage: "32 GB (67%)",
-          },
-          namespaces: 8,
-          services: 15,
-          events: { total: 124, warnings: 3, errors: 1 },
-          storage: { pvcs: 10, totalCapacity: "500 GB" },
-          cost: { estimated: "1,245.00", currency: "USD" },
-        });
-      } finally {
-        setMetricsLoading(false);
-      }
-    };
-
-    fetchMetrics();
-  }, [selectedCluster, orgId]);
+    setMetrics(sseData);
+  }, [sseData]);
 
   const getClusterVersion = () => {
     if (!selectedCluster) return "N/A";

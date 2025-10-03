@@ -24,6 +24,7 @@ message ClusterOptimizationConfigRequest {
   repeated string preferred_instance_types = 6;
   bool allow_spot = 7;
   string max_spot_percentage = 8;
+  string cluster_scaling_mode = 9; // "auto" or "recommend"
 }
 
 message ClusterOptimizationConfigResponse {

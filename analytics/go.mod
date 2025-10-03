@@ -8,6 +8,7 @@ require (
 	github.com/opisvigilant/futura/proto v0.0.0-20250908181247-6318dde452f3
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.20.1
+	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.75.0
 )
 

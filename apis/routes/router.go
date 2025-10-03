@@ -115,6 +115,7 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 				clusters.GET("/:cluster_id/metrics", clusterController.GetMetrics)
 				clusters.GET("/:cluster_id/events", clusterController.GetEvents)
 				clusters.GET("/:cluster_id/slo-metrics", clusterController.GetSLOMetricsSSE)
+				clusters.GET("/:cluster_id/nodes/stream", clusterController.GetNodesSSE)
 			}
 		}
 	}

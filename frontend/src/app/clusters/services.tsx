@@ -126,6 +126,39 @@ type ServiceSLO = {
   lastUpdated: number; // unix timestamp
 };
 
+// Backend proto types (from analytics.proto ServiceMetrics)
+type BackendServiceMetrics = {
+  serviceName: string;
+  namespace: string;
+  podName: string;
+  containerName: string;
+  httpRequestCount: string; // uint64 comes as string from JSON
+  httpErrorCount: string;
+  httpErrorRate: number;
+  httpLatencyP50: number;
+  httpLatencyP95: number;
+  httpLatencyP99: number;
+  memoryAllocCount: string;
+  memoryAllocBytes: string;
+  memoryFreeCount: string;
+  memoryNetAllocated: string;
+  memoryGcCount: string;
+  cpuUtilization: number;
+  cpuContextSwitches: string;
+  cpuRunqueueLatencyUs: number;
+  networkBytesSent: string;
+  networkBytesReceived: string;
+  networkConnectionsActive: string;
+  networkConnectionsTotal: string;
+  fsReadOps: string;
+  fsWriteOps: string;
+  fsBytesRead: string;
+  fsBytesWritten: string;
+  fsReadLatencyAvgUs: number;
+  fsWriteLatencyAvgUs: number;
+  timestamp: number;
+};
+
 const ClusterServices: React.FC<ServicesProps> = ({ title }) => {
   const { user } = useAuth();
 
@@ -157,7 +190,7 @@ const ClusterServices: React.FC<ServicesProps> = ({ title }) => {
     : "";
 
   // Use SSE hook for real-time updates
-  const { latest: sseData } = useSSE<{ data: ServiceSLO[] }>(sseUrl, {
+  const { latest: sseData } = useSSE<{ data: BackendServiceMetrics[] }>(sseUrl, {
     event: "slo-metrics",
   });
 
@@ -210,42 +243,141 @@ const ClusterServices: React.FC<ServicesProps> = ({ title }) => {
     fetchClusters();
   }, [selectedProvider, orgId]);
 
-  // Handle SSE data updates
+  // Reset services when cluster changes
   useEffect(() => {
     if (!selectedCluster) return;
 
-    // Use mock data for now since backend returns empty array
-    // TODO: Remove mock data when backend implements real SLO metrics
     setLoading(true);
-    setServices(mockServices);
-    setFilteredServices(mockServices);
-
-    // Set initial selected service if none selected and sheet is not open
-    if (!selectedServiceIdRef.current && mockServices.length > 0) {
-      setSelectedService(mockServices[0]);
-      selectedServiceIdRef.current = `${mockServices[0].namespace}-${mockServices[0].serviceName}`;
-    }
-
-    setLoading(false);
+    setServices([]);
+    setFilteredServices([]);
+    setSelectedService(null);
+    selectedServiceIdRef.current = null;
+    // Loading will be set to false when SSE data arrives
   }, [selectedCluster]);
+
+  // Transform backend service metrics to frontend ServiceSLO format
+  const transformServiceMetrics = (backendServices: BackendServiceMetrics[]): ServiceSLO[] => {
+    return backendServices.map((svc) => {
+      // Calculate SLO status based on metrics
+      const errorRate = svc.httpErrorRate || 0;
+      const latencyP95 = svc.httpLatencyP95 || 0;
+
+      let sloStatus: SLOStatus = "healthy";
+      const violations: string[] = [];
+
+      // Example SLO thresholds
+      const targetErrorRate = 1.0; // 1%
+      const targetP95Latency = 500; // 500ms
+
+      if (errorRate > targetErrorRate * 2) {
+        sloStatus = "violated";
+        violations.push(`Error rate ${errorRate.toFixed(2)}% exceeds target ${targetErrorRate}%`);
+      } else if (errorRate > targetErrorRate) {
+        sloStatus = "degraded";
+      }
+
+      if (latencyP95 > targetP95Latency * 2) {
+        sloStatus = "violated";
+        violations.push(`P95 latency ${latencyP95.toFixed(0)}ms exceeds target ${targetP95Latency}ms`);
+      } else if (latencyP95 > targetP95Latency && sloStatus === "healthy") {
+        sloStatus = "degraded";
+      }
+
+      // Calculate SLO score (0-100)
+      const errorScore = Math.max(0, 100 - (errorRate / targetErrorRate) * 50);
+      const latencyScore = Math.max(0, 100 - (latencyP95 / targetP95Latency) * 50);
+      const sloScore = (errorScore + latencyScore) / 2;
+
+      return {
+        serviceName: svc.serviceName || "unknown",
+        namespace: svc.namespace || "default",
+        podName: svc.podName || "",
+        containerName: svc.containerName || "",
+        targetP95Latency: targetP95Latency,
+        targetErrorRate: targetErrorRate,
+        targetThroughput: 100,
+        http: {
+          requestCount: Number(svc.httpRequestCount) || 0,
+          errorCount: Number(svc.httpErrorCount) || 0,
+          errorRate: svc.httpErrorRate || 0,
+          latencyP50: svc.httpLatencyP50 || 0,
+          latencyP95: svc.httpLatencyP95 || 0,
+          latencyP99: svc.httpLatencyP99 || 0,
+          throughput: 0, // TODO: Calculate from request count over time
+          activeConnections: Number(svc.networkConnectionsActive) || 0,
+        },
+        memory: {
+          allocCount: Number(svc.memoryAllocCount) || 0,
+          allocBytes: Number(svc.memoryAllocBytes) || 0,
+          freeCount: Number(svc.memoryFreeCount) || 0,
+          leakSuspected: false, // TODO: Implement leak detection logic
+          heapSize: Number(svc.memoryNetAllocated) || 0,
+          gcCount: Number(svc.memoryGcCount) || 0,
+          history: [], // TODO: Query historical data
+        },
+        cpu: {
+          usagePercent: svc.cpuUtilization || 0,
+          contextSwitches: Number(svc.cpuContextSwitches) || 0,
+          runqueueLatency: svc.cpuRunqueueLatencyUs || 0,
+          history: [], // TODO: Query historical data
+        },
+        network: {
+          bytesReceived: Number(svc.networkBytesReceived) || 0,
+          bytesSent: Number(svc.networkBytesSent) || 0,
+          connectionsActive: Number(svc.networkConnectionsActive) || 0,
+          connectionsTotal: Number(svc.networkConnectionsTotal) || 0,
+          history: [], // TODO: Query historical data
+        },
+        filesystem: {
+          readsCount: Number(svc.fsReadOps) || 0,
+          writesCount: Number(svc.fsWriteOps) || 0,
+          readBytes: Number(svc.fsBytesRead) || 0,
+          writeBytes: Number(svc.fsBytesWritten) || 0,
+          readLatencyAvg: svc.fsReadLatencyAvgUs || 0,
+          writeLatencyAvg: svc.fsWriteLatencyAvgUs || 0,
+          history: [], // TODO: Query historical data
+        },
+        sloStatus,
+        sloScore: Math.round(sloScore),
+        violations,
+        lastUpdated: svc.timestamp || Date.now() / 1000,
+      };
+    });
+  };
 
   // Update services when SSE data arrives (keeping selected service)
   useEffect(() => {
-    if (!sseData || !sseData.data) return;
+    if (!sseData) return;
 
-    // If backend sends real data, use it
-    if (sseData.data.length > 0) {
-      setServices(sseData.data);
+    // Always set loading to false when we receive SSE data (even if empty)
+    setLoading(false);
 
+    // Handle missing or empty data
+    if (!sseData.data || sseData.data.length === 0) {
+      setServices([]);
+      setSelectedService(null);
+      selectedServiceIdRef.current = null;
+      return;
+    }
+
+    // Transform backend data to frontend format
+    const transformedServices = transformServiceMetrics(sseData.data);
+    setServices(transformedServices);
+
+    if (transformedServices.length > 0) {
       // Preserve selected service across updates
       if (selectedServiceIdRef.current) {
         const [namespace, serviceName] = selectedServiceIdRef.current.split("-");
-        const updatedSelectedService = sseData.data.find(
+        const updatedSelectedService = transformedServices.find(
           (s) => s.namespace === namespace && s.serviceName === serviceName
         );
         if (updatedSelectedService) {
           setSelectedService(updatedSelectedService);
         }
+      } else {
+        // Set first service as selected if none is selected
+        setSelectedService(transformedServices[0]);
+        selectedServiceIdRef.current = `${transformedServices[0].namespace}-${transformedServices[0].serviceName}`;
       }
     }
   }, [sseData]);
@@ -1104,205 +1236,5 @@ const ClusterServices: React.FC<ServicesProps> = ({ title }) => {
     </div>
   );
 };
-
-// Helper to generate historical data points
-const generateHistoryData = (points: number, baseValue: number, variance: number) => {
-  const history: MetricHistoryPoint[] = [];
-  const now = Date.now();
-
-  for (let i = points; i >= 0; i--) {
-    const time = new Date(now - i * 10000); // 10 second intervals
-    const hours = time.getHours();
-    const minutes = time.getMinutes();
-    const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-    // Add some realistic variation
-    const value = baseValue + (Math.random() - 0.5) * variance;
-    history.push({
-      time: timeStr,
-      value: Math.max(0, value),
-    });
-  }
-
-  return history;
-};
-
-// Helper to generate mock services
-const generateMockService = (
-  index: number,
-  namespace: string,
-  status: SLOStatus
-): ServiceSLO => {
-  const serviceNames = [
-    "api-gateway",
-    "user-service",
-    "payment-processor",
-    "auth-service",
-    "notification-service",
-    "email-service",
-    "analytics-service",
-    "search-service",
-    "recommendation-engine",
-    "inventory-service",
-    "order-service",
-    "shipping-service",
-    "billing-service",
-    "fraud-detection",
-    "audit-logger",
-    "metrics-collector",
-    "cache-service",
-    "session-manager",
-    "file-storage",
-    "image-processor",
-    "video-transcoder",
-    "webhook-handler",
-    "scheduler-service",
-    "queue-manager",
-    "data-pipeline",
-    "ml-inference",
-    "feature-flags",
-    "config-service",
-    "monitoring-agent",
-    "logging-service",
-    "tracing-collector",
-    "secret-manager",
-    "backup-service",
-    "restore-service",
-    "migration-tool",
-    "health-checker",
-  ];
-
-  const serviceName = `${serviceNames[index % serviceNames.length]}-${
-    Math.floor(index / serviceNames.length) || ""
-  }`;
-
-  const baseLatency =
-    status === "healthy" ? 50 : status === "degraded" ? 150 : 350;
-  const baseError =
-    status === "healthy" ? 0.1 : status === "degraded" ? 0.8 : 2.5;
-  const baseScore = status === "healthy" ? 95 : status === "degraded" ? 85 : 70;
-
-  // Base values for metrics
-  const baseCpuUsage = status === "healthy" ? 45 : status === "degraded" ? 65 : 85;
-  const baseMemoryMB = Math.floor(Math.random() * 1024) + 512; // 512-1536 MB
-  const baseNetworkMB = Math.random() * 10 + 2; // 2-12 MB/s
-  const baseFsIO = Math.random() * 5 + 1; // 1-6 MB/s
-
-  // Generate historical data (last 30 data points = ~5 minutes at 10s intervals)
-  const memoryHistory = generateHistoryData(30, baseMemoryMB, baseMemoryMB * 0.15);
-  const cpuHistory = generateHistoryData(30, baseCpuUsage, 15);
-
-  const networkHistory = memoryHistory.map((point) => ({
-    time: point.time,
-    received: Math.max(0, baseNetworkMB + (Math.random() - 0.5) * baseNetworkMB * 0.3),
-    sent: Math.max(0, baseNetworkMB * 0.8 + (Math.random() - 0.5) * baseNetworkMB * 0.3),
-  }));
-
-  const filesystemHistory = memoryHistory.map((point) => ({
-    time: point.time,
-    reads: Math.max(0, baseFsIO + (Math.random() - 0.5) * baseFsIO * 0.4),
-    writes: Math.max(0, baseFsIO * 0.6 + (Math.random() - 0.5) * baseFsIO * 0.4),
-  }));
-
-  return {
-    serviceName,
-    namespace,
-    podName: `${serviceName}-${Math.random().toString(36).substr(2, 9)}`,
-    containerName: serviceName.split("-")[0],
-    targetP95Latency: 250,
-    targetErrorRate: 1,
-    targetThroughput: 500,
-    http: {
-      requestCount: Math.floor(Math.random() * 50000) + 10000,
-      errorCount: Math.floor(Math.random() * 500) + 10,
-      errorRate: baseError + Math.random() * 0.5,
-      latencyP50: baseLatency + Math.random() * 50,
-      latencyP95: baseLatency * 2 + Math.random() * 100,
-      latencyP99: baseLatency * 4 + Math.random() * 200,
-      throughput: Math.floor(Math.random() * 1000) + 200,
-      activeConnections: Math.floor(Math.random() * 300) + 50,
-    },
-    memory: {
-      allocCount: Math.floor(Math.random() * 3000000) + 500000,
-      allocBytes: Math.floor(Math.random() * 8589934592) + 1073741824,
-      freeCount: Math.floor(Math.random() * 2900000) + 490000,
-      leakSuspected: status === "degraded" && Math.random() > 0.7,
-      heapSize: Math.floor(baseMemoryMB * 1024 * 1024), // Convert MB to bytes
-      gcCount: Math.floor(Math.random() * 300) + 50,
-      history: memoryHistory,
-    },
-    cpu: {
-      usagePercent: baseCpuUsage + (Math.random() - 0.5) * 10,
-      contextSwitches: Math.floor(Math.random() * 100000) + 10000,
-      runqueueLatency: Math.random() * 5 + 0.5,
-      history: cpuHistory,
-    },
-    network: {
-      bytesReceived: Math.floor(Math.random() * 2147483648) + 268435456,
-      bytesSent: Math.floor(Math.random() * 4294967296) + 536870912,
-      connectionsActive: Math.floor(Math.random() * 200) + 50,
-      connectionsTotal: Math.floor(Math.random() * 15000) + 5000,
-      history: networkHistory,
-    },
-    filesystem: {
-      readsCount: Math.floor(Math.random() * 30000) + 5000,
-      writesCount: Math.floor(Math.random() * 20000) + 2000,
-      readBytes: Math.floor(Math.random() * 2097152000) + 524288000,
-      writeBytes: Math.floor(Math.random() * 1572864000) + 209715200,
-      readLatencyAvg: Math.random() * 8 + 1,
-      writeLatencyAvg: Math.random() * 15 + 3,
-      history: filesystemHistory,
-    },
-    sloStatus: status,
-    sloScore: baseScore + Math.random() * 10 - 5,
-    violations:
-      status === "violated"
-        ? [
-            "P95 latency exceeds target",
-            "Error rate above threshold",
-            "Throughput below target",
-          ]
-        : status === "degraded"
-        ? ["P95 latency approaching limit"]
-        : [],
-    lastUpdated: Math.floor(Date.now() / 1000),
-  };
-};
-
-// Generate 53 mock services across different namespaces and statuses
-const mockServices: ServiceSLO[] = [
-  // Production namespace (30 services)
-  ...Array.from({ length: 15 }, (_, i) =>
-    generateMockService(i, "production", "healthy")
-  ),
-  ...Array.from({ length: 10 }, (_, i) =>
-    generateMockService(i + 15, "production", "degraded")
-  ),
-  ...Array.from({ length: 5 }, (_, i) =>
-    generateMockService(i + 25, "production", "violated")
-  ),
-
-  // Staging namespace (13 services)
-  ...Array.from({ length: 7 }, (_, i) =>
-    generateMockService(i + 30, "staging", "healthy")
-  ),
-  ...Array.from({ length: 4 }, (_, i) =>
-    generateMockService(i + 37, "staging", "degraded")
-  ),
-  ...Array.from({ length: 2 }, (_, i) =>
-    generateMockService(i + 41, "staging", "violated")
-  ),
-
-  // Development namespace (10 services)
-  ...Array.from({ length: 5 }, (_, i) =>
-    generateMockService(i + 43, "development", "healthy")
-  ),
-  ...Array.from({ length: 3 }, (_, i) =>
-    generateMockService(i + 48, "development", "degraded")
-  ),
-  ...Array.from({ length: 2 }, (_, i) =>
-    generateMockService(i + 51, "development", "violated")
-  ),
-];
 
 export default ClusterServices;

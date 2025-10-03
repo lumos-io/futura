@@ -91,6 +91,7 @@ type ClusterOptimizationConfigRequest struct {
 	PreferredInstanceTypes []string               `protobuf:"bytes,6,rep,name=preferred_instance_types,json=preferredInstanceTypes,proto3" json:"preferred_instance_types,omitempty"`
 	AllowSpot              bool                   `protobuf:"varint,7,opt,name=allow_spot,json=allowSpot,proto3" json:"allow_spot,omitempty"`
 	MaxSpotPercentage      string                 `protobuf:"bytes,8,opt,name=max_spot_percentage,json=maxSpotPercentage,proto3" json:"max_spot_percentage,omitempty"`
+	ClusterScalingMode     string                 `protobuf:"bytes,9,opt,name=cluster_scaling_mode,json=clusterScalingMode,proto3" json:"cluster_scaling_mode,omitempty"` // "auto" or "recommend"
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -177,6 +178,13 @@ func (x *ClusterOptimizationConfigRequest) GetAllowSpot() bool {
 func (x *ClusterOptimizationConfigRequest) GetMaxSpotPercentage() string {
 	if x != nil {
 		return x.MaxSpotPercentage
+	}
+	return ""
+}
+
+func (x *ClusterOptimizationConfigRequest) GetClusterScalingMode() string {
+	if x != nil {
+		return x.ClusterScalingMode
 	}
 	return ""
 }
@@ -3279,7 +3287,7 @@ var File_engine_engine_proto protoreflect.FileDescriptor
 
 const file_engine_engine_proto_rawDesc = "" +
 	"\n" +
-	"\x13engine/engine.proto\x12\tengine.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xd5\x02\n" +
+	"\x13engine/engine.proto\x12\tengine.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\x87\x03\n" +
 	" ClusterOptimizationConfigRequest\x12\x17\n" +
 	"\aapi_key\x18\x01 \x01(\tR\x06apiKey\x12%\n" +
 	"\x0ecloud_provider\x18\x02 \x01(\tR\rcloudProvider\x12\x16\n" +
@@ -3289,7 +3297,8 @@ const file_engine_engine_proto_rawDesc = "" +
 	"\x18preferred_instance_types\x18\x06 \x03(\tR\x16preferredInstanceTypes\x12\x1d\n" +
 	"\n" +
 	"allow_spot\x18\a \x01(\bR\tallowSpot\x12.\n" +
-	"\x13max_spot_percentage\x18\b \x01(\tR\x11maxSpotPercentage\"W\n" +
+	"\x13max_spot_percentage\x18\b \x01(\tR\x11maxSpotPercentage\x120\n" +
+	"\x14cluster_scaling_mode\x18\t \x01(\tR\x12clusterScalingMode\"W\n" +
 	"!ClusterOptimizationConfigResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xae\x02\n" +

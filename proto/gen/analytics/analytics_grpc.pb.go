@@ -19,7 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AnalyticsService_GetEvents_FullMethodName = "/analytics.AnalyticsService/GetEvents"
+	AnalyticsService_GetEvents_FullMethodName          = "/analytics.AnalyticsService/GetEvents"
+	AnalyticsService_GetNodes_FullMethodName           = "/analytics.AnalyticsService/GetNodes"
+	AnalyticsService_GetClusterConfig_FullMethodName   = "/analytics.AnalyticsService/GetClusterConfig"
+	AnalyticsService_GetServices_FullMethodName        = "/analytics.AnalyticsService/GetServices"
+	AnalyticsService_GetOverviewMetrics_FullMethodName = "/analytics.AnalyticsService/GetOverviewMetrics"
 )
 
 // AnalyticsServiceClient is the client API for AnalyticsService service.
@@ -27,6 +31,10 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AnalyticsServiceClient interface {
 	GetEvents(ctx context.Context, in *GetEventsByClusterIdRequest, opts ...grpc.CallOption) (*GetEventsResponse, error)
+	GetNodes(ctx context.Context, in *GetNodesByClusterIdRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
+	GetClusterConfig(ctx context.Context, in *GetClusterConfigRequest, opts ...grpc.CallOption) (*ClusterConfigResponse, error)
+	GetServices(ctx context.Context, in *GetServicesByClusterIdRequest, opts ...grpc.CallOption) (*GetServicesResponse, error)
+	GetOverviewMetrics(ctx context.Context, in *GetOverviewMetricsRequest, opts ...grpc.CallOption) (*OverviewMetrics, error)
 }
 
 type analyticsServiceClient struct {
@@ -47,11 +55,55 @@ func (c *analyticsServiceClient) GetEvents(ctx context.Context, in *GetEventsByC
 	return out, nil
 }
 
+func (c *analyticsServiceClient) GetNodes(ctx context.Context, in *GetNodesByClusterIdRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetNodesResponse)
+	err := c.cc.Invoke(ctx, AnalyticsService_GetNodes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analyticsServiceClient) GetClusterConfig(ctx context.Context, in *GetClusterConfigRequest, opts ...grpc.CallOption) (*ClusterConfigResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClusterConfigResponse)
+	err := c.cc.Invoke(ctx, AnalyticsService_GetClusterConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analyticsServiceClient) GetServices(ctx context.Context, in *GetServicesByClusterIdRequest, opts ...grpc.CallOption) (*GetServicesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetServicesResponse)
+	err := c.cc.Invoke(ctx, AnalyticsService_GetServices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analyticsServiceClient) GetOverviewMetrics(ctx context.Context, in *GetOverviewMetricsRequest, opts ...grpc.CallOption) (*OverviewMetrics, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OverviewMetrics)
+	err := c.cc.Invoke(ctx, AnalyticsService_GetOverviewMetrics_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalyticsServiceServer is the server API for AnalyticsService service.
 // All implementations must embed UnimplementedAnalyticsServiceServer
 // for forward compatibility.
 type AnalyticsServiceServer interface {
 	GetEvents(context.Context, *GetEventsByClusterIdRequest) (*GetEventsResponse, error)
+	GetNodes(context.Context, *GetNodesByClusterIdRequest) (*GetNodesResponse, error)
+	GetClusterConfig(context.Context, *GetClusterConfigRequest) (*ClusterConfigResponse, error)
+	GetServices(context.Context, *GetServicesByClusterIdRequest) (*GetServicesResponse, error)
+	GetOverviewMetrics(context.Context, *GetOverviewMetricsRequest) (*OverviewMetrics, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()
 }
 
@@ -64,6 +116,18 @@ type UnimplementedAnalyticsServiceServer struct{}
 
 func (UnimplementedAnalyticsServiceServer) GetEvents(context.Context, *GetEventsByClusterIdRequest) (*GetEventsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvents not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) GetNodes(context.Context, *GetNodesByClusterIdRequest) (*GetNodesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodes not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) GetClusterConfig(context.Context, *GetClusterConfigRequest) (*ClusterConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClusterConfig not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) GetServices(context.Context, *GetServicesByClusterIdRequest) (*GetServicesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServices not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) GetOverviewMetrics(context.Context, *GetOverviewMetricsRequest) (*OverviewMetrics, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOverviewMetrics not implemented")
 }
 func (UnimplementedAnalyticsServiceServer) mustEmbedUnimplementedAnalyticsServiceServer() {}
 func (UnimplementedAnalyticsServiceServer) testEmbeddedByValue()                          {}
@@ -104,6 +168,78 @@ func _AnalyticsService_GetEvents_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AnalyticsService_GetNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodesByClusterIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).GetNodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_GetNodes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).GetNodes(ctx, req.(*GetNodesByClusterIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AnalyticsService_GetClusterConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).GetClusterConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_GetClusterConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).GetClusterConfig(ctx, req.(*GetClusterConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AnalyticsService_GetServices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetServicesByClusterIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).GetServices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_GetServices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).GetServices(ctx, req.(*GetServicesByClusterIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AnalyticsService_GetOverviewMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOverviewMetricsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).GetOverviewMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_GetOverviewMetrics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).GetOverviewMetrics(ctx, req.(*GetOverviewMetricsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AnalyticsService_ServiceDesc is the grpc.ServiceDesc for AnalyticsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +250,22 @@ var AnalyticsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetEvents",
 			Handler:    _AnalyticsService_GetEvents_Handler,
+		},
+		{
+			MethodName: "GetNodes",
+			Handler:    _AnalyticsService_GetNodes_Handler,
+		},
+		{
+			MethodName: "GetClusterConfig",
+			Handler:    _AnalyticsService_GetClusterConfig_Handler,
+		},
+		{
+			MethodName: "GetServices",
+			Handler:    _AnalyticsService_GetServices_Handler,
+		},
+		{
+			MethodName: "GetOverviewMetrics",
+			Handler:    _AnalyticsService_GetOverviewMetrics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -37,6 +37,38 @@ func (c *Client) GetEvents(req *pban.GetEventsByClusterIdRequest) ([]*pbtl.Kuber
 	return events, nil
 }
 
+func (c *Client) GetNodes(req *pban.GetNodesByClusterIdRequest) (*pban.GetNodesResponse, error) {
+	resp, err := c.AnalyticsServiceClient.GetNodes(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (c *Client) GetClusterConfig(req *pban.GetClusterConfigRequest) (*pban.ClusterConfigResponse, error) {
+	resp, err := c.AnalyticsServiceClient.GetClusterConfig(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (c *Client) GetServices(req *pban.GetServicesByClusterIdRequest) (*pban.GetServicesResponse, error) {
+	resp, err := c.AnalyticsServiceClient.GetServices(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (c *Client) GetOverviewMetrics(req *pban.GetOverviewMetricsRequest) (*pban.OverviewMetrics, error) {
+	resp, err := c.AnalyticsServiceClient.GetOverviewMetrics(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (c *Client) Close() error {
 	if c.conn != nil {
 		return c.conn.Close()
