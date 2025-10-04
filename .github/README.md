@@ -4,32 +4,41 @@ This directory contains the GitHub Actions workflows for the Futura monorepo.
 
 ## Workflows
 
-### 1. `test.yml` - Pull Request Testing
+### 1. `test.yml` - Pull Request Testing & Build
 
 **Trigger:** On all pull requests
 
-**Jobs (run in parallel):**
+**Phase 1 - Testing (run in parallel):**
 
-- ✅ **test-apis**: Go tests for APIs service
+- ✅ **test-apis**: Go tests for APIs service (with frontend build)
 - ✅ **test-analytics**: Go tests for Analytics service
 - ✅ **test-pipeline**: Go tests for Pipeline service
-- ✅ **test-watcher**: Go tests for Watcher service
-- ✅ **test-operator**: Go tests for Operator (includes manifests generation)
+- ✅ **test-watcher**: Go tests for Watcher service (with eBPF generation)
+- ✅ **test-operator**: Operator build verification
 - ✅ **test-engine**: Python tests for Engine service
 - ✅ **test-frontend**: Bun lint + TypeScript type-checking
 
-**Purpose:** Catch issues early by running all tests in parallel before merging PRs.
+**Phase 2 - Version & Build (runs only if all tests pass):**
 
-### 2. `build-push.yml` - Build and Push Docker Images
+- 🔢 **version-pr**: Increments **patch version** (3rd digit: `v0.1.0` → `v0.1.1`)
+- 🏗️ **build-frontend-pr**: Builds frontend assets
+- 🐳 **build-and-push-pr**: Builds and pushes Docker images with tags:
+  - `davideberdin/futura-{service}:{version}` (e.g., `v0.1.1`)
+  - `davideberdin/futura-{service}:pr-{number}` (e.g., `pr-123`)
 
-**Trigger:** On push to `main` branch
+**Purpose:** Test all services, then build and push versioned Docker images for successful PRs.
+
+### 2. `build-push.yml` - Production Build on Main
+
+**Trigger:** On push to `main` branch (e.g., when PRs are merged)
 
 **Process:**
 
 1. **Version Management**:
 
    - Reads current version from `.version` file
-   - Auto-increments patch version (e.g., `v0.1.0` → `v0.1.1`)
+   - Auto-increments **minor version** (2nd digit: `v0.1.5` → `v0.2.0`)
+   - Resets patch version to 0
    - Commits new version back to repository with `[skip ci]` flag
 
 2. **Frontend Build**:
@@ -81,8 +90,20 @@ The project uses semantic versioning stored in the `.version` file at the reposi
 
 **Auto-increment behavior:**
 
-- Every push to `main` automatically increments the **patch** version
+- **Pull Requests**: Increment **patch** version (3rd digit)
+  - Example: `v0.1.0` → `v0.1.1` → `v0.1.2`
+- **Main branch** (merged PRs): Increment **minor** version (2nd digit) and reset patch to 0
+  - Example: `v0.1.5` → `v0.2.0`
 - The version commit includes `[skip ci]` to prevent infinite CI loops
+
+**Version Flow Example:**
+```
+PR #1: v0.1.0 → v0.1.1 (patch bump)
+PR #2: v0.1.1 → v0.1.2 (patch bump)
+Merge to main: v0.1.2 → v0.2.0 (minor bump, patch reset)
+PR #3: v0.2.0 → v0.2.1 (patch bump)
+Merge to main: v0.2.1 → v0.3.0 (minor bump, patch reset)
+```
 
 **Manual version bumps:**
 If you need to bump major or minor versions manually:
@@ -151,7 +172,27 @@ The CI workflows handle monorepo dependencies correctly:
 
 ## Local Testing
 
-Before pushing, you can test workflows locally using [act](https://github.com/nektos/act):
+### Run All Tests Locally
+
+You can run all tests locally using the root Makefile:
+
+```bash
+# Run all tests (Go, Python, Frontend)
+make test
+
+# Run only Go service tests
+make test-go
+
+# Run only Python tests
+make test-python
+
+# Run only Frontend tests
+make test-frontend
+```
+
+### Test with Act (GitHub Actions locally)
+
+You can test workflows locally using [act](https://github.com/nektos/act):
 
 ```bash
 # Test PR workflow
@@ -164,14 +205,29 @@ act push -s DOCKERHUB_TOKEN=your-token-here
 ## CI/CD Flow Diagram
 
 ```bash
-Pull Request → test.yml (parallel jobs) → ✅/❌ Status check
-                                            ↓
-                                      Merge if all pass
-                                            ↓
-Push to main → build-push.yml → 1. Bump version
-                                 2. Build frontend
-                                 3. Build & push images (6 services)
-                                 4. Generate summary
-                                            ↓
-                                    Docker Hub (versioned images)
+Pull Request Created
+    ↓
+test.yml → Phase 1: Run all tests in parallel
+    ↓
+All tests pass? ─────┐
+    ↓                │
+    Yes              No → ❌ PR blocked
+    ↓
+Phase 2: Version & Build
+    1. Bump patch version (v0.1.0 → v0.1.1)
+    2. Build frontend
+    3. Build & push Docker images
+       - Tags: v0.1.1, pr-123
+    ↓
+✅ PR ready to merge
+    ↓
+Merge to main
+    ↓
+build-push.yml
+    1. Bump minor version (v0.1.1 → v0.2.0)
+    2. Build frontend
+    3. Build & push Docker images
+       - Tags: v0.2.0, latest
+    ↓
+🚀 Production images on Docker Hub
 ```

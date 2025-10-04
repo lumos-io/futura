@@ -81,13 +81,13 @@ func (r *ServiceLevelObjectiveReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	grpcReq := &pbeg.SyncSLORequest{
-		ApiKey:             config.Spec.ApiKey,
-		ServiceName:        slo.Spec.Name,
-		TargetP95Latency:   "250ms", // TODO: Extract from metrics spec
-		TargetErrorRate:    "0.01",  // TODO: Extract from metrics spec
-		TargetThroughput:   "1000rps", // TODO: Extract from metrics spec
-		Priority:           "medium",  // TODO: Make this configurable
-		LastUpdated:        timestamppb.New(slo.Status.LastUpdated.Time),
+		ApiKey:           config.Spec.ApiKey,
+		ServiceName:      slo.Spec.Name,
+		TargetP95Latency: "250ms",   // TODO: Extract from metrics spec
+		TargetErrorRate:  "0.01",    // TODO: Extract from metrics spec
+		TargetThroughput: "1000rps", // TODO: Extract from metrics spec
+		Priority:         "medium",  // TODO: Make this configurable
+		LastUpdated:      timestamppb.New(slo.Status.LastUpdated.Time),
 	}
 
 	// Call gRPC backend

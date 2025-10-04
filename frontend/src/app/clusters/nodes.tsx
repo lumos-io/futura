@@ -168,7 +168,7 @@ const ClusterNodes: React.FC<NodesProps> = ({ title }) => {
 
         // Process nodes data
         if (data.nodes) {
-          const processedNodes: Node[] = data.nodes.map((node: any) => ({
+          const processedNodes: Node[] = data.nodes.map((node: { name: string; status: string; kubeletVersion?: string; instanceType?: string; zone?: string }) => ({
             name: node.name,
             status: node.status as "Ready" | "NotReady" | "Unknown",
             role: "worker", // TODO: Extract from labels
