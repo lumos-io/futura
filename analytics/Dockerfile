@@ -12,7 +12,6 @@ COPY analytics/go.mod analytics/go.sum ./analytics/
 COPY analytics/internal ./analytics/internal
 COPY analytics/db ./analytics/db
 COPY analytics/main.go ./analytics/main.go
-COPY analytics/config.toml ./analytics/config.toml
 
 WORKDIR /src/analytics
 RUN go env -w GOPROXY=https://proxy.golang.org,direct
@@ -31,7 +30,6 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o an
 FROM gcr.io/distroless/base-debian12:latest
 WORKDIR /app
 COPY --from=builder /src/analytics/analytics /app/analytics
-COPY --from=builder /src/analytics/config.toml /app/config.toml
 
 # Expose gRPC port (default: 50051)
 EXPOSE 50051
