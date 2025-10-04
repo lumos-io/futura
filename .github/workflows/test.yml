@@ -107,10 +107,6 @@ jobs:
         run: |
           migrate -path analytics/db/migrations -database "clickhouse://localhost:9000?username=user&password=password&database=futura&x-multi-statement=true" up
 
-      - name: Run Engine migrations
-        run: |
-          migrate -path engine/db/migrations -database "clickhouse://localhost:9000?username=user&password=password&database=futura&x-multi-statement=true" up
-
       - name: Run Analytics tests
         working-directory: analytics
         env:
