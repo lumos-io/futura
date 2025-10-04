@@ -8,9 +8,6 @@ data:
   config.toml: |
     environment = "{{ .Values.environment }}"
 
-    [analytics]
-    endpoint = "{{ .Values.analytics.endpoint }}"
-
     [database]
     host = "{{ .Values.database.host }}"
     port = "{{ .Values.database.port }}"

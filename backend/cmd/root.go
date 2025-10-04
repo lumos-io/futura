@@ -16,7 +16,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "backend",
 	Short: "Futura backend services",
-	Long: `Futura backend services - unified binary for APIs, Analytics, and Pipeline services.
+	Long: `Futura backend services - unified binary for APIs and Pipeline services.
 
 This application provides multiple subcommands to run different backend services:
   - apis: HTTP/REST API server with SSE support

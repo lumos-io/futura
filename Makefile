@@ -25,11 +25,9 @@ test: test-go test-python test-frontend ## Run all tests in the project
 test-go: ## Run all Go service tests
 	@echo "==> Running Go tests..."
 	@echo "  - Testing APIs..."
-	@cd apis && go test -v -race ./... || exit 1
-	@echo "  - Testing Analytics (requires ClickHouse running)..."
-	@cd analytics && go test -v -race ./... || exit 1
+	@cd backend/apis && go test -v -race ./... || exit 1
 	@echo "  - Testing Pipeline..."
-	@cd pipeline && go test -v -race ./... || exit 1
+	@cd backend/pipeline && go test -v -race ./... || exit 1
 	@echo "  - Testing Watcher..."
 	@cd watcher && go test -v -race $(shell cd watcher && go list ./... | grep -v '/internal/ebpf/bpf/') || exit 1
 	@echo "  - Testing Operator..."
@@ -42,8 +40,8 @@ setup-clickhouse-migrations: ## Run ClickHouse migrations (requires ClickHouse r
 	@command -v migrate >/dev/null 2>&1 || { echo "Error: golang-migrate not installed. Install: brew install golang-migrate"; exit 1; }
 	@echo "  - Creating futura database..."
 	@clickhouse-client --host localhost --user user --password password --query "CREATE DATABASE IF NOT EXISTS futura" || echo "Note: If connection fails, check ClickHouse credentials in docker-compose.yaml"
-	@echo "  - Running Analytics migrations (includes engine tables)..."
-	@migrate -path analytics/db/migrations \
+	@echo "  - Running ClickHouse migrations (includes engine tables)..."
+	@migrate -path backend/db/clickhouse/migrations \
 		-database "clickhouse://localhost:9000?username=user&password=password&database=futura&x-multi-statement=true" \
 		up
 	@echo "✅ ClickHouse migrations completed!"
@@ -60,7 +58,7 @@ test-frontend: ## Run frontend lint and type-check
 	@cd frontend && bun install && bun run lint --max-warnings 20 && bun run type-check || exit 1
 	@echo "✅ Frontend tests passed!"
 
-PHONY: dev-env
+.PHONY: dev-env
 dev-env:
 ifeq ("$(wildcard $(GO_WORK_FILE))","")
 	@echo "initialize go workspaces with Go 1.24.1 toolchain"
@@ -241,19 +239,12 @@ pipeline-deploy:
 pipeline-run:
 	$(MAKE) -C pipeline run
 
-##@ Analytics
-.PHONY: analytics-run
-analytics-run:
-	$(MAKE) -C analytics run
-
 ##@ APIs
 .PHONY: apis-run
-apis-run: frontend-build
-	$(MAKE) -C analytics run & \
-	$(MAKE) -C apis run & \
-	wait
-##@ Help
+apis-run: frontend-build	
+	$(MAKE) -C backend apis-run	
 
+##@ Help
 .PHONY: help
 help: ## Display this help message
 	@echo "Futura Monorepo - Available Make Targets"

@@ -72,7 +72,7 @@ services:
     image: clickhouse/clickhouse-server:25.6-alpine
     container_name: clickhouse
     environment:
-      CLICKHOUSE_DB: events
+      CLICKHOUSE_DB: futura
       CLICKHOUSE_USER: user
       CLICKHOUSE_PASSWORD: password
     ports:

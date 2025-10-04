@@ -5,6 +5,7 @@ REST API backend for Futura with embedded frontend.
 ## Overview
 
 The APIs service provides the main REST API backend for Futura, including:
+
 - User authentication (OAuth with Google/GitHub)
 - Cluster management
 - SSE streaming endpoints for real-time updates
@@ -18,7 +19,6 @@ The APIs service provides the main REST API backend for Futura, including:
 - Helm 3.0+
 - PostgreSQL database
 - Redis server
-- Analytics service (gRPC)
 - (Optional) Unleash feature flag service
 
 ## Installation
@@ -78,22 +78,21 @@ helm install futura-apis ./deployments/futura-apis \
 
 ### Key Values
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `replicaCount` | Number of replicas | `2` |
-| `image.repository` | APIs image repository | `davideberdin/futura-apis` |
-| `image.tag` | Image tag | `latest` |
-| `service.port` | HTTP service port | `8080` |
-| `environment` | Environment (development, production) | `production` |
-| `analytics.endpoint` | Analytics gRPC endpoint | `futura-analytics:50061` |
-| `database.host` | PostgreSQL host | `postgres` |
-| `database.port` | PostgreSQL port | `5432` |
-| `database.name` | Database name | `futura` |
-| `redis.servers` | Redis server addresses | `["redis:6379"]` |
-| `oauth.google.clientId` | Google OAuth client ID | `""` |
-| `oauth.github.clientId` | GitHub OAuth client ID | `""` |
-| `ingress.enabled` | Enable ingress | `false` |
-| `autoscaling.enabled` | Enable HPA | `false` |
+| Parameter               | Description                           | Default                    |
+| ----------------------- | ------------------------------------- | -------------------------- |
+| `replicaCount`          | Number of replicas                    | `2`                        |
+| `image.repository`      | APIs image repository                 | `davideberdin/futura-apis` |
+| `image.tag`             | Image tag                             | `latest`                   |
+| `service.port`          | HTTP service port                     | `8080`                     |
+| `environment`           | Environment (development, production) | `production`               |
+| `database.host`         | PostgreSQL host                       | `postgres`                 |
+| `database.port`         | PostgreSQL port                       | `5432`                     |
+| `database.name`         | Database name                         | `futura`                   |
+| `redis.servers`         | Redis server addresses                | `["redis:6379"]`           |
+| `oauth.google.clientId` | Google OAuth client ID                | `""`                       |
+| `oauth.github.clientId` | GitHub OAuth client ID                | `""`                       |
+| `ingress.enabled`       | Enable ingress                        | `false`                    |
+| `autoscaling.enabled`   | Enable HPA                            | `false`                    |
 
 ### Example Production Values
 
@@ -107,9 +106,6 @@ image:
   tag: "v0.2.0"
 
 environment: production
-
-analytics:
-  endpoint: futura-analytics:50061
 
 database:
   host: postgres-primary.database.svc.cluster.local
@@ -129,11 +125,11 @@ redis:
 
 oauth:
   google:
-    clientId: ""  # Set via secret
+    clientId: "" # Set via secret
     callbackUrl: https://futura.example.com/auth/google/callback
     existingSecret: oauth-secrets
   github:
-    clientId: ""  # Set via secret
+    clientId: "" # Set via secret
     callbackUrl: https://futura.example.com/auth/github/callback
     existingSecret: oauth-secrets
 
@@ -182,13 +178,13 @@ autoscaling:
 affinity:
   podAntiAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
-    - labelSelector:
-        matchExpressions:
-        - key: app.kubernetes.io/name
-          operator: In
-          values:
-          - futura-apis
-      topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - futura-apis
+        topologyKey: kubernetes.io/hostname
 ```
 
 Install with production values:
@@ -227,6 +223,7 @@ The chart includes HTTP health probes:
 1. Create OAuth credentials at [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Set authorized redirect URI: `https://your-domain.com/auth/google/callback`
 3. Store credentials in secret:
+
 ```bash
 kubectl create secret generic oauth-secrets \
   --from-literal=google-client-id=<client-id> \
@@ -239,6 +236,7 @@ kubectl create secret generic oauth-secrets \
 1. Create OAuth app at [GitHub Developer Settings](https://github.com/settings/developers)
 2. Set callback URL: `https://your-domain.com/auth/github/callback`
 3. Store credentials in secret:
+
 ```bash
 kubectl create secret generic oauth-secrets \
   --from-literal=github-client-id=<client-id> \
@@ -270,9 +268,9 @@ curl http://localhost:8080/healthz
 ## Architecture
 
 The APIs service:
+
 - Serves embedded React frontend from `/public` directory
 - Listens on port 8080 for HTTP requests
-- Connects to Analytics service via gRPC
 - Uses PostgreSQL for user/cluster data
 - Uses Redis for API key storage
 - Supports SSE for real-time updates
@@ -283,19 +281,21 @@ The APIs service:
 ### Pods not starting
 
 Check logs:
+
 ```bash
 kubectl logs -n futura-system <pod-name>
 ```
 
 Common issues:
+
 - Database connection failure
 - Missing secrets
-- Analytics service not available
 - Invalid configuration
 
 ### Database connection errors
 
 Verify PostgreSQL connectivity:
+
 ```bash
 kubectl exec -n futura-system <apis-pod> -- nc -zv <postgres-host> 5432
 ```
@@ -307,6 +307,7 @@ Check callback URLs match your ingress configuration and OAuth provider settings
 ### SSE endpoints timing out
 
 Ensure ingress has proper timeout settings:
+
 ```yaml
 ingress:
   annotations:

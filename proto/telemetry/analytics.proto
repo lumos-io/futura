@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+import "telemetry/events.proto";
+import "telemetry/cluster.proto";
+import "telemetry/stats.proto";
+
+package telemetry;
+
+option go_package = "github.com/opisvigilant/futura/proto/gen/telemetry;telemetry";
+
+message GetEventsByClusterIdRequest {
+  uint32 organization_id = 1;
+  int64 cluster_id = 2;
+
+  int32 limit = 3;  // Number of events to return
+  int64 cursor = 4; // Use object_timestamp as the cursor
+  bool reverse = 5; // If true, move backward in time (older events)
+}
+
+message GetEventsResponse {
+  repeated telemetry.KubernetesEvent events = 1;
+
+  int64 next_cursor = 2; // Timestamp to pass for next page
+  int64 prev_cursor = 3; // Optional: for reverse pagination
+}
+
+message GetNodesByClusterIdRequest {
+  uint32 organization_id = 1;
+  int64 cluster_id = 2;
+}
+
+message NodeInfo {
+  string name = 1;
+  string uid = 2;
+  string status = 3;
+  string kubelet_version = 4;
+  string instance_type = 5;
+  string zone = 6;
+  string cloud_provider = 7;
+  string capacity_type = 8;
+  int64 timestamp = 9;
+
+  // Conditions
+  repeated telemetry.NodeCondition conditions = 10;
+
+  // Allocatable resources
+  telemetry.AllocatableResources allocatable = 11;
+
+  // Cloud metadata
+  telemetry.CloudNodeMetadata cloud_metadata = 12;
+
+  // Pod count
+  int32 pod_count = 13;
+
+  // Scaling mode (from deployment labels)
+  string scaling_mode = 14;
+}
+
+message GetNodesResponse { repeated NodeInfo nodes = 1; }
+
+message GetClusterConfigRequest {
+  uint32 organization_id = 1;
+  int64 cluster_id = 2;
+}
+
+message ClusterConfigResponse {
+  string cluster_scaling_mode = 1; // "auto" or "recommend"
+  bool enable_hpa = 2;
+  bool enable_vpa = 3;
+  bool enable_node_handler = 4;
+  string cost_sensitivity = 5;
+  string monthly_budget = 6;
+  bool spot_instances_allowed = 7;
+  string max_spot_percentage = 8;
+}
+
+message GetServicesByClusterIdRequest {
+  uint32 organization_id = 1;
+  int64 cluster_id = 2;
+}
+
+message ServiceMetrics {
+  string service_name = 1;
+  string namespace = 2;
+  string pod_name = 3;
+  string container_name = 4;
+
+  // HTTP metrics
+  uint64 http_request_count = 5;
+  uint64 http_error_count = 6;
+  double http_error_rate = 7;
+  double http_latency_p50 = 8;
+  double http_latency_p95 = 9;
+  double http_latency_p99 = 10;
+
+  // Memory metrics
+  uint64 memory_alloc_count = 11;
+  uint64 memory_alloc_bytes = 12;
+  uint64 memory_free_count = 13;
+  uint64 memory_net_allocated = 14;
+  uint64 memory_gc_count = 15;
+
+  // CPU metrics
+  double cpu_utilization = 16;
+  uint64 cpu_context_switches = 17;
+  double cpu_runqueue_latency_us = 18;
+
+  // Network metrics
+  uint64 network_bytes_sent = 19;
+  uint64 network_bytes_received = 20;
+  uint64 network_connections_active = 21;
+  uint64 network_connections_total = 22;
+
+  // Filesystem metrics
+  uint64 fs_read_ops = 23;
+  uint64 fs_write_ops = 24;
+  uint64 fs_bytes_read = 25;
+  uint64 fs_bytes_written = 26;
+  double fs_read_latency_avg_us = 27;
+  double fs_write_latency_avg_us = 28;
+
+  int64 timestamp = 29;
+}
+
+message GetServicesResponse { repeated ServiceMetrics services = 1; }
+
+message GetOverviewMetricsRequest {
+  uint32 organization_id = 1;
+  int64 cluster_id = 2;
+}
+
+message OverviewMetrics {
+  // Nodes
+  int32 nodes_total = 1;
+  int32 nodes_ready = 2;
+  int32 nodes_not_ready = 3;
+
+  // Workloads
+  int32 deployments = 4;
+  int32 stateful_sets = 5;
+  int32 daemon_sets = 6;
+  int32 jobs = 7;
+  int32 cron_jobs = 8;
+
+  // Pods
+  int32 pods_total = 9;
+  int32 pods_running = 10;
+  int32 pods_pending = 11;
+  int32 pods_failed = 12;
+
+  // Resources
+  string cpu_capacity = 13;
+  string cpu_usage = 14;
+  string memory_capacity = 15;
+  string memory_usage = 16;
+
+  // Other resources
+  int32 namespaces = 17;
+  int32 services = 18;
+
+  // Events
+  int32 events_total = 19;
+  int32 events_warnings = 20;
+  int32 events_errors = 21;
+
+  // Storage
+  int32 pvcs = 22;
+  string storage_total_capacity = 23;
+
+  // Cost (optional, may not be available)
+  string estimated_cost = 24;
+  string currency = 25;
+}

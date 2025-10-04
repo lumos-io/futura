@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/opisvigilant/futura/backend/internal/apis/models"
+	"github.com/opisvigilant/futura/backend/internal/shared/config"
 	alibabaprovider "github.com/opisvigilant/futura/backend/internal/apis/providers/alibaba"
 	awsprovider "github.com/opisvigilant/futura/backend/internal/apis/providers/aws"
 	azureprovider "github.com/opisvigilant/futura/backend/internal/apis/providers/azure"
@@ -12,7 +12,7 @@ import (
 	gcpprovider "github.com/opisvigilant/futura/backend/internal/apis/providers/gcp"
 	kindprovider "github.com/opisvigilant/futura/backend/internal/apis/providers/kind"
 	"github.com/opisvigilant/futura/backend/internal/apis/secrets"
-	"github.com/opisvigilant/futura/backend/internal/shared/config"
+	"github.com/opisvigilant/futura/backend/internal/apis/models"
 
 	pb "github.com/opisvigilant/futura/proto/gen/backend"
 )
