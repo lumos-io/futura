@@ -56,11 +56,15 @@ jobs:
     services:
       clickhouse:
         image: clickhouse/clickhouse-server:latest
+        env:
+          CLICKHOUSE_USER: user
+          CLICKHOUSE_PASSWORD: password
+          CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
         ports:
           - 9000:9000
           - 8123:8123
         options: >-
-          --health-cmd "clickhouse-client --query 'SELECT 1'"
+          --health-cmd "clickhouse-client --user user --password password --query 'SELECT 1'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -102,18 +106,18 @@ jobs:
         run: |
           # Use docker exec to run clickhouse-client inside the container
           CONTAINER_ID=$(docker ps --filter "ancestor=clickhouse/clickhouse-server:latest" --format "{{.ID}}")
-          docker exec $CONTAINER_ID clickhouse-client --query "CREATE DATABASE IF NOT EXISTS events"
+          docker exec $CONTAINER_ID clickhouse-client --user user --password password --query "CREATE DATABASE IF NOT EXISTS events"
 
       - name: Run Analytics migrations
         run: |
           migrate -path analytics/db/migrations \
-            -database "clickhouse://default@localhost:9000/events?x-multi-statement=true" \
+            -database "clickhouse://user:password@localhost:9000/events?x-multi-statement=true" \
             up
 
       - name: Run Engine migrations
         run: |
           migrate -path engine/db/migrations \
-            -database "clickhouse://default@localhost:9000/events?x-multi-statement=true" \
+            -database "clickhouse://user:password@localhost:9000/events?x-multi-statement=true" \
             up
 
       - name: Run Analytics tests
