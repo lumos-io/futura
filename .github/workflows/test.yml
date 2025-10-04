@@ -106,19 +106,15 @@ jobs:
         run: |
           # Use docker exec to run clickhouse-client inside the container
           CONTAINER_ID=$(docker ps --filter "ancestor=clickhouse/clickhouse-server:latest" --format "{{.ID}}")
-          docker exec $CONTAINER_ID clickhouse-client --user user --password password --query "CREATE DATABASE IF NOT EXISTS events"
+          docker exec $CONTAINER_ID clickhouse-client --user user --password password --query "CREATE DATABASE IF NOT EXISTS futura"
 
       - name: Run Analytics migrations
         run: |
-          migrate -path analytics/db/migrations \
-            -database "clickhouse://user:password@localhost:9000/events?x-multi-statement=true" \
-            up
+          migrate -path analytics/db/migrations -database "clickhouse://user:password@localhost:9000/futura?x-multi-statement=true" up
 
       - name: Run Engine migrations
         run: |
-          migrate -path engine/db/migrations \
-            -database "clickhouse://user:password@localhost:9000/events?x-multi-statement=true" \
-            up
+          migrate -path engine/db/migrations -database "clickhouse://user:password@localhost:9000/futura?x-multi-statement=true" up
 
       - name: Run Analytics tests
         working-directory: analytics
@@ -275,7 +271,16 @@ jobs:
   version-pr:
     name: Bump Patch Version for PR
     runs-on: ubuntu-latest
-    needs: [test-apis, test-analytics, test-pipeline, test-watcher, test-operator, test-engine, test-frontend]
+    needs:
+      [
+        test-apis,
+        test-analytics,
+        test-pipeline,
+        test-watcher,
+        test-operator,
+        test-engine,
+        test-frontend,
+      ]
     outputs:
       version: ${{ steps.bump.outputs.version }}
     steps:

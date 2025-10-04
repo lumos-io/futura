@@ -2,7 +2,6 @@
 Configuration management for Futura Engine.
 """
 
-import os
 import tomllib
 from dataclasses import dataclass
 from typing import Optional
@@ -21,8 +20,10 @@ class ServerConfig:
 class ClickHouseConfig:
     """ClickHouse database configuration."""
     url: str = "http://localhost:8123"
-    engine_db: str = "engine"
-    analytics_db: str = "analytics"
+    engine_db: str = "futura"
+    analytics_db: str = "futura"
+    username: str = "user"
+    password: str = "password"
 
 
 @dataclass

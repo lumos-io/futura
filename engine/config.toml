@@ -9,8 +9,10 @@ log_level = "INFO"
 
 [clickhouse]
 url = "http://localhost:8123"
-engine_db = "engine"
-analytics_db = "analytics"
+engine_db = "futura"
+analytics_db = "futura"
+username = "user"
+password = "password"
 
 # External RL server address (only used when service = "recommendation" and RL is external)
 # rl_server_address = "localhost:8081"
