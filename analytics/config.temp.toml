@@ -1,6 +1,6 @@
 [clickhouse]
 servers = ["localhost:8123"]
-database = "events"
+database = "futura"
 username = "user"
 password = "password"
 

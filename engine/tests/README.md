@@ -23,6 +23,7 @@ tests/
 ### Prerequisites
 
 1. **Install test dependencies:**
+
    ```bash
    cd engine
    pip install -e ".[dev]"
@@ -36,12 +37,14 @@ tests/
 ### Running Tests
 
 #### Run All Tests
+
 ```bash
 # From engine directory
 python -m pytest
 ```
 
 #### Run by Category
+
 ```bash
 # Unit tests only
 python -m pytest tests/unit/ -v
@@ -54,6 +57,7 @@ python -m pytest tests/e2e/ -v
 ```
 
 #### Run by Markers
+
 ```bash
 # Fast unit tests
 python -m pytest -m unit
@@ -69,6 +73,7 @@ python -m pytest -m "not slow"
 ```
 
 #### Run Specific Test Files
+
 ```bash
 # Test scaling algorithms
 python -m pytest tests/unit/test_scaling_algorithms.py -v
@@ -87,6 +92,7 @@ python -m pytest tests/e2e/test_grpc_services.py -v
 Test individual components in isolation with minimal dependencies.
 
 **Features:**
+
 - ✅ Scaling algorithm logic
 - ✅ PyTorch model architecture (mocked)
 - ✅ Training job manager
@@ -94,6 +100,7 @@ Test individual components in isolation with minimal dependencies.
 - ✅ Edge case handling
 
 **Run with:**
+
 ```bash
 python -m pytest tests/unit/ -v
 ```
@@ -103,6 +110,7 @@ python -m pytest tests/unit/ -v
 Test component interactions with mocked external dependencies.
 
 **Features:**
+
 - ✅ RLServer with mocked ClickHouse/Kubernetes
 - ✅ Complete recommendation flow
 - ✅ Safety policy enforcement
@@ -110,6 +118,7 @@ Test component interactions with mocked external dependencies.
 - ✅ Error handling and fallbacks
 
 **Run with:**
+
 ```bash
 python -m pytest tests/integration/ -v
 ```
@@ -119,6 +128,7 @@ python -m pytest tests/integration/ -v
 Test complete workflows with full gRPC communication.
 
 **Features:**
+
 - ✅ gRPC service communication
 - ✅ Full recommendation pipeline
 - ✅ Training trigger to completion
@@ -126,6 +136,7 @@ Test complete workflows with full gRPC communication.
 - ✅ System integration flows
 
 **Run with:**
+
 ```bash
 python -m pytest tests/e2e/ -v
 ```
@@ -153,6 +164,7 @@ markers =
 ### Global Fixtures (`conftest.py`)
 
 **Available Fixtures:**
+
 - `mock_clickhouse_client` - Mocked ClickHouse client
 - `mock_kubernetes_client` - Mocked Kubernetes client
 - `mock_torch` - Mocked PyTorch for CPU testing
@@ -162,6 +174,7 @@ markers =
 - `temp_model_dir` - Temporary model storage
 
 **Auto-applied Mocks:**
+
 - External dependencies are automatically mocked
 - GPU detection disabled for testing
 - Kubernetes config loading mocked
@@ -173,6 +186,7 @@ markers =
 All external dependencies are comprehensively mocked:
 
 **ClickHouse:**
+
 ```python
 @pytest.fixture
 def mock_clickhouse_client():
@@ -184,6 +198,7 @@ def mock_clickhouse_client():
 ```
 
 **Kubernetes:**
+
 ```python
 @pytest.fixture
 def mock_kubernetes_client():
@@ -194,6 +209,7 @@ def mock_kubernetes_client():
 ```
 
 **PyTorch:**
+
 ```python
 @pytest.fixture
 def mock_torch():
@@ -208,6 +224,7 @@ def mock_torch():
 ### Data Generation
 
 **Sample Data:**
+
 ```python
 # Generate metrics for testing
 data = generate_metrics_data(num_points=100)
@@ -245,6 +262,7 @@ pytest -m requires_clickhouse
 ## Coverage Reporting
 
 ### Generate Coverage Report
+
 ```bash
 # Run tests with coverage
 python -m pytest --cov=. --cov-report=html
@@ -254,6 +272,7 @@ open htmlcov/index.html
 ```
 
 ### Coverage Targets
+
 - **Unit Tests:** >90% line coverage
 - **Integration Tests:** >80% branch coverage
 - **Critical Paths:** 100% coverage
@@ -261,6 +280,7 @@ open htmlcov/index.html
 ## Performance Testing
 
 ### Benchmark Tests
+
 ```bash
 # Run performance benchmarks
 python -m pytest tests/ -k benchmark --benchmark-only
@@ -270,6 +290,7 @@ python -m pytest tests/ --benchmark-compare
 ```
 
 ### Load Testing
+
 ```bash
 # Test with high concurrency
 python -m pytest tests/e2e/ -k "load" --asyncio-mode=auto
@@ -278,6 +299,7 @@ python -m pytest tests/e2e/ -k "load" --asyncio-mode=auto
 ## Debugging Tests
 
 ### Verbose Output
+
 ```bash
 # Maximum verbosity
 python -m pytest -vvv --tb=long
@@ -290,6 +312,7 @@ python -m pytest -x
 ```
 
 ### Debug Specific Tests
+
 ```bash
 # Debug single test
 python -m pytest tests/unit/test_scaling_algorithms.py::TestScalingAlgorithms::test_slo_violation_detection -vvv -s
@@ -301,6 +324,7 @@ python -m pytest --pdb
 ## Continuous Integration
 
 ### GitHub Actions
+
 ```yaml
 # .github/workflows/test.yml
 - name: Run Tests
@@ -312,6 +336,7 @@ python -m pytest --pdb
 ```
 
 ### Pre-commit Hooks
+
 ```bash
 # Install pre-commit
 pip install pre-commit
@@ -324,6 +349,7 @@ pre-commit run --all-files
 ## Common Test Patterns
 
 ### Testing Async Functions
+
 ```python
 @pytest.mark.asyncio
 async def test_async_function():
@@ -332,6 +358,7 @@ async def test_async_function():
 ```
 
 ### Testing Exceptions
+
 ```python
 def test_exception_handling():
     with pytest.raises(ValueError, match="Invalid input"):
@@ -339,6 +366,7 @@ def test_exception_handling():
 ```
 
 ### Parameterized Tests
+
 ```python
 @pytest.mark.parametrize("input,expected", [
     (1, 2),
@@ -350,6 +378,7 @@ def test_multiply_by_two(input, expected):
 ```
 
 ### Mock Patching
+
 ```python
 @patch('module.external_function')
 def test_with_mock(mock_func):
@@ -363,6 +392,7 @@ def test_with_mock(mock_func):
 ### Common Issues
 
 **Import Errors:**
+
 ```bash
 # Ensure engine is in Python path
 export PYTHONPATH="/path/to/engine:$PYTHONPATH"
@@ -372,6 +402,7 @@ pip install -e .
 ```
 
 **Async Test Issues:**
+
 ```bash
 # Use asyncio mode
 pytest --asyncio-mode=auto
@@ -381,6 +412,7 @@ pytest --asyncio-mode=auto
 ```
 
 **Mock Not Working:**
+
 ```python
 # Use patch context manager
 with patch('module.function') as mock:

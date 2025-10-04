@@ -56,8 +56,8 @@ class ClickHouseClient:
         self,
         engine_dsn: str = "http://localhost:8123/engine",
         analytics_dsn: str = "http://localhost:8123/analytics",
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        username: Optional[str] = "user",
+        password: Optional[str] = "password",
         timeout: int = 30
     ):
         """
