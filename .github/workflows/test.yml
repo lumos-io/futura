@@ -25,22 +25,13 @@ jobs:
         working-directory: proto
         run: bun install
 
-      - name: Build frontend
+      - name: Build frontend (outputs to apis/public)
         working-directory: frontend
         run: |
           bun install
           bun run build
-          ls -la dist/  # Verify build output
-
-      - name: Copy frontend build to APIs public folder
-        run: |
-          if [ ! -d "frontend/dist" ]; then
-            echo "Error: frontend/dist directory not found"
-            exit 1
-          fi
-          mkdir -p apis/public
-          cp -r frontend/dist/* apis/public/
-          ls -la apis/public/  # Verify copy
+          # Vite config builds directly to ../apis/public
+          ls -la ../apis/public/  # Verify build output
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -109,8 +100,9 @@ jobs:
 
       - name: Create ClickHouse database
         run: |
-          # ClickHouse default user has no password in the container
-          clickhouse-client --host localhost --query "CREATE DATABASE IF NOT EXISTS events"
+          # Use docker exec to run clickhouse-client inside the container
+          CONTAINER_ID=$(docker ps --filter "ancestor=clickhouse/clickhouse-server:latest" --format "{{.ID}}")
+          docker exec $CONTAINER_ID clickhouse-client --query "CREATE DATABASE IF NOT EXISTS events"
 
       - name: Run Analytics migrations
         run: |
@@ -345,7 +337,7 @@ jobs:
         working-directory: frontend
         run: bun install
 
-      - name: Build frontend
+      - name: Build frontend (outputs to apis/public)
         working-directory: frontend
         run: bun run build
 
@@ -353,7 +345,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist-pr
-          path: frontend/dist/
+          path: apis/public/
           retention-days: 1
 
   build-and-push-pr:
