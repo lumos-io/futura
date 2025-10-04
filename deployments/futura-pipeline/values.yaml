@@ -29,7 +29,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: true
 
 # Individual service configurations
@@ -104,7 +104,7 @@ config:
 
   clickhouse:
     url: "http://clickhouse:8123"
-    database: "events"
+    database: "futura"
     username: "user"
     password: "password"
     existingSecret: ""

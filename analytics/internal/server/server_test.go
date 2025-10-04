@@ -23,7 +23,7 @@ func TestGetNodes_Integration(t *testing.T) {
 	cfg := &config.Configuration{
 		Clickhouse: &config.Clickhouse{
 			Servers:  []string{"localhost:9000"},
-			Database: "events",
+			Database: "futura",
 			Username: "user",
 			Password: "password",
 		},
@@ -126,7 +126,7 @@ func TestGetClusterConfig_Integration(t *testing.T) {
 	cfg := &config.Configuration{
 		Clickhouse: &config.Clickhouse{
 			Servers:  []string{"localhost:9000"},
-			Database: "events",
+			Database: "futura",
 			Username: "user",
 			Password: "password",
 		},
@@ -184,7 +184,7 @@ func TestGetServices_Integration(t *testing.T) {
 	cfg := &config.Configuration{
 		Clickhouse: &config.Clickhouse{
 			Servers:  []string{"localhost:9000"},
-			Database: "events",
+			Database: "futura",
 			Username: "user",
 			Password: "password",
 		},
@@ -281,7 +281,7 @@ func TestClickHouseQuery_Syntax(t *testing.T) {
 	cfg := &config.Configuration{
 		Clickhouse: &config.Clickhouse{
 			Servers:  []string{"localhost:9000"},
-			Database: "events",
+			Database: "futura",
 			Username: "user",
 			Password: "password",
 		},
