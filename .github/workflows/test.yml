@@ -57,6 +57,7 @@ jobs:
       clickhouse:
         image: clickhouse/clickhouse-server:latest
         env:
+          CLICKHOUSE_DB: futura
           CLICKHOUSE_USER: user
           CLICKHOUSE_PASSWORD: password
           CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
@@ -101,12 +102,6 @@ jobs:
       - name: Wait for ClickHouse
         run: |
           timeout 30 bash -c 'until nc -z localhost 9000; do sleep 1; done'
-
-      - name: Create ClickHouse database
-        run: |
-          # Use docker exec to run clickhouse-client inside the container
-          CONTAINER_ID=$(docker ps --filter "ancestor=clickhouse/clickhouse-server:latest" --format "{{.ID}}")
-          docker exec $CONTAINER_ID clickhouse-client --user user --password password --query "CREATE DATABASE IF NOT EXISTS futura"
 
       - name: Run Analytics migrations
         run: |
