@@ -3,7 +3,7 @@ name: Tests
 on:
   pull_request:
     branches:
-      - '**'
+      - "**"
 
 jobs:
   test-apis:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
 
       - name: Setup Go workspace
         run: |
@@ -40,7 +40,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
 
       - name: Setup Go workspace
         run: |
@@ -64,7 +64,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
 
       - name: Setup Go workspace
         run: |
@@ -88,7 +88,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
 
       - name: Setup Go workspace
         run: |
@@ -112,7 +112,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
 
       - name: Setup Go workspace
         run: |
@@ -140,7 +140,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install uv
         run: |
