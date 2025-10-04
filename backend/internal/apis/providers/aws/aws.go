@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/opisvigilant/futura/backend/internal/apis/models"
-	"github.com/opisvigilant/futura/apis/utils"
+	"github.com/opisvigilant/futura/backend/internal/shared/utils"
 	"gorm.io/datatypes"
 )
 

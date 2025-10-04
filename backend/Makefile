@@ -1,6 +1,7 @@
 VERSION := $(shell git describe --tags --always)
 COMMIT := $(shell git rev-parse HEAD)
 BUILD_TIME := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+IMAGE_NAME := davideberdin/futura-backend
 
 # ==================== APIs ====================
 
@@ -72,3 +73,10 @@ test-coverage: ## Run tests with coverage report
 .PHONY: test-short
 test-short: ## Run tests without verbose output
 	go test -race -timeout=30s ./...
+
+
+# Host-level build: builds the builder image, then runs it to create local artifacts
+.PHONY: container-build
+container-build:
+	@echo "==> Building builder image from project root..."
+	cd .. && docker build -t $(IMAGE_NAME):latest -f backend/Dockerfile .

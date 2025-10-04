@@ -76,7 +76,7 @@ jobs:
         working-directory: frontend
         run: bun install
 
-      - name: Build frontend (outputs to apis/public)
+      - name: Build frontend (outputs to backend/public)
         working-directory: frontend
         run: bun run build
 
@@ -84,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: apis/public/
+          path: backend/public/
           retention-days: 1
 
   build-and-push:
@@ -93,7 +93,7 @@ jobs:
     needs: [version, build-frontend]
     strategy:
       matrix:
-        service: [apis, analytics, operator, watcher, pipeline, engine]
+        service: [backend, operator, watcher, engine]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -101,11 +101,11 @@ jobs:
           ref: main
 
       - name: Download frontend build (APIs only)
-        if: matrix.service == 'apis'
+        if: matrix.service == 'backend'
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: apis/public/
+          path: backend/public/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -142,9 +142,7 @@ jobs:
           echo "**Version:** ${{ needs.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Images pushed to Docker Hub:**" >> $GITHUB_STEP_SUMMARY
-          echo "- \`davideberdin/futura-apis:${{ needs.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`davideberdin/futura-analytics:${{ needs.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`davideberdin/futura-backend:${{ needs.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`davideberdin/futura-operator:${{ needs.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`davideberdin/futura-watcher:${{ needs.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`davideberdin/futura-pipeline:${{ needs.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`davideberdin/futura-engine:${{ needs.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
