@@ -137,6 +137,20 @@ jobs:
         if: matrix.service.changed == 'true'
         uses: actions/checkout@v4
 
+      - name: Set up Go
+        if: matrix.service.changed == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Initialize Go workspace
+        if: matrix.service.changed == 'true'
+        run: |
+          # Create go.work file required by Gazelle
+          GOTOOLCHAIN=go1.24+auto go work init
+          go work use -r .
+          go work sync
+
       - name: Set up Bazelisk
         if: matrix.service.changed == 'true'
         uses: bazel-contrib/setup-bazel@0.9.0

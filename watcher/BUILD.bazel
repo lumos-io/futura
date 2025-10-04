@@ -21,15 +21,18 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 # This uses docker_build from rules_oci to orchestrate the multi-stage build
 genrule(
     name = "watcher_docker_build",
-    srcs = glob([
-        "**/*.go",
-        "**/*.c",
-        "**/*.h",
-        "go.mod",
-        "go.sum",
-        "Makefile",
-        "Dockerfile",
-    ]) + [
+    srcs = glob(
+        [
+            "**/*.go",
+            "**/*.c",
+            "**/*.h",
+            "go.mod",
+            "go.sum",
+            "Makefile",
+            "Dockerfile",
+        ],
+        allow_empty = True,
+    ) + [
         "//proto:proto_files",
     ],
     outs = [

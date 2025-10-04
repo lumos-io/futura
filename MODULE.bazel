@@ -100,6 +100,7 @@ use_repo(
 node = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
 node.npm_translate_lock(
     name = "npm",
+    npmrc = "//:.npmrc",
     pnpm_lock = "//frontend:pnpm-lock.yaml",
     verify_node_modules_ignored = "//:.bazelignore",
 )
@@ -143,22 +144,20 @@ oci.pull(
 # Python slim image (for engine)
 oci.pull(
     name = "python_base",
-    digest = "sha256:5e5a824a51e5f16b8a5f9b4d3da83e1e8e8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f",
     image = "python:3.13-slim",
     platforms = [
         "linux/amd64",
-        "linux/arm64",
+        "linux/arm64/v8",
     ],
 )
 
 # Debian bookworm (for watcher eBPF compilation)
 oci.pull(
     name = "debian_bookworm",
-    digest = "sha256:e11072c1614c08bf88b543fcfe09d75a0426d90896408e926454e88078274fcb",
     image = "debian:bookworm",
     platforms = [
         "linux/amd64",
-        "linux/arm64",
+        "linux/arm64/v8",
     ],
 )
-use_repo(oci, "debian_bookworm", "debian_bookworm_linux_amd64", "debian_bookworm_linux_arm64", "distroless_base", "distroless_base_linux_amd64", "distroless_base_linux_arm64_v8", "distroless_static", "distroless_static_linux_amd64", "distroless_static_linux_arm64_v8", "python_base", "python_base_linux_amd64", "python_base_linux_arm64")
+use_repo(oci, "debian_bookworm", "debian_bookworm_linux_amd64", "debian_bookworm_linux_arm64_v8", "distroless_base", "distroless_base_linux_amd64", "distroless_base_linux_arm64_v8", "distroless_static", "distroless_static_linux_amd64", "distroless_static_linux_arm64_v8", "python_base", "python_base_linux_amd64", "python_base_linux_arm64_v8")
