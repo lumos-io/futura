@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,7 +13,7 @@ import (
 	"github.com/opisvigilant/futura/backend/internal/shared/config"
 )
 
-func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Engine, error) {
+func SetupRouter(config *config.Configuration) (*gin.Engine, error) {
 	router := gin.Default()
 
 	// Security headers
@@ -36,6 +35,12 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 
 	router.GET("/healthz", controllers.Healthz)
 	router.GET("/version", controllers.Version)
+
+	// Initialize analytics controller
+	analyticsCtrl, err := controllers.NewAnalyticsController(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize analytics controller: %w", err)
+	}
 
 	// Auth routes
 	a := controllers.NewAuthController(config)
@@ -109,15 +114,20 @@ func SetupRouter(embeddedFiles embed.FS, config *config.Configuration) (*gin.Eng
 				orgClusters.DELETE("/:cluster_id", clusterController.DeleteCluster)
 			}
 
-			// Cluster-specific endpoints (direct access by cluster ID)
-			clusters := org.Group("/:org_id/clusters")
+			// Cluster-specific analytics endpoints (direct access by cluster ID)
+			analytics := org.Group("/:org_id/clusters")
 			{
-				clusters.GET("/:cluster_id/metrics", clusterController.GetMetrics)
-				clusters.GET("/:cluster_id/events", clusterController.GetEvents)
-				clusters.GET("/:cluster_id/slo-metrics", clusterController.GetSLOMetricsSSE)
-				clusters.GET("/:cluster_id/nodes/stream", clusterController.GetNodesSSE)
+				analytics.GET("/:cluster_id/services", analyticsCtrl.GetServices)
+				analytics.GET("/:cluster_id/overview", analyticsCtrl.GetOverviewMetrics)
+				analytics.GET("/:cluster_id/cluster-config", analyticsCtrl.GetClusterConfig)
+				analytics.GET("/:cluster_id/metrics", analyticsCtrl.GetMetrics)
+				analytics.GET("/:cluster_id/nodes", analyticsCtrl.GetNodes)
+				analytics.GET("/:cluster_id/events", analyticsCtrl.GetEvents)
+				analytics.GET("/:cluster_id/slo-metrics", analyticsCtrl.GetSLOMetricsSSE)
+				analytics.GET("/:cluster_id/nodes/stream", analyticsCtrl.GetNodesSSE)
 			}
 		}
+
 	}
 
 	router.NoRoute(func(c *gin.Context) {

@@ -50,10 +50,6 @@ This directory contains the GitHub Actions workflows for the Futura monorepo.
 **Phase 1 - Testing (run in parallel):**
 
 - ✅ **test-apis**: Go tests for APIs service (with frontend build)
-- ✅ **test-analytics**: Go tests for Analytics service
-  - Runs ClickHouse service container
-  - Executes migrations (analytics + engine)
-  - Runs tests with database
 - ✅ **test-pipeline**: Go tests for Pipeline service
 - ✅ **test-watcher**: Go tests for Watcher service (with eBPF generation)
 - ✅ **test-operator**: Operator build verification
@@ -90,7 +86,7 @@ This directory contains the GitHub Actions workflows for the Futura monorepo.
 
 3. **Multi-Architecture Image Build**:
 
-   - Builds Docker images for all services (apis, analytics, operator, watcher, pipeline, engine)
+   - Builds Docker images for all services (apis, operator, watcher, pipeline, engine)
    - Pushes to Docker Hub with tags:
      - `davideberdin/futura-{service}:{version}` (e.g., `v0.1.1`)
      - `davideberdin/futura-{service}:latest`
@@ -171,7 +167,7 @@ The next automatic push to `main` will increment from your new version.
 
 The CI workflows handle monorepo dependencies correctly:
 
-### Go Services (apis, analytics, operator, watcher, pipeline)
+### Go Services (apis, operator, watcher, pipeline)
 
 - Uses Go workspace (`go work`) to resolve local module dependencies
 - Includes `proto/` and `go-lib/` modules automatically
@@ -223,7 +219,7 @@ You can run all tests locally using the root Makefile:
 # Run all tests (Go, Python, Frontend)
 make test
 
-# Run only Go service tests (Analytics requires ClickHouse)
+# Run only Go service tests (apis requires ClickHouse)
 make test-go
 
 # Run only Python tests
@@ -233,13 +229,13 @@ make test-python
 make test-frontend
 ```
 
-**Note:** Analytics tests require ClickHouse to be running. Start it with:
+**Note:** Apis tests require ClickHouse to be running. Start it with:
 
 ```bash
 # Start ClickHouse with docker-compose
 docker compose up -d clickhouse
 
-# Run ClickHouse migrations (both analytics and engine)
+# Run ClickHouse migrations
 make setup-clickhouse-migrations
 
 # Now run tests

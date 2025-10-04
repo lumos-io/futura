@@ -1,9 +1,22 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/opisvigilant/futura/backend/internal/pipeline/collect"
+	"github.com/opisvigilant/futura/backend/internal/pipeline/enrich"
+	"github.com/opisvigilant/futura/backend/internal/pipeline/store"
+	"github.com/opisvigilant/futura/backend/internal/pipeline/validate"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+
+	pb "github.com/opisvigilant/futura/proto/gen/services"
 )
 
 var pipelineCmd = &cobra.Command{
@@ -25,8 +38,44 @@ var collectCmd = &cobra.Command{
 		if err := cfg.ValidatePipeline(); err != nil {
 			return fmt.Errorf("configuration validation failed: %w", err)
 		}
-		// TODO: Implement collect logic
-		return fmt.Errorf("collect command not yet implemented")
+
+		signalCh := make(chan os.Signal, 1)
+		signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+
+		lis, err := net.Listen("tcp", cfg.Collect.Endpoint)
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+			os.Exit(1)
+		}
+
+		grpcServer := grpc.NewServer()
+
+		cs, err := collect.NewCollectServer(cfg)
+		if err != nil {
+			log.Fatalf("failed to create the collect server: %v", err)
+			os.Exit(1)
+		}
+
+		// start shutdown goroutine
+		go func() {
+			// capture sigterm and other system call here
+			<-signalCh
+			if err := cs.Close(); err != nil {
+				panic(err)
+			}
+			grpcServer.GracefulStop()
+
+			fmt.Println("Shutting down collector stage...")
+		}()
+
+		pb.RegisterCollectServiceServer(grpcServer, cs)
+
+		log.Println("🚀 gRPC server listening on :50051")
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+			os.Exit(1)
+		}
+		return nil
 	},
 }
 
@@ -38,8 +87,29 @@ var storeCmd = &cobra.Command{
 		if err := cfg.ValidatePipeline(); err != nil {
 			return fmt.Errorf("configuration validation failed: %w", err)
 		}
-		// TODO: Implement store logic
-		return fmt.Errorf("store command not yet implemented")
+		signalCh := make(chan os.Signal, 1)
+		signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+
+		s, err := store.New(cfg)
+		if err != nil {
+			panic(err)
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		// start shutdown goroutine
+		go func() {
+			// capture sigterm and other system call here
+			<-signalCh
+			signal.Stop(signalCh)
+			cancel()
+			fmt.Println("Shutting down store stage...")
+		}()
+
+		if err := s.Start(ctx); err != nil {
+			panic(err)
+		}
+		return nil
 	},
 }
 
@@ -51,8 +121,29 @@ var validateCmd = &cobra.Command{
 		if err := cfg.ValidatePipeline(); err != nil {
 			return fmt.Errorf("configuration validation failed: %w", err)
 		}
-		// TODO: Implement validate logic
-		return fmt.Errorf("validate command not yet implemented")
+		signalCh := make(chan os.Signal, 1)
+		signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+
+		v, err := validate.New(cfg)
+		if err != nil {
+			panic(err)
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		// start shutdown goroutine
+		go func() {
+			// capture sigterm and other system call here
+			<-signalCh
+			signal.Stop(signalCh)
+			cancel()
+			fmt.Println("Shutting down validate stage...")
+		}()
+
+		if err := v.Start(ctx); err != nil {
+			panic(err)
+		}
+		return nil
 	},
 }
 
@@ -64,8 +155,29 @@ var enrichCmd = &cobra.Command{
 		if err := cfg.ValidatePipeline(); err != nil {
 			return fmt.Errorf("configuration validation failed: %w", err)
 		}
-		// TODO: Implement enrich logic
-		return fmt.Errorf("enrich command not yet implemented")
+		signalCh := make(chan os.Signal, 1)
+		signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+
+		e, err := enrich.New(cfg)
+		if err != nil {
+			panic(err)
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		// start shutdown goroutine
+		go func() {
+			// capture sigterm and other system call here
+			<-signalCh
+			signal.Stop(signalCh)
+			cancel()
+			fmt.Println("Shutting down enrichment stage...")
+		}()
+
+		if err := e.Start(ctx); err != nil {
+			panic(err)
+		}
+		return nil
 	},
 }
 

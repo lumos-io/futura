@@ -25,30 +25,7 @@ helm install futura-operator ./deployments/futura-operator \
   --create-namespace
 ```
 
-### 2. futura-analytics
-
-Analytics service for metrics aggregation from ClickHouse.
-
-**Location:** `deployments/futura-analytics/`
-
-**Key Features:**
-
-- gRPC service (port 50061)
-- ClickHouse integration
-- HPA support
-- Pod Disruption Budget
-
-**Installation:**
-
-```bash
-helm install futura-analytics ./deployments/futura-analytics \
-  --namespace futura-system \
-  --create-namespace \
-  --set clickhouse.servers={clickhouse:9000} \
-  --set clickhouse.password=<password>
-```
-
-### 3. futura-apis
+### 2. futura-apis
 
 REST API backend with embedded React frontend.
 
@@ -73,7 +50,7 @@ helm install futura-apis ./deployments/futura-apis \
   --set redis.servers={redis:6379}
 ```
 
-### 4. futura-engine
+### 3. futura-engine
 
 Optimization engine with RL-based recommendations.
 
@@ -98,7 +75,7 @@ helm install futura-engine ./deployments/futura-engine \
   --set config.clickhouse.url=http://clickhouse:8123
 ```
 
-### 5. futura-pipeline
+### 4. futura-pipeline
 
 Data ingestion pipeline (Kafka → ClickHouse).
 
@@ -134,24 +111,18 @@ kubectl create namespace futura-system
 helm install futura-operator ./deployments/futura-operator \
   --namespace futura-system
 
-# 3. Install analytics (required by APIs)
-helm install futura-analytics ./deployments/futura-analytics \
-  --namespace futura-system \
-  --set clickhouse.servers={clickhouse:9000}
-
-# 4. Install APIs (frontend + backend)
+# 3. Install APIs (frontend + backend)
 helm install futura-apis ./deployments/futura-apis \
   --namespace futura-system \
-  --set analytics.endpoint=futura-analytics:50061 \
   --set database.host=postgres \
   --set redis.servers={redis:6379}
 
-# 5. Install engine (optimization recommendations)
+# 4. Install engine (optimization recommendations)
 helm install futura-engine ./deployments/futura-engine \
   --namespace futura-system \
   --set config.clickhouse.url=http://clickhouse:8123
 
-# 6. Install pipeline (data ingestion)
+# 5. Install pipeline (data ingestion)
 helm install futura-pipeline ./deployments/futura-pipeline \
   --namespace futura-system \
   --set config.kafka.brokers={kafka:9092} \
@@ -167,7 +138,7 @@ For local testing with Kind:
 kind create cluster --name futura-test
 
 # Install all services with default values
-for chart in operator analytics apis engine pipeline; do
+for chart in operator apis engine pipeline; do
   helm install futura-$chart ./deployments/futura-$chart \
     --namespace futura-system \
     --create-namespace \
@@ -187,14 +158,14 @@ done
          │  futura-apis  │ (REST API + Frontend)
          └───────┬───────┘
                  │ gRPC
-       ┌─────────┴─────────┐
-       ↓                   ↓
-┌──────────────┐    ┌──────────────┐
-│ futura-      │    │ futura-      │
-│ analytics    │    │ engine       │
-└──────┬───────┘    └──────┬───────┘
-       │ SQL               │ SQL
-       ↓                   ↓
+       ┌─────────┴
+       ↓
+┌──────────────┐
+│ futura-      │
+│ engine       │
+└──────┬───────┘
+       │ SQL
+       ↓
 ┌──────────────────────────────────┐
 │         ClickHouse               │
 └──────────────────────────────────┘
@@ -219,7 +190,7 @@ All charts require these external services:
 ### Required
 
 - **PostgreSQL**: User/cluster data (APIs)
-- **ClickHouse**: Metrics storage (Analytics, Engine, Pipeline)
+- **ClickHouse**: Metrics storage (Engine, Pipeline)
 - **Redis**: API key storage (APIs, Pipeline)
 - **Kafka**: Event streaming (Pipeline)
 
@@ -261,9 +232,6 @@ kubectl create secret generic clickhouse-credentials \
   --from-literal=clickhouse-password=<password> \
   -n futura-system
 
-# Install with secret references
-helm install futura-analytics ./deployments/futura-analytics \
-  --set clickhouse.existingSecret=clickhouse-credentials
 ```
 
 ## Upgrading
@@ -271,7 +239,7 @@ helm install futura-analytics ./deployments/futura-analytics \
 Upgrade all services:
 
 ```bash
-for chart in operator analytics apis engine pipeline; do
+for chart in operator apis engine pipeline; do
   helm upgrade futura-$chart ./deployments/futura-$chart \
     --namespace futura-system
 done
@@ -290,7 +258,7 @@ helm upgrade futura-apis ./deployments/futura-apis \
 Remove all services:
 
 ```bash
-for chart in pipeline engine apis analytics operator; do
+for chart in pipeline engine apis operator; do
   helm uninstall futura-$chart --namespace futura-system
 done
 
@@ -341,17 +309,6 @@ kubectl logs -n futura-system -l app.kubernetes.io/name=futura-apis -f
 
 # Specific pod
 kubectl logs -n futura-system <pod-name> -f
-```
-
-### Debug Connection Issues
-
-```bash
-# Test DNS resolution
-kubectl run -it --rm debug --image=busybox --restart=Never -- nslookup futura-analytics
-
-# Test TCP connectivity
-kubectl run -it --rm debug --image=nicolaka/netshoot --restart=Never -- \
-  nc -zv futura-analytics 50061
 ```
 
 ### Common Issues

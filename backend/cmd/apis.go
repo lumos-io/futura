@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,16 +10,12 @@ import (
 	"time"
 
 	"github.com/Unleash/unleash-client-go/v4"
-	"github.com/opisvigilant/futura/backend/internal/analytics"
 	"github.com/opisvigilant/futura/backend/internal/apis/models"
 	"github.com/opisvigilant/futura/backend/internal/apis/routes"
 	"github.com/opisvigilant/futura/backend/internal/apis/workflow"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
-
-//go:embed ../public/*
-var embeddedFiles embed.FS
 
 var apisCmd = &cobra.Command{
 	Use:   "apis",
@@ -42,13 +37,6 @@ func runAPIs(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("configuration validation failed: %w", err)
 	}
 
-	// Initialize analytics
-	analyticsClient, err := analytics.New(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to initialize analytics: %w", err)
-	}
-	defer analyticsClient.Close()
-
 	// Setup feature flags
 	if err := initializeUnleash(); err != nil {
 		return fmt.Errorf("failed to initialize unleash: %w", err)
@@ -61,7 +49,7 @@ func runAPIs(cmd *cobra.Command, args []string) error {
 	}
 
 	// Setup router
-	router, err := routes.SetupRouter(embeddedFiles, cfg, analyticsClient)
+	router, err := routes.SetupRouter(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to define routes: %w", err)
 	}
