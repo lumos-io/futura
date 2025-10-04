@@ -30,11 +30,17 @@ jobs:
         run: |
           bun install
           bun run build
+          ls -la dist/  # Verify build output
 
       - name: Copy frontend build to APIs public folder
         run: |
+          if [ ! -d "frontend/dist" ]; then
+            echo "Error: frontend/dist directory not found"
+            exit 1
+          fi
           mkdir -p apis/public
           cp -r frontend/dist/* apis/public/
+          ls -la apis/public/  # Verify copy
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -82,8 +88,17 @@ jobs:
           go work use -r .
           go work sync
 
-      - name: Install golang-migrate
+      - name: Install ClickHouse client and migrate tool
         run: |
+          # Install ClickHouse client
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates dirmngr
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 8919F6BD2B48D754
+          echo "deb https://packages.clickhouse.com/deb stable main" | sudo tee /etc/apt/sources.list.d/clickhouse.list
+          sudo apt-get update
+          sudo apt-get install -y clickhouse-client
+
+          # Install golang-migrate
           curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz
           sudo mv migrate /usr/local/bin/migrate
           chmod +x /usr/local/bin/migrate
@@ -92,16 +107,21 @@ jobs:
         run: |
           timeout 30 bash -c 'until nc -z localhost 9000; do sleep 1; done'
 
+      - name: Create ClickHouse database
+        run: |
+          # ClickHouse default user has no password in the container
+          clickhouse-client --host localhost --query "CREATE DATABASE IF NOT EXISTS events"
+
       - name: Run Analytics migrations
         run: |
           migrate -path analytics/db/migrations \
-            -database "clickhouse://localhost:9000?database=events&x-multi-statement=true" \
+            -database "clickhouse://default@localhost:9000/events?x-multi-statement=true" \
             up
 
       - name: Run Engine migrations
         run: |
           migrate -path engine/db/migrations \
-            -database "clickhouse://localhost:9000?database=events&x-multi-statement=true" \
+            -database "clickhouse://default@localhost:9000/events?x-multi-statement=true" \
             up
 
       - name: Run Analytics tests
