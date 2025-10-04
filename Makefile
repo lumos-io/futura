@@ -41,14 +41,14 @@ setup-clickhouse-migrations: ## Run ClickHouse migrations (requires ClickHouse r
 	@echo "==> Running ClickHouse migrations..."
 	@command -v migrate >/dev/null 2>&1 || { echo "Error: golang-migrate not installed. Install: brew install golang-migrate"; exit 1; }
 	@echo "  - Creating events database..."
-	@clickhouse-client --host localhost --query "CREATE DATABASE IF NOT EXISTS events" || echo "Note: If connection fails, check ClickHouse credentials in docker-compose.yaml"
+	@clickhouse-client --host localhost --user user --password password --query "CREATE DATABASE IF NOT EXISTS events" || echo "Note: If connection fails, check ClickHouse credentials in docker-compose.yaml"
 	@echo "  - Running Analytics migrations..."
 	@migrate -path analytics/db/migrations \
-		-database "clickhouse://default@localhost:9000/events?x-multi-statement=true" \
+		-database "clickhouse://user:password@localhost:9000/events?x-multi-statement=true" \
 		up
 	@echo "  - Running Engine migrations..."
 	@migrate -path engine/db/migrations \
-		-database "clickhouse://default@localhost:9000/events?x-multi-statement=true" \
+		-database "clickhouse://user:password@localhost:9000/events?x-multi-statement=true" \
 		up
 	@echo "✅ ClickHouse migrations completed!"
 
