@@ -7,8 +7,8 @@ import (
 	"time"
 
 	pbeg "github.com/opisvigilant/futura/proto/gen/engine"
-	"io.lumos/futura/internal/cloudprovider"
 	futurav1 "io.lumos/futura/api/v1"
+	"io.lumos/futura/internal/cloudprovider"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -22,8 +22,8 @@ import (
 )
 
 type Poller struct {
-	grpcClient            pbeg.RecommendationServiceClient
-	cloudProviderManager  *cloudprovider.CloudProviderManager
+	grpcClient           pbeg.RecommendationServiceClient
+	cloudProviderManager *cloudprovider.CloudProviderManager
 }
 
 func New(grpcConn *grpc.ClientConn, kubeClient client.Client) (*Poller, error) {

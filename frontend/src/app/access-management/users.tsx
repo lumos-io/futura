@@ -90,7 +90,7 @@ const Users: React.FC<UsersProps> = ({ title }) => {
 
         const data = await res.json();
         // Convert role and status integers to enum strings
-        const users = (data.data || []).map((user: any) => ({
+        const users = (data.data || []).map((user: { role: number; status: number }) => ({
           ...user,
           role: userRoleFromJSON(user.role),
           status: userStatusFromJSON(user.status),

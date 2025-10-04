@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/opisvigilant/futura/go-lib/stream"
 	"github.com/opisvigilant/futura/pipeline/internal/config"
@@ -185,6 +186,11 @@ func (v *Validator) ValidateKubernetesEvent(e *pb.KubernetesEvent) error {
 	if e.ObjectTimestamp <= 0 {
 		return fmt.Errorf("invalid object_timestamp: %d", e.ObjectTimestamp)
 	}
+	// Check timestamp not too old (24 hours)
+	now := time.Now().Unix()
+	if now-e.ObjectTimestamp > 24*3600 {
+		return errors.New("object_timestamp out of acceptable range")
+	}
 	if e.EventUid == "" {
 		return errors.New("event_uid is required")
 	}
@@ -193,6 +199,12 @@ func (v *Validator) ValidateKubernetesEvent(e *pb.KubernetesEvent) error {
 	}
 	if e.EventCount < 0 {
 		return fmt.Errorf("event_count must be non-negative: %d", e.EventCount)
+	}
+	// Validate RFC3339 format for EventStarttime
+	if e.EventStarttime != "" {
+		if _, err := time.Parse(time.RFC3339, e.EventStarttime); err != nil {
+			return errors.New("event_starttime not RFC3339")
+		}
 	}
 	return nil
 }
@@ -205,35 +217,44 @@ func (v *Validator) ValidateKubernetesClusterObject(obj *pb.KubernetesClusterObj
 	if obj.Type == "" {
 		return errors.New("type is required")
 	}
+	if obj.Kind == "" {
+		return errors.New("kind is required")
+	}
+	if obj.Name == "" {
+		return errors.New("name is required")
+	}
 	if obj.Uid == "" {
 		return errors.New("uid is required")
 	}
+	if obj.Timestamp == nil {
+		return errors.New("timestamp is nil")
+	}
 	if obj.RestartCount < 0 {
-		obj.RestartCount = 0
+		return errors.New("restart_count must be non-negative")
 	}
 	// Replica counts must be non-negative
-	replicaFields := map[string]int64{
-		"replicas":                           obj.Replicas,
-		"ready_replicas":                     obj.ReadyReplicas,
-		"available_replicas":                 obj.AvailableReplicas,
-		"updated_replicas":                   obj.UpdatedReplicas,
-		"current_replicas":                   obj.CurrentReplicas,
-		"hpa_max_replicas":                   obj.HpaMaxReplicas,
-		"hpa_min_replicas":                   obj.HpaMinReplicas,
-		"job_active":                         obj.JobActive,
-		"job_failed":                         obj.JobFailed,
-		"job_succeeded":                      obj.JobSucceeded,
-		"job_parallelism":                    obj.JobParallelism,
-		"job_completions":                    obj.JobCompletions,
-		"ns_phase_value":                     obj.NsPhaseValue,
-		"daemonset_current_number_scheduled": obj.DaemonsetCurrentNumberScheduled,
-		"daemonset_desired_number_scheduled": obj.DaemonsetDesiredNumberScheduled,
-		"daemonset_number_misscheduled":      obj.DaemonsetNumberMisscheduled,
-		"daemonset_number_ready":             obj.DaemonsetNumberReady,
+	if obj.Replicas < 0 {
+		return errors.New("replicas must be non-negative")
 	}
-	for _, value := range replicaFields {
-		if value < 0 {
-			value = 0
+	// Validate containers
+	for i, c := range obj.Containers {
+		if c.Name == "" {
+			return fmt.Errorf("containers[%d].name is required", i)
+		}
+	}
+	// Validate volumes
+	for i, v := range obj.Volumes {
+		if v.Name == "" {
+			return fmt.Errorf("volumes[%d].name is required", i)
+		}
+	}
+	// Validate cluster quota if present
+	if obj.ClusterQuota != nil {
+		if obj.ClusterQuota.Name == "" {
+			return errors.New("cluster_quota.name is required")
+		}
+		if obj.ClusterQuota.Uid == "" {
+			return errors.New("cluster_quota.uid is required")
 		}
 	}
 	return nil
@@ -276,6 +297,9 @@ func (v *Validator) ValidateKubeletMetrics(m *pb.KubernetesKubeletStats) error {
 func (v *Validator) validateContainerStats(c *pb.ContainerStats, path string) error {
 	if c.Name == "" {
 		return fmt.Errorf("%s.name is required", path)
+	}
+	if c.StartTime == nil {
+		return fmt.Errorf("%s.startTime is nil", path)
 	}
 	return nil
 }

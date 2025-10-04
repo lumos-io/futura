@@ -16,6 +16,38 @@ PROTO_ENGINE_FILES := $(shell find $(PROTO_ENGINE_DIR) -name '*.proto')
 
 GO_WORK_FILE=./go.work
 
+##@ Testing
+
+.PHONY: test
+test: test-go test-python test-frontend ## Run all tests in the project
+
+.PHONY: test-go
+test-go: ## Run all Go service tests
+	@echo "==> Running Go tests..."
+	@echo "  - Testing APIs..."
+	@cd apis && go test -v -race ./... || exit 1
+	@echo "  - Testing Analytics..."
+	@cd analytics && go test -v -race ./... || exit 1
+	@echo "  - Testing Pipeline..."
+	@cd pipeline && go test -v -race ./... || exit 1
+	@echo "  - Testing Watcher..."
+	@cd watcher && go test -v -race ./... || exit 1
+	@echo "  - Testing Operator..."
+	@cd operator && go mod tidy && make build || exit 1
+	@echo "✅ All Go tests passed!"
+
+.PHONY: test-python
+test-python: ## Run Python engine tests
+	@echo "==> Running Python tests..."
+	@cd engine && uv sync && uv run python3 -m pytest tests/ -v || exit 1
+	@echo "✅ Python tests passed!"
+
+.PHONY: test-frontend
+test-frontend: ## Run frontend lint and type-check
+	@echo "==> Running Frontend tests..."
+	@cd frontend && bun install && bun run lint --max-warnings 20 && bun run type-check || exit 1
+	@echo "✅ Frontend tests passed!"
+
 PHONY: dev-env
 dev-env:
 ifeq ("$(wildcard $(GO_WORK_FILE))","")
@@ -208,3 +240,10 @@ apis-run: frontend-build
 	$(MAKE) -C analytics run & \
 	$(MAKE) -C apis run & \
 	wait
+##@ Help
+
+.PHONY: help
+help: ## Display this help message
+	@echo "Futura Monorepo - Available Make Targets"
+	@echo ""
+	@awk 'BEGIN {FS = ":.*##"; printf "\033[36m%-20s\033[0m %s\n", "Target", "Description"} /^[a-zA-Z_-]+:.*?##/ { printf "\033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

@@ -45,6 +45,16 @@ spec:
                 description: ApiKey specifies which customer/cluster this optimization
                   is for.
                 type: string
+              clusterScalingMode:
+                default: recommend
+                description: |-
+                  ClusterScalingMode controls whether the operator automatically scales the cluster or only provides recommendations.
+                  Valid values: "auto" (automatic scaling), "recommend" (recommendations only).
+                  Defaults to "recommend" if not specified.
+                enum:
+                - auto
+                - recommend
+                type: string
               costOptimization:
                 description: CostOptimization settings for budget and instance preferences.
                 properties:

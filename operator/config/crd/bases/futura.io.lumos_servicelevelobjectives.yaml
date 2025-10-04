@@ -672,6 +672,10 @@ spec:
                   type: object
                 type: array
                 x-kubernetes-list-type: atomic
+              name:
+                type: string
+              namespace:
+                type: string
               recommenders:
                 description: |-
                   Recommender responsible for generating recommendation for the set of pods and the deployment.
@@ -679,7 +683,7 @@ spec:
                   recommender.
                 items:
                   description: |-
-                    MultidimPodAutoscalerRecommenderSelector points to a specific Multidimensional Pod Autoscaler
+                    PodAutoscalerRecommenderSelector points to a specific ServiceLevelObjective
                     recommender.
                     In the future it might pass parameters to the recommender.
                   properties:
@@ -764,10 +768,10 @@ spec:
               scaleTargetRef:
                 description: |-
                   ScaleTargetRef points to the controller managing the set of pods for the autoscaler to
-                  control, e.g., Deployment, StatefulSet. MultidimPodAutoscaler can be targeted at controller
+                  control, e.g., Deployment, StatefulSet. ServiceLevelObjective can be targeted at controller
                   implementing scale subresource (the pod set is retrieved from the controller's ScaleStatus
                   or some well known controllers (e.g., for DaemonSet the pod set is read from the
-                  controller's spec). If MultidimPodAutoscaler cannot use specified target it will report
+                  controller's spec). If ServiceLevelObjective cannot use specified target it will report
                   the ConfigUnsupported condition.
                 properties:
                   apiVersion:
@@ -801,6 +805,8 @@ spec:
                     type: string
                 type: object
             required:
+            - name
+            - namespace
             - scaleTargetRef
             type: object
           status:
@@ -812,8 +818,8 @@ spec:
                   Conditions is the set of conditions required for this autoscaler to scale its target, and
                   indicates whether or not those conditions are met.
                 items:
-                  description: MultidimPodAutoscalerCondition describes the state
-                    of a MultidimPodAutoscaler at a certain point.
+                  description: PodAutoscalerCondition describes the state of a PodAutoscaler
+                    at a certain point.
                   properties:
                     lastTransitionTime:
                       description: lastTransitionTime is the last time the condition
@@ -1273,7 +1279,7 @@ spec:
                 type: integer
               lastScaleTime:
                 description: |-
-                  Last time the MultidimPodAutoscaler scaled the number of pods and resizes containers;
+                  Last time the PodAutoscaler scaled the number of pods and resizes containers;
                   Used by the autoscaler to control how often scaling operations are performed.
                 format: date-time
                 type: string

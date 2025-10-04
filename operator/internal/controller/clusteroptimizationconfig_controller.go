@@ -83,7 +83,7 @@ func (r *ClusterOptimizationConfigReconciler) Reconcile(ctx context.Context, req
 
 	grpcReq := &pbeg.ClusterOptimizationConfigRequest{
 		ApiKey:                 config.Spec.ApiKey,
-		CloudProvider:          "aws", // TODO: Make this configurable
+		CloudProvider:          "aws",       // TODO: Make this configurable
 		Region:                 "us-east-1", // TODO: Make this configurable
 		CostSensitivity:        config.Spec.CostOptimization.CostSensitivity,
 		MonthlyBudget:          config.Spec.CostOptimization.MaxMonthlyBudgetUSD,

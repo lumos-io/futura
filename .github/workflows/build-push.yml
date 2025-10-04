@@ -26,7 +26,7 @@ jobs:
           CURRENT_VERSION=$(cat .version)
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Bump patch version
+      - name: Bump minor version
         id: bump
         run: |
           CURRENT_VERSION="${{ steps.read.outputs.current }}"
@@ -37,9 +37,9 @@ jobs:
           MINOR=${PARTS[1]}
           PATCH=${PARTS[2]}
 
-          # Increment patch
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+          # Increment minor (2nd digit) and reset patch to 0
+          NEW_MINOR=$((MINOR + 1))
+          NEW_VERSION="v${MAJOR}.${NEW_MINOR}.0"
 
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "New version: $NEW_VERSION"
