@@ -1,0 +1,178 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  test-apis:
+    name: Test APIs Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Setup Go workspace
+        run: |
+          go work init
+          go work use -r .
+          go work sync
+
+      - name: Run APIs tests
+        working-directory: apis
+        run: |
+          go mod tidy
+          make test
+
+  test-analytics:
+    name: Test Analytics Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Setup Go workspace
+        run: |
+          go work init
+          go work use -r .
+          go work sync
+
+      - name: Run Analytics tests
+        working-directory: analytics
+        run: |
+          go mod tidy
+          go test -v -race ./...
+
+  test-pipeline:
+    name: Test Pipeline Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Setup Go workspace
+        run: |
+          go work init
+          go work use -r .
+          go work sync
+
+      - name: Run Pipeline tests
+        working-directory: pipeline
+        run: |
+          go mod tidy
+          go test -v -race ./...
+
+  test-watcher:
+    name: Test Watcher Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Setup Go workspace
+        run: |
+          go work init
+          go work use -r .
+          go work sync
+
+      - name: Run Watcher tests
+        working-directory: watcher
+        run: |
+          go mod tidy
+          go test -v -race ./...
+
+  test-operator:
+    name: Test Operator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Setup Go workspace
+        run: |
+          go work init
+          go work use -r .
+          go work sync
+
+      - name: Install controller-gen
+        run: |
+          go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.17.0
+
+      - name: Run Operator tests
+        working-directory: operator
+        run: |
+          go mod tidy
+          make test
+
+  test-engine:
+    name: Test Engine Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Run Engine tests
+        working-directory: engine
+        run: |
+          uv sync
+          uv run python3 -m pytest tests/ -v
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install
+
+      - name: Run lint
+        working-directory: frontend
+        run: bun run lint
+
+      - name: Type check
+        working-directory: frontend
+        run: bun run type-check
