@@ -18,7 +18,7 @@ export default defineConfig({
   },
   base: "/",
   build: {
-    outDir: "../apis/public", // Build frontend into the Go backend
+    outDir: "../backend/public", // Build frontend into the Go backend
     emptyOutDir: true,
   },
 })

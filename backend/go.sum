@@ -214,10 +214,6 @@ github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjY
 github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe/go.mod h1:wL8QJuTMNUDYhXwkmfOly8iTdp5TEcJFWZD2D7SIkUc=
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 h1:W6apQkHrMkS0Muv8G/TipAy/FJl/rCYT0+EuS8+Z0z4=
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
-github.com/opisvigilant/futura/apis v0.0.0-20251004121337-9f3cfe710c34 h1:dWj49/C4hlsUs2JqZ4+h5uaSgK/kOBMkH3FK5/ql1oo=
-github.com/opisvigilant/futura/apis v0.0.0-20251004121337-9f3cfe710c34/go.mod h1:nKWpIWP52bulw6UU9hxVjvxq6PUFzkwtGRAIW2rmbsk=
-github.com/opisvigilant/futura/proto v0.0.0-20251004121337-9f3cfe710c34 h1:Y9KZu7aWP/7K7LY3qWPaGKoqCt5ntAV/w1/e6Fwip+A=
-github.com/opisvigilant/futura/proto v0.0.0-20251004121337-9f3cfe710c34/go.mod h1:DwCrPCcGJHGr580SiF3qqJs/ZuSBBE8N4NrNDlaUK/4=
 github.com/paulmach/orb v0.11.1 h1:3koVegMC4X/WeiXYz9iswopaTwMem53NzTJuTF20JzU=
 github.com/paulmach/orb v0.11.1/go.mod h1:5mULz1xQfs3bmQm63QEJA6lNGujuRafwA5S/EnuLaLU=
 github.com/paulmach/protoscan v0.2.1/go.mod h1:SpcSwydNLrxUGSDvXvO0P7g7AuhJ7lcKfDlhJCDw2gY=
