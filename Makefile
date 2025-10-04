@@ -44,11 +44,11 @@ setup-clickhouse-migrations: ## Run ClickHouse migrations (requires ClickHouse r
 	@clickhouse-client --host localhost --user user --password password --query "CREATE DATABASE IF NOT EXISTS futura" || echo "Note: If connection fails, check ClickHouse credentials in docker-compose.yaml"
 	@echo "  - Running Analytics migrations..."
 	@migrate -path analytics/db/migrations \
-		-database "clickhouse://user:password@localhost:9000/futura?x-multi-statement=true" \
+		-database "clickhouse://localhost:9000?username=user&password=password&database=futura&x-multi-statement=true" \
 		up
 	@echo "  - Running Engine migrations..."
 	@migrate -path engine/db/migrations \
-		-database "clickhouse://user:password@localhost:9000/futura?x-multi-statement=true" \
+		-database "clickhouse://localhost:9000?username=user&password=password&database=futura&x-multi-statement=true" \
 		up
 	@echo "✅ ClickHouse migrations completed!"
 
