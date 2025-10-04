@@ -26,15 +26,29 @@ test-go: ## Run all Go service tests
 	@echo "==> Running Go tests..."
 	@echo "  - Testing APIs..."
 	@cd apis && go test -v -race ./... || exit 1
-	@echo "  - Testing Analytics..."
+	@echo "  - Testing Analytics (requires ClickHouse running)..."
 	@cd analytics && go test -v -race ./... || exit 1
 	@echo "  - Testing Pipeline..."
 	@cd pipeline && go test -v -race ./... || exit 1
 	@echo "  - Testing Watcher..."
-	@cd watcher && go test -v -race ./... || exit 1
+	@cd watcher && go test -v -race $(shell cd watcher && go list ./... | grep -v '/internal/ebpf/bpf/') || exit 1
 	@echo "  - Testing Operator..."
 	@cd operator && go mod tidy && make build || exit 1
 	@echo "✅ All Go tests passed!"
+
+.PHONY: setup-clickhouse-migrations
+setup-clickhouse-migrations: ## Run ClickHouse migrations (requires ClickHouse running on localhost:9000)
+	@echo "==> Running ClickHouse migrations..."
+	@command -v migrate >/dev/null 2>&1 || { echo "Error: golang-migrate not installed. Install: brew install golang-migrate"; exit 1; }
+	@echo "  - Running Analytics migrations..."
+	@migrate -path analytics/db/migrations \
+		-database "clickhouse://localhost:9000?database=events&x-multi-statement=true" \
+		up
+	@echo "  - Running Engine migrations..."
+	@migrate -path engine/db/migrations \
+		-database "clickhouse://localhost:9000?database=events&x-multi-statement=true" \
+		up
+	@echo "✅ ClickHouse migrations completed!"
 
 .PHONY: test-python
 test-python: ## Run Python engine tests

@@ -68,6 +68,10 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install proto dependencies
+        working-directory: proto
+        run: bun install
+
       - name: Install dependencies
         working-directory: frontend
         run: bun install

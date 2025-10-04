@@ -12,6 +12,9 @@ This directory contains the GitHub Actions workflows for the Futura monorepo.
 
 - ✅ **test-apis**: Go tests for APIs service (with frontend build)
 - ✅ **test-analytics**: Go tests for Analytics service
+  - Runs ClickHouse service container
+  - Executes migrations (analytics + engine)
+  - Runs tests with database
 - ✅ **test-pipeline**: Go tests for Pipeline service
 - ✅ **test-watcher**: Go tests for Watcher service (with eBPF generation)
 - ✅ **test-operator**: Operator build verification
@@ -180,7 +183,7 @@ You can run all tests locally using the root Makefile:
 # Run all tests (Go, Python, Frontend)
 make test
 
-# Run only Go service tests
+# Run only Go service tests (Analytics requires ClickHouse)
 make test-go
 
 # Run only Python tests
@@ -188,6 +191,19 @@ make test-python
 
 # Run only Frontend tests
 make test-frontend
+```
+
+**Note:** Analytics tests require ClickHouse to be running. Start it with:
+
+```bash
+# Start ClickHouse with docker-compose
+docker compose up -d clickhouse
+
+# Run ClickHouse migrations (both analytics and engine)
+make setup-clickhouse-migrations
+
+# Now run tests
+make test-go
 ```
 
 ### Test with Act (GitHub Actions locally)
