@@ -13,7 +13,6 @@ COPY pipeline/go.mod pipeline/go.sum ./pipeline/
 COPY pipeline/cmd ./pipeline/cmd
 COPY pipeline/internal ./pipeline/internal
 COPY pipeline/main.go ./pipeline/main.go
-COPY pipeline/config.toml ./pipeline/config.toml
 
 WORKDIR /src/pipeline
 RUN go env -w GOPROXY=https://proxy.golang.org,direct
@@ -33,7 +32,6 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o pi
 FROM gcr.io/distroless/base-debian12:latest
 WORKDIR /app
 COPY --from=builder /src/pipeline/pipeline /app/pipeline
-COPY --from=builder /src/pipeline/config.toml /app/config.toml
 
 # Expose default port if needed
 EXPOSE 8080

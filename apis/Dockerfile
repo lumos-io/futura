@@ -20,7 +20,6 @@ COPY apis/utils ./apis/utils
 COPY apis/version ./apis/version
 COPY apis/test ./apis/test
 COPY apis/main.go ./apis/main.go
-COPY apis/config.toml ./apis/config.toml
 
 # Copy frontend build (must be pre-built: cd frontend && bun run build)
 COPY apis/public ./apis/public
@@ -43,7 +42,6 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o ap
 FROM gcr.io/distroless/base-debian12:latest
 WORKDIR /app
 COPY --from=builder /src/apis/apis /app/apis
-COPY --from=builder /src/apis/config.toml /app/config.toml
 
 # Expose API port (default: 8080)
 EXPOSE 8080
