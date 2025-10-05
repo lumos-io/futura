@@ -31,10 +31,13 @@ COPY watcher/ ./
 # container-build is a Makefile target (no docker commands)
 RUN make container-build
 
-# ---- Stage: Runtime ----
-FROM gcr.io/distroless/base
-COPY --from=builder /src/bin/watcher /bin/watcher
-# include generated eBPF objects if placed under internal/ebpf/bpf/
-COPY --from=builder /src/internal/ebpf/bpf/*.o /bpf/
-ENTRYPOINT ["/bin/watcher"]
+# Verify build artifacts
+RUN ls -lh /src/watcher/bin/watcher && \
+    find /src/watcher/internal/ebpf/bpf -name "*.o" -exec ls -lh {} \;
 
+# ---- Stage: Runtime ----
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=builder /src/watcher/bin/watcher /bin/watcher
+# include generated eBPF objects if placed under internal/ebpf/bpf/
+COPY --from=builder /src/watcher/internal/ebpf/bpf/*/*.o /bpf/
+ENTRYPOINT ["/bin/watcher"]

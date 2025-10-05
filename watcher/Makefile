@@ -31,7 +31,7 @@ build-binary:
 
 # Build final runtime Docker image (multi-stage Dockerfile)
 docker-image:
-	cd .. && docker build -t $(IMAGE_NAME):latest -f watcher/Dockerfile .
+	cd .. && docker build -t $(IMAGE_NAME) -f watcher/Dockerfile .
 
 clean:
 	@echo "==> Cleaning bin/"
